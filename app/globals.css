@@ -1,26 +1,133 @@
 @import "tailwindcss";
 
+/* ─── Maritime Enterprise Design System ─────────────────────────────────── */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Surfaces — background shifts replace borders */
+  --surface:                  #F8F9FA;
+  --surface-container-low:    #F3F4F5;
+  --surface-container-lowest: #FFFFFF;
+  --surface-container-high:   #E8EAEB;
+  --surface-container-highest:#E1E3E4;
+
+  /* Brand */
+  --primary:            #000A1E;
+  --primary-container:  #002147;
+  --secondary:          #006399;
+  --secondary-light:    #0077B6;
+  --on-primary:         #FFFFFF;
+  --on-surface:         #191C1D;
+  --on-surface-variant: #43474E;
+
+  /* Semantic */
+  --tertiary-fixed:     #A7EDFF;
+  --tertiary-fixed-dim: #58D6F1;
+  --tertiary-container: #00262D;
+  --error:              #BA1A1A;
+  --error-container:    #FFDAD6;
+  --warning:            #FFB703;
+  --outline-variant:    rgba(196, 198, 207, 0.2); /* Ghost border */
+
+  /* Ambient shadow — tinted primary */
+  --shadow-ambient: 0px 12px 32px rgba(0, 10, 30, 0.06);
+
+  /* Radius — max md, instrument-panel feel */
+  --radius-xs: 0.125rem;  /* sm — buttons */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;  /* max allowed */
+
+  /* Ocean gradient for CTAs & rings */
+  --gradient-ocean: linear-gradient(135deg, #006399, #002147);
+
+  /* Fonts */
+  --font-display: var(--font-manrope), system-ui, sans-serif;
+  --font-body:    var(--font-inter), system-ui, sans-serif;
+
+  /* Legacy compat for shadcn components */
+  --background:          var(--surface);
+  --foreground:          var(--on-surface);
+  --card:                var(--surface-container-lowest);
+  --card-foreground:     var(--on-surface);
+  --popover:             var(--surface-container-lowest);
+  --popover-foreground:  var(--on-surface);
+  --primary-bg:          var(--primary-container);
+  --primary-fg:          var(--on-primary);
+  --muted:               var(--surface-container-low);
+  --muted-foreground:    var(--on-surface-variant);
+  --accent:              var(--surface-container-highest);
+  --accent-foreground:   var(--on-surface);
+  --destructive:         var(--error);
+  --destructive-foreground: #FFFFFF;
+  --border:              var(--outline-variant);
+  --input:               var(--outline-variant);
+  --ring:                var(--secondary);
+  --radius:              0.375rem;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background:          var(--surface);
+  --color-foreground:          var(--on-surface);
+  --color-card:                var(--surface-container-lowest);
+  --color-card-foreground:     var(--on-surface);
+  --color-popover:             var(--surface-container-lowest);
+  --color-popover-foreground:  var(--on-surface);
+  --color-primary:             var(--primary-container);
+  --color-primary-foreground:  var(--on-primary);
+  --color-secondary:           var(--secondary);
+  --color-secondary-foreground:var(--on-primary);
+  --color-muted:               var(--surface-container-low);
+  --color-muted-foreground:    var(--on-surface-variant);
+  --color-accent:              var(--surface-container-highest);
+  --color-accent-foreground:   var(--on-surface);
+  --color-destructive:         var(--error);
+  --color-border:              var(--outline-variant);
+  --color-input:               var(--outline-variant);
+  --color-ring:                var(--secondary);
+  --font-sans:                 var(--font-body);
+  --font-display:              var(--font-display);
+  --radius-sm:                 var(--radius-xs);
+  --radius-md:                 var(--radius-sm);
+  --radius-lg:                 var(--radius-md);
+  --radius-xl:                 var(--radius-md);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* ─── Base ──────────────────────────────────────────────────────────────── */
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--surface);
+  color: var(--on-surface);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Display typography — Manrope */
+h1, h2, h3, h4,
+.font-display {
+  font-family: var(--font-display);
+  color: var(--primary);
+  letter-spacing: -0.01em;
+}
+
+/* Label caps utility */
+.label-sm {
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Ocean gradient utility */
+.gradient-ocean {
+  background: var(--gradient-ocean);
+}
+
+/* Ghost border utility */
+.border-ghost {
+  border: 1px solid var(--outline-variant);
+}
+
+/* Ambient shadow */
+.shadow-ambient {
+  box-shadow: var(--shadow-ambient);
 }

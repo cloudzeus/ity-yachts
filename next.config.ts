@@ -1,7 +1,22 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from "next"
 
 const nextConfig: NextConfig = {
-  /* config options here */
-};
+  output: "standalone",
+  experimental: {
+    serverActions: { bodySizeLimit: "50mb" },
+  },
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "*.b-cdn.net",
+      },
+      {
+        protocol: "https",
+        hostname: "*.bunnycdn.com",
+      },
+    ],
+  },
+}
 
-export default nextConfig;
+export default nextConfig
