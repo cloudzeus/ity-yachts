@@ -88,6 +88,7 @@ export function PagesClient({ initialData }: Props) {
   const [newPageSlug, setNewPageSlug] = useState("")
   const [slugOverridden, setSlugOverridden] = useState(false)
   const [newPageTranslations, setNewPageTranslations] = useState({ el: "", en: "", de: "" })
+  const [showTranslations, setShowTranslations] = useState(false)
   const [creating, setCreating] = useState(false)
   const [deletePageId, setDeletePageId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
@@ -139,8 +140,8 @@ export function PagesClient({ initialData }: Props) {
 
   async function handleCreate() {
     if (!newPageName || !newPageSlug) return
-    if (!newPageTranslations.el || !newPageTranslations.en || !newPageTranslations.de) {
-      alert("All language translations (Greek, English, German) are required")
+    if (!newPageTranslations.el || !newPageTranslations.de) {
+      alert("Greek and German translations are required")
       return
     }
     setCreating(true)
@@ -161,6 +162,7 @@ export function PagesClient({ initialData }: Props) {
         setNewPageSlug("")
         setSlugOverridden(false)
         setNewPageTranslations({ el: "", en: "", de: "" })
+        setShowTranslations(false)
         router.push(`/admin/pages/${json.page.id}`)
       } else {
         alert("Failed to create page")
@@ -288,80 +290,105 @@ export function PagesClient({ initialData }: Props) {
           <DialogHeader>
             <DialogTitle style={{ fontFamily: "var(--font-display)", color: "var(--primary)" }}>Create New Page</DialogTitle>
             <DialogDescription style={{ color: "var(--on-surface-variant)" }}>
-              Add page name and translations for all languages.
+              {showTranslations ? "Add translations for Greek and German" : "Enter page name in English"}
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-1.5">
-              <Label className="text-xs" style={{ color: "var(--on-surface-variant)" }}>Page Name</Label>
-              <Input
-                value={newPageName}
-                onChange={(e) => handleNameChange(e.target.value)}
-                placeholder="e.g., About Us"
-                style={{ background: "var(--surface-container-lowest)", borderColor: "var(--outline-variant)" }}
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label className="text-xs" style={{ color: "var(--on-surface-variant)" }}>Page Slug</Label>
-              <Input
-                value={newPageSlug}
-                onChange={(e) => handleSlugChange(e.target.value)}
-                placeholder="e.g., about-us"
-                style={{ background: "var(--surface-container-lowest)", borderColor: "var(--outline-variant)" }}
-              />
-            </div>
-            <div className="border-t" style={{ borderColor: "var(--outline-variant)" }} />
-            <div className="flex flex-col gap-3">
-              <p className="text-xs font-semibold" style={{ color: "var(--primary)" }}>Translations</p>
-              <div className="flex flex-col gap-2">
+            {/* Initial step - English only */}
+            {!showTranslations ? (
+              <>
                 <div className="flex flex-col gap-1.5">
-                  <Label className="text-xs" style={{ color: "var(--on-surface-variant)" }}>Greek (Ελληνικά)</Label>
+                  <Label className="text-xs" style={{ color: "var(--on-surface-variant)" }}>Page Name (English)</Label>
                   <Input
-                    value={newPageTranslations.el}
-                    onChange={(e) => setNewPageTranslations({ ...newPageTranslations, el: e.target.value })}
-                    placeholder="Greek page name..."
+                    value={newPageName}
+                    onChange={(e) => {
+                      handleNameChange(e.target.value)
+                      setNewPageTranslations({ ...newPageTranslations, en: e.target.value })
+                    }}
+                    placeholder="e.g., About Us"
+                    autoFocus
                     style={{ background: "var(--surface-container-lowest)", borderColor: "var(--outline-variant)" }}
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <Label className="text-xs" style={{ color: "var(--on-surface-variant)" }}>English</Label>
+                  <Label className="text-xs" style={{ color: "var(--on-surface-variant)" }}>Page Slug</Label>
                   <Input
-                    value={newPageTranslations.en}
-                    onChange={(e) => setNewPageTranslations({ ...newPageTranslations, en: e.target.value })}
-                    placeholder="English page name..."
+                    value={newPageSlug}
+                    onChange={(e) => handleSlugChange(e.target.value)}
+                    placeholder="e.g., about-us"
                     style={{ background: "var(--surface-container-lowest)", borderColor: "var(--outline-variant)" }}
                   />
                 </div>
-                <div className="flex flex-col gap-1.5">
-                  <Label className="text-xs" style={{ color: "var(--on-surface-variant)" }}>German (Deutsch)</Label>
-                  <Input
-                    value={newPageTranslations.de}
-                    onChange={(e) => setNewPageTranslations({ ...newPageTranslations, de: e.target.value })}
-                    placeholder="German page name..."
-                    style={{ background: "var(--surface-container-lowest)", borderColor: "var(--outline-variant)" }}
-                  />
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button variant="outline" onClick={() => {
+                    setNewPageOpen(false)
+                    setNewPageName("")
+                    setNewPageSlug("")
+                    setSlugOverridden(false)
+                    setNewPageTranslations({ el: "", en: "", de: "" })
+                    setShowTranslations(false)
+                  }} disabled={creating}>
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => setShowTranslations(true)}
+                    disabled={!newPageName || !newPageSlug}
+                    className="text-white"
+                    style={{ background: "var(--gradient-ocean)", borderRadius: "var(--radius-xs)" }}
+                  >
+                    Translate
+                  </Button>
                 </div>
-              </div>
-            </div>
-            <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" onClick={() => {
-                setNewPageOpen(false)
-                setNewPageName("")
-                setNewPageSlug("")
-                setSlugOverridden(false)
-                setNewPageTranslations({ el: "", en: "", de: "" })
-              }} disabled={creating}>
-                Cancel
-              </Button>
-              <Button
-                onClick={handleCreate}
-                disabled={creating || !newPageName || !newPageSlug || !newPageTranslations.el || !newPageTranslations.en || !newPageTranslations.de}
-                className="text-white"
-                style={{ background: "var(--gradient-ocean)", borderRadius: "var(--radius-xs)" }}
-              >
-                {creating ? "Creating…" : "Create Page"}
-              </Button>
-            </div>
+              </>
+            ) : (
+              <>
+                {/* Translation step */}
+                <div className="flex flex-col gap-0.5 pb-2" style={{ borderBottom: "1px solid var(--outline-variant)" }}>
+                  <p className="text-xs font-medium" style={{ color: "var(--on-surface)" }}>English: <span style={{ color: "var(--primary)" }}>{newPageTranslations.en}</span></p>
+                  <p className="text-xs" style={{ color: "var(--on-surface-variant)" }}>Translate this to other languages</p>
+                </div>
+
+                <div className="flex flex-col gap-3">
+                  <div className="flex flex-col gap-1.5">
+                    <Label className="text-xs" style={{ color: "var(--on-surface-variant)" }}>Greek (Ελληνικά) *</Label>
+                    <Input
+                      value={newPageTranslations.el}
+                      onChange={(e) => setNewPageTranslations({ ...newPageTranslations, el: e.target.value })}
+                      placeholder="Greek translation..."
+                      autoFocus
+                      style={{ background: "var(--surface-container-lowest)", borderColor: "var(--outline-variant)" }}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <Label className="text-xs" style={{ color: "var(--on-surface-variant)" }}>German (Deutsch) *</Label>
+                    <Input
+                      value={newPageTranslations.de}
+                      onChange={(e) => setNewPageTranslations({ ...newPageTranslations, de: e.target.value })}
+                      placeholder="German translation..."
+                      style={{ background: "var(--surface-container-lowest)", borderColor: "var(--outline-variant)" }}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowTranslations(false)}
+                    disabled={creating}
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    onClick={handleCreate}
+                    disabled={creating || !newPageTranslations.el || !newPageTranslations.de}
+                    className="text-white"
+                    style={{ background: "var(--gradient-ocean)", borderRadius: "var(--radius-xs)" }}
+                  >
+                    {creating ? "Creating…" : "Create Page"}
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         </DialogContent>
       </Dialog>
