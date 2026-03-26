@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
-    const { name, slug } = await req.json()
+    const { name, slug, translations } = await req.json()
     if (!name || !slug) {
       return NextResponse.json({ error: "Missing name or slug" }, { status: 400 })
     }
@@ -72,6 +72,7 @@ export async function POST(req: NextRequest) {
         slug,
         status: "draft",
         content: [],
+        translations: translations || { el: "", en: "", de: "" },
       },
     })
 

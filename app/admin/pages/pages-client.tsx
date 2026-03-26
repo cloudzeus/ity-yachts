@@ -87,6 +87,7 @@ export function PagesClient({ initialData }: Props) {
   const [newPageName, setNewPageName] = useState("")
   const [newPageSlug, setNewPageSlug] = useState("")
   const [slugOverridden, setSlugOverridden] = useState(false)
+  const [newPageTranslations, setNewPageTranslations] = useState({ el: "", en: "", de: "" })
   const [creating, setCreating] = useState(false)
   const [deletePageId, setDeletePageId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
@@ -138,12 +139,20 @@ export function PagesClient({ initialData }: Props) {
 
   async function handleCreate() {
     if (!newPageName || !newPageSlug) return
+    if (!newPageTranslations.el || !newPageTranslations.en || !newPageTranslations.de) {
+      alert("All language translations (Greek, English, German) are required")
+      return
+    }
     setCreating(true)
     try {
       const res = await fetch("/api/admin/pages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newPageName, slug: newPageSlug }),
+        body: JSON.stringify({
+          name: newPageName,
+          slug: newPageSlug,
+          translations: newPageTranslations
+        }),
       })
       if (res.ok) {
         const json = await res.json()
@@ -151,6 +160,7 @@ export function PagesClient({ initialData }: Props) {
         setNewPageName("")
         setNewPageSlug("")
         setSlugOverridden(false)
+        setNewPageTranslations({ el: "", en: "", de: "" })
         router.push(`/admin/pages/${json.page.id}`)
       } else {
         alert("Failed to create page")
@@ -274,11 +284,11 @@ export function PagesClient({ initialData }: Props) {
 
       {/* New Page Dialog */}
       <Dialog open={newPageOpen} onOpenChange={setNewPageOpen}>
-        <DialogContent className="sm:max-w-sm" style={{ background: "var(--surface-container-lowest)" }}>
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto" style={{ background: "var(--surface-container-lowest)" }}>
           <DialogHeader>
             <DialogTitle style={{ fontFamily: "var(--font-display)", color: "var(--primary)" }}>Create New Page</DialogTitle>
             <DialogDescription style={{ color: "var(--on-surface-variant)" }}>
-              Page slug will auto-generate from the name.
+              Add page name and translations for all languages.
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-4">
@@ -300,13 +310,52 @@ export function PagesClient({ initialData }: Props) {
                 style={{ background: "var(--surface-container-lowest)", borderColor: "var(--outline-variant)" }}
               />
             </div>
+            <div className="border-t" style={{ borderColor: "var(--outline-variant)" }} />
+            <div className="flex flex-col gap-3">
+              <p className="text-xs font-semibold" style={{ color: "var(--primary)" }}>Translations</p>
+              <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-xs" style={{ color: "var(--on-surface-variant)" }}>Greek (Ελληνικά)</Label>
+                  <Input
+                    value={newPageTranslations.el}
+                    onChange={(e) => setNewPageTranslations({ ...newPageTranslations, el: e.target.value })}
+                    placeholder="Greek page name..."
+                    style={{ background: "var(--surface-container-lowest)", borderColor: "var(--outline-variant)" }}
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-xs" style={{ color: "var(--on-surface-variant)" }}>English</Label>
+                  <Input
+                    value={newPageTranslations.en}
+                    onChange={(e) => setNewPageTranslations({ ...newPageTranslations, en: e.target.value })}
+                    placeholder="English page name..."
+                    style={{ background: "var(--surface-container-lowest)", borderColor: "var(--outline-variant)" }}
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-xs" style={{ color: "var(--on-surface-variant)" }}>German (Deutsch)</Label>
+                  <Input
+                    value={newPageTranslations.de}
+                    onChange={(e) => setNewPageTranslations({ ...newPageTranslations, de: e.target.value })}
+                    placeholder="German page name..."
+                    style={{ background: "var(--surface-container-lowest)", borderColor: "var(--outline-variant)" }}
+                  />
+                </div>
+              </div>
+            </div>
             <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" onClick={() => setNewPageOpen(false)} disabled={creating}>
+              <Button variant="outline" onClick={() => {
+                setNewPageOpen(false)
+                setNewPageName("")
+                setNewPageSlug("")
+                setSlugOverridden(false)
+                setNewPageTranslations({ el: "", en: "", de: "" })
+              }} disabled={creating}>
                 Cancel
               </Button>
               <Button
                 onClick={handleCreate}
-                disabled={creating || !newPageName || !newPageSlug}
+                disabled={creating || !newPageName || !newPageSlug || !newPageTranslations.el || !newPageTranslations.en || !newPageTranslations.de}
                 className="text-white"
                 style={{ background: "var(--gradient-ocean)", borderRadius: "var(--radius-xs)" }}
               >
@@ -353,33 +402,39 @@ export function PagesClient({ initialData }: Props) {
                 Edit Translations
               </DialogTitle>
               <DialogDescription style={{ color: "var(--on-surface-variant)" }}>
-                Add or edit page name translations for different languages.
+                Edit page name translations for Greek, English, and German.
               </DialogDescription>
             </DialogHeader>
-            <div className="flex flex-col gap-4 max-h-96 overflow-y-auto">
-              {Object.keys(editTranslations).length === 0 ? (
-                <p className="text-sm text-center py-4" style={{ color: "var(--on-surface-variant)" }}>
-                  No translations yet
-                </p>
-              ) : (
-                Object.entries(editTranslations).map(([lang, translation]) => (
-                  <div key={lang} className="flex flex-col gap-1.5">
-                    <Label className="text-xs" style={{ color: "var(--on-surface-variant)" }}>
-                      {lang.toUpperCase()}
-                    </Label>
-                    <Input
-                      value={translation}
-                      onChange={(e) =>
-                        setEditTranslations({ ...editTranslations, [lang]: e.target.value })
-                      }
-                      placeholder={`Translation in ${lang}...`}
-                      style={{ background: "var(--surface-container-lowest)", borderColor: "var(--outline-variant)" }}
-                    />
-                  </div>
-                ))
-              )}
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-xs" style={{ color: "var(--on-surface-variant)" }}>Greek (Ελληνικά)</Label>
+                <Input
+                  value={editTranslations["el"] || ""}
+                  onChange={(e) => setEditTranslations({ ...editTranslations, el: e.target.value })}
+                  placeholder="Greek translation..."
+                  style={{ background: "var(--surface-container-lowest)", borderColor: "var(--outline-variant)" }}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-xs" style={{ color: "var(--on-surface-variant)" }}>English</Label>
+                <Input
+                  value={editTranslations["en"] || ""}
+                  onChange={(e) => setEditTranslations({ ...editTranslations, en: e.target.value })}
+                  placeholder="English translation..."
+                  style={{ background: "var(--surface-container-lowest)", borderColor: "var(--outline-variant)" }}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-xs" style={{ color: "var(--on-surface-variant)" }}>German (Deutsch)</Label>
+                <Input
+                  value={editTranslations["de"] || ""}
+                  onChange={(e) => setEditTranslations({ ...editTranslations, de: e.target.value })}
+                  placeholder="German translation..."
+                  style={{ background: "var(--surface-container-lowest)", borderColor: "var(--outline-variant)" }}
+                />
+              </div>
             </div>
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex justify-end gap-2 pt-4">
               <Button
                 variant="outline"
                 onClick={() => setEditTranslationsPageId(null)}
