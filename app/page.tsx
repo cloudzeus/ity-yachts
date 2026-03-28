@@ -1,199 +1,155 @@
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
 import { Ship, Calendar, Users, Shield } from "lucide-react"
+import { SiteHeader } from "@/components/site-header"
+import { SiteFooter } from "@/components/site-footer"
 
 export default function Home() {
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: "var(--surface)" }}>
-      {/* Navigation */}
-      <nav
-        className="flex h-16 items-center justify-between px-6 md:px-12"
+    <main>
+      {/* Page content — clip-path lets the fixed footer reveal beneath */}
+      <div
+        className="relative z-10 min-h-screen"
         style={{
-          background: "rgba(255,255,255,0.85)",
-          backdropFilter: "blur(12px)",
-          borderBottom: "1px solid rgba(196,198,207,0.2)",
+          background: "#060c27",
+          clipPath: "polygon(0% 0, 100% 0%, 100% 100%, 0 100%)",
         }}
       >
-        <div className="flex items-center gap-3">
+        <SiteHeader />
+
+        {/* Hero */}
+        <section className="relative flex min-h-screen items-center justify-center px-6 md:px-12">
           <div
-            className="flex h-8 w-8 items-center justify-center"
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
             style={{
-              background: "var(--gradient-ocean)",
-              borderRadius: "var(--radius-xs)",
+              backgroundImage:
+                "url('https://images.unsplash.com/photo-1540946485063-a40da27545f8?q=80&w=2940&auto=format&fit=crop')",
             }}
-          >
-            <span
-              className="text-xs font-bold tracking-tight"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#060c27]/60 via-[#060c27]/40 to-[#060c27]" />
+
+          <div className="relative z-10 w-full max-w-3xl text-center">
+            <div className="mb-6 inline-block rounded-sm border border-white/15 px-4 py-1.5">
+              <span
+                className="text-xs font-semibold uppercase tracking-widest text-white/60"
+                style={{ fontFamily: "var(--font-body)" }}
+              >
+                Luxury Yacht Charters
+              </span>
+            </div>
+
+            <h1
+              className="mb-6 text-4xl font-bold leading-tight text-white md:text-6xl lg:text-7xl"
               style={{
                 fontFamily: "var(--font-display)",
-                color: "var(--tertiary-fixed)",
+                letterSpacing: "-0.02em",
               }}
             >
-              IYC
-            </span>
-          </div>
-          <span
-            className="font-semibold"
-            style={{
-              fontFamily: "var(--font-display)",
-              color: "var(--primary)",
-            }}
-          >
-            IYC Yachts
-          </span>
-        </div>
-        <div className="flex items-center gap-4">
-          <Link
-            href="/login"
-            className="text-sm transition-colors"
-            style={{ color: "var(--on-surface-variant)" }}
-          >
-            Sign In
-          </Link>
-          <a
-            href="/admin"
-            className="text-sm font-semibold text-white px-4 py-2 rounded-sm transition-all"
-            style={{
-              background: "var(--gradient-ocean)",
-            }}
-          >
-            Admin
-          </a>
-        </div>
-      </nav>
+              Navigate the World
+              <br />
+              in Unmatched Luxury
+            </h1>
 
-      {/* Hero */}
-      <section className="flex-1 flex items-center justify-center px-6 md:px-12 py-20">
-        <div className="w-full max-w-2xl text-center">
-          <div
-            className="inline-block px-3 py-1.5 mb-6"
-            style={{
-              background: "rgba(0,99,153,0.08)",
-              borderRadius: "var(--radius-xs)",
-            }}
-          >
-            <span className="label-sm" style={{ color: "var(--secondary)" }}>
-              Maritime Excellence
-            </span>
-          </div>
-
-          <h1
-            className="text-4xl md:text-5xl font-bold mb-4 leading-tight"
-            style={{
-              fontFamily: "var(--font-display)",
-              color: "var(--primary)",
-              letterSpacing: "-0.02em",
-            }}
-          >
-            The Precise Navigator for Yacht Bookings
-          </h1>
-
-          <p
-            className="text-lg mb-8 max-w-xl mx-auto"
-            style={{ color: "var(--on-surface-variant)" }}
-          >
-            Enterprise-grade yacht management and booking platform designed for the maritime industry. Experience institutional trust and digital sophistication.
-          </p>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/login">
-              <button
-                className="px-6 py-3 text-white font-semibold rounded-sm transition-all"
-                style={{ background: "var(--gradient-ocean)" }}
-              >
-                Get Started
-              </button>
-            </Link>
-            <button
-              className="px-6 py-3 font-semibold rounded-sm transition-colors"
-              style={{
-                background: "var(--surface-container-low)",
-                color: "var(--primary)",
-              }}
+            <p
+              className="mx-auto mb-10 max-w-xl text-lg text-white/60"
+              style={{ fontFamily: "var(--font-body)" }}
             >
-              Learn More
-            </button>
-          </div>
-        </div>
-      </section>
+              Discover hand-selected yachts and bespoke itineraries crafted for
+              the most discerning travellers. Your voyage begins here.
+            </p>
 
-      {/* Features */}
-      <section
-        className="px-6 md:px-12 py-20"
-        style={{ background: "var(--surface-container-low)" }}
-      >
-        <div className="max-w-6xl mx-auto">
-          <h2
-            className="text-3xl font-bold mb-12 text-center"
-            style={{
-              fontFamily: "var(--font-display)",
-              color: "var(--primary)",
-              letterSpacing: "-0.01em",
-            }}
-          >
-            Platform Features
-          </h2>
-
-          <div className="grid md:grid-cols-4 gap-6">
-            {[
-              {
-                icon: Ship,
-                title: "Fleet Management",
-                desc: "Comprehensive yacht inventory and status tracking",
-              },
-              {
-                icon: Calendar,
-                title: "Smart Booking",
-                desc: "Intuitive scheduling and reservation system",
-              },
-              {
-                icon: Users,
-                title: "Team Collaboration",
-                desc: "Multi-role access with granular permissions",
-              },
-              {
-                icon: Shield,
-                title: "Enterprise Security",
-                desc: "Advanced authentication and data protection",
-              },
-            ].map((feature, i) => (
-              <div
-                key={i}
-                className="p-6 rounded-md"
+            <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+              <Link
+                href="/start-planning"
+                className="bg-white px-8 py-3.5 text-sm font-semibold transition-all hover:bg-white/90"
                 style={{
-                  background: "var(--surface-container-lowest)",
-                  boxShadow: "var(--shadow-ambient)",
+                  borderRadius: "6px",
+                  color: "#060c27",
+                  fontFamily: "var(--font-display)",
                 }}
               >
-                <feature.icon
-                  className="w-8 h-8 mb-3"
-                  style={{ color: "var(--secondary)" }}
-                />
-                <h3
-                  className="font-semibold mb-2"
+                Start Planning
+              </Link>
+              <Link
+                href="/fleet"
+                className="border border-white/20 px-8 py-3.5 text-sm font-semibold text-white transition-all hover:border-white/40 hover:bg-white/5"
+                style={{ borderRadius: "6px", fontFamily: "var(--font-display)" }}
+              >
+                Explore Fleet
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* Features */}
+        <section className="px-6 md:px-12 py-24" style={{ background: "var(--surface)" }}>
+          <div className="max-w-6xl mx-auto">
+            <h2
+              className="text-3xl font-bold mb-12 text-center"
+              style={{
+                fontFamily: "var(--font-display)",
+                color: "var(--primary)",
+                letterSpacing: "-0.01em",
+              }}
+            >
+              Platform Features
+            </h2>
+
+            <div className="grid md:grid-cols-4 gap-6">
+              {[
+                {
+                  icon: Ship,
+                  title: "Fleet Management",
+                  desc: "Comprehensive yacht inventory and status tracking",
+                },
+                {
+                  icon: Calendar,
+                  title: "Smart Booking",
+                  desc: "Intuitive scheduling and reservation system",
+                },
+                {
+                  icon: Users,
+                  title: "Team Collaboration",
+                  desc: "Multi-role access with granular permissions",
+                },
+                {
+                  icon: Shield,
+                  title: "Enterprise Security",
+                  desc: "Advanced authentication and data protection",
+                },
+              ].map((feature, i) => (
+                <div
+                  key={i}
+                  className="p-6 rounded-md"
                   style={{
-                    fontFamily: "var(--font-display)",
-                    color: "var(--primary)",
+                    background: "var(--surface-container-lowest)",
+                    boxShadow: "var(--shadow-ambient)",
                   }}
                 >
-                  {feature.title}
-                </h3>
-                <p className="text-sm" style={{ color: "var(--on-surface-variant)" }}>
-                  {feature.desc}
-                </p>
-              </div>
-            ))}
+                  <feature.icon
+                    className="w-8 h-8 mb-3"
+                    style={{ color: "var(--secondary)" }}
+                  />
+                  <h3
+                    className="font-semibold mb-2"
+                    style={{
+                      fontFamily: "var(--font-display)",
+                      color: "var(--primary)",
+                    }}
+                  >
+                    {feature.title}
+                  </h3>
+                  <p className="text-sm" style={{ color: "var(--on-surface-variant)" }}>
+                    {feature.desc}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
 
-      {/* Footer */}
-      <footer
-        className="px-6 md:px-12 py-8 text-center text-sm"
-        style={{ color: "var(--on-surface-variant)" }}
-      >
-        <p>© 2026 IYC Yachts. Maritime enterprise management platform.</p>
-      </footer>
-    </div>
+      {/* Sticky reveal footer */}
+      <SiteFooter />
+    </main>
   )
 }

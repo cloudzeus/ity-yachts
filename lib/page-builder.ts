@@ -32,6 +32,9 @@ export function createBlock(type: PageBlock["type"]): PageBlock {
     case "h1":
     case "h2":
     case "h3":
+    case "h4":
+    case "h5":
+    case "h6":
     case "paragraph":
     case "richtext":
       return { ...base, content: "" }
@@ -79,7 +82,7 @@ export function updateBlock(
             a.id === areaId
               ? {
                   ...a,
-                  blocks: a.blocks.map((b) => (b.id === blockId ? { ...b, ...updates } : b)),
+                  blocks: a.blocks.map((b) => (b.id === blockId ? { ...b, ...updates } as PageBlock : b)),
                 }
               : a
           ),

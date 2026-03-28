@@ -10,9 +10,12 @@ interface AIData {
   openaiKey: string
   anthropicKey: string
   deepseekKey: string
+  geocodeKey: string
+  googleMapsKey: string
+  weatherApiKey: string
 }
 
-const defaults: AIData = { openaiKey: "", anthropicKey: "", deepseekKey: "" }
+const defaults: AIData = { openaiKey: "", anthropicKey: "", deepseekKey: "", geocodeKey: "", googleMapsKey: "", weatherApiKey: "" }
 
 function MaskedField({ label, description, value, onChange, placeholder }: {
   label: string
@@ -121,6 +124,36 @@ export function AITab({ initialData }: { initialData?: Partial<AIData> }) {
             value={data.deepseekKey}
             onChange={(v) => setData((p) => ({ ...p, deepseekKey: v }))}
             placeholder="sk-..."
+          />
+        </div>
+
+        <div style={{ borderTop: "1px solid var(--outline-variant)", paddingTop: "1rem" }}>
+          <MaskedField
+            label="Geocode.maps.co API Key"
+            description="Used for geocoding addresses to coordinates in Locations."
+            value={data.geocodeKey}
+            onChange={(v) => setData((p) => ({ ...p, geocodeKey: v }))}
+            placeholder="api_key..."
+          />
+        </div>
+
+        <div style={{ borderTop: "1px solid var(--outline-variant)", paddingTop: "1rem" }}>
+          <MaskedField
+            label="Google Maps API Key"
+            description="Powers Google Maps embeds and Places autocomplete in Locations."
+            value={data.googleMapsKey}
+            onChange={(v) => setData((p) => ({ ...p, googleMapsKey: v }))}
+            placeholder="AIza..."
+          />
+        </div>
+
+        <div style={{ borderTop: "1px solid var(--outline-variant)", paddingTop: "1rem" }}>
+          <MaskedField
+            label="WeatherAPI.com API Key"
+            description="Powers weather forecast widgets for locations on the website."
+            value={data.weatherApiKey}
+            onChange={(v) => setData((p) => ({ ...p, weatherApiKey: v }))}
+            placeholder="your-weatherapi-key"
           />
         </div>
       </div>

@@ -23,7 +23,7 @@ export interface AnimationConfig {
 
 // ── Blocks ────────────────────────────────────────────────────
 export type PageBlock =
-  | { id: string; type: "h1" | "h2" | "h3"; content: string; animation?: AnimationConfig }
+  | { id: string; type: "h1" | "h2" | "h3" | "h4" | "h5" | "h6"; content: string; subheader?: string; animation?: AnimationConfig }
   | { id: string; type: "paragraph"; content: string; animation?: AnimationConfig }
   | { id: string; type: "richtext"; content: string; animation?: AnimationConfig }
   | { id: string; type: "image"; url: string; alt: string; caption?: string }
@@ -47,6 +47,7 @@ export type SectionHeight = "auto" | "screen" | "half-screen" | number  // numbe
 
 export interface PageSection {
   id: string
+  name?: string
   columns: 1 | 2 | 3
   ratio: ColumnRatio
   height: SectionHeight

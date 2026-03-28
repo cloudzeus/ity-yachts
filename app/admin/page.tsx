@@ -1,4 +1,5 @@
 import { Users, Ship, TrendingUp, CalendarDays } from "lucide-react"
+import { WeatherWidget } from "@/components/admin/weather-widget"
 
 const stats = [
   {
@@ -93,8 +94,8 @@ export default function AdminPage() {
         ))}
       </div>
 
-      {/* Bottom panels — surface-container-low sections, no borders */}
-      <div className="grid gap-4 lg:grid-cols-2">
+      {/* Bottom panels */}
+      <div className="grid gap-4 lg:grid-cols-3">
         {/* Recent Bookings */}
         <div
           className="flex flex-col"
@@ -154,6 +155,9 @@ export default function AdminPage() {
             </p>
           </div>
         </div>
+
+        {/* Weather */}
+        <WeatherWidget />
       </div>
     </div>
   )

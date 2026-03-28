@@ -12,9 +12,20 @@ import {
   Settings,
   BarChart3,
   ImageIcon,
+  MapPin,
+  UserCircle,
   LogOut,
   ChevronLeft,
   ChevronRight,
+  Route,
+  Star,
+  Sailboat,
+  DollarSign,
+  Anchor,
+  Package,
+  Calendar,
+  Contact,
+  MessageSquare,
 } from "lucide-react"
 import {
   Tooltip,
@@ -36,13 +47,28 @@ const navGroups = [
     label: "Bookings",
     items: [
       { label: "Bookings", href: "/admin/bookings", icon: CalendarDays },
+      { label: "Enquiries", href: "/admin/enquiries", icon: MessageSquare },
+      { label: "Customers", href: "/admin/customers", icon: Contact },
       { label: "Yachts", href: "/admin/yachts", icon: Ship },
+    ],
+  },
+  {
+    label: "Fleet",
+    items: [
+      { label: "Fleet", href: "/admin/fleet", icon: Sailboat, exact: true },
+      { label: "Pricing", href: "/admin/fleet/pricing", icon: DollarSign },
+      { label: "Bases", href: "/admin/fleet/bases", icon: Anchor },
+      { label: "Seasons", href: "/admin/fleet/seasons", icon: Calendar },
+      { label: "Catalogue", href: "/admin/fleet/catalogue", icon: Package },
     ],
   },
   {
     label: "CMS",
     items: [
       { label: "Pages", href: "/admin/pages", icon: FileText },
+      { label: "Locations", href: "/admin/locations", icon: MapPin },
+      { label: "Itineraries", href: "/admin/itineraries", icon: Route },
+      { label: "Reviews", href: "/admin/reviews", icon: Star },
       { label: "Media", href: "/admin/media", icon: ImageIcon },
     ],
   },
@@ -50,6 +76,7 @@ const navGroups = [
     label: "System",
     items: [
       { label: "Users", href: "/admin/users", icon: Users },
+      { label: "Company Staff", href: "/admin/staff", icon: UserCircle },
       { label: "Settings", href: "/admin/settings", icon: Settings },
     ],
   },

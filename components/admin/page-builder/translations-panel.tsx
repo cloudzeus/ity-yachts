@@ -1,12 +1,8 @@
 "use client"
 
+import { useState } from "react"
 import { Input } from "@/components/ui/input"
-
-const REQUIRED_LANGUAGES = [
-  { code: "el", name: "Greek (Ελληνικά)" },
-  { code: "en", name: "English" },
-  { code: "de", name: "German (Deutsch)" },
-]
+import { Button } from "@/components/ui/button"
 
 interface TranslationsPanelProps {
   translations: Record<string, string>
@@ -14,35 +10,81 @@ interface TranslationsPanelProps {
 }
 
 export function TranslationsPanel({ translations, onTranslationsChange }: TranslationsPanelProps) {
-  const updateTranslation = (code: string, value: string) => {
+  const [translating, setTranslating] = useState(false)
+
+  const update = (code: string, value: string) => {
     onTranslationsChange({ ...translations, [code]: value })
   }
 
-  return (
-    <div className="flex flex-col gap-4">
-      <div>
-        <h3 className="text-xs font-semibold mb-3" style={{ color: "var(--primary)", fontFamily: "var(--font-display)" }}>
-          Translations
-        </h3>
-        <p className="text-xs mb-3" style={{ color: "var(--on-surface-variant)" }}>
-          Page name translations for Greek, English, and German
-        </p>
-      </div>
+  async function handleTranslate() {
+    const en = translations.en
+    if (!en) return
+    setTranslating(true)
+    try {
+      const res = await fetch("/api/admin/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: en, languages: ["el", "de"] }),
+      })
+      if (res.ok) {
+        const json = await res.json()
+        onTranslationsChange({ ...translations, el: json.translations.el || "", de: json.translations.de || "" })
+      }
+    } catch (err) {
+      console.error("[TranslationsPanel translate]", err)
+    } finally {
+      setTranslating(false)
+    }
+  }
 
-      <div className="flex flex-col gap-3">
-        {REQUIRED_LANGUAGES.map((lang) => (
-          <div key={lang.code} className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium" style={{ color: "var(--on-surface)" }}>
-              {lang.name}
-            </label>
-            <Input
-              value={translations[lang.code] || ""}
-              onChange={(e) => updateTranslation(lang.code, e.target.value)}
-              placeholder={`Enter ${lang.name}...`}
-              className="text-sm h-8"
-            />
-          </div>
-        ))}
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] uppercase tracking-wide font-semibold" style={{ color: "var(--primary)", fontFamily: "var(--font-display)" }}>
+          Page Name
+        </span>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-5 text-[10px] px-2"
+          style={{ color: "var(--primary)" }}
+          onClick={handleTranslate}
+          disabled={translating || !translations.en}
+        >
+          {translating ? "Translating…" : "Translate via DeepSeek"}
+        </Button>
+      </div>
+      <div className="flex gap-2">
+        <div className="flex flex-col gap-1 flex-1">
+          <span className="text-[10px] uppercase tracking-wide" style={{ color: "var(--on-surface-variant)" }}>EN</span>
+          <Input
+            value={translations.en || ""}
+            onChange={(e) => update("en", e.target.value)}
+            placeholder="About Us"
+            className="h-7 text-xs"
+            style={{ background: "var(--surface-container-lowest)", borderColor: "var(--outline-variant)" }}
+          />
+        </div>
+        <div className="flex flex-col gap-1 flex-1">
+          <span className="text-[10px] uppercase tracking-wide" style={{ color: "var(--on-surface-variant)" }}>EL</span>
+          <Input
+            value={translations.el || ""}
+            onChange={(e) => update("el", e.target.value)}
+            placeholder="Σχετικά με εμάς"
+            className="h-7 text-xs"
+            style={{ background: "var(--surface-container-lowest)", borderColor: "var(--outline-variant)" }}
+          />
+        </div>
+        <div className="flex flex-col gap-1 flex-1">
+          <span className="text-[10px] uppercase tracking-wide" style={{ color: "var(--on-surface-variant)" }}>DE</span>
+          <Input
+            value={translations.de || ""}
+            onChange={(e) => update("de", e.target.value)}
+            placeholder="Über uns"
+            className="h-7 text-xs"
+            style={{ background: "var(--surface-container-lowest)", borderColor: "var(--outline-variant)" }}
+          />
+        </div>
       </div>
     </div>
   )

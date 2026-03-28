@@ -10,7 +10,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     const { id } = await params
-    const page = await db.page.findUnique({ where: { id } })
+    const page = await db.page.findUnique({
+      where: { id },
+      include: { textComponents: { orderBy: { createdAt: "asc" } } },
+    })
     if (!page) {
       return NextResponse.json({ error: "Page not found" }, { status: 404 })
     }

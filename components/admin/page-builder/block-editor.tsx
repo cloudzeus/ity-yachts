@@ -32,12 +32,19 @@ export function BlockEditor({ block, onUpdate, onDelete, onMoveUp, onMoveDown }:
     },
   }, [block.type === "richtext" ? (block as any).content : ""])
 
+  const HEADING_TYPES = ["h1", "h2", "h3", "h4", "h5", "h6"]
+
   // Auto-grow textarea for text blocks
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const subheaderRef = useRef<HTMLTextAreaElement>(null)
   useEffect(() => {
-    if (textareaRef.current && (block.type === "paragraph" || block.type === "h1" || block.type === "h2" || block.type === "h3")) {
+    if (textareaRef.current && (block.type === "paragraph" || HEADING_TYPES.includes(block.type))) {
       textareaRef.current.style.height = "auto"
       textareaRef.current.style.height = `${Math.max(40, textareaRef.current.scrollHeight)}px`
+    }
+    if (subheaderRef.current) {
+      subheaderRef.current.style.height = "auto"
+      subheaderRef.current.style.height = `${Math.max(28, subheaderRef.current.scrollHeight)}px`
     }
   }, [block])
 
@@ -45,6 +52,9 @@ export function BlockEditor({ block, onUpdate, onDelete, onMoveUp, onMoveDown }:
     h1: "#0063A9",
     h2: "#0077B6",
     h3: "#00B4D8",
+    h4: "#0096C7",
+    h5: "#48CAE4",
+    h6: "#90E0EF",
     paragraph: "#7C3AED",
     richtext: "#9333EA",
     image: "#DC2626",
@@ -55,6 +65,9 @@ export function BlockEditor({ block, onUpdate, onDelete, onMoveUp, onMoveDown }:
     h1: "24px",
     h2: "20px",
     h3: "16px",
+    h4: "14px",
+    h5: "13px",
+    h6: "12px",
     paragraph: "14px",
   }
 
@@ -62,6 +75,9 @@ export function BlockEditor({ block, onUpdate, onDelete, onMoveUp, onMoveDown }:
     h1: 700,
     h2: 600,
     h3: 500,
+    h4: 500,
+    h5: 500,
+    h6: 400,
     paragraph: 400,
   }
 
@@ -80,20 +96,37 @@ export function BlockEditor({ block, onUpdate, onDelete, onMoveUp, onMoveDown }:
 
       {/* Content editor */}
       <div className="flex-1 min-w-0">
-        {(block.type === "h1" || block.type === "h2" || block.type === "h3" || block.type === "paragraph") && (
-          <textarea
-            ref={textareaRef}
-            value={(block as any).content || ""}
-            onChange={(e) => onUpdate({ ...block, content: e.target.value })}
-            placeholder={`Enter ${block.type}...`}
-            className="w-full resize-none border-0 bg-transparent p-0 outline-none text-sm focus:ring-0"
-            style={{
-              fontSize: fontSize[block.type],
-              fontWeight: fontWeight[block.type],
-              color: "var(--on-surface)",
-              fontFamily: block.type !== "paragraph" ? "var(--font-display)" : "var(--font-body)",
-            }}
-          />
+        {(HEADING_TYPES.includes(block.type) || block.type === "paragraph") && (
+          <div className="flex flex-col gap-1">
+            <textarea
+              ref={textareaRef}
+              value={(block as any).content || ""}
+              onChange={(e) => onUpdate({ ...block, content: e.target.value } as any)}
+              placeholder={`Enter ${block.type.toUpperCase()}…`}
+              className="w-full resize-none border-0 bg-transparent p-0 outline-none focus:ring-0"
+              style={{
+                fontSize: fontSize[block.type] ?? "14px",
+                fontWeight: fontWeight[block.type] ?? 400,
+                color: "var(--on-surface)",
+                fontFamily: block.type !== "paragraph" ? "var(--font-display)" : "var(--font-body)",
+              }}
+            />
+            {HEADING_TYPES.includes(block.type) && (
+              <textarea
+                ref={subheaderRef}
+                value={(block as any).subheader || ""}
+                onChange={(e) => onUpdate({ ...block, subheader: e.target.value } as any)}
+                placeholder="Subheader (optional)…"
+                className="w-full resize-none border-0 bg-transparent p-0 outline-none focus:ring-0"
+                style={{
+                  fontSize: "12px",
+                  fontWeight: 400,
+                  color: "var(--on-surface-variant)",
+                  fontFamily: "var(--font-body)",
+                }}
+              />
+            )}
+          </div>
         )}
 
         {block.type === "richtext" && (

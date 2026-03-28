@@ -182,31 +182,32 @@ export function EditorClient({ page: initialPage }: EditorClientProps) {
         <div className="flex-1 flex flex-col gap-4 overflow-y-auto pr-2">
           {/* Page info card */}
           <div
-            className="rounded-lg p-4 flex flex-col gap-4"
+            className="rounded-lg p-3 flex flex-col gap-3"
             style={{
               background: "var(--surface-container-low)",
               border: "1px solid var(--outline-variant)",
               boxShadow: "var(--shadow-ambient)",
             }}
           >
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold" style={{ color: "var(--primary)", fontFamily: "var(--font-display)" }}>
-                Page Slug
-              </label>
-              <Input
-                value={slug}
-                onChange={(e) => handleSlugChange(e.target.value)}
-                placeholder="page-slug"
-                className="text-sm"
-              />
-            </div>
-
-            <div className="border-t" style={{ borderColor: "var(--outline-variant)" }}></div>
-
             <TranslationsPanel
               translations={translations}
               onTranslationsChange={setTranslations}
             />
+
+            <div className="border-t" style={{ borderColor: "var(--outline-variant)" }}></div>
+
+            <div className="flex flex-col gap-1">
+              <span className="text-[10px] uppercase tracking-wide font-semibold" style={{ color: "var(--primary)", fontFamily: "var(--font-display)" }}>
+                Slug
+              </span>
+              <Input
+                value={slug}
+                onChange={(e) => handleSlugChange(e.target.value)}
+                placeholder="page-slug"
+                className="h-7 text-xs"
+                style={{ background: "var(--surface-container-lowest)", borderColor: "var(--outline-variant)" }}
+              />
+            </div>
           </div>
 
           {/* Sections */}

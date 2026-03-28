@@ -1,6 +1,8 @@
 import { AdminSidebar } from "@/components/admin/sidebar"
 import { AdminHeader } from "@/components/admin/header"
 
+export const dynamic = "force-dynamic"
+
 export const metadata = {
   title: { default: "Admin — IYC Yachts", template: "%s — IYC Admin" },
 }

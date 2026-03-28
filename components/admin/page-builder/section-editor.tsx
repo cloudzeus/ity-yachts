@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { Settings2, Trash2, ChevronUp, ChevronDown, GripHorizontal } from "lucide-react"
+import { useState, useRef, useEffect } from "react"
+import { Settings2, Trash2, ChevronUp, ChevronDown, GripHorizontal, Pencil, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
@@ -26,6 +26,18 @@ const RATIO_OPTIONS: Record<number, ColumnRatio[]> = {
 
 export function SectionEditor({ section, onUpdate, onDelete, onMoveUp, onMoveDown }: SectionEditorProps) {
   const [showSettings, setShowSettings] = useState(false)
+  const [editingName, setEditingName] = useState(false)
+  const [nameValue, setNameValue] = useState(section.name || "")
+  const nameInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (editingName) nameInputRef.current?.focus()
+  }, [editingName])
+
+  function commitName() {
+    onUpdate({ ...section, name: nameValue.trim() || undefined })
+    setEditingName(false)
+  }
 
   // Calculate flex values from ratio
   function getRatioValues(ratio: ColumnRatio): number[] {
@@ -65,9 +77,32 @@ export function SectionEditor({ section, onUpdate, onDelete, onMoveUp, onMoveDow
           <div className="opacity-40 cursor-grab active:cursor-grabbing">
             <GripHorizontal className="size-4" style={{ color: "var(--primary)" }} />
           </div>
-          <span className="text-xs font-medium" style={{ color: "var(--on-surface-variant)" }}>
-            Section
-          </span>
+          {editingName ? (
+            <div className="flex items-center gap-1">
+              <Input
+                ref={nameInputRef}
+                value={nameValue}
+                onChange={(e) => setNameValue(e.target.value)}
+                onBlur={commitName}
+                onKeyDown={(e) => { if (e.key === "Enter") commitName(); if (e.key === "Escape") setEditingName(false) }}
+                className="h-6 text-xs w-32 px-1.5"
+                placeholder="Section name…"
+              />
+              <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={commitName}>
+                <Check className="size-3" />
+              </Button>
+            </div>
+          ) : (
+            <button
+              className="flex items-center gap-1 group/name"
+              onClick={() => { setNameValue(section.name || ""); setEditingName(true) }}
+            >
+              <span className="text-xs font-medium" style={{ color: "var(--on-surface-variant)" }}>
+                {section.name || "Section"}
+              </span>
+              <Pencil className="size-3 opacity-0 group-hover/name:opacity-40 transition-opacity" style={{ color: "var(--on-surface-variant)" }} />
+            </button>
+          )}
 
           {/* Column layout toggle */}
           <div className="flex gap-0.5 ml-2">

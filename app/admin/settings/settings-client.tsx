@@ -1,25 +1,26 @@
 "use client"
 
 import { useState } from "react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CompanyTab } from "@/components/admin/settings/company-tab"
 import { SocialTab } from "@/components/admin/settings/social-tab"
 import { AITab } from "@/components/admin/settings/ai-tab"
 import { AnalyticsTab } from "@/components/admin/settings/analytics-tab"
 import { NausysTab } from "@/components/admin/settings/nausys-tab"
 import { EmailTab } from "@/components/admin/settings/email-tab"
+import { WeatherTab } from "@/components/admin/settings/weather-tab"
 
 interface SettingsClientProps {
   settings: Record<string, any>
 }
 
 const TABS = [
-  { value: "company",   label: "Company",      color: "#0063A9" },
-  { value: "social",    label: "Social Media",  color: "#0063A9" },
-  { value: "ai",        label: "AI Keys",       color: "#E53935" },
-  { value: "analytics", label: "Analytics",     color: "#0063A9" },
-  { value: "nausys",    label: "NAUSYS",        color: "#E53935" },
-  { value: "email",     label: "Email",         color: "#E53935" },
+  { value: "company",   label: "Company" },
+  { value: "social",    label: "Social Media" },
+  { value: "ai",        label: "AI Keys" },
+  { value: "analytics", label: "Analytics" },
+  { value: "nausys",    label: "NAUSYS" },
+  { value: "email",     label: "Email" },
+  { value: "weather",   label: "Weather" },
 ] as const
 
 export function SettingsClient({ settings }: SettingsClientProps) {
@@ -36,47 +37,36 @@ export function SettingsClient({ settings }: SettingsClientProps) {
         </p>
       </div>
 
-      <Tabs value={active} onValueChange={setActive} className="flex-col">
-        <TabsList variant="line" className="flex flex-wrap gap-1.5 pt-4 pb-4 w-full h-auto" style={{ borderBottom: "1px solid var(--outline-variant)" }}>
-          {TABS.map(({ value, label, color }) => {
-            const isActive = active === value
-            return (
-              <TabsTrigger
-                key={value}
-                value={value}
-                className="rounded-full px-3 text-xs font-medium h-7 border-0 after:hidden transition-all"
-                style={isActive
-                  ? { background: color, color: "#fff", opacity: 1 }
-                  : { background: `${color}18`, color, opacity: 0.75 }
-                }
-              >
-                {label}
-              </TabsTrigger>
-            )
-          })}
-        </TabsList>
+      <div className="flex gap-1 pt-4 border-b" style={{ borderColor: "var(--outline-variant)" }}>
+        {TABS.map(({ value, label }) => {
+          const isActive = active === value
+          return (
+            <button
+              key={value}
+              onClick={() => setActive(value)}
+              className="px-4 py-2 text-xs font-medium transition-colors relative"
+              style={{
+                color: isActive ? "var(--primary)" : "var(--on-surface-variant)",
+              }}
+            >
+              {label}
+              {isActive && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: "var(--primary)" }} />
+              )}
+            </button>
+          )
+        })}
+      </div>
 
-        <div className="pt-6">
-          <TabsContent value="company">
-            <CompanyTab initialData={settings.company ?? {}} />
-          </TabsContent>
-          <TabsContent value="social">
-            <SocialTab initialData={settings.social ?? {}} />
-          </TabsContent>
-          <TabsContent value="ai">
-            <AITab initialData={settings.ai_keys ?? {}} />
-          </TabsContent>
-          <TabsContent value="analytics">
-            <AnalyticsTab initialData={settings.analytics ?? {}} />
-          </TabsContent>
-          <TabsContent value="nausys">
-            <NausysTab initialData={settings.nausys ?? {}} />
-          </TabsContent>
-          <TabsContent value="email">
-            <EmailTab initialData={settings.email ?? {}} />
-          </TabsContent>
-        </div>
-      </Tabs>
+      <div className="pt-6">
+        {active === "company" && <CompanyTab initialData={settings.company ?? {}} />}
+        {active === "social" && <SocialTab initialData={settings.social ?? {}} />}
+        {active === "ai" && <AITab initialData={settings.ai_keys ?? {}} />}
+        {active === "analytics" && <AnalyticsTab initialData={settings.analytics ?? {}} />}
+        {active === "nausys" && <NausysTab initialData={settings.nausys ?? {}} />}
+        {active === "email" && <EmailTab initialData={settings.email ?? {}} />}
+        {active === "weather" && <WeatherTab />}
+      </div>
     </div>
   )
 }

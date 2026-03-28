@@ -30,6 +30,7 @@ model User {
   preferences   Json?
   accounts      Account[]
   sessions      Session[]
+  customer      Customer?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -101,22 +102,933 @@ model VerificationToken {
 }
 
 model Page {
-  id            String   @id @default(cuid())
+  id            String           @id @default(cuid())
   name          String
-  slug          String   @unique
-  status        String   @default("draft")
-  content       Json     @default("[]")
-  translations  Json     @default("{}")
+  slug          String           @unique
+  status        String           @default("draft")
+  content       Json             @default("[]")
+  translations  Json             @default("{}")
   metaTitle     String?
   metaDesc      String?
   metaKeywords  String?
   metaOgTitle   String?
   metaOgDesc    String?
   metaOgImage   String?
-  metaRobots    String?  @default("index, follow")
+  metaRobots    String?          @default("index, follow")
   metaCanonical String?
+  textComponents TextComponent[]
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@map("pages")
+}
+
+model TextComponent {
+  id           String   @id @default(cuid())
+  pageId       String
+  page         Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  key          String
+  translations Json     @default("{}")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([pageId, key])
+  @@map("text_components")
+}
+
+model Location {
+  id               String   @id @default(cuid())
+  name             String
+  slug             String   @unique
+  status           String   @default("draft")
+  nameTranslations Json     @default("{}")   // { en, el, de }
+  shortDesc        Json     @default("{}")   // { en, el, de }
+  description      Json     @default("{}")   // { en, el, de }
+  prefecture       Json     @default("{}")   // { en, el, de }
+  city             String   @default("")
+  municipality     String   @default("")
+  latitude         Float?
+  longitude        Float?
+  defaultMedia     String?                   // URL to default image or video
+  defaultMediaType String?                   // "image" | "video"
+  images           Json     @default("[]")   // array of image URLs
+  metaTitle        String?
+  metaDesc         String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("locations")
+}
+
+model Itinerary {
+  id               String         @id @default(cuid())
+  name             Json           @default("{}")   // { en, el, de }
+  slug             String         @unique
+  status           String         @default("draft")
+  shortDesc        Json           @default("{}")   // { en, el, de }
+  startFrom        String         @default("")
+  startLatitude    Float?
+  startLongitude   Float?
+  places           Json           @default("[]")   // [{ name, latitude, longitude }]
+  totalDays        Int            @default(0)
+  totalMiles       Float          @default(0)
+  defaultMedia     String?
+  defaultMediaType String?
+  metaTitle        String?
+  metaDesc         String?
+  days             ItineraryDay[]
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@map("itineraries")
+}
+
+model ItineraryDay {
+  id          String         @id @default(cuid())
+  itineraryId String
+  itinerary   Itinerary      @relation(fields: [itineraryId], references: [id], onDelete: Cascade)
+  dayNumber   Int
+  description Json           @default("{}")   // { en, el, de }
+  legs        ItineraryLeg[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@map("itinerary_days")
+}
+
+model ItineraryLeg {
+  id          String       @id @default(cuid())
+  dayId       String
+  day         ItineraryDay @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  sortOrder   Int          @default(0)
+  name        Json         @default("{}")   // { en, el, de }
+  description Json         @default("{}")   // { en, el, de }
+  latitude    Float?
+  longitude   Float?
+  images      Json         @default("[]")   // array of image URLs
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@map("itinerary_legs")
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @default("")
+  date      DateTime @default(now())
+  content   Json     @default("{}")   // { en, el, de } — rich text per language
+  rating    Int      @default(5)
+  status    String   @default("draft")
+  sortOrder Int      @default(0)
+  image     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("reviews")
+}
+
+model Staff {
+  id           String   @id @default(cuid())
+  userId       String?
+  name         String
+  email        String   @default("")
+  phone        String   @default("")
+  mobile       String   @default("")
+  address      String   @default("")
+  city         Json     @default("{}")   // { en, el, de }
+  latitude     Float?
+  longitude    Float?
+  department   Json     @default("{}")   // { en, el, de }
+  position     Json     @default("{}")   // { en, el, de }
+  bio          Json     @default("{}")   // { en, el, de }
+  image        String?
+  sortOrder    Int      @default(0)
+  status       String   @default("active")
+  enquiries    Enquiry[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("staff")
+}
+
+// ──────────────────────────────────────────────────────────────
+// NAUSYS Charter Fleet Models
+// ──────────────────────────────────────────────────────────────
+
+// Yacht categories (Sailing, Motor, Catamaran, Gulet, etc.)
+model NausysYachtCategory {
+  id        Int      @id                      // NAUSYS id
+  name      Json     @default("{}")           // { en, el, de }
+  models    NausysYachtModel[]
+  yachts    NausysYacht[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("nausys_yacht_categories")
+}
+
+// Yacht builders / manufacturers
+model NausysYachtBuilder {
+  id        Int      @id                      // NAUSYS id
+  name      String
+  models    NausysYachtModel[]
+  yachts    NausysYacht[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("nausys_yacht_builders")
+}
+
+// Engine builders
+model NausysEngineBuilder {
+  id        Int      @id                      // NAUSYS id
+  name      String
+  yachts    NausysYacht[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("nausys_engine_builders")
+}
+
+// Yacht models (e.g. Bavaria 46, Dufour 412)
+model NausysYachtModel {
+  id              Int      @id                // NAUSYS id
+  name            String
+  categoryId      Int
+  category        NausysYachtCategory @relation(fields: [categoryId], references: [id])
+  builderId       Int
+  builder         NausysYachtBuilder  @relation(fields: [builderId], references: [id])
+  loa             Float?                      // length overall (m)
+  beam            Float?
+  draft           Float?
+  cabins          Int?
+  wc              Int?
+  waterTank       Int?
+  fuelTank        Int?
+  displacement    Int?
+  virtualLength   Int?                        // length in ft
+  yachts          NausysYacht[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("nausys_yacht_models")
+}
+
+// Sail types (Bermuda, Furling main, etc.)
+model NausysSailType {
+  id        Int      @id                      // NAUSYS id
+  name      Json     @default("{}")           // { en, el, de }
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("nausys_sail_types")
+}
+
+// Steering types (Wheel, Tiller, etc.)
+model NausysSteeringType {
+  id        Int      @id                      // NAUSYS id
+  name      Json     @default("{}")           // { en, el, de }
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("nausys_steering_types")
+}
+
+// Countries
+model NausysCountry {
+  id        Int      @id                      // NAUSYS id
+  code      String?                           // ISO 3166 Alpha-3
+  code2     String?                           // ISO 3166 Alpha-2
+  name      Json     @default("{}")           // { en, el, de }
+  regions   NausysRegion[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("nausys_countries")
+}
+
+// Regions within a country
+model NausysRegion {
+  id        Int      @id                      // NAUSYS id
+  name      Json     @default("{}")           // { en, el, de }
+  countryId Int
+  country   NausysCountry @relation(fields: [countryId], references: [id])
+  locations NausysLocation[]
+  yachtAreas NausysYachtArea[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("nausys_regions")
+}
+
+// Locations (marina / port areas)
+model NausysLocation {
+  id        Int      @id                      // NAUSYS id
+  name      Json     @default("{}")           // { en, el, de }
+  regionId  Int?
+  region    NausysRegion? @relation(fields: [regionId], references: [id])
+  bases     NausysCharterBase[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("nausys_locations")
+}
+
+// Charter bases (physical marina check-in points)
+model NausysCharterBase {
+  id              Int      @id               // NAUSYS id
+  locationId      Int
+  location        NausysLocation @relation(fields: [locationId], references: [id])
+  companyId       Int?
+  checkInTime     String?
+  checkOutTime    String?
+  lat             Float?
+  lon             Float?
+  secondaryBase   Boolean  @default(false)
+  disabled        Boolean  @default(false)
+  disabledDate    DateTime?
+  openBaseDate    DateTime?
+  closedBaseDate  DateTime?
+  yachts          NausysYacht[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("nausys_charter_bases")
+}
+
+// Equipment categories (Navigation, Safety, Comfort, etc.)
+model NausysEquipmentCategory {
+  id        Int      @id                      // NAUSYS id
+  name      Json     @default("{}")           // { en, el, de }
+  equipment NausysEquipment[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("nausys_equipment_categories")
+}
+
+// Equipment items (Autopilot, GPS, Bimini, etc.)
+model NausysEquipment {
+  id         Int      @id                     // NAUSYS id
+  name       Json     @default("{}")          // { en, el, de }
+  categoryId Int
+  category   NausysEquipmentCategory @relation(fields: [categoryId], references: [id])
+  yachtEquipment  NausysYachtEquipment[]
+  yachtExtraEquipment NausysYachtExtraEquipment[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("nausys_equipment")
+}
+
+// Services at base (Transit log, cleaning, skipper, etc.)
+model NausysService {
+  id               Int      @id              // NAUSYS id
+  name             Json     @default("{}")   // { en, el, de }
+  depositInsurance Boolean  @default(false)
+  yachtServices    NausysYachtService[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("nausys_services")
+}
+
+// Price measure units (per week, per day, per booking, etc.)
+model NausysPriceMeasure {
+  id        Int      @id                      // NAUSYS id
+  name      Json     @default("{}")           // { en, el, de }
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("nausys_price_measures")
+}
+
+// Discount item definitions (Early booking, Last minute, etc.)
+model NausysDiscountItem {
+  id        Int      @id                      // NAUSYS id
+  name      Json     @default("{}")           // { en, el, de }
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("nausys_discount_items")
+}
+
+// Seasons defined per charter company
+model NausysSeason {
+  id              Int      @id               // NAUSYS id
+  companyId       Int?
+  season          String                     // season label
+  dateFrom        DateTime
+  dateTo          DateTime
+  defaultSeason   Boolean  @default(false)
+  locationsId     Json     @default("[]")    // array of location IDs
+  yachtSeasons    NausysYachtSeason[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("nausys_seasons")
+}
+
+// ──────────────────────────────
+// The Yacht (core entity)
+// ──────────────────────────────
+
+model NausysYacht {
+  id                    Int      @id          // NAUSYS yacht id
+  name                  String
+  companyId             Int?
+  baseId                Int?
+  base                  NausysCharterBase? @relation(fields: [baseId], references: [id])
+  modelId               Int?
+  model                 NausysYachtModel?  @relation(fields: [modelId], references: [id])
+  categoryId            Int?
+  category              NausysYachtCategory? @relation(fields: [categoryId], references: [id])
+  builderId             Int?
+  builder               NausysYachtBuilder?  @relation(fields: [builderId], references: [id])
+  engineBuilderId       Int?
+  engineBuilder         NausysEngineBuilder? @relation(fields: [engineBuilderId], references: [id])
+
+  // Dimensions & specs
+  draft                 Float?
+  loa                   Float?
+  beam                  Float?
+  cabins                Int?
+  cabinsCrew            Int?
+  berthsCabin           Int?
+  berthsSalon           Int?
+  berthsCrew            Int?
+  berthsTotal           Int?
+  maxPersons            Int?
+  recommendedPersons    Int?
+  wc                    Int?
+  wcCrew                Int?
+  showers               Int?
+  showersCrew           Int?
+  buildYear             Int?
+  renewed               Int?
+  launchedYear          Int?
+
+  // Engine & propulsion
+  engines               Int?
+  enginePower           Float?
+  engineBuildYear       Int?
+  engineRenewedYear     Int?
+  fuelType              String?              // DIESEL, HYBRID, PETROL
+  fuelConsumption       Int?
+  fuelTank              Int?
+  waterTank             Int?
+  propulsionType        String?              // SAILDRIVE, SHAFT, ZDRIVE, IPS, OUTBOARD, SURFACE, JET
+  numberOfRudderBlades  Int?
+  maxSpeed              Int?
+  cruisingSpeed         Int?
+
+  // Sails
+  sailTypeId            Int?
+  sailRenewed           Int?
+  genoaTypeId           Int?
+  genoaRenewed          Int?
+  mastLength            Float?
+
+  // Steering
+  steeringTypeId        Int?
+
+  // Charter info
+  charterType           String?              // BAREBOAT or CREWED
+  crewedCharterType     String?              // SKIPPER, SKIPPER_HOSTESS, ALL_INCLUSIVE
+  crewCount             Int?
+  checkInTime           String?
+  checkOutTime          String?
+  hullColor             String?
+
+  // Pricing & commission
+  commission            Float?
+  deposit               Float?
+  depositWhenInsured    Float?
+  depositCurrency       String?
+  maxDiscount           Float?
+  maxDiscountFromCommission Float?
+  agencyDiscountType    String?              // CLIENT_PRICE, AGENCY_COMMISSION
+
+  // Flags & status
+  isPremium             Boolean  @default(false)
+  needsOptionApproval   Boolean  @default(false)
+  canMakeBookingFixed   Boolean  @default(false)
+  onSale                Boolean  @default(false)
+  registrationNumber    String?
+  registrationCertified Boolean  @default(false)
+  outOfFleetDate        DateTime?
+
+  // Multilingual text content
+  highlights            String?  @db.Text     // English only
+  note                  String?  @db.Text     // English only
+  highlightsTranslations Json    @default("{}") // { en, el, de }
+  noteTranslations      Json     @default("{}") // { en, el, de }
+
+  // Media (from NAUSYS)
+  mainPictureUrl        String?  @db.Text
+  picturesUrl           Json     @default("[]") // array of picture URLs from NAUSYS
+  youtubeVideos         String?  @db.Text
+  vimeoVideos           String?  @db.Text
+  linkFor360tour        String?  @db.Text
+  yachtTutorialVimeoVideos    String? @db.Text
+  yachtTutorialYoutubeVideos  String? @db.Text
+
+  // Website custom media (managed by admin, separate from NAUSYS sync)
+  websiteImages         Json     @default("[]") // [{ url, caption?, sortOrder }]
+  websiteVideos         Json     @default("[]") // [{ url, type: "youtube"|"vimeo"|"upload", caption?, sortOrder }]
+
+  // Website area associations (regions/locations this yacht operates in)
+  websiteAreas          NausysYachtArea[]
+
+  // Country flags
+  flagsId               Json     @default("[]") // array of country IDs
+
+  // Relations
+  equipment             NausysYachtEquipment[]
+  extraEquipment        NausysYachtExtraEquipment[]
+  services              NausysYachtService[]
+  cabinDefinitions      NausysYachtCabin[]
+  checkInPeriods        NausysYachtCheckInPeriod[]
+  crewMembers           NausysYachtCrewMember[]
+  seasons               NausysYachtSeason[]
+  prices                NausysYachtPrice[]
+  availability          NausysAvailability[]
+  bookings              Booking[]
+
+  // Sync metadata
+  lastSyncedAt          DateTime?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@map("nausys_yachts")
+}
+
+// Standard equipment on a yacht
+model NausysYachtEquipment {
+  id          String @id @default(cuid())
+  yachtId     Int
+  yacht       NausysYacht    @relation(fields: [yachtId], references: [id], onDelete: Cascade)
+  equipmentId Int
+  equipment   NausysEquipment @relation(fields: [equipmentId], references: [id])
+  quantity    Int     @default(1)
+  highlight   Boolean @default(false)
+  comment     Json    @default("{}")          // { en, el, de }
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([yachtId, equipmentId])
+  @@map("nausys_yacht_equipment")
+}
+
+// Additional/optional equipment with pricing (per season)
+model NausysYachtExtraEquipment {
+  id                        String  @id @default(cuid())
+  nausysId                  Int?                         // NAUSYS id
+  yachtId                   Int
+  yacht                     NausysYacht    @relation(fields: [yachtId], references: [id], onDelete: Cascade)
+  seasonId                  Int?
+  equipmentId               Int
+  equipment                 NausysEquipment @relation(fields: [equipmentId], references: [id])
+  quantity                  Int     @default(1)
+  price                     String?                      // price string
+  currency                  String  @default("EUR")
+  priceMeasureId            Int?
+  calculationType           String?                      // SEPARATE_PAYMENT, ADVANCE_PAYMENT
+  amount                    String?                      // amount or percentage value
+  amountIsPercentage        Boolean @default(false)
+  percentageCalculationType String?                      // PRICELIST_PRICE, CLIENT_PRICE, etc.
+  minimumPrice              String?
+  validPeriodFrom           DateTime?
+  validPeriodTo             DateTime?
+  minDuration               Int?
+  maxDuration               Int?
+  vatInPrice                String?
+  comment                   Json    @default("{}")       // { en, el, de }
+  condition                 Json    @default("{}")       // { en, el, de }
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  @@map("nausys_yacht_extra_equipment")
+}
+
+// Services available on a yacht (per season)
+model NausysYachtService {
+  id                        String  @id @default(cuid())
+  nausysId                  Int?                         // NAUSYS id
+  yachtId                   Int
+  yacht                     NausysYacht @relation(fields: [yachtId], references: [id], onDelete: Cascade)
+  seasonId                  Int?
+  serviceId                 Int
+  service                   NausysService @relation(fields: [serviceId], references: [id])
+  price                     String?
+  currency                  String  @default("EUR")
+  priceMeasureId            Int?
+  calculationType           String?
+  obligatory                Boolean @default(false)
+  amount                    String?
+  amountIsPercentage        Boolean @default(false)
+  percentageCalculationType String?
+  validPeriodFrom           DateTime?
+  validPeriodTo             DateTime?
+  vatInPrice                String?
+  description               Json    @default("{}")       // { en, el, de }
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  @@map("nausys_yacht_services")
+}
+
+// Cabin definitions for a yacht
+model NausysYachtCabin {
+  id              String @id @default(cuid())
+  nausysId        Int?                         // NAUSYS cabin definition id
+  yachtId         Int
+  yacht           NausysYacht @relation(fields: [yachtId], references: [id], onDelete: Cascade)
+  cabinName       String?
+  cabinPosition   String?                      // FRONT, REAR
+  cabinType       String?                      // SINGLE, DOUBLE, SPLIT, BUNK, DOUBLE_PLUS_SINGLE
+  description     String? @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("nausys_yacht_cabins")
+}
+
+// Check-in periods (allowed check-in/out days)
+model NausysYachtCheckInPeriod {
+  id                        String  @id @default(cuid())
+  yachtId                   Int
+  yacht                     NausysYacht @relation(fields: [yachtId], references: [id], onDelete: Cascade)
+  dateFrom                  DateTime
+  dateTo                    DateTime
+  minReservationDuration    Int     @default(7)
+  checkInMonday             Boolean @default(false)
+  checkInTuesday            Boolean @default(false)
+  checkInWednesday          Boolean @default(false)
+  checkInThursday           Boolean @default(false)
+  checkInFriday             Boolean @default(false)
+  checkInSaturday           Boolean @default(true)
+  checkInSunday             Boolean @default(false)
+  checkOutMonday            Boolean @default(false)
+  checkOutTuesday           Boolean @default(false)
+  checkOutWednesday         Boolean @default(false)
+  checkOutThursday          Boolean @default(false)
+  checkOutFriday            Boolean @default(false)
+  checkOutSaturday          Boolean @default(true)
+  checkOutSunday            Boolean @default(false)
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  @@map("nausys_yacht_checkin_periods")
+}
+
+// Crew members assigned to a yacht
+model NausysYachtCrewMember {
+  id          String @id @default(cuid())
+  nausysId    Int?                             // NAUSYS id
+  yachtId     Int
+  yacht       NausysYacht @relation(fields: [yachtId], references: [id], onDelete: Cascade)
+  name        String
+  surname     String  @default("")
+  crewRole    String?
+  livingPlace String?
+  summary     String? @db.Text
+  photoUrl    String? @db.Text
+  languages   Json    @default("[]")           // array of language strings
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("nausys_yacht_crew_members")
+}
+
+// Season-specific data for a yacht (links yacht to season + base)
+model NausysYachtSeason {
+  id                  String @id @default(cuid())
+  yachtId             Int
+  yacht               NausysYacht  @relation(fields: [yachtId], references: [id], onDelete: Cascade)
+  seasonId            Int
+  season              NausysSeason @relation(fields: [seasonId], references: [id])
+  baseId              Int?
+  locationId          Int?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  // Season-specific discounts stored as JSON array
+  regularDiscounts    Json    @default("[]")   // [{ discountItemId, amount, type }]
+
+  @@unique([yachtId, seasonId])
+  @@map("nausys_yacht_seasons")
+}
+
+// Yacht prices per period (from price list or season data)
+model NausysYachtPrice {
+  id          String   @id @default(cuid())
+  nausysId    Int?                             // NAUSYS pricelist id
+  yachtId     Int
+  yacht       NausysYacht @relation(fields: [yachtId], references: [id], onDelete: Cascade)
+  dateFrom    DateTime
+  dateTo      DateTime
+  price       Float
+  currency    String   @default("EUR")
+  priceType   String   @default("WEEKLY")      // DAILY or WEEKLY
+  locationsId Json     @default("[]")          // array of location IDs
+  vatInPrice  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("nausys_yacht_prices")
+}
+
+// One-way periods (when boat can be delivered to another location)
+model NausysOneWayPeriod {
+  id         String   @id @default(cuid())
+  nausysId   Int?                              // NAUSYS id
+  yachtId    Int
+  periodFrom DateTime
+  periodTo   DateTime
+  baseId     Int?
+  locationId Int?
+  price      Float?
+  currency   String   @default("EUR")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("nausys_one_way_periods")
+}
+
+// Website area associations (yacht ↔ region, managed by admin)
+model NausysYachtArea {
+  id        String @id @default(cuid())
+  yachtId   Int
+  yacht     NausysYacht  @relation(fields: [yachtId], references: [id], onDelete: Cascade)
+  regionId  Int
+  region    NausysRegion @relation(fields: [regionId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([yachtId, regionId])
+  @@map("nausys_yacht_areas")
+}
+
+// Cached yacht availability (synced from NAUSYS)
+model NausysAvailability {
+  id        String   @id @default(cuid())
+  yachtId   Int
+  yacht     NausysYacht @relation(fields: [yachtId], references: [id], onDelete: Cascade)
+  dateFrom  DateTime
+  dateTo    DateTime
+  status    String                               // FREE, BOOKED, OPTION, MAINTENANCE, TRANSIT
+  baseId    Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([yachtId, dateFrom, dateTo])
+  @@index([status, dateFrom])
+  @@map("nausys_availability")
+}
+
+// NAUSYS sync log to track import runs
+model NausysSyncLog {
+  id          String   @id @default(cuid())
+  syncType    String                           // FULL, YACHTS, PRICES, EQUIPMENT, etc.
+  status      String   @default("running")     // running, completed, failed
+  itemCount   Int      @default(0)
+  errorMsg    String?  @db.Text
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+
+  @@map("nausys_sync_logs")
+}
+
+// ──────────────────────────────────────────────────────────────
+// Booking & Customer Models
+// ──────────────────────────────────────────────────────────────
+
+// Charter customer profile (extends User with charter-specific data)
+model Customer {
+  id                  String   @id @default(cuid())
+  userId              String?  @unique
+  user                User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  firstName           String
+  lastName            String
+  email               String
+  phone               String   @default("")
+  mobile              String   @default("")
+  nationality         String   @default("")
+  passportNumber      String   @default("")
+  passportExpiry      DateTime?
+  dateOfBirth         DateTime?
+  address             String   @default("")
+  city                String   @default("")
+  country             String   @default("")
+  postcode            String   @default("")
+  sailingExperience   String   @default("")       // NONE, BEGINNER, INTERMEDIATE, ADVANCED, PROFESSIONAL
+  certifications      Json     @default("[]")     // ["ICC", "Day Skipper", "Yachtmaster", etc.]
+  emergencyName       String   @default("")
+  emergencyPhone      String   @default("")
+  notes               String?  @db.Text
+  bookings            Booking[]
+  enquiries           Enquiry[]
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@map("customers")
+}
+
+// Pre-booking enquiries / leads
+model Enquiry {
+  id                String   @id @default(cuid())
+  customerId        String?
+  customer          Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  assignedStaffId   String?
+  assignedStaff     Staff?   @relation(fields: [assignedStaffId], references: [id], onDelete: SetNull)
+  status            String   @default("NEW")      // NEW, CONTACTED, QUOTED, CONVERTED, LOST
+  dateFrom          DateTime?
+  dateTo            DateTime?
+  guests            Int?
+  preferredCategory String?                       // Sailing, Motor, Catamaran, etc.
+  preferredLength   String?                       // e.g. "40-45ft"
+  budget            Float?
+  currency          String   @default("EUR")
+  baseFrom          String?
+  baseTo            String?
+  notes             String?  @db.Text
+  source            String   @default("")         // WEBSITE, PHONE, EMAIL, REFERRAL
+  bookingId         String?  @unique              // set when converted to a booking
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("enquiries")
+}
+
+// Core booking / reservation record
+model Booking {
+  id                    String   @id @default(cuid())
+  bookingNumber         String   @unique           // human-readable reference (e.g. IYC-2026-0001)
+  nausysReservationId   Int?     @unique           // NAUSYS reservation ID once synced
+  customerId            String
+  customer              Customer @relation(fields: [customerId], references: [id])
+  yachtId               Int
+  yacht                 NausysYacht @relation(fields: [yachtId], references: [id])
+  status                String   @default("OPTION") // OPTION, CONFIRMED, PAID, COMPLETED, CANCELLED
+  dateFrom              DateTime
+  dateTo                DateTime
+  baseFromId            Int?
+  baseToId              Int?
+  guests                Int      @default(1)
+  charterType           String   @default("BAREBOAT") // BAREBOAT, CREWED
+  basePrice             Float                       // yacht price for the period
+  discountAmount        Float    @default(0)
+  discountPercent       Float    @default(0)
+  extrasTotal           Float    @default(0)
+  servicesTotal         Float    @default(0)
+  totalPrice            Float
+  currency              String   @default("EUR")
+  commission            Float    @default(0)
+  deposit               Float    @default(0)
+  depositDueDate        DateTime?
+  balanceDueDate        DateTime?
+  optionExpiresAt       DateTime?                   // when the option hold expires
+  internalNotes         String?  @db.Text
+  clientNotes           String?  @db.Text
+
+  // Relations
+  extras                BookingExtra[]
+  services              BookingService[]
+  payments              BookingPayment[]
+  statusHistory         BookingStatusHistory[]
+  documents             BookingDocument[]
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([customerId])
+  @@index([yachtId, dateFrom])
+  @@index([status])
+  @@map("bookings")
+}
+
+// Selected extra equipment for a booking
+model BookingExtra {
+  id            String  @id @default(cuid())
+  bookingId     String
+  booking       Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  equipmentId   Int                                // references NausysEquipment.id
+  equipmentName String                             // snapshot of name at time of booking
+  quantity      Int     @default(1)
+  unitPrice     Float
+  totalPrice    Float
+  currency      String  @default("EUR")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  @@map("pages")
+  @@map("booking_extras")
+}
+
+// Selected services for a booking
+model BookingService {
+  id            String  @id @default(cuid())
+  bookingId     String
+  booking       Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  serviceId     Int                                // references NausysService.id
+  serviceName   String                             // snapshot of name at time of booking
+  unitPrice     Float
+  totalPrice    Float
+  currency      String  @default("EUR")
+  obligatory    Boolean @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("booking_services")
+}
+
+// Payment records for a booking
+model BookingPayment {
+  id            String   @id @default(cuid())
+  bookingId     String
+  booking       Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  type          String                             // DEPOSIT, INSTALLMENT, BALANCE, REFUND
+  amount        Float
+  currency      String   @default("EUR")
+  method        String   @default("")              // BANK_TRANSFER, CREDIT_CARD, CASH, PAYPAL
+  status        String   @default("PENDING")       // PENDING, COMPLETED, FAILED, REFUNDED
+  reference     String   @default("")              // transaction ID / bank reference
+  paidAt        DateTime?
+  notes         String?  @db.Text
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([bookingId])
+  @@map("booking_payments")
+}
+
+// Audit trail of booking status changes
+model BookingStatusHistory {
+  id          String   @id @default(cuid())
+  bookingId   String
+  booking     Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  fromStatus  String?
+  toStatus    String
+  changedBy   String?                              // user ID who made the change
+  reason      String?  @db.Text
+  createdAt   DateTime @default(now())
+
+  @@index([bookingId])
+  @@map("booking_status_history")
+}
+
+// Uploaded documents linked to a booking
+model BookingDocument {
+  id          String   @id @default(cuid())
+  bookingId   String
+  booking     Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  name        String                               // display name
+  type        String   @default("")                // CHARTER_AGREEMENT, INVOICE, CREW_LIST, RECEIPT, OTHER
+  url         String                               // file URL (Bunny CDN or local)
+  mimeType    String   @default("")
+  size        Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("booking_documents")
 }

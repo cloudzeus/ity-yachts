@@ -41,7 +41,7 @@ export async function uploadToBunnyCDN({
           "Content-Type": "application/octet-stream",
           AccessKey: process.env.BUNNY_STORAGE_PASSWORD || "",
         },
-        body: buffer,
+        body: buffer as unknown as BodyInit,
       }
     )
 

@@ -8,7 +8,7 @@ export default async function PagesPage() {
     db.page.findMany({
       orderBy: { updatedAt: "desc" },
       take: 10,
-      select: { id: true, name: true, slug: true, status: true, translations: true, updatedAt: true },
+      select: { id: true, name: true, slug: true, status: true, updatedAt: true },
     }),
     db.page.count(),
   ])
@@ -29,7 +29,6 @@ export default async function PagesPage() {
       <PagesClient initialData={{
         pages: pages.map((p) => ({
           ...p,
-          translations: (typeof p.translations === 'object' && p.translations ? p.translations : {}) as Record<string, string>,
           updatedAt: p.updatedAt.toISOString(),
         })),
         total,

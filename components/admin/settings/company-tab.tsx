@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { Plus, X, Building2, Phone, Mail, FileText, Image as ImageIcon } from "lucide-react"
+import { useState, useRef } from "react"
+import { Plus, X, Building2, Phone, Mail, FileText, Image as ImageIcon, Upload, FolderOpen, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -52,6 +52,8 @@ export function CompanyTab({ initialData }: { initialData?: Partial<CompanyData>
   const [saving, setSaving] = useState(false)
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle")
   const [logoPickerOpen, setLogoPickerOpen] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   function set(field: keyof CompanyData, value: string) {
     setData((prev) => ({ ...prev, [field]: value }))
@@ -68,6 +70,27 @@ export function CompanyTab({ initialData }: { initialData?: Partial<CompanyData>
   function handleLogoSelect(media: PickedMedia | PickedMedia[]) {
     const m = Array.isArray(media) ? media[0] : media
     setData((prev) => ({ ...prev, logoUrl: m.url, logoPath: m.path }))
+  }
+
+  async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+      formData.append("folder", "branding")
+      const res = await fetch("/api/admin/media/upload", { method: "POST", body: formData })
+      if (res.ok) {
+        const json = await res.json()
+        setData((prev) => ({ ...prev, logoUrl: json.file.url, logoPath: json.file.path }))
+      } else {
+        alert("Upload failed")
+      }
+    } finally {
+      setUploading(false)
+      e.target.value = ""
+    }
   }
 
   async function handleSave() {
@@ -116,23 +139,30 @@ export function CompanyTab({ initialData }: { initialData?: Partial<CompanyData>
       {/* Logo */}
       <SettingSection icon={ImageIcon} title="Company Logo" description="Displayed in emails, documents and the website header">
         <div className="flex items-center gap-4">
-          <div className="size-20 rounded-md flex items-center justify-center overflow-hidden shrink-0"
-            style={{ background: "var(--surface-container-high)", border: "1px solid var(--outline-variant)", borderRadius: "var(--radius-xs)" }}>
+          <div className="size-24 rounded-lg flex items-center justify-center overflow-hidden shrink-0 relative group"
+            style={{ background: "var(--surface-container-high)", border: "1px solid var(--outline-variant)" }}>
             {data.logoUrl
               // eslint-disable-next-line @next/next/no-img-element
-              ? <img src={data.logoUrl} alt="Logo" className="max-w-full max-h-full object-contain p-1" />
-              : <ImageIcon className="size-6 opacity-20" style={{ color: "var(--on-surface-variant)" }} />}
+              ? <>
+                  <img src={data.logoUrl} alt="Logo" className="max-w-full max-h-full object-contain p-2" />
+                  <button
+                    onClick={() => setData((p) => ({ ...p, logoUrl: "", logoPath: "" }))}
+                    className="absolute top-1 right-1 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    style={{ background: "rgba(0,0,0,0.6)" }}
+                  >
+                    <X className="size-3 text-white" />
+                  </button>
+                </>
+              : <ImageIcon className="size-8 opacity-20" style={{ color: "var(--on-surface-variant)" }} />}
           </div>
           <div className="flex flex-col gap-2">
             <Button variant="outline" size="sm" className="text-xs h-8 gap-1.5" onClick={() => setLogoPickerOpen(true)}>
-              <ImageIcon className="size-3.5" /> {data.logoUrl ? "Change Logo" : "Select Logo"}
+              <FolderOpen className="size-3.5" /> Library
             </Button>
-            {data.logoUrl && (
-              <Button variant="outline" size="sm" className="text-xs h-8" style={{ color: "var(--error)" }}
-                onClick={() => setData((p) => ({ ...p, logoUrl: "", logoPath: "" }))}>
-                Remove
-              </Button>
-            )}
+            <Button variant="outline" size="sm" className="text-xs h-8 gap-1.5" disabled={uploading} onClick={() => fileInputRef.current?.click()}>
+              {uploading ? <Loader2 className="size-3.5 animate-spin" /> : <Upload className="size-3.5" />} Upload
+            </Button>
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
           </div>
         </div>
       </SettingSection>

@@ -62,6 +62,7 @@ interface DataTableProps<TData> {
   onSortChange: (column: string, direction: SortDirection) => void
   rowActions?: (row: TData) => ActionItem[]
   rowExpand?: (row: TData) => ReactNode
+  onRowExpand?: (row: TData) => void
   batchActions?: (selectedIds: string[]) => ActionItem[]
   onSelectionChange?: (ids: string[]) => void
   toolbar?: ReactNode
@@ -84,6 +85,7 @@ export function DataTable<TData extends { id: string }>({
   onSortChange,
   rowActions,
   rowExpand,
+  onRowExpand,
   batchActions,
   onSelectionChange,
   toolbar,
@@ -373,7 +375,7 @@ export function DataTable<TData extends { id: string }>({
                         {rowExpand && (
                           <td className="px-1 py-3 w-8">
                             <button
-                              onClick={() => toggleExpand(row.id)}
+                              onClick={() => { toggleExpand(row.id); if (expandedId !== row.id) onRowExpand?.(row) }}
                               className="flex items-center justify-center rounded p-0.5 transition-colors hover:bg-black/10"
                               style={{ color: "var(--on-surface-variant)" }}
                             >
