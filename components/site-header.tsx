@@ -7,15 +7,25 @@ import gsap from "gsap"
 import { Menu, X, User, Anchor } from "lucide-react"
 import { SearchModal } from "@/components/search-modal"
 import { useTranslations } from "@/lib/use-translations"
+import { useNavigation } from "@/lib/use-navigation"
 
 export function SiteHeader() {
   const headerRef = useRef<HTMLElement>(null)
+  const logoRef = useRef<HTMLImageElement>(null)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const mobileMenuRef = useRef<HTMLDivElement>(null)
   const menuItemsRef = useRef<HTMLDivElement>(null)
   const { t } = useTranslations()
+  const { items: navItems } = useNavigation()
+
+  const navLinks = navItems
+    .filter((item) => item.slug !== "home")
+    .map((item) => ({
+      label: item.translations?.en || item.label,
+      href: item.href,
+    }))
 
   useEffect(() => {
     const header = headerRef.current
@@ -31,6 +41,13 @@ export function SiteHeader() {
           duration: 0.4,
           ease: "power2.out",
         })
+        if (logoRef.current) {
+          gsap.to(logoRef.current, {
+            height: isScrolled ? 36 : 56,
+            duration: 0.4,
+            ease: "power2.out",
+          })
+        }
       }
     }
 
@@ -73,14 +90,6 @@ export function SiteHeader() {
     }
   }, [mobileOpen])
 
-  const navLinks = [
-    { label: t("header.nav.destinations", "Destinations"), href: "/destinations" },
-    { label: t("header.nav.fleet", "Fleet"), href: "/fleet" },
-    { label: t("header.nav.experiences", "Experiences"), href: "/experiences" },
-    { label: t("header.nav.about", "About"), href: "/about" },
-    { label: t("header.nav.contact", "Contact"), href: "/contact" },
-  ]
-
   return (
     <>
       <style jsx global>{`
@@ -103,11 +112,13 @@ export function SiteHeader() {
           {/* Logo */}
           <Link href="/" className="relative z-10 shrink-0">
             <Image
+              ref={logoRef}
               src="https://iycweb.b-cdn.net/IYC_LOGO_TRANS_white.svg"
               alt="IYC Yachts"
-              width={100}
-              height={40}
-              className="h-10 w-auto"
+              width={140}
+              height={56}
+              className="w-auto"
+              style={{ height: 56 }}
               priority
             />
           </Link>

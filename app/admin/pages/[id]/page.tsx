@@ -30,5 +30,8 @@ export default async function PageEditorPage({ params }: { params: Promise<{ id:
     metaOgImage: page.metaOgImage ?? undefined,
     metaRobots: page.metaRobots ?? undefined,
     metaCanonical: page.metaCanonical ?? undefined,
+    showInMenu: page.showInMenu,
+    menuOrder: page.menuOrder,
+    menuLabel: page.menuLabel ?? undefined,
   }} />
 }

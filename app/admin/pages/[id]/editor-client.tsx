@@ -12,6 +12,7 @@ import { MetaPanel } from "@/components/admin/page-builder/meta-panel"
 import { TranslationsPanel } from "@/components/admin/page-builder/translations-panel"
 import { HeroSectionPanel, HeroSectionData } from "@/components/admin/page-builder/hero-section-panel"
 import Link from "next/link"
+import { PageComponentsPanel } from "@/components/admin/page-builder/page-components-panel"
 
 interface Page {
   id: string
@@ -29,6 +30,9 @@ interface Page {
   metaOgImage?: string
   metaRobots?: string
   metaCanonical?: string
+  showInMenu?: boolean
+  menuOrder?: number
+  menuLabel?: string
 }
 
 interface EditorClientProps {
@@ -46,6 +50,9 @@ export function EditorClient({ page: initialPage }: EditorClientProps) {
   const [slug, setSlug] = useState(page.slug)
   const [slugOverridden, setSlugOverridden] = useState(false)
   const [translations, setTranslations] = useState<Record<string, string>>(page.translations || {})
+  const [showInMenu, setShowInMenu] = useState(page.showInMenu ?? false)
+  const [menuOrder, setMenuOrder] = useState(page.menuOrder ?? 0)
+  const [menuLabel, setMenuLabel] = useState(page.menuLabel ?? "")
   const [saving, setSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const autoSaveRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -82,6 +89,9 @@ export function EditorClient({ page: initialPage }: EditorClientProps) {
           content: sections,
           heroSection,
           translations,
+          showInMenu,
+          menuOrder,
+          menuLabel: menuLabel || null,
           metaTitle: page.metaTitle,
           metaDesc: page.metaDesc,
           metaKeywords: page.metaKeywords,
@@ -100,7 +110,7 @@ export function EditorClient({ page: initialPage }: EditorClientProps) {
     } finally {
       setSaving(false)
     }
-  }, [page.id, name, slug, sections, heroSection, translations, page])
+  }, [page.id, name, slug, sections, heroSection, translations, showInMenu, menuOrder, menuLabel, page])
 
   // Debounced auto-save
   useEffect(() => {
@@ -112,7 +122,7 @@ export function EditorClient({ page: initialPage }: EditorClientProps) {
     return () => {
       if (autoSaveRef.current) clearTimeout(autoSaveRef.current)
     }
-  }, [name, slug, sections, heroSection, translations, autoSave])
+  }, [name, slug, sections, heroSection, translations, showInMenu, menuOrder, menuLabel, autoSave])
 
   async function publish() {
     setSaving(true)
@@ -214,6 +224,48 @@ export function EditorClient({ page: initialPage }: EditorClientProps) {
                 style={{ background: "var(--surface-container-lowest)", borderColor: "var(--outline-variant)" }}
               />
             </div>
+
+            <div className="border-t" style={{ borderColor: "var(--outline-variant)" }}></div>
+
+            {/* Menu Settings */}
+            <div className="flex flex-col gap-2">
+              <span className="text-[10px] uppercase tracking-wide font-semibold" style={{ color: "var(--primary)", fontFamily: "var(--font-display)" }}>
+                Navigation Menu
+              </span>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={showInMenu}
+                  onChange={(e) => setShowInMenu(e.target.checked)}
+                  className="h-3.5 w-3.5 rounded border-gray-300 accent-[var(--primary)]"
+                />
+                <span className="text-xs" style={{ color: "var(--on-surface)" }}>Show in navigation menu</span>
+              </label>
+              {showInMenu && (
+                <div className="flex gap-2">
+                  <div className="flex-1 flex flex-col gap-0.5">
+                    <span className="text-[9px] text-gray-500">Menu Label (optional)</span>
+                    <Input
+                      value={menuLabel}
+                      onChange={(e) => setMenuLabel(e.target.value)}
+                      placeholder={name || "Page name"}
+                      className="h-7 text-xs"
+                      style={{ background: "var(--surface-container-lowest)", borderColor: "var(--outline-variant)" }}
+                    />
+                  </div>
+                  <div className="w-16 flex flex-col gap-0.5">
+                    <span className="text-[9px] text-gray-500">Order</span>
+                    <Input
+                      type="number"
+                      value={menuOrder}
+                      onChange={(e) => setMenuOrder(parseInt(e.target.value) || 0)}
+                      className="h-7 text-xs"
+                      style={{ background: "var(--surface-container-lowest)", borderColor: "var(--outline-variant)" }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Hero Section */}
@@ -229,6 +281,18 @@ export function EditorClient({ page: initialPage }: EditorClientProps) {
               data={heroSection}
               onChange={(val) => setHeroSection(val)}
             />
+          </div>
+
+          {/* Page Components */}
+          <div
+            className="rounded-lg p-3 flex flex-col gap-3"
+            style={{
+              background: "var(--surface-container-low)",
+              border: "1px solid var(--outline-variant)",
+              boxShadow: "var(--shadow-ambient)",
+            }}
+          >
+            <PageComponentsPanel pageId={page.id} />
           </div>
 
           {/* Sections */}

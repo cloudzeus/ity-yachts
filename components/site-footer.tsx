@@ -4,27 +4,20 @@ import Link from "next/link"
 import Image from "next/image"
 import { Anchor, Mail, Phone, MapPin, ArrowUpRight } from "lucide-react"
 import { useTranslations } from "@/lib/use-translations"
+import { useNavigation } from "@/lib/use-navigation"
 
 const iconColor = "#0055a9"
 
 export function SiteFooter() {
   const { t } = useTranslations()
+  const { items: navItems } = useNavigation()
 
-  const destinations = [
-    { label: t("footer.nav.mediterranean", "Mediterranean"), href: "/destinations/mediterranean" },
-    { label: t("footer.nav.caribbean", "Caribbean"), href: "/destinations/caribbean" },
-    { label: t("footer.nav.southeastAsia", "Southeast Asia"), href: "/destinations/southeast-asia" },
-    { label: t("footer.nav.northernEurope", "Northern Europe"), href: "/destinations/northern-europe" },
-    { label: t("footer.nav.middleEast", "Middle East"), href: "/destinations/middle-east" },
-  ]
-
-  const company = [
-    { label: t("footer.nav.aboutUs", "About Us"), href: "/about" },
-    { label: t("footer.nav.ourFleet", "Our Fleet"), href: "/fleet" },
-    { label: t("footer.nav.experiences", "Experiences"), href: "/experiences" },
-    { label: t("footer.nav.careers", "Careers"), href: "/careers" },
-    { label: t("footer.nav.press", "Press"), href: "/press" },
-  ]
+  const company = navItems
+    .filter((item) => item.slug !== "home")
+    .map((item) => ({
+      label: item.translations?.en || item.label,
+      href: item.href,
+    }))
   return (
     <div
       className="relative h-[600px]"
@@ -79,48 +72,26 @@ export function SiteFooter() {
               </div>
             </div>
 
-            {/* Column 2: Destinations + Company */}
-            <div className="grid grid-cols-2 gap-8">
-              <div>
-                <h4
-                  className="mb-4 text-xs font-semibold uppercase tracking-widest text-white/30"
-                  style={{ fontFamily: "var(--font-body)" }}
-                >
-                  {t("footer.destinations", "Destinations")}
-                </h4>
-                <ul className="flex flex-col gap-2.5">
-                  {destinations.map((link) => (
-                    <li key={link.href}>
-                      <Link
-                        href={link.href}
-                        className="text-sm text-white/50 transition-colors hover:text-white"
-                      >
-                        {link.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div>
-                <h4
-                  className="mb-4 text-xs font-semibold uppercase tracking-widest text-white/30"
-                  style={{ fontFamily: "var(--font-body)" }}
-                >
-                  {t("footer.company", "Company")}
-                </h4>
-                <ul className="flex flex-col gap-2.5">
-                  {company.map((link) => (
-                    <li key={link.href}>
-                      <Link
-                        href={link.href}
-                        className="text-sm text-white/50 transition-colors hover:text-white"
-                      >
-                        {link.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+            {/* Column 2: Pages */}
+            <div>
+              <h4
+                className="mb-4 text-xs font-semibold uppercase tracking-widest text-white/30"
+                style={{ fontFamily: "var(--font-body)" }}
+              >
+                {t("footer.company", "Company")}
+              </h4>
+              <ul className="flex flex-col gap-2.5">
+                {company.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="text-sm text-white/50 transition-colors hover:text-white"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             </div>
 
             {/* Column 3: Newsletter + Help & Contact */}

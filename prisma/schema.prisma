@@ -131,9 +131,13 @@ model Page {
   metaOgImage   String?
   metaRobots    String?          @default("index, follow")
   metaCanonical String?
-  textComponents TextComponent[]
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
+  showInMenu    Boolean          @default(false)
+  menuOrder     Int              @default(0)
+  menuLabel     String?
+  textComponents  TextComponent[]
+  pageComponents  PageComponent[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
 
   @@map("pages")
 }
@@ -149,6 +153,22 @@ model TextComponent {
 
   @@unique([pageId, key])
   @@map("text_components")
+}
+
+model PageComponent {
+  id         String   @id @default(cuid())
+  pageId     String
+  page       Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  type       String                          // e.g. "team-grid", "team-card", "hero-banner"
+  name       String   @default("")           // admin-friendly label
+  props      Json     @default("{}")         // static props: titles, descriptions, settings
+  dataSource Json     @default("{}")         // dynamic data config: { model: "staff", filter: {...} }
+  sortOrder  Int      @default(0)
+  status     String   @default("active")     // active | hidden
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("page_components")
 }
 
 model Location {
@@ -1030,6 +1050,29 @@ model BookingStatusHistory {
 
   @@index([bookingId])
   @@map("booking_status_history")
+}
+
+// Blog / News articles
+model Article {
+  id               String   @id @default(cuid())
+  title            Json     @default("{}")   // { en, el, de }
+  slug             String   @unique
+  status           String   @default("draft")
+  date             DateTime @default(now())
+  category         Json     @default("{}")   // { en, el, de }
+  author           String   @default("")
+  shortDesc        Json     @default("{}")   // { en, el, de }
+  description      Json     @default("{}")   // { en, el, de } — rich text
+  defaultMedia     String?                   // URL to default image or video
+  defaultMediaType String?                   // "image" | "video"
+  media            Json     @default("[]")   // array of image/video URLs
+  sortOrder        Int      @default(0)
+  metaTitle        String?
+  metaDesc         String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("articles")
 }
 
 // Uploaded documents linked to a booking
