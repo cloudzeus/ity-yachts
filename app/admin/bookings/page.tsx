@@ -1,6 +1,8 @@
 import { db } from "@/lib/db"
 import { BookingsClient } from "./bookings-client"
 
+export const dynamic = "force-dynamic"
+
 export const metadata = { title: "Bookings — IYC Admin" }
 
 export default async function BookingsPage() {

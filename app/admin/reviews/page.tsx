@@ -1,6 +1,8 @@
 import { db } from "@/lib/db"
 import { ReviewsClient } from "./reviews-client"
 
+export const dynamic = "force-dynamic"
+
 export const metadata = { title: "Reviews — IYC Admin" }
 
 export default async function ReviewsPage() {

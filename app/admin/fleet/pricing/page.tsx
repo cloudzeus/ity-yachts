@@ -1,6 +1,8 @@
 import { db } from "@/lib/db"
 import { PricingClient } from "./pricing-client"
 
+export const dynamic = "force-dynamic"
+
 export const metadata = { title: "Fleet Pricing — IYC Admin" }
 
 export default async function PricingPage() {

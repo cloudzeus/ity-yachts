@@ -1,6 +1,8 @@
 import { db } from "@/lib/db"
 import { LocationsClient } from "./locations-client"
 
+export const dynamic = "force-dynamic"
+
 export const metadata = { title: "Locations — IYC Admin" }
 
 export default async function LocationsPage() {

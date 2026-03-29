@@ -2,6 +2,8 @@ import { db } from "@/lib/db"
 import { notFound } from "next/navigation"
 import { Metadata } from "next"
 
+export const dynamic = "force-dynamic"
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
   const itinerary = await db.itinerary.findUnique({ where: { slug }, select: { name: true, metaTitle: true, metaDesc: true, defaultMedia: true } })

@@ -1,6 +1,8 @@
 import { db } from "@/lib/db"
 import { EnquiriesClient } from "./enquiries-client"
 
+export const dynamic = "force-dynamic"
+
 export const metadata = { title: "Enquiries — IYC Admin" }
 
 export default async function EnquiriesPage() {

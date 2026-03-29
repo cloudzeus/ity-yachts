@@ -1,6 +1,8 @@
 import { db } from "@/lib/db"
 import { SeasonsClient } from "./seasons-client"
 
+export const dynamic = "force-dynamic"
+
 export const metadata = { title: "Seasons — IYC Admin" }
 
 export default async function SeasonsPage() {

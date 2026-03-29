@@ -26,6 +26,7 @@ import {
   Calendar,
   Contact,
   MessageSquare,
+  Languages,
 } from "lucide-react"
 import {
   Tooltip,
@@ -66,6 +67,7 @@ const navGroups = [
     label: "CMS",
     items: [
       { label: "Pages", href: "/admin/pages", icon: FileText },
+      { label: "Translations", href: "/admin/translations", icon: Languages },
       { label: "Locations", href: "/admin/locations", icon: MapPin },
       { label: "Itineraries", href: "/admin/itineraries", icon: Route },
       { label: "Reviews", href: "/admin/reviews", icon: Star },

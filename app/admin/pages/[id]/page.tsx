@@ -2,6 +2,8 @@ import { db } from "@/lib/db"
 import { notFound } from "next/navigation"
 import { EditorClient } from "./editor-client"
 
+export const dynamic = "force-dynamic"
+
 export const metadata = { title: "Page Editor — IYC Admin" }
 
 export default async function PageEditorPage({ params }: { params: Promise<{ id: string }> }) {

@@ -1,6 +1,8 @@
 import { db } from "@/lib/db"
 import { CatalogueClient } from "./catalogue-client"
 
+export const dynamic = "force-dynamic"
+
 export const metadata = { title: "Fleet Catalogue — IYC Admin" }
 
 export default async function CataloguePage() {

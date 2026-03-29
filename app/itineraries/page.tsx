@@ -2,6 +2,8 @@ import { db } from "@/lib/db"
 import Link from "next/link"
 import { Metadata } from "next"
 
+export const dynamic = "force-dynamic"
+
 export const metadata: Metadata = {
   title: "Sailing Itineraries — IYC Yachts",
   description: "Explore our curated sailing itineraries across the Greek islands and beyond.",

@@ -1,6 +1,8 @@
 import { db } from "@/lib/db"
 import { ItinerariesClient } from "./itineraries-client"
 
+export const dynamic = "force-dynamic"
+
 export const metadata = { title: "Itineraries — IYC Admin" }
 
 export default async function ItinerariesPage() {

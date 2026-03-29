@@ -2,6 +2,8 @@ import { db } from "@/lib/db"
 import { notFound } from "next/navigation"
 import { CustomerEditorClient } from "./editor-client"
 
+export const dynamic = "force-dynamic"
+
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const customer = await db.customer.findUnique({ where: { id }, select: { firstName: true, lastName: true } })

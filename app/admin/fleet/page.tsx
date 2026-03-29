@@ -1,6 +1,8 @@
 import { db } from "@/lib/db"
 import { FleetClient } from "./fleet-client"
 
+export const dynamic = "force-dynamic"
+
 export const metadata = { title: "Fleet — IYC Admin" }
 
 export default async function FleetPage() {

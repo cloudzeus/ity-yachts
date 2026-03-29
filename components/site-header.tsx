@@ -6,6 +6,7 @@ import Image from "next/image"
 import gsap from "gsap"
 import { Menu, X, User, Anchor } from "lucide-react"
 import { SearchModal } from "@/components/search-modal"
+import { useTranslations } from "@/lib/use-translations"
 
 export function SiteHeader() {
   const headerRef = useRef<HTMLElement>(null)
@@ -14,6 +15,7 @@ export function SiteHeader() {
   const [scrolled, setScrolled] = useState(false)
   const mobileMenuRef = useRef<HTMLDivElement>(null)
   const menuItemsRef = useRef<HTMLDivElement>(null)
+  const { t } = useTranslations()
 
   useEffect(() => {
     const header = headerRef.current
@@ -72,11 +74,11 @@ export function SiteHeader() {
   }, [mobileOpen])
 
   const navLinks = [
-    { label: "Destinations", href: "/destinations" },
-    { label: "Fleet", href: "/fleet" },
-    { label: "Experiences", href: "/experiences" },
-    { label: "About", href: "/about" },
-    { label: "Contact", href: "/contact" },
+    { label: t("header.nav.destinations", "Destinations"), href: "/destinations" },
+    { label: t("header.nav.fleet", "Fleet"), href: "/fleet" },
+    { label: t("header.nav.experiences", "Experiences"), href: "/experiences" },
+    { label: t("header.nav.about", "About"), href: "/about" },
+    { label: t("header.nav.contact", "Contact"), href: "/contact" },
   ]
 
   return (
@@ -135,7 +137,7 @@ export function SiteHeader() {
               }}
             >
               <Anchor className="h-3.5 w-3.5" strokeWidth={1.5} />
-              Start Planning
+              {t("header.startPlanning", "Start Planning")}
             </Link>
 
             <button
@@ -208,7 +210,7 @@ export function SiteHeader() {
                 fontFamily: "var(--font-display)",
               }}
             >
-              Start Planning
+              {t("header.startPlanning", "Start Planning")}
             </Link>
           </div>
         </div>

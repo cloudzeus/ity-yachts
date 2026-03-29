@@ -92,6 +92,20 @@ model Setting {
   @@map("settings")
 }
 
+model SiteTranslation {
+  id        String   @id @default(cuid())
+  key       String   @unique // e.g. "header.startPlanning", "footer.helpSupport.title"
+  namespace String   @default("common") // group: common, header, footer, home, etc.
+  en        String   @db.Text
+  el        String   @db.Text
+  de        String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([namespace])
+  @@map("site_translations")
+}
+
 model VerificationToken {
   identifier String
   token      String   @unique

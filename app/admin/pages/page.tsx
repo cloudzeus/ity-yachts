@@ -1,6 +1,8 @@
 import { db } from "@/lib/db"
 import { PagesClient } from "./pages-client"
 
+export const dynamic = "force-dynamic"
+
 export const metadata = { title: "Pages — IYC Admin" }
 
 export default async function PagesPage() {

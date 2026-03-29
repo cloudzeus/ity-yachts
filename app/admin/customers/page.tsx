@@ -1,6 +1,8 @@
 import { db } from "@/lib/db"
 import { CustomersClient } from "./customers-client"
 
+export const dynamic = "force-dynamic"
+
 export const metadata = { title: "Customers — IYC Admin" }
 
 export default async function CustomersPage() {

@@ -2,6 +2,8 @@ import { db } from "@/lib/db"
 import { notFound } from "next/navigation"
 import { BookingEditorClient } from "./editor-client"
 
+export const dynamic = "force-dynamic"
+
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const booking = await db.booking.findUnique({ where: { id }, select: { bookingNumber: true } })

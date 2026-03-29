@@ -3,6 +3,8 @@ import { getSession } from "@/lib/auth-session"
 import { redirect } from "next/navigation"
 import { SettingsClient } from "./settings-client"
 
+export const dynamic = "force-dynamic"
+
 export default async function SettingsPage() {
   const session = await getSession()
   if (!session.user || !["ADMIN", "MANAGER"].includes(session.user.role)) {

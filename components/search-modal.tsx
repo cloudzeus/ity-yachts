@@ -3,22 +3,24 @@
 import { useEffect, useRef, useState, useCallback } from "react"
 import gsap from "gsap"
 import { Search, X, ArrowRight } from "lucide-react"
+import { useTranslations } from "@/lib/use-translations"
 
 interface SearchModalProps {
   open: boolean
   onClose: () => void
 }
 
-const quickLinks = [
-  { label: "Motor Yachts", href: "/fleet?type=motor" },
-  { label: "Sailing Yachts", href: "/fleet?type=sailing" },
-  { label: "Mediterranean", href: "/destinations/mediterranean" },
-  { label: "Caribbean", href: "/destinations/caribbean" },
-  { label: "Day Charters", href: "/experiences/day-charter" },
-  { label: "Weekly Charters", href: "/experiences/weekly-charter" },
-]
-
 export function SearchModal({ open, onClose }: SearchModalProps) {
+  const { t } = useTranslations()
+
+  const quickLinks = [
+    { label: t("search.link.motorYachts", "Motor Yachts"), href: "/fleet?type=motor" },
+    { label: t("search.link.sailingYachts", "Sailing Yachts"), href: "/fleet?type=sailing" },
+    { label: t("search.link.mediterranean", "Mediterranean"), href: "/destinations/mediterranean" },
+    { label: t("search.link.caribbean", "Caribbean"), href: "/destinations/caribbean" },
+    { label: t("search.link.catamarans", "Catamarans"), href: "/experiences/day-charter" },
+    { label: t("search.link.luxury", "Luxury Charters"), href: "/experiences/weekly-charter" },
+  ]
   const overlayRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -146,7 +148,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search destinations, yachts, experiences..."
+            placeholder={t("search.placeholder", "Search destinations, yachts, experiences...")}
             className="w-full border-b border-white/20 bg-transparent pb-4 pl-10 text-2xl font-light text-white placeholder:text-white/30 focus:border-white/40 focus:outline-none"
             style={{ fontFamily: "var(--font-display)" }}
           />
@@ -158,7 +160,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
             className="mb-4 text-xs font-semibold uppercase tracking-widest text-white/40"
             style={{ fontFamily: "var(--font-body)" }}
           >
-            Quick Links
+            {t("search.quickLinks", "Quick Links")}
           </p>
           <div ref={linksRef} className="grid gap-1 sm:grid-cols-2">
             {quickLinks.map((link) => (

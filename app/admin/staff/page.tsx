@@ -1,6 +1,8 @@
 import { db } from "@/lib/db"
 import { StaffClient } from "./staff-client"
 
+export const dynamic = "force-dynamic"
+
 export const metadata = { title: "Company Staff — IYC Admin" }
 
 export default async function StaffPage() {
