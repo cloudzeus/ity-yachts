@@ -5,7 +5,7 @@ import type { NextRequest } from "next/server"
 const ADMIN_ROLES = ["ADMIN", "MANAGER", "EDITOR", "EMPLOYEE"]
 const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET || "fallback-secret-change-me")
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { nextUrl } = req
 
   if (nextUrl.pathname.startsWith("/admin")) {

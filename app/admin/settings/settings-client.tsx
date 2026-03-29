@@ -8,6 +8,7 @@ import { AnalyticsTab } from "@/components/admin/settings/analytics-tab"
 import { NausysTab } from "@/components/admin/settings/nausys-tab"
 import { EmailTab } from "@/components/admin/settings/email-tab"
 import { WeatherTab } from "@/components/admin/settings/weather-tab"
+import { LegalTab } from "@/components/admin/settings/legal-tab"
 
 interface SettingsClientProps {
   settings: Record<string, any>
@@ -21,6 +22,7 @@ const TABS = [
   { value: "nausys",    label: "NAUSYS" },
   { value: "email",     label: "Email" },
   { value: "weather",   label: "Weather" },
+  { value: "legal",     label: "Legal Pages" },
 ] as const
 
 export function SettingsClient({ settings }: SettingsClientProps) {
@@ -66,6 +68,7 @@ export function SettingsClient({ settings }: SettingsClientProps) {
         {active === "nausys" && <NausysTab initialData={settings.nausys ?? {}} />}
         {active === "email" && <EmailTab initialData={settings.email ?? {}} />}
         {active === "weather" && <WeatherTab />}
+        {active === "legal" && <LegalTab initialData={settings.legal ?? {}} />}
       </div>
     </div>
   )

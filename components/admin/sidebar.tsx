@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback, useMemo } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
@@ -17,6 +17,7 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Route,
   Star,
   Sailboat,
@@ -27,6 +28,7 @@ import {
   Contact,
   MessageSquare,
   Languages,
+  Newspaper,
 } from "lucide-react"
 import {
   Tooltip,
@@ -70,6 +72,7 @@ const navGroups = [
       { label: "Translations", href: "/admin/translations", icon: Languages },
       { label: "Locations", href: "/admin/locations", icon: MapPin },
       { label: "Itineraries", href: "/admin/itineraries", icon: Route },
+      { label: "Articles", href: "/admin/articles", icon: Newspaper },
       { label: "Reviews", href: "/admin/reviews", icon: Star },
       { label: "Media", href: "/admin/media", icon: ImageIcon },
     ],
@@ -87,6 +90,29 @@ const navGroups = [
 export function AdminSidebar() {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
+
+  // Auto-expand the group containing the active route
+  const activeGroups = useMemo(() => {
+    const groups = new Set<string>()
+    for (const group of navGroups) {
+      for (const item of group.items) {
+        const active = item.exact ? pathname === item.href : pathname.startsWith(item.href)
+        if (active) groups.add(group.label)
+      }
+    }
+    return groups
+  }, [pathname])
+
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => new Set(navGroups.map(g => g.label)))
+
+  const toggleGroup = useCallback((label: string) => {
+    setExpandedGroups(prev => {
+      const next = new Set(prev)
+      if (next.has(label)) next.delete(label)
+      else next.add(label)
+      return next
+    })
+  }, [])
 
   function isActive(href: string, exact?: boolean) {
     return exact ? pathname === href : pathname.startsWith(href)
@@ -147,17 +173,39 @@ export function AdminSidebar() {
 
         {/* Nav groups */}
         <nav className="flex flex-1 flex-col gap-4 overflow-y-auto px-2 py-4">
-          {navGroups.map((group) => (
+          {navGroups.map((group) => {
+            const isExpanded = expandedGroups.has(group.label)
+            const hasActive = activeGroups.has(group.label)
+
+            return (
             <div key={group.label}>
               {!collapsed && (
-                <p
-                  className="label-sm mb-2 px-2 text-xs"
-                  style={{ color: "var(--secondary-light)", opacity: 0.7 }}
+                <button
+                  onClick={() => toggleGroup(group.label)}
+                  className="flex w-full items-center justify-between mb-1 px-2 py-1 text-xs rounded transition-colors hover:bg-white/10"
+                  style={{ color: "var(--secondary-light)", opacity: isExpanded ? 0.9 : 0.6 }}
                 >
-                  {group.label}
-                </p>
+                  <span className="label-sm flex items-center gap-1.5">
+                    {group.label}
+                    {!isExpanded && hasActive && (
+                      <span
+                        className="inline-block h-1.5 w-1.5 rounded-full"
+                        style={{ background: "var(--secondary-light)" }}
+                      />
+                    )}
+                  </span>
+                  <ChevronDown
+                    className={cn("size-3.5 transition-transform duration-200", !isExpanded && "-rotate-90")}
+                  />
+                </button>
               )}
-              <div className="flex flex-col gap-1">
+              <div
+                className={cn(
+                  "flex flex-col gap-1 overflow-hidden transition-all duration-200",
+                  !collapsed && !isExpanded && "max-h-0 opacity-0",
+                  (!collapsed && isExpanded || collapsed) && "max-h-[500px] opacity-100"
+                )}
+              >
                 {group.items.map((item) => {
                   const active = isActive(item.href, item.exact)
                   const ItemIcon = item.icon
@@ -206,7 +254,8 @@ export function AdminSidebar() {
                 })}
               </div>
             </div>
-          ))}
+            )
+          })}
         </nav>
 
         {/* Sign out */}

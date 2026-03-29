@@ -108,6 +108,8 @@ export function LocationEditorClient({ location }: Props) {
   const [defaultMedia, setDefaultMedia] = useState(location.defaultMedia ?? "")
   const [defaultMediaType, setDefaultMediaType] = useState(location.defaultMediaType ?? "image")
   const [images, setImages] = useState<string[]>(location.images)
+  const [metaTitle, setMetaTitle] = useState(location.metaTitle ?? "")
+  const [metaDesc, setMetaDesc] = useState(location.metaDesc ?? "")
   const [saving, setSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [geocoding, setGeocoding] = useState(false)
@@ -191,13 +193,15 @@ export function LocationEditorClient({ location }: Props) {
           defaultMedia: defaultMedia || null,
           defaultMediaType: defaultMediaType || null,
           images,
+          metaTitle: metaTitle || null,
+          metaDesc: metaDesc || null,
         }),
       })
       if (res.ok) setLastSaved(new Date())
     } finally {
       setSaving(false)
     }
-  }, [location.id, name, slug, status, nameTranslations, shortDesc, description, prefecture, city, municipality, latitude, longitude, defaultMedia, defaultMediaType, images])
+  }, [location.id, name, slug, status, nameTranslations, shortDesc, description, prefecture, city, municipality, latitude, longitude, defaultMedia, defaultMediaType, images, metaTitle, metaDesc])
 
   // Auto-save debounce
   useEffect(() => {
@@ -495,6 +499,34 @@ export function LocationEditorClient({ location }: Props) {
                 Upload
               </Button>
               <input ref={galleryInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleGalleryUpload} />
+            </div>
+          </div>
+
+          {/* SEO */}
+          <div className="rounded-lg p-4 flex flex-col gap-3" style={{ background: "var(--surface-container-lowest)", border: "1px solid var(--outline-variant)" }}>
+            <div className="flex items-center gap-2 pb-2" style={{ borderBottom: "1px solid var(--outline-variant)" }}>
+              <Search className="size-4" style={{ color: "var(--secondary)" }} />
+              <span className="text-xs font-semibold" style={{ fontFamily: "var(--font-display)", color: "var(--primary)" }}>SEO / Meta</span>
+            </div>
+            <div className="flex flex-col gap-1">
+              <Label className="text-[10px] uppercase tracking-wide" style={{ color: "var(--on-surface-variant)" }}>Meta Title</Label>
+              <Input
+                value={metaTitle}
+                onChange={(e) => setMetaTitle(e.target.value)}
+                placeholder="SEO title (defaults to location name)"
+                className="h-7 text-xs"
+                style={{ background: "var(--surface-container-lowest)", borderColor: "var(--outline-variant)" }}
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <Label className="text-[10px] uppercase tracking-wide" style={{ color: "var(--on-surface-variant)" }}>Meta Description</Label>
+              <Textarea
+                value={metaDesc}
+                onChange={(e) => setMetaDesc(e.target.value)}
+                placeholder="SEO description for search engines"
+                className="text-xs min-h-16 resize-none"
+                style={{ background: "var(--surface-container-lowest)", borderColor: "var(--outline-variant)" }}
+              />
             </div>
           </div>
 
