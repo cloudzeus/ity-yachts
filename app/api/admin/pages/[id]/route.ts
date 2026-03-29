@@ -34,7 +34,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     const { id } = await params
     const body = await req.json()
-    const { name, slug, status, content, translations, metaTitle, metaDesc, metaKeywords, metaOgTitle, metaOgDesc, metaOgImage, metaRobots, metaCanonical } = body
+    const { name, slug, status, content, heroSection, translations, metaTitle, metaDesc, metaKeywords, metaOgTitle, metaOgDesc, metaOgImage, metaRobots, metaCanonical } = body
 
     // If slug is being changed, check uniqueness
     if (slug) {
@@ -51,6 +51,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         ...(slug !== undefined && { slug }),
         ...(status !== undefined && { status }),
         ...(content !== undefined && { content }),
+        ...(heroSection !== undefined && { heroSection }),
         ...(translations !== undefined && { translations }),
         ...(metaTitle !== undefined && { metaTitle }),
         ...(metaDesc !== undefined && { metaDesc }),

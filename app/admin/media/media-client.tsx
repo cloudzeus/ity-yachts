@@ -476,8 +476,20 @@ function GridView({ files, folders, selected, onToggle, onSelectAll, onFolderCli
               {isImg ? (
                 <Image src={file.url} alt={file.name} fill className="object-contain" sizes="120px" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <Play className="size-8 text-secondary opacity-40" />
+                <div className="relative w-full h-full">
+                  <video
+                    src={file.url}
+                    muted
+                    preload="metadata"
+                    className="absolute inset-0 w-full h-full object-cover"
+                    onMouseEnter={(e) => e.currentTarget.play()}
+                    onMouseLeave={(e) => { e.currentTarget.pause(); e.currentTarget.currentTime = 0 }}
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="size-8 rounded-full bg-black/50 flex items-center justify-center">
+                      <Play className="size-4 text-white ml-0.5" fill="white" />
+                    </div>
+                  </div>
                 </div>
               )}
               {/* Selection Overlay */}
@@ -590,9 +602,14 @@ function ListView({ files, folders, selected, onToggle, onSelectAll, onFolderCli
                   <div className="flex items-center gap-2.5">
                     <div className="size-8 rounded overflow-hidden shrink-0 flex items-center justify-center relative"
                       style={{ background: "var(--surface-container-high)", borderRadius: "var(--radius-xs)" }}>
-                      {isImg
-                        ? <Image src={file.url} alt={file.name} fill className="object-contain" sizes="32px" />
-                        : <Play className="size-4" style={{ color: "var(--secondary)" }} />}
+                      {isImg ? (
+                        <Image src={file.url} alt={file.name} fill className="object-contain" sizes="32px" />
+                      ) : (
+                        <>
+                          <video src={file.url} muted preload="metadata" className="absolute inset-0 w-full h-full object-cover" />
+                          <Play className="size-3 text-white relative z-10 drop-shadow-md" fill="white" />
+                        </>
+                      )}
                     </div>
                     <span className="text-xs font-medium truncate max-w-[200px]" style={{ color: "var(--on-surface)" }}>{file.name}</span>
                   </div>

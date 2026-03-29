@@ -10,6 +10,7 @@ import { createSection, deleteSection, moveSection } from "@/lib/page-builder"
 import { SectionEditor } from "@/components/admin/page-builder/section-editor"
 import { MetaPanel } from "@/components/admin/page-builder/meta-panel"
 import { TranslationsPanel } from "@/components/admin/page-builder/translations-panel"
+import { HeroSectionPanel, HeroSectionData } from "@/components/admin/page-builder/hero-section-panel"
 import Link from "next/link"
 
 interface Page {
@@ -18,6 +19,7 @@ interface Page {
   slug: string
   status: string
   content: any
+  heroSection?: Record<string, unknown> | null
   translations?: Record<string, string>
   metaTitle?: string
   metaDesc?: string
@@ -37,6 +39,9 @@ export function EditorClient({ page: initialPage }: EditorClientProps) {
   const router = useRouter()
   const [page, setPage] = useState(initialPage)
   const [sections, setSections] = useState<PageSection[]>(Array.isArray(page.content) ? page.content : [])
+  const [heroSection, setHeroSection] = useState<HeroSectionData | null>(
+    (page.heroSection as HeroSectionData | null) ?? null
+  )
   const [name, setName] = useState(page.name)
   const [slug, setSlug] = useState(page.slug)
   const [slugOverridden, setSlugOverridden] = useState(false)
@@ -75,6 +80,7 @@ export function EditorClient({ page: initialPage }: EditorClientProps) {
           name,
           slug,
           content: sections,
+          heroSection,
           translations,
           metaTitle: page.metaTitle,
           metaDesc: page.metaDesc,
@@ -94,7 +100,7 @@ export function EditorClient({ page: initialPage }: EditorClientProps) {
     } finally {
       setSaving(false)
     }
-  }, [page.id, name, slug, sections, translations, page])
+  }, [page.id, name, slug, sections, heroSection, translations, page])
 
   // Debounced auto-save
   useEffect(() => {
@@ -106,7 +112,7 @@ export function EditorClient({ page: initialPage }: EditorClientProps) {
     return () => {
       if (autoSaveRef.current) clearTimeout(autoSaveRef.current)
     }
-  }, [name, slug, sections, translations, autoSave])
+  }, [name, slug, sections, heroSection, translations, autoSave])
 
   async function publish() {
     setSaving(true)
@@ -208,6 +214,21 @@ export function EditorClient({ page: initialPage }: EditorClientProps) {
                 style={{ background: "var(--surface-container-lowest)", borderColor: "var(--outline-variant)" }}
               />
             </div>
+          </div>
+
+          {/* Hero Section */}
+          <div
+            className="rounded-lg p-3 flex flex-col gap-3"
+            style={{
+              background: "var(--surface-container-low)",
+              border: "1px solid var(--outline-variant)",
+              boxShadow: "var(--shadow-ambient)",
+            }}
+          >
+            <HeroSectionPanel
+              data={heroSection}
+              onChange={(val) => setHeroSection(val)}
+            />
           </div>
 
           {/* Sections */}

@@ -1,7 +1,7 @@
 import { db } from "@/lib/db"
 import { getSession } from "@/lib/auth-session"
 import { uploadToBunnyCDN, createFolder } from "@/lib/bunny-cdn"
-import { processImage, isImage, isVideo, slugify } from "@/lib/media-processor"
+import { processImage, processVideo, isImage, isVideo, slugify } from "@/lib/media-processor"
 import { NextRequest, NextResponse } from "next/server"
 
 export const maxDuration = 60
@@ -52,6 +52,12 @@ export async function POST(req: NextRequest) {
       width = processed.width
       height = processed.height
       fileName = `${Date.now()}-${slugify(baseName)}.webp`
+    } else if (isVideo(originalMime)) {
+      // Convert all video formats to H.264 MP4
+      const processed = await processVideo(buffer)
+      buffer = Buffer.from(processed.buffer)
+      mimeType = processed.mimeType
+      fileName = `${Date.now()}-${slugify(baseName)}.mp4`
     } else {
       const ext = originalName.split(".").pop() ?? "mp4"
       fileName = `${Date.now()}-${slugify(baseName)}.${ext}`

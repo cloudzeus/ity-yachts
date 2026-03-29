@@ -121,6 +121,7 @@ model Page {
   slug          String           @unique
   status        String           @default("draft")
   content       Json             @default("[]")
+  heroSection   Json?
   translations  Json             @default("{}")
   metaTitle     String?
   metaDesc      String?

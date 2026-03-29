@@ -20,6 +20,7 @@ export default async function PageEditorPage({ params }: { params: Promise<{ id:
     slug: page.slug,
     status: page.status,
     content: page.content,
+    heroSection: page.heroSection as Record<string, unknown> | null,
     translations: (typeof page.translations === 'object' && page.translations ? page.translations : {}) as Record<string, string>,
     metaTitle: page.metaTitle ?? undefined,
     metaDesc: page.metaDesc ?? undefined,

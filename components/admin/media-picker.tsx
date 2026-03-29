@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useCallback, useEffect } from "react"
+import { useState, useCallback, useEffect, useRef } from "react"
 import Image from "next/image"
-import { Check, ChevronRight, Folder, Home, Image as ImageIcon, Play } from "lucide-react"
+import { Check, ChevronRight, Folder, Home, Image as ImageIcon, Play, Upload, Loader2 } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -36,6 +36,8 @@ export function MediaPicker({ open, onClose, onSelect, accept = "all", multiple 
   const [folders, setFolders] = useState<BunnyFolder[]>([])
   const [loading, setLoading] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const fetchMedia = useCallback(async (f: string) => {
     setLoading(true)
@@ -58,6 +60,28 @@ export function MediaPicker({ open, onClose, onSelect, accept = "all", multiple 
 
   // Reset when closed
   useEffect(() => { if (!open) { setFolder(""); setSelected(new Set()) } }, [open])
+
+  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const fileList = e.target.files
+    if (!fileList || fileList.length === 0) return
+    setUploading(true)
+    try {
+      for (let i = 0; i < fileList.length; i++) {
+        const file = fileList[i]
+        const formData = new FormData()
+        formData.append("file", file)
+        formData.append("folder", folder)
+        await fetch("/api/admin/media/upload", { method: "POST", body: formData })
+      }
+      // Refresh the current folder to show uploaded files
+      await fetchMedia(folder)
+    } catch (err) {
+      console.error("[MediaPicker upload]", err)
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ""
+    }
+  }
 
   function toggleSelect(file: MediaFile) {
     if (!multiple) {
@@ -86,10 +110,34 @@ export function MediaPicker({ open, onClose, onSelect, accept = "all", multiple 
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="sm:max-w-3xl max-h-[80vh] flex flex-col" style={{ background: "var(--surface-container-lowest)" }}>
         <DialogHeader>
-          <DialogTitle style={{ fontFamily: "var(--font-display)", color: "var(--primary)" }}>Media Library</DialogTitle>
-          <DialogDescription style={{ color: "var(--on-surface-variant)" }}>
-            {multiple ? "Select one or more files" : "Click a file to select it"}
-          </DialogDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <DialogTitle style={{ fontFamily: "var(--font-display)", color: "var(--primary)" }}>Media Library</DialogTitle>
+              <DialogDescription style={{ color: "var(--on-surface-variant)" }}>
+                {multiple ? "Select one or more files" : "Click a file to select it"}
+              </DialogDescription>
+            </div>
+            <div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="hidden"
+                accept={accept === "image" ? "image/*" : accept === "video" ? "video/*" : "image/*,video/*"}
+                multiple
+                onChange={handleUpload}
+              />
+              <Button
+                size="sm"
+                className="gap-1.5 text-xs text-white"
+                style={{ background: "var(--gradient-ocean)", borderRadius: "var(--radius-xs)" }}
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+              >
+                {uploading ? <Loader2 className="size-3.5 animate-spin" /> : <Upload className="size-3.5" />}
+                {uploading ? "Uploading\u2026" : "Upload"}
+              </Button>
+            </div>
+          </div>
         </DialogHeader>
 
         {/* Breadcrumb */}
@@ -140,9 +188,18 @@ export function MediaPicker({ open, onClose, onSelect, accept = "all", multiple 
                       background: "var(--surface-container-high)",
                     }}>
                     <div className="aspect-square relative overflow-hidden flex items-center justify-center">
-                      {isImg
-                        ? <Image src={file.url} alt={file.name} fill className="object-contain" sizes="120px" />
-                        : <div className="flex items-center justify-center w-full h-full"><Play className="size-6" style={{ color: "var(--secondary)" }} /></div>}
+                      {isImg ? (
+                        <Image src={file.url} alt={file.name} fill className="object-contain" sizes="120px" />
+                      ) : (
+                        <div className="relative w-full h-full">
+                          <video src={file.url} muted preload="metadata" className="absolute inset-0 w-full h-full object-cover" />
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div className="size-6 rounded-full bg-black/50 flex items-center justify-center">
+                              <Play className="size-3 text-white ml-0.5" fill="white" />
+                            </div>
+                          </div>
+                        </div>
+                      )}
                       {isSelected && (
                         <div className="absolute inset-0 flex items-center justify-center" style={{ background: "rgba(0,99,153,0.35)" }}>
                           <Check className="size-6 text-white" />

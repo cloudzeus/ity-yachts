@@ -22,8 +22,10 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>("en")
   const [dict, setDict] = useState<Record<string, string>>({})
   const [ready, setReady] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
     const saved = localStorage.getItem("iyc-locale") as Locale | null
     if (saved && ["en", "el", "de"].includes(saved)) {
       setLocaleState(saved)
@@ -54,13 +56,19 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("iyc-locale", l)
   }, [])
 
-  const t = useCallback(
-    (key: string, fallback?: string) => dict[key] || fallback || key,
-    [dict]
+  // Only use saved locale after mount to avoid hydration mismatch
+  const activeLocale = mounted ? locale : "en"
+
+  const safeT = useCallback(
+    (key: string, fallback?: string) => {
+      if (!mounted) return fallback || key
+      return dict[key] || fallback || key
+    },
+    [dict, mounted]
   )
 
   return (
-    <TranslationContext.Provider value={{ locale, setLocale, t, ready }}>
+    <TranslationContext.Provider value={{ locale: activeLocale, setLocale, t: safeT, ready: ready && mounted }}>
       {children}
     </TranslationContext.Provider>
   )

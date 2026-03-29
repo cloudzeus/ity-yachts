@@ -18,7 +18,16 @@ export default function Home() {
         <SiteHeader />
 
         {/* Hero */}
-        <HeroSection />
+        <HeroSection
+          data={{
+            mediaUrl: "https://iycweb.b-cdn.net/1774760973356-lonely-sailboat-sailing-on-blue-water-aerial-view-2026-01-21-13-48-12-utc.mp4",
+            mediaType: "video",
+            heading: { en: "Discover the World by Sea", el: "", de: "" },
+            subheading: { en: "Bespoke yacht charters and luxury maritime experiences crafted for the most discerning travellers. Your voyage begins here.", el: "", de: "" },
+            buttonText: { en: "Start Planning", el: "", de: "" },
+            buttonLink: "/start-planning",
+          }}
+        />
 
         {/* Features */}
         <section className="px-6 md:px-12 py-24" style={{ background: "var(--surface)" }}>
