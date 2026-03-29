@@ -11,6 +11,7 @@ export interface HeroSectionProps {
   data?: {
     mediaUrl: string
     mediaType: "image" | "video"
+    overSubheading?: Record<string, string>
     heading: Record<string, string>
     subheading: Record<string, string>
     buttonText: Record<string, string>
@@ -54,6 +55,7 @@ export function HeroSection({ data }: HeroSectionProps) {
 
   /* ─── Dynamic hero from admin ──────────────────────────────────────── */
   if (data?.mediaUrl) {
+    const overSubheading = data.overSubheading?.[locale] || data.overSubheading?.en || ""
     const heading = data.heading[locale] || data.heading.en || ""
     const subheading = data.subheading[locale] || data.subheading.en || ""
     const buttonText = data.buttonText[locale] || data.buttonText.en || ""
@@ -87,6 +89,17 @@ export function HeroSection({ data }: HeroSectionProps) {
 
         {/* Content */}
         <div className="relative z-10 w-full max-w-3xl text-center">
+          {overSubheading && (
+            <div className="mb-5 inline-block rounded-sm border border-white/20 px-4 py-1.5">
+              <span
+                className="text-xs font-semibold uppercase tracking-widest text-white/70"
+                style={{ fontFamily: "var(--font-body)" }}
+              >
+                {overSubheading}
+              </span>
+            </div>
+          )}
+
           {heading && (
             <h1
               ref={headingRef}

@@ -11,6 +11,7 @@ import { ImageIcon, Play, X, Upload } from "lucide-react"
 export interface HeroSectionData {
   mediaUrl: string
   mediaType: "image" | "video"
+  overSubheading: Record<string, string> // { en, el, de }
   heading: Record<string, string>    // { en, el, de }
   subheading: Record<string, string> // { en, el, de }
   buttonText: Record<string, string> // { en, el, de }
@@ -20,6 +21,7 @@ export interface HeroSectionData {
 const EMPTY_HERO: HeroSectionData = {
   mediaUrl: "",
   mediaType: "image",
+  overSubheading: { en: "", el: "", de: "" },
   heading: { en: "", el: "", de: "" },
   subheading: { en: "", el: "", de: "" },
   buttonText: { en: "", el: "", de: "" },
@@ -44,14 +46,14 @@ export function HeroSectionPanel({ data, onChange }: HeroSectionPanelProps) {
   }
 
   function updateTranslatable(
-    field: "heading" | "subheading" | "buttonText",
+    field: "overSubheading" | "heading" | "subheading" | "buttonText",
     lang: string,
     value: string
   ) {
     onChange({ ...hero, [field]: { ...hero[field], [lang]: value } })
   }
 
-  async function translateField(field: "heading" | "subheading" | "buttonText") {
+  async function translateField(field: "overSubheading" | "heading" | "subheading" | "buttonText") {
     const en = hero[field].en
     if (!en) return
     setTranslatingField(field)
@@ -82,7 +84,7 @@ export function HeroSectionPanel({ data, onChange }: HeroSectionPanelProps) {
   async function translateAll() {
     setTranslatingField("all")
     try {
-      const fields = ["heading", "subheading", "buttonText"] as const
+      const fields = ["overSubheading", "heading", "subheading", "buttonText"] as const
       const texts = fields.map((f) => hero[f].en).filter(Boolean)
       if (texts.length === 0) return
 
@@ -250,6 +252,16 @@ export function HeroSectionPanel({ data, onChange }: HeroSectionPanelProps) {
             )}
           </div>
 
+          {/* Over Subheading */}
+          <TranslatableField
+            label="Over Subheading"
+            field="overSubheading"
+            values={hero.overSubheading}
+            onChange={updateTranslatable}
+            onTranslate={translateField}
+            translating={translatingField === "overSubheading"}
+          />
+
           {/* Heading */}
           <TranslatableField
             label="Heading"
@@ -325,10 +337,10 @@ function TranslatableField({
   multiline,
 }: {
   label: string
-  field: "heading" | "subheading" | "buttonText"
+  field: "overSubheading" | "heading" | "subheading" | "buttonText"
   values: Record<string, string>
-  onChange: (field: "heading" | "subheading" | "buttonText", lang: string, value: string) => void
-  onTranslate: (field: "heading" | "subheading" | "buttonText") => void
+  onChange: (field: "overSubheading" | "heading" | "subheading" | "buttonText", lang: string, value: string) => void
+  onTranslate: (field: "overSubheading" | "heading" | "subheading" | "buttonText") => void
   translating: boolean
   multiline?: boolean
 }) {

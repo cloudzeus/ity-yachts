@@ -1,10 +1,118 @@
-import Link from "next/link"
-import { Ship, Calendar, Users, Shield } from "lucide-react"
+import { db } from "@/lib/db"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
-import { HeroSection } from "@/components/hero-section"
+import { HomepageClient } from "@/components/home/homepage-client"
 
-export default function Home() {
+export const dynamic = "force-dynamic"
+
+export default async function Home() {
+  // Fetch all homepage data in parallel
+  const [homePage, locations, itineraries, yachts, reviews] = await Promise.all([
+    db.page.findFirst({
+      where: { slug: "home" },
+      select: { heroSection: true },
+    }),
+    db.location.findMany({
+      where: { status: "published" },
+      orderBy: { updatedAt: "desc" },
+      take: 8,
+    }),
+    db.itinerary.findMany({
+      where: { status: "published" },
+      orderBy: { updatedAt: "desc" },
+      take: 6,
+    }),
+    db.nausysYacht.findMany({
+      take: 6,
+      orderBy: { updatedAt: "desc" },
+      include: {
+        category: true,
+        model: true,
+        base: true,
+      },
+    }),
+    db.review.findMany({
+      where: { status: "published" },
+      orderBy: { sortOrder: "asc" },
+      take: 6,
+    }),
+  ])
+
+  // Extract hero data from admin-configured page
+  const heroJson = homePage?.heroSection as {
+    overSubheading?: Record<string, string>
+    heading?: Record<string, string>
+    subheading?: Record<string, string>
+  } | null
+
+  const heroData = {
+    overSubheading: heroJson?.overSubheading?.en || "Luxury Yacht Charters",
+    heading: heroJson?.heading?.en || "IONISCHE YACHT CHARTER",
+    subheading: heroJson?.subheading?.en || "Bespoke yacht charters and luxury maritime experiences crafted for the most discerning travellers.",
+  }
+
+  // Transform data for client components
+  const destinationData = locations.map((loc) => {
+    const nameT = loc.nameTranslations as Record<string, string>
+    const descT = loc.shortDesc as Record<string, string>
+    return {
+      id: loc.id,
+      name: nameT?.en || loc.name,
+      slug: loc.slug,
+      image: loc.defaultMedia || "",
+      shortDesc: descT?.en || "",
+    }
+  })
+
+  const itineraryData = itineraries.map((it) => {
+    const nameT = it.name as Record<string, string>
+    const descT = it.shortDesc as Record<string, string>
+    return {
+      id: it.id,
+      name: nameT?.en || "Untitled",
+      slug: it.slug,
+      image: it.defaultMedia || "",
+      shortDesc: descT?.en || "",
+      totalDays: it.totalDays,
+      totalMiles: it.totalMiles,
+      startFrom: it.startFrom,
+    }
+  })
+
+  const yachtData = yachts.map((y) => {
+    const categoryName = y.category
+      ? (y.category.name as Record<string, string>)?.en || "Yacht"
+      : "Yacht"
+    // Use website images first, fall back to NAUSYS main picture, then pictures array
+    const websiteImgs = y.websiteImages as Array<{ url: string }> | null
+    const picturesArr = y.picturesUrl as string[] | null
+    const image = websiteImgs?.[0]?.url || y.mainPictureUrl || picturesArr?.[0] || ""
+    return {
+      id: y.id,
+      name: y.name || y.model?.name || "Yacht",
+      slug: String(y.id),
+      image,
+      category: categoryName,
+      loa: y.loa || 0,
+      cabins: y.cabins || 0,
+      berths: y.berthsTotal || y.maxPersons || 0,
+      baseName: y.base?.id ? String(y.base.id) : "",
+      priceFrom: 0,
+    }
+  })
+
+  const reviewData = reviews.map((r) => {
+    const contentT = r.content as Record<string, string>
+    return {
+      id: r.id,
+      name: r.name,
+      content: contentT?.en || "",
+      rating: r.rating,
+      image: r.image,
+      date: r.date.toISOString(),
+    }
+  })
+
   return (
     <main>
       {/* Page content — clip-path lets the fixed footer reveal beneath */}
@@ -16,85 +124,13 @@ export default function Home() {
         }}
       >
         <SiteHeader />
-
-        {/* Hero */}
-        <HeroSection
-          data={{
-            mediaUrl: "https://iycweb.b-cdn.net/1774760973356-lonely-sailboat-sailing-on-blue-water-aerial-view-2026-01-21-13-48-12-utc.mp4",
-            mediaType: "video",
-            heading: { en: "Discover the World by Sea", el: "", de: "" },
-            subheading: { en: "Bespoke yacht charters and luxury maritime experiences crafted for the most discerning travellers. Your voyage begins here.", el: "", de: "" },
-            buttonText: { en: "Start Planning", el: "", de: "" },
-            buttonLink: "/start-planning",
-          }}
+        <HomepageClient
+          hero={heroData}
+          destinations={destinationData}
+          itineraries={itineraryData}
+          yachts={yachtData}
+          reviews={reviewData}
         />
-
-        {/* Features */}
-        <section className="px-6 md:px-12 py-24" style={{ background: "var(--surface)" }}>
-          <div className="max-w-6xl mx-auto">
-            <h2
-              className="text-3xl font-bold mb-12 text-center"
-              style={{
-                fontFamily: "var(--font-display)",
-                color: "var(--primary)",
-                letterSpacing: "-0.01em",
-              }}
-            >
-              Platform Features
-            </h2>
-
-            <div className="grid md:grid-cols-4 gap-6">
-              {[
-                {
-                  icon: Ship,
-                  title: "Fleet Management",
-                  desc: "Comprehensive yacht inventory and status tracking",
-                },
-                {
-                  icon: Calendar,
-                  title: "Smart Booking",
-                  desc: "Intuitive scheduling and reservation system",
-                },
-                {
-                  icon: Users,
-                  title: "Team Collaboration",
-                  desc: "Multi-role access with granular permissions",
-                },
-                {
-                  icon: Shield,
-                  title: "Enterprise Security",
-                  desc: "Advanced authentication and data protection",
-                },
-              ].map((feature, i) => (
-                <div
-                  key={i}
-                  className="p-6 rounded-md"
-                  style={{
-                    background: "var(--surface-container-lowest)",
-                    boxShadow: "var(--shadow-ambient)",
-                  }}
-                >
-                  <feature.icon
-                    className="w-8 h-8 mb-3"
-                    style={{ color: "var(--secondary)" }}
-                  />
-                  <h3
-                    className="font-semibold mb-2"
-                    style={{
-                      fontFamily: "var(--font-display)",
-                      color: "var(--primary)",
-                    }}
-                  >
-                    {feature.title}
-                  </h3>
-                  <p className="text-sm" style={{ color: "var(--on-surface-variant)" }}>
-                    {feature.desc}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
       </div>
 
       {/* Sticky reveal footer */}

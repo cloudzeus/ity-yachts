@@ -14,7 +14,14 @@ if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger)
 }
 
+interface HeroData {
+  overSubheading: string
+  heading: string
+  subheading: string
+}
+
 interface HomepageProps {
+  hero: HeroData
   destinations: Array<{
     id: string
     name: string
@@ -55,7 +62,7 @@ interface HomepageProps {
   }>
 }
 
-export function HomepageClient({ destinations, itineraries, yachts, reviews }: HomepageProps) {
+export function HomepageClient({ hero, destinations, itineraries, yachts, reviews }: HomepageProps) {
   useEffect(() => {
     // Hero text animation
     const tl = gsap.timeline({ defaults: { ease: "power3.out" } })
@@ -108,34 +115,40 @@ export function HomepageClient({ destinations, itineraries, yachts, reviews }: H
 
           {/* Hero Text — centered */}
           <div className="relative z-10 w-full max-w-5xl mx-auto text-center flex-1 flex flex-col items-center justify-center">
-            <div className="mb-5 inline-block rounded-sm border border-white/20 px-4 py-1.5">
-              <span
-                className="text-xs font-semibold uppercase tracking-widest text-white/70"
-                style={{ fontFamily: "var(--font-body)" }}
+            {hero.overSubheading && (
+              <div className="mb-5 inline-block rounded-sm border border-white/20 px-4 py-1.5">
+                <span
+                  className="text-xs font-semibold uppercase tracking-widest text-white/70"
+                  style={{ fontFamily: "var(--font-body)" }}
+                >
+                  {hero.overSubheading}
+                </span>
+              </div>
+            )}
+
+            {hero.heading && (
+              <h1
+                className="hero-heading mb-5 text-4xl font-bold leading-tight md:text-6xl lg:text-7xl"
+                style={{
+                  fontFamily: "var(--font-display)",
+                  letterSpacing: "-0.02em",
+                  opacity: 0,
+                  color: "#0055a9",
+                  textShadow: "0 2px 30px rgba(255,255,255,0.15)",
+                }}
               >
-                Luxury Yacht Charters
-              </span>
-            </div>
+                {hero.heading}
+              </h1>
+            )}
 
-            <h1
-              className="hero-heading mb-5 text-4xl font-bold leading-tight md:text-6xl lg:text-7xl"
-              style={{
-                fontFamily: "var(--font-display)",
-                letterSpacing: "-0.02em",
-                opacity: 0,
-                color: "#0055a9",
-                textShadow: "0 2px 30px rgba(255,255,255,0.15)",
-              }}
-            >
-              IONISCHE YACHT CHARTER
-            </h1>
-
-            <p
-              className="hero-subheading mx-auto max-w-xl text-lg text-white/90"
-              style={{ fontFamily: "var(--font-body)", opacity: 0, textShadow: "0 1px 10px rgba(0,0,0,0.2)" }}
-            >
-              Bespoke yacht charters and luxury maritime experiences crafted for the most discerning travellers.
-            </p>
+            {hero.subheading && (
+              <p
+                className="hero-subheading mx-auto max-w-xl text-lg text-white/90"
+                style={{ fontFamily: "var(--font-body)", opacity: 0, textShadow: "0 1px 10px rgba(0,0,0,0.2)" }}
+              >
+                {hero.subheading}
+              </p>
+            )}
           </div>
 
           {/* Search Form — pinned to bottom of hero */}
