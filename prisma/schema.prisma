@@ -131,6 +131,7 @@ model Page {
   metaOgImage   String?
   metaRobots    String?          @default("index, follow")
   metaCanonical String?
+  isHomePage    Boolean          @default(false)
   showInMenu    Boolean          @default(false)
   menuOrder     Int              @default(0)
   menuLabel     String?
@@ -295,6 +296,7 @@ model Staff {
 model NausysYachtCategory {
   id        Int      @id                      // NAUSYS id
   name      Json     @default("{}")           // { en, el, de }
+  icon      String?                            // react-icons name e.g. "FaSailboat"
   models    NausysYachtModel[]
   yachts    NausysYacht[]
   createdAt DateTime @default(now())
@@ -307,6 +309,7 @@ model NausysYachtCategory {
 model NausysYachtBuilder {
   id        Int      @id                      // NAUSYS id
   name      String
+  logoUrl   String?                            // SVG/PNG logo URL (Bunny CDN or external)
   models    NausysYachtModel[]
   yachts    NausysYacht[]
   createdAt DateTime @default(now())
@@ -319,6 +322,7 @@ model NausysYachtBuilder {
 model NausysEngineBuilder {
   id        Int      @id                      // NAUSYS id
   name      String
+  logoUrl   String?                            // SVG/PNG logo URL (Bunny CDN or external)
   yachts    NausysYacht[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -447,8 +451,8 @@ model NausysEquipmentCategory {
 model NausysEquipment {
   id         Int      @id                     // NAUSYS id
   name       Json     @default("{}")          // { en, el, de }
-  categoryId Int
-  category   NausysEquipmentCategory @relation(fields: [categoryId], references: [id])
+  categoryId Int?
+  category   NausysEquipmentCategory? @relation(fields: [categoryId], references: [id])
   yachtEquipment  NausysYachtEquipment[]
   yachtExtraEquipment NausysYachtExtraEquipment[]
   createdAt  DateTime @default(now())
@@ -586,6 +590,7 @@ model NausysYacht {
   agencyDiscountType    String?              // CLIENT_PRICE, AGENCY_COMMISSION
 
   // Flags & status
+  isOwnFleet            Boolean  @default(false)  // marks yacht as part of our fleet
   isPremium             Boolean  @default(false)
   needsOptionApproval   Boolean  @default(false)
   canMakeBookingFixed   Boolean  @default(false)

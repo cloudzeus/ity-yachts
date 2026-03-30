@@ -29,6 +29,7 @@ import {
   MessageSquare,
   Languages,
   Newspaper,
+  TableProperties,
 } from "lucide-react"
 import {
   Tooltip,
@@ -63,6 +64,7 @@ const navGroups = [
       { label: "Bases", href: "/admin/fleet/bases", icon: Anchor },
       { label: "Seasons", href: "/admin/fleet/seasons", icon: Calendar },
       { label: "Catalogue", href: "/admin/fleet/catalogue", icon: Package },
+      { label: "Reference Tables", href: "/admin/fleet/tables", icon: TableProperties },
     ],
   },
   {
