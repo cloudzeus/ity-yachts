@@ -10,7 +10,7 @@ export default async function PagesPage() {
     db.page.findMany({
       orderBy: { updatedAt: "desc" },
       take: 10,
-      select: { id: true, name: true, slug: true, status: true, updatedAt: true },
+      select: { id: true, name: true, slug: true, status: true, isHomePage: true, showInMenu: true, menuOrder: true, updatedAt: true },
     }),
     db.page.count(),
   ])

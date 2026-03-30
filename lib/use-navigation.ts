@@ -7,6 +7,7 @@ export interface NavItem {
   label: string
   slug: string
   href: string
+  isHomePage: boolean
   menuOrder: number
   translations: Record<string, string>
 }

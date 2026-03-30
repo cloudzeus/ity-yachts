@@ -14,6 +14,7 @@ export async function GET() {
         id: true,
         name: true,
         slug: true,
+        isHomePage: true,
         menuLabel: true,
         menuOrder: true,
         translations: true,
@@ -27,7 +28,8 @@ export async function GET() {
         id: p.id,
         label: p.menuLabel || p.name,
         slug: p.slug,
-        href: p.slug === "home" ? "/" : `/${p.slug}`,
+        href: p.isHomePage ? "/" : `/${p.slug}`,
+        isHomePage: p.isHomePage,
         menuOrder: p.menuOrder,
         translations: translations || {},
       }

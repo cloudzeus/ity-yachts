@@ -38,6 +38,10 @@ export default async function YachtDetailPage({ params }: { params: Promise<{ id
           crewMembers: true,
           seasons: { include: { season: true } },
           prices: { orderBy: { dateFrom: "asc" } },
+          bookings: {
+            select: { id: true, dateFrom: true, dateTo: true, status: true, bookingNumber: true },
+            orderBy: { dateFrom: "asc" },
+          },
         },
       }),
       db.nausysYachtModel.findMany({

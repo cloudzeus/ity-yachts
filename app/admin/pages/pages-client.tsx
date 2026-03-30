@@ -2,7 +2,8 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Plus, Pencil, Trash2 } from "lucide-react"
+import Link from "next/link"
+import { Plus, Pencil, Trash2, Menu, ExternalLink, Home } from "lucide-react"
 import { DataTable, type ColumnDef, type SortDirection } from "@/components/ui/data-table"
 import { Button } from "@/components/ui/button"
 import {
@@ -21,6 +22,9 @@ type Page = {
   name: string
   slug: string
   status: string
+  isHomePage: boolean
+  showInMenu: boolean
+  menuOrder: number
   updatedAt: string
 }
 
@@ -37,15 +41,41 @@ const statusBadge = (status: string) => {
   )
 }
 
+const menuBadge = (showInMenu: boolean, menuOrder: number) => {
+  if (!showInMenu) return <span className="text-xs" style={{ color: "var(--on-surface-variant)" }}>—</span>
+  return (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium" style={{ background: "rgba(21,101,192,0.12)", color: "#1565C0", borderRadius: "var(--radius-xs)" }}>
+      <Menu className="size-3" />
+      #{menuOrder}
+    </span>
+  )
+}
+
 const COLUMNS: ColumnDef<Page>[] = [
   {
     key: "name",
     header: "Name",
     sortable: true,
-    cell: (row) => <span>{row.name}</span>,
+    cell: (row) => (
+      <Link href={`/admin/pages/${row.id}`} className="inline-flex items-center gap-1.5 font-medium hover:underline" style={{ color: "var(--primary)" }}>
+        {row.isHomePage && <Home className="size-3.5" style={{ color: "var(--primary)" }} />}
+        {row.name}
+      </Link>
+    ),
   },
-  { key: "slug", header: "Slug", sortable: true, cell: (row) => <code className="text-xs" style={{ color: "var(--on-surface-variant)" }}>/{row.slug}</code> },
+  {
+    key: "slug",
+    header: "Slug",
+    sortable: true,
+    cell: (row) => (
+      <a href={row.isHomePage ? "/" : `/${row.slug}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 hover:underline">
+        <code className="text-xs" style={{ color: "var(--on-surface-variant)" }}>/{row.slug}</code>
+        <ExternalLink className="size-3" style={{ color: "var(--on-surface-variant)" }} />
+      </a>
+    ),
+  },
   { key: "status", header: "Status", sortable: true, cell: (row) => statusBadge(row.status) },
+  { key: "showInMenu", header: "Menu", sortable: true, cell: (row) => menuBadge(row.showInMenu, row.menuOrder) },
   {
     key: "updatedAt",
     header: "Updated",

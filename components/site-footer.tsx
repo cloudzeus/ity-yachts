@@ -13,7 +13,7 @@ export function SiteFooter() {
   const { items: navItems } = useNavigation()
 
   const company = navItems
-    .filter((item) => item.slug !== "home")
+    .filter((item) => !item.isHomePage)
     .map((item) => ({
       label: item.translations?.en || item.label,
       href: item.href,

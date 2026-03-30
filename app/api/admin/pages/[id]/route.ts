@@ -34,7 +34,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     const { id } = await params
     const body = await req.json()
-    const { name, slug, status, content, heroSection, translations, metaTitle, metaDesc, metaKeywords, metaOgTitle, metaOgDesc, metaOgImage, metaRobots, metaCanonical, showInMenu, menuOrder, menuLabel } = body
+    const { name, slug, status, content, heroSection, translations, metaTitle, metaDesc, metaKeywords, metaOgTitle, metaOgDesc, metaOgImage, metaRobots, metaCanonical, isHomePage, showInMenu, menuOrder, menuLabel } = body
 
     // If slug is being changed, check uniqueness
     if (slug) {
@@ -42,6 +42,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       if (existing && existing.id !== id) {
         return NextResponse.json({ error: "Slug already exists" }, { status: 409 })
       }
+    }
+
+    // If setting this page as home, unset any other home page first
+    if (isHomePage === true) {
+      await db.page.updateMany({
+        where: { isHomePage: true, id: { not: id } },
+        data: { isHomePage: false },
+      })
     }
 
     const page = await db.page.update({
@@ -61,6 +69,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         ...(metaOgImage !== undefined && { metaOgImage }),
         ...(metaRobots !== undefined && { metaRobots }),
         ...(metaCanonical !== undefined && { metaCanonical }),
+        ...(isHomePage !== undefined && { isHomePage }),
         ...(showInMenu !== undefined && { showInMenu }),
         ...(menuOrder !== undefined && { menuOrder }),
         ...(menuLabel !== undefined && { menuLabel }),

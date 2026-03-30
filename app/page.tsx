@@ -9,7 +9,7 @@ export default async function Home() {
   // Fetch all homepage data in parallel
   const [homePage, locations, itineraries, yachts, reviews] = await Promise.all([
     db.page.findFirst({
-      where: { slug: "home" },
+      where: { isHomePage: true },
       select: { heroSection: true },
     }),
     db.location.findMany({

@@ -6,16 +6,7 @@ export const dynamic = "force-dynamic"
 export const metadata = { title: "Fleet — IYC Admin" }
 
 export default async function FleetPage() {
-  const [yachts, total, lastSync] = await Promise.all([
-    db.nausysYacht.findMany({
-      include: {
-        model: { include: { category: true, builder: true } },
-        base: { include: { location: true } },
-        _count: { select: { equipment: true, cabinDefinitions: true, prices: true } },
-      },
-      orderBy: { name: "asc" },
-      take: 50,
-    }),
+  const [total, lastSync] = await Promise.all([
     db.nausysYacht.count(),
     db.nausysSyncLog.findFirst({ orderBy: { startedAt: "desc" } }),
   ])
@@ -37,36 +28,9 @@ export default async function FleetPage() {
       </div>
 
       <FleetClient
-        initialData={{
-          yachts: yachts.map((y) => ({
-            ...y,
-            highlightsTranslations: y.highlightsTranslations as Record<string, string>,
-            noteTranslations: y.noteTranslations as Record<string, string>,
-            picturesUrl: y.picturesUrl as string[],
-            flagsId: y.flagsId as number[],
-            lastSyncedAt: y.lastSyncedAt?.toISOString() ?? null,
-            outOfFleetDate: y.outOfFleetDate?.toISOString() ?? null,
-            createdAt: y.createdAt.toISOString(),
-            updatedAt: y.updatedAt.toISOString(),
-            model: y.model
-              ? {
-                  ...y.model,
-                  category: y.model.category
-                    ? { ...y.model.category, name: y.model.category.name as Record<string, string> }
-                    : null,
-                }
-              : null,
-            base: y.base
-              ? {
-                  ...y.base,
-                  location: y.base.location
-                    ? { ...y.base.location, name: y.base.location.name as Record<string, string> }
-                    : null,
-                }
-              : null,
-          })),
-          total,
-          lastSync: lastSync
+        total={total}
+        lastSync={
+          lastSync
             ? {
                 id: lastSync.id,
                 syncType: lastSync.syncType,
@@ -75,8 +39,8 @@ export default async function FleetPage() {
                 startedAt: lastSync.startedAt.toISOString(),
                 completedAt: lastSync.completedAt?.toISOString() ?? null,
               }
-            : null,
-        }}
+            : null
+        }
       />
     </div>
   )

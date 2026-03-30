@@ -30,6 +30,7 @@ interface Page {
   metaOgImage?: string
   metaRobots?: string
   metaCanonical?: string
+  isHomePage?: boolean
   showInMenu?: boolean
   menuOrder?: number
   menuLabel?: string
@@ -50,6 +51,7 @@ export function EditorClient({ page: initialPage }: EditorClientProps) {
   const [slug, setSlug] = useState(page.slug)
   const [slugOverridden, setSlugOverridden] = useState(false)
   const [translations, setTranslations] = useState<Record<string, string>>(page.translations || {})
+  const [isHomePage, setIsHomePage] = useState(page.isHomePage ?? false)
   const [showInMenu, setShowInMenu] = useState(page.showInMenu ?? false)
   const [menuOrder, setMenuOrder] = useState(page.menuOrder ?? 0)
   const [menuLabel, setMenuLabel] = useState(page.menuLabel ?? "")
@@ -89,6 +91,7 @@ export function EditorClient({ page: initialPage }: EditorClientProps) {
           content: sections,
           heroSection,
           translations,
+          isHomePage,
           showInMenu,
           menuOrder,
           menuLabel: menuLabel || null,
@@ -110,7 +113,7 @@ export function EditorClient({ page: initialPage }: EditorClientProps) {
     } finally {
       setSaving(false)
     }
-  }, [page.id, name, slug, sections, heroSection, translations, showInMenu, menuOrder, menuLabel, page])
+  }, [page.id, name, slug, sections, heroSection, translations, isHomePage, showInMenu, menuOrder, menuLabel, page])
 
   // Debounced auto-save
   useEffect(() => {
@@ -122,7 +125,7 @@ export function EditorClient({ page: initialPage }: EditorClientProps) {
     return () => {
       if (autoSaveRef.current) clearTimeout(autoSaveRef.current)
     }
-  }, [name, slug, sections, heroSection, translations, showInMenu, menuOrder, menuLabel, autoSave])
+  }, [name, slug, sections, heroSection, translations, isHomePage, showInMenu, menuOrder, menuLabel, autoSave])
 
   async function publish() {
     setSaving(true)
@@ -223,6 +226,29 @@ export function EditorClient({ page: initialPage }: EditorClientProps) {
                 className="h-7 text-xs"
                 style={{ background: "var(--surface-container-lowest)", borderColor: "var(--outline-variant)" }}
               />
+            </div>
+
+            <div className="border-t" style={{ borderColor: "var(--outline-variant)" }}></div>
+
+            {/* Home Page */}
+            <div className="flex flex-col gap-2">
+              <span className="text-[10px] uppercase tracking-wide font-semibold" style={{ color: "var(--primary)", fontFamily: "var(--font-display)" }}>
+                Home Page
+              </span>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isHomePage}
+                  onChange={(e) => setIsHomePage(e.target.checked)}
+                  className="h-3.5 w-3.5 rounded border-gray-300 accent-[var(--primary)]"
+                />
+                <span className="text-xs" style={{ color: "var(--on-surface)" }}>Set as home page</span>
+              </label>
+              {isHomePage && (
+                <p className="text-[10px]" style={{ color: "var(--on-surface-variant)" }}>
+                  This page will be served at the root URL (/). Only one page can be the home page.
+                </p>
+              )}
             </div>
 
             <div className="border-t" style={{ borderColor: "var(--outline-variant)" }}></div>
