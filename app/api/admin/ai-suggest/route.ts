@@ -32,7 +32,10 @@ async function askDeepSeek(system: string, user: string): Promise<string> {
     throw new Error(`DeepSeek error ${res.status}: ${err}`)
   }
   const json = await res.json()
-  return json.choices[0].message.content.trim()
+  let content = json.choices[0].message.content.trim()
+  // Strip markdown code fences if present
+  content = content.replace(/^```(?:json)?\s*\n?/i, "").replace(/\n?```\s*$/i, "")
+  return content.trim()
 }
 
 export async function POST(req: NextRequest) {
