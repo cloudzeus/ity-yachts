@@ -223,8 +223,8 @@ export function TablesClient({ counts }: Props) {
   }
 
   // DeepSeek translate: translate EN text to EL + DE
-  async function translateName(itemId: number) {
-    const name = editData.name as TranslatedName
+  async function translateName(itemId: number, directName?: TranslatedName) {
+    const name = directName ?? (editData.name as TranslatedName)
     if (!name?.en) {
       alert("Enter the English name first")
       return
@@ -336,19 +336,38 @@ export function TablesClient({ counts }: Props) {
         })}
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-xs">
-        <Search
-          className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5"
-          style={{ color: "var(--on-surface-variant)" }}
-        />
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder={`Search ${tabDef.label.toLowerCase()}...`}
-          className="pl-8 h-8 text-xs"
-          style={inputStyle}
-        />
+      {/* Search + AI info */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="relative max-w-xs">
+          <Search
+            className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5"
+            style={{ color: "var(--on-surface-variant)" }}
+          />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={`Search ${tabDef.label.toLowerCase()}...`}
+            className="pl-8 h-8 text-xs"
+            style={inputStyle}
+          />
+        </div>
+        <div
+          className="flex items-center gap-2 px-3 py-1.5 rounded-md text-[11px]"
+          style={{
+            background: "rgba(156,39,176,0.06)",
+            border: "1px solid rgba(156,39,176,0.15)",
+            color: "#9C27B0",
+          }}
+        >
+          <Sparkles className="size-3.5 shrink-0" />
+          <span>
+            Click <strong>Edit</strong> on any row to access{" "}
+            {tabDef.isJsonName && "AI Translate, "}
+            {tabDef.hasIcon && "AI Icon Suggest, "}
+            {tabDef.hasLogo && "AI Logo Finder, "}
+            and inline editing
+          </span>
+        </div>
       </div>
 
       {/* Table */}
@@ -845,15 +864,51 @@ export function TablesClient({ counts }: Props) {
                             Saved
                           </span>
                         ) : (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => startEdit(item)}
-                            className="h-7 px-3 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                            style={{ color: "var(--primary)" }}
-                          >
-                            Edit
-                          </Button>
+                          <div className="flex items-center justify-end gap-1">
+                            {tabDef.hasLogo && (
+                              <button
+                                onClick={() => { startEdit(item); setTimeout(() => suggestLogo(item.id, getDisplayName(item)), 100) }}
+                                disabled={aiSuggestingLogo === item.id}
+                                className="flex items-center gap-1 px-1.5 py-1 text-[10px] font-medium rounded shrink-0 transition-colors"
+                                style={{
+                                  background: "rgba(156,39,176,0.08)",
+                                  color: "#9C27B0",
+                                  border: "1px solid rgba(156,39,176,0.2)",
+                                }}
+                                title="Find logo with AI"
+                              >
+                                {aiSuggestingLogo === item.id ? <Loader2 className="size-3 animate-spin" /> : <Image className="size-3" />}
+                              </button>
+                            )}
+                            {tabDef.isJsonName && (
+                              <button
+                                onClick={() => {
+                                  startEdit(item)
+                                  const name = typeof item.name === "object" ? item.name as TranslatedName : null
+                                  if (name) translateName(item.id, name)
+                                }}
+                                disabled={translating}
+                                className="flex items-center gap-1 px-1.5 py-1 text-[10px] font-medium rounded shrink-0 transition-colors"
+                                style={{
+                                  background: "rgba(21,101,192,0.08)",
+                                  color: "var(--primary)",
+                                  border: "1px solid rgba(21,101,192,0.2)",
+                                }}
+                                title="Translate EN → EL + DE"
+                              >
+                                <Languages className="size-3" />
+                              </button>
+                            )}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => startEdit(item)}
+                              className="h-7 px-3 text-xs"
+                              style={{ color: "var(--primary)" }}
+                            >
+                              Edit
+                            </Button>
+                          </div>
                         )}
                       </td>
                     </tr>
