@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { CharterSearchForm } from "./charter-search-form"
@@ -79,6 +79,19 @@ interface HomepageProps {
 }
 
 export function HomepageClient({ hero, destinations, itineraries, yachts, fleetYachts, reviews }: HomepageProps) {
+  const heroVideoRef = useRef<HTMLVideoElement>(null)
+
+  useEffect(() => {
+    // Ensure hero video plays and loops
+    const video = heroVideoRef.current
+    if (video) {
+      video.muted = true
+      video.loop = true
+      video.playsInline = true
+      video.play().catch(() => {})
+    }
+  }, [])
+
   useEffect(() => {
     // Hero text animation
     const tl = gsap.timeline({ defaults: { ease: "power3.out" } })
@@ -110,11 +123,13 @@ export function HomepageClient({ hero, destinations, itineraries, yachts, fleetY
           {/* Video Background */}
           <div className="absolute inset-0 overflow-hidden" suppressHydrationWarning>
             <video
+              ref={heroVideoRef}
               src="https://iycweb.b-cdn.net/1774760973356-lonely-sailboat-sailing-on-blue-water-aerial-view-2026-01-21-13-48-12-utc.mp4"
               autoPlay
               muted
               loop
               playsInline
+              preload="auto"
               className="h-full w-full object-cover"
               suppressHydrationWarning
             />

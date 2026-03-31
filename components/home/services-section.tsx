@@ -251,7 +251,7 @@ export function ServicesSection() {
               </div>
               <div className="w-px" style={{ background: "rgba(132,119,110,0.2)" }} />
               <div className="text-center">
-                <span className="text-2xl font-light text-white">50+</span>
+                <span className="text-2xl font-light text-white">18+</span>
                 <span className="text-[10px] uppercase tracking-wider block" style={{ color: "#84776e" }}>Yachts</span>
               </div>
             </div>
