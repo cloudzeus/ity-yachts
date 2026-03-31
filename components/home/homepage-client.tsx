@@ -6,7 +6,6 @@ import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { CharterSearchForm } from "./charter-search-form"
 import { FleetCarouselSection } from "./fleet-carousel-section"
 import { LocationsSection } from "./locations-section"
-import { DestinationsSection } from "./destinations-section"
 import { ItinerariesSection } from "./itineraries-section"
 import { FeaturedYachtsSection } from "./featured-yachts-section"
 import { TestimonialsSection } from "./testimonials-section"
@@ -195,14 +194,11 @@ export function HomepageClient({ hero, destinations, itineraries, yachts, fleetY
       {/* Locations - Mythic Grid */}
       <LocationsSection destinations={destinations} />
 
-      {/* Destinations - Horizontal Scroll */}
-      <DestinationsSection destinations={destinations} />
-
-{/* Itineraries - Parallax Cards */}
-      <ItinerariesSection itineraries={itineraries} />
-
-      {/* Services + Stats */}
+      {/* Services — Curated Experiences */}
       <ServicesSection />
+
+      {/* Itineraries - Parallax Cards */}
+      <ItinerariesSection itineraries={itineraries} />
 
       {/* Testimonials */}
       <TestimonialsSection reviews={reviews} />
