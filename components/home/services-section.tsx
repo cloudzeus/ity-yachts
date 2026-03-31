@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
@@ -9,8 +9,30 @@ if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger)
 }
 
+interface WeatherData {
+  temp_c: number
+  condition: string
+  high_c: number
+  low_c: number
+  wind_kph: number
+  humidity: number
+  wave_height_m: number | null
+}
+
+function kphToKnots(kph: number) {
+  return Math.round(kph * 0.539957)
+}
+
 export function ServicesSection() {
   const sectionRef = useRef<HTMLDivElement>(null)
+  const [weather, setWeather] = useState<WeatherData | null>(null)
+
+  useEffect(() => {
+    fetch("/api/weather")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => d && setWeather(d))
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     const el = sectionRef.current
@@ -181,10 +203,10 @@ export function ServicesSection() {
                 </svg>
               </div>
               <div className="text-center mb-6">
-                <span className="text-7xl font-extralight text-white tracking-tighter">28°</span>
+                <span className="text-7xl font-extralight text-white tracking-tighter">{weather ? `${weather.temp_c}°` : "—"}</span>
                 <div className="mt-2">
-                  <span className="text-white/80 text-sm">Clear Sky</span>
-                  <span className="text-xs ml-2" style={{ color: "#84776e" }}>H:31° L:24°</span>
+                  <span className="text-white/80 text-sm">{weather?.condition ?? "Loading..."}</span>
+                  <span className="text-xs ml-2" style={{ color: "#84776e" }}>{weather ? `H:${weather.high_c}° L:${weather.low_c}°` : ""}</span>
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-4 py-6" style={{ borderTop: "1px solid rgba(132,119,110,0.2)", borderBottom: "1px solid rgba(132,119,110,0.2)" }}>
@@ -192,14 +214,14 @@ export function ServicesSection() {
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#84776e" strokeWidth="1.5" className="mx-auto mb-2">
                     <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2" />
                   </svg>
-                  <span className="text-white text-sm font-medium">12 kt</span>
+                  <span className="text-white text-sm font-medium">{weather ? `${kphToKnots(weather.wind_kph)} kt` : "—"}</span>
                   <span className="text-[10px] uppercase tracking-wider block mt-1" style={{ color: "rgba(132,119,110,0.7)" }}>Wind</span>
                 </div>
                 <div className="text-center">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#84776e" strokeWidth="1.5" className="mx-auto mb-2">
                     <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
                   </svg>
-                  <span className="text-white text-sm font-medium">65%</span>
+                  <span className="text-white text-sm font-medium">{weather ? `${weather.humidity}%` : "—"}</span>
                   <span className="text-[10px] uppercase tracking-wider block mt-1" style={{ color: "rgba(132,119,110,0.7)" }}>Humidity</span>
                 </div>
                 <div className="text-center">
@@ -207,7 +229,7 @@ export function ServicesSection() {
                     <path d="M2 6s2-2 4-2 4 2 4 2 2-2 4-2 4 2 4 2 2-2 4-2" />
                     <path d="M2 12s2-2 4-2 4 2 4 2 2-2 4-2 4 2 4 2 2-2 4-2" />
                   </svg>
-                  <span className="text-white text-sm font-medium">0.8m</span>
+                  <span className="text-white text-sm font-medium">{weather?.wave_height_m != null ? `${weather.wave_height_m}m` : "—"}</span>
                   <span className="text-[10px] uppercase tracking-wider block mt-1" style={{ color: "rgba(132,119,110,0.7)" }}>Waves</span>
                 </div>
               </div>
