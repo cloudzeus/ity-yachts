@@ -17,32 +17,41 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url)
     const q = searchParams.get("q") || "Lefkada, Greece"
 
-    const url = `${BASE_URL}/marine.json?key=${apiKey}&q=${encodeURIComponent(q)}&days=1`
-    const res = await fetch(url, { next: { revalidate: 1800 } })
+    // Fetch forecast (has current + forecast) and marine (has wave data) in parallel
+    const [forecastRes, marineRes] = await Promise.all([
+      fetch(
+        `${BASE_URL}/forecast.json?key=${apiKey}&q=${encodeURIComponent(q)}&days=1&aqi=no&alerts=no`,
+        { next: { revalidate: 1800 } }
+      ),
+      fetch(
+        `${BASE_URL}/marine.json?key=${apiKey}&q=${encodeURIComponent(q)}&days=1`,
+        { next: { revalidate: 1800 } }
+      ),
+    ])
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}))
+    if (!forecastRes.ok) {
+      const err = await forecastRes.json().catch(() => ({}))
       return NextResponse.json(
-        { error: err?.error?.message || `WeatherAPI error: ${res.status}` },
+        { error: err?.error?.message || `WeatherAPI error: ${forecastRes.status}` },
         { status: 502 }
       )
     }
 
-    const data = await res.json()
+    const forecast = await forecastRes.json()
+    const marine = marineRes.ok ? await marineRes.json() : null
 
-    // Return only what the widget needs
-    const current = data.current
-    const forecastDay = data.forecast?.forecastday?.[0]?.day
-    const marine = data.forecast?.forecastday?.[0]?.hour?.[12] // midday marine data
+    const current = forecast.current
+    const day = forecast.forecast?.forecastday?.[0]?.day
+    const marineHour = marine?.forecast?.forecastday?.[0]?.hour?.[12]
 
     return NextResponse.json({
       temp_c: Math.round(current?.temp_c ?? 0),
       condition: current?.condition?.text ?? "Clear",
-      high_c: Math.round(forecastDay?.maxtemp_c ?? 0),
-      low_c: Math.round(forecastDay?.mintemp_c ?? 0),
+      high_c: Math.round(day?.maxtemp_c ?? 0),
+      low_c: Math.round(day?.mintemp_c ?? 0),
       wind_kph: Math.round(current?.wind_kph ?? 0),
       humidity: current?.humidity ?? 0,
-      wave_height_m: marine?.sig_ht_mt ?? null,
+      wave_height_m: marineHour?.sig_ht_mt ?? null,
     })
   } catch (error) {
     console.error("[GET /api/weather]", error)
