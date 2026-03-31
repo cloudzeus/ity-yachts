@@ -25,23 +25,22 @@ export function FeaturedYachtsSection({ yachts }: { yachts: FeaturedYacht[] }) {
   return (
     <section
       className="relative py-24 md:py-32 px-6 md:px-12 overflow-hidden"
-      style={{ background: "var(--surface-container-lowest)" }}
+      style={{ background: "#070c26" }}
     >
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-16">
           <div>
             <TextReveal>
-              <span className="label-sm mb-3 block" style={{ color: "var(--secondary)" }}>
+              <span className="label-sm mb-3 block" style={{ color: "var(--secondary-light)" }}>
                 Fleet
               </span>
             </TextReveal>
             <TextReveal delay={0.1}>
               <h2
-                className="text-4xl md:text-6xl font-bold"
+                className="text-4xl md:text-6xl font-bold text-white"
                 style={{
                   fontFamily: "var(--font-display)",
-                  color: "var(--primary)",
                   letterSpacing: "-0.02em",
                 }}
               >
@@ -53,7 +52,7 @@ export function FeaturedYachtsSection({ yachts }: { yachts: FeaturedYacht[] }) {
             <Link
               href="/fleet"
               className="inline-flex items-center gap-2 text-sm font-semibold mt-4 md:mt-0 transition-colors hover:gap-3"
-              style={{ color: "var(--secondary)", fontFamily: "var(--font-display)" }}
+              style={{ color: "var(--secondary-light)", fontFamily: "var(--font-display)" }}
             >
               Browse full fleet
               <ArrowRight className="w-4 h-4" />

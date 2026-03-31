@@ -4,6 +4,8 @@ import { useEffect } from "react"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { CharterSearchForm } from "./charter-search-form"
+import { FleetCarouselSection } from "./fleet-carousel-section"
+import { LocationsSection } from "./locations-section"
 import { DestinationsSection } from "./destinations-section"
 import { ItinerariesSection } from "./itineraries-section"
 import { FeaturedYachtsSection } from "./featured-yachts-section"
@@ -27,8 +29,12 @@ interface HomepageProps {
     name: string
     slug: string
     image: string
+    mediaType?: string
     shortDesc: string
     yachtCount?: number
+    latitude?: number | null
+    longitude?: number | null
+    prefecture?: string
   }>
   itineraries: Array<{
     id: string
@@ -52,6 +58,17 @@ interface HomepageProps {
     baseName: string
     priceFrom?: number
   }>
+  fleetYachts?: Array<{
+    id: number
+    name: string
+    slug: string
+    image: string
+    category: string
+    loa: number
+    cabins: number
+    berths: number
+    baseName: string
+  }>
   reviews: Array<{
     id: string
     name: string
@@ -62,7 +79,7 @@ interface HomepageProps {
   }>
 }
 
-export function HomepageClient({ hero, destinations, itineraries, yachts, reviews }: HomepageProps) {
+export function HomepageClient({ hero, destinations, itineraries, yachts, fleetYachts, reviews }: HomepageProps) {
   useEffect(() => {
     // Hero text animation
     const tl = gsap.timeline({ defaults: { ease: "power3.out" } })
@@ -88,11 +105,11 @@ export function HomepageClient({ hero, destinations, itineraries, yachts, review
   return (
     <>
       {/* Hero with search form overlapping bottom edge */}
-      <section className="relative">
+      <section className="relative z-20">
         {/* Video area */}
-        <div className="relative h-[85vh] min-h-[600px] flex flex-col px-6 md:px-12 overflow-hidden">
+        <div className="relative w-full flex flex-col px-6 md:px-12" style={{ aspectRatio: "16/9" }}>
           {/* Video Background */}
-          <div className="absolute inset-0" suppressHydrationWarning>
+          <div className="absolute inset-0 overflow-hidden" suppressHydrationWarning>
             <video
               src="https://iycweb.b-cdn.net/1774760973356-lonely-sailboat-sailing-on-blue-water-aerial-view-2026-01-21-13-48-12-utc.mp4"
               autoPlay
@@ -104,67 +121,84 @@ export function HomepageClient({ hero, destinations, itineraries, yachts, review
             />
           </div>
 
-          {/* Blue-to-transparent gradient overlay */}
+          {/* Light overlay for top portion only */}
           <div
             className="absolute inset-0"
             style={{
               background:
-                "linear-gradient(180deg, rgba(0, 33, 71, 0.7) 0%, rgba(0, 33, 71, 0.3) 30%, rgba(0, 33, 71, 0.08) 55%, transparent 75%, rgba(6, 12, 39, 0.45) 100%)",
+                "linear-gradient(180deg, rgba(0, 33, 71, 0.5) 0%, rgba(0, 33, 71, 0.15) 40%, transparent 60%)",
             }}
           />
 
-          {/* Hero Text — centered */}
-          <div className="relative z-10 w-full max-w-5xl mx-auto text-center flex-1 flex flex-col items-center justify-center">
-            {hero.overSubheading && (
-              <div className="mb-5 inline-block rounded-sm border border-white/20 px-4 py-1.5">
-                <span
-                  className="text-xs font-semibold uppercase tracking-widest text-white/70"
-                  style={{ fontFamily: "var(--font-body)" }}
+          {/* Navy gradient rising from bottom — 100% at bottom, fading to 15% into hero */}
+          <div
+            className="absolute inset-x-0 bottom-0 pointer-events-none"
+            style={{
+              height: "40%",
+              background:
+                "linear-gradient(to top, #070c26 0%, rgba(7,12,38,0.7) 40%, rgba(7,12,38,0.15) 100%)",
+            }}
+          />
+
+          {/* Hero Text — absolute center */}
+          <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
+            <div className="text-center pointer-events-auto">
+              {hero.overSubheading && (
+                <div className="mb-5 inline-block rounded-sm border border-white/20 px-4 py-1.5">
+                  <span
+                    className="text-xs font-semibold uppercase tracking-widest text-white/70"
+                    style={{ fontFamily: "var(--font-body)" }}
+                  >
+                    {hero.overSubheading}
+                  </span>
+                </div>
+              )}
+
+              {hero.heading && (
+                <h1
+                  className="hero-heading mb-5 text-4xl font-bold leading-tight md:text-6xl lg:text-7xl"
+                  style={{
+                    fontFamily: "var(--font-display)",
+                    letterSpacing: "-0.02em",
+                    opacity: 0,
+                    color: "#0055a9",
+                    textShadow: "0 2px 30px rgba(255,255,255,0.15)",
+                  }}
                 >
-                  {hero.overSubheading}
-                </span>
-              </div>
-            )}
+                  {hero.heading}
+                </h1>
+              )}
 
-            {hero.heading && (
-              <h1
-                className="hero-heading mb-5 text-4xl font-bold leading-tight md:text-6xl lg:text-7xl"
-                style={{
-                  fontFamily: "var(--font-display)",
-                  letterSpacing: "-0.02em",
-                  opacity: 0,
-                  color: "#0055a9",
-                  textShadow: "0 2px 30px rgba(255,255,255,0.15)",
-                }}
-              >
-                {hero.heading}
-              </h1>
-            )}
-
-            {hero.subheading && (
-              <p
-                className="hero-subheading mx-auto max-w-xl text-lg text-white/90"
-                style={{ fontFamily: "var(--font-body)", opacity: 0, textShadow: "0 1px 10px rgba(0,0,0,0.2)" }}
-              >
-                {hero.subheading}
-              </p>
-            )}
+              {hero.subheading && (
+                <p
+                  className="hero-subheading mx-auto max-w-xl text-lg text-white/90"
+                  style={{ fontFamily: "var(--font-body)", opacity: 0, textShadow: "0 1px 10px rgba(0,0,0,0.2)" }}
+                >
+                  {hero.subheading}
+                </p>
+              )}
+            </div>
           </div>
 
-          {/* Search Form — pinned to bottom of hero */}
-          <div className="relative z-10 w-full max-w-5xl mx-auto pb-6">
+          {/* Search form pinned to bottom — z-40 so dropdowns appear above next section */}
+          <div className="relative z-40 w-full max-w-5xl mx-auto mt-auto mb-8 px-0">
             <CharterSearchForm />
           </div>
         </div>
       </section>
 
+      {/* Fleet Carousel */}
+      {fleetYachts && fleetYachts.length > 0 && (
+        <FleetCarouselSection yachts={fleetYachts} />
+      )}
+
+      {/* Locations - Mythic Grid */}
+      <LocationsSection destinations={destinations} />
+
       {/* Destinations - Horizontal Scroll */}
       <DestinationsSection destinations={destinations} />
 
-      {/* Featured Yachts - Mouse Scale */}
-      <FeaturedYachtsSection yachts={yachts} />
-
-      {/* Itineraries - Parallax Cards */}
+{/* Itineraries - Parallax Cards */}
       <ItinerariesSection itineraries={itineraries} />
 
       {/* Services + Stats */}

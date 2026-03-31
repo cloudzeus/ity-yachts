@@ -45,22 +45,22 @@ const STATS = [
 
 export function ServicesSection() {
   return (
-    <section className="relative py-24 md:py-32 px-6 md:px-12" style={{ background: "var(--surface)" }}>
+    <section className="relative py-24 md:py-32 px-6 md:px-12" style={{ background: "#070c26" }}>
       <div className="max-w-7xl mx-auto">
         {/* Stats Bar */}
         <div
           className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-24 pb-24"
-          style={{ borderBottom: "1px solid var(--outline-variant)" }}
+          style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}
         >
           {STATS.map((stat, i) => (
             <div key={i} className="text-center">
               <div
-                className="text-4xl md:text-5xl font-bold mb-2"
-                style={{ fontFamily: "var(--font-display)", color: "var(--primary)" }}
+                className="text-4xl md:text-5xl font-bold mb-2 text-white"
+                style={{ fontFamily: "var(--font-display)" }}
               >
                 <AnimatedCounter value={stat.value} suffix={stat.suffix} />
               </div>
-              <div className="text-sm" style={{ color: "var(--on-surface-variant)" }}>
+              <div className="text-sm text-white/50">
                 {stat.label}
               </div>
             </div>
@@ -70,16 +70,15 @@ export function ServicesSection() {
         {/* Header */}
         <div className="mb-16">
           <TextReveal>
-            <span className="label-sm mb-3 block" style={{ color: "var(--secondary)" }}>
+            <span className="label-sm mb-3 block" style={{ color: "var(--secondary-light)" }}>
               Services
             </span>
           </TextReveal>
           <TextReveal delay={0.1}>
             <h2
-              className="text-4xl md:text-6xl font-bold max-w-3xl"
+              className="text-4xl md:text-6xl font-bold max-w-3xl text-white"
               style={{
                 fontFamily: "var(--font-display)",
-                color: "var(--primary)",
                 letterSpacing: "-0.02em",
               }}
             >
@@ -97,23 +96,23 @@ export function ServicesSection() {
                 key={i}
                 className="group p-8 rounded-md transition-all duration-300 hover:shadow-lg"
                 style={{
-                  background: "var(--surface-container-lowest)",
-                  border: "1px solid var(--outline-variant)",
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(255,255,255,0.08)",
                 }}
               >
                 <div
                   className="w-12 h-12 rounded-md flex items-center justify-center mb-5 transition-colors"
-                  style={{ background: "rgba(0, 99, 153, 0.08)" }}
+                  style={{ background: "rgba(0, 119, 182, 0.15)" }}
                 >
-                  <Icon className="w-6 h-6" style={{ color: "var(--secondary)" }} />
+                  <Icon className="w-6 h-6" style={{ color: "var(--secondary-light)" }} />
                 </div>
                 <h3
-                  className="text-lg font-semibold mb-2"
-                  style={{ fontFamily: "var(--font-display)", color: "var(--primary)" }}
+                  className="text-lg font-semibold mb-2 text-white"
+                  style={{ fontFamily: "var(--font-display)" }}
                 >
                   {service.title}
                 </h3>
-                <p className="text-sm leading-relaxed" style={{ color: "var(--on-surface-variant)" }}>
+                <p className="text-sm leading-relaxed text-white/50">
                   {service.desc}
                 </p>
               </div>

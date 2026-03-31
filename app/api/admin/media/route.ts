@@ -3,6 +3,21 @@ import { getSession } from "@/lib/auth-session"
 import { listDirectory, deleteObject } from "@/lib/bunny-cdn"
 import { NextRequest, NextResponse } from "next/server"
 
+const MIME_MAP: Record<string, string> = {
+  webp: "image/webp", jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png",
+  gif: "image/gif", svg: "image/svg+xml", bmp: "image/bmp", ico: "image/x-icon",
+  mp4: "video/mp4", mov: "video/quicktime", avi: "video/x-msvideo", webm: "video/webm", mkv: "video/x-matroska",
+  pdf: "application/pdf", doc: "application/msword", docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  xls: "application/vnd.ms-excel", xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  zip: "application/zip", rar: "application/x-rar-compressed",
+  txt: "text/plain", csv: "text/csv", json: "application/json",
+}
+
+function guessMimeType(filename: string): string {
+  const ext = filename.split(".").pop()?.toLowerCase() ?? ""
+  return MIME_MAP[ext] ?? "application/octet-stream"
+}
+
 export async function GET(req: NextRequest) {
   try {
     const session = await getSession()
@@ -24,8 +39,9 @@ export async function GET(req: NextRequest) {
 
     const folders = bunnyItems.filter((f) => {
       if (!f.IsDirectory) return false
-      if (seenFolders.has(f.Path)) return false
-      seenFolders.add(f.Path)
+      const key = `${f.Path}${f.ObjectName}`
+      if (seenFolders.has(key)) return false
+      seenFolders.add(key)
       return true
     })
 
@@ -57,7 +73,7 @@ export async function GET(req: NextRequest) {
         name: f.ObjectName,
         path: folder ? `${folder}/${f.ObjectName}` : f.ObjectName,
         url,
-        mimeType: db?.mimeType ?? "image/webp",
+        mimeType: db?.mimeType ?? guessMimeType(f.ObjectName),
         size: db?.size ?? f.Length,
         width: db?.width ?? null,
         height: db?.height ?? null,

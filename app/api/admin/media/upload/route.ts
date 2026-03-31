@@ -1,7 +1,7 @@
 import { db } from "@/lib/db"
 import { getSession } from "@/lib/auth-session"
 import { uploadToBunnyCDN, createFolder } from "@/lib/bunny-cdn"
-import { processImage, processVideo, isImage, isVideo, slugify } from "@/lib/media-processor"
+import { processImage, processVideo, isImage, isSvg, isVideo, slugify } from "@/lib/media-processor"
 import { NextRequest, NextResponse } from "next/server"
 
 export const maxDuration = 60
@@ -30,10 +30,6 @@ export async function POST(req: NextRequest) {
     const originalMime = file.type || "application/octet-stream"
     const originalName = file.name
 
-    if (!isImage(originalMime) && !isVideo(originalMime)) {
-      return NextResponse.json({ error: "Only images and videos are allowed" }, { status: 400 })
-    }
-
     const arrayBuffer = await file.arrayBuffer()
     let buffer = Buffer.from(arrayBuffer)
     let mimeType = originalMime
@@ -42,9 +38,14 @@ export async function POST(req: NextRequest) {
 
     // Strip original extension from name for slug base
     const baseName = originalName.replace(/\.[^.]+$/, "")
+    const ext = originalName.split(".").pop() ?? "bin"
     let fileName: string
 
-    if (isImage(originalMime)) {
+    if (isSvg(originalMime)) {
+      // SVGs are vectors — keep as-is, no conversion
+      mimeType = "image/svg+xml"
+      fileName = `${Date.now()}-${slugify(baseName)}.svg`
+    } else if (isImage(originalMime)) {
       const processed = await processImage(buffer)
       // @ts-ignore
       buffer = processed.buffer
@@ -59,7 +60,7 @@ export async function POST(req: NextRequest) {
       mimeType = processed.mimeType
       fileName = `${Date.now()}-${slugify(baseName)}.mp4`
     } else {
-      const ext = originalName.split(".").pop() ?? "mp4"
+      // PDFs, documents, and other files — upload as-is
       fileName = `${Date.now()}-${slugify(baseName)}.${ext}`
     }
 

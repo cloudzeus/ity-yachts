@@ -23,12 +23,12 @@ export default async function Home() {
       take: 6,
     }),
     db.nausysYacht.findMany({
-      take: 6,
+      take: 10,
       orderBy: { updatedAt: "desc" },
       include: {
         category: true,
         model: true,
-        base: true,
+        base: { include: { location: true } },
       },
     }),
     db.review.findMany({
@@ -55,12 +55,17 @@ export default async function Home() {
   const destinationData = locations.map((loc) => {
     const nameT = loc.nameTranslations as Record<string, string>
     const descT = loc.shortDesc as Record<string, string>
+    const prefT = loc.prefecture as Record<string, string>
     return {
       id: loc.id,
       name: nameT?.en || loc.name,
       slug: loc.slug,
       image: loc.defaultMedia || "",
+      mediaType: loc.defaultMediaType || "image",
       shortDesc: descT?.en || "",
+      latitude: loc.latitude,
+      longitude: loc.longitude,
+      prefecture: prefT?.en || "",
     }
   })
 
@@ -87,6 +92,9 @@ export default async function Home() {
     const websiteImgs = y.websiteImages as Array<{ url: string }> | null
     const picturesArr = y.picturesUrl as string[] | null
     const image = websiteImgs?.[0]?.url || y.mainPictureUrl || picturesArr?.[0] || ""
+    const locationName = y.base?.location
+      ? (y.base.location.name as Record<string, string>)?.en || ""
+      : ""
     return {
       id: y.id,
       name: y.name || y.model?.name || "Yacht",
@@ -96,8 +104,10 @@ export default async function Home() {
       loa: y.loa || 0,
       cabins: y.cabins || 0,
       berths: y.berthsTotal || y.maxPersons || 0,
-      baseName: y.base?.id ? String(y.base.id) : "",
+      baseName: locationName || (y.base?.id ? String(y.base.id) : ""),
       priceFrom: 0,
+      year: y.buildYear || undefined,
+      rating: 4.8,
     }
   })
 
@@ -129,6 +139,7 @@ export default async function Home() {
           destinations={destinationData}
           itineraries={itineraryData}
           yachts={yachtData}
+          fleetYachts={yachtData}
           reviews={reviewData}
         />
       </div>

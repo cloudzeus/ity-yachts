@@ -5,7 +5,7 @@ import Image from "next/image"
 import {
   LayoutGrid, List, FolderPlus, Upload, ChevronRight,
   Folder, Trash2, MoreHorizontal, Play, Image as ImageIcon,
-  X, Check, Home,
+  X, Check, Home, FileText, Film,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -66,6 +66,7 @@ export function MediaClient() {
   const [newFolderName, setNewFolderName] = useState("")
   const [deleteTarget, setDeleteTarget] = useState<{ type: "file" | "folder"; path: string; name: string } | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [creatingFolder, setCreatingFolder] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const fetchMedia = useCallback(async (f: string, p: number = 1) => {
@@ -134,15 +135,27 @@ export function MediaClient() {
 
   async function handleCreateFolder() {
     if (!newFolderName.trim()) return
+    setCreatingFolder(true)
     const path = folder ? `${folder}/${newFolderName.trim()}` : newFolderName.trim()
-    await fetch("/api/admin/media/folder", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ folderPath: path }),
-    })
-    setCreateFolderOpen(false)
-    setNewFolderName("")
-    await fetchMedia(folder)
+    try {
+      const res = await fetch("/api/admin/media/folder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ folderPath: path }),
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        alert(`Failed to create folder: ${err.error}`)
+        return
+      }
+      setCreateFolderOpen(false)
+      setNewFolderName("")
+      await fetchMedia(folder)
+    } catch (e) {
+      alert("Failed to create folder")
+    } finally {
+      setCreatingFolder(false)
+    }
   }
 
   async function handleDelete() {
@@ -224,7 +237,7 @@ export function MediaClient() {
             onClick={() => fileInputRef.current?.click()}>
             <Upload className="size-4" /> Upload
           </Button>
-          <input ref={fileInputRef} type="file" multiple accept="image/*,video/*" className="hidden"
+          <input ref={fileInputRef} type="file" multiple className="hidden"
             onChange={(e) => { if (e.target.files) uploadFiles(Array.from(e.target.files)) }} />
           {/* View toggle */}
           <div className="flex rounded overflow-hidden" style={{ border: "1px solid var(--outline-variant)" }}>
@@ -294,7 +307,8 @@ export function MediaClient() {
               onSelectAll={toggleSelectAll}
               onFolderClick={setFolder}
               onDelete={(f) => setDeleteTarget({ type: "file", path: f.path, name: f.name })}
-              onDeleteFolder={(f) => setDeleteTarget({ type: "folder", path: f.Path.replace(/^\//, ""), name: f.ObjectName })}
+              onDeleteFolder={(f) => setDeleteTarget({ type: "folder", path: folder ? `${folder}/${f.ObjectName}` : f.ObjectName, name: f.ObjectName })}
+              currentFolder={folder}
             />
           ) : (
             <ListView
@@ -305,7 +319,8 @@ export function MediaClient() {
               onSelectAll={toggleSelectAll}
               onFolderClick={setFolder}
               onDelete={(f) => setDeleteTarget({ type: "file", path: f.path, name: f.name })}
-              onDeleteFolder={(f) => setDeleteTarget({ type: "folder", path: f.Path.replace(/^\//, ""), name: f.ObjectName })}
+              onDeleteFolder={(f) => setDeleteTarget({ type: "folder", path: folder ? `${folder}/${f.ObjectName}` : f.ObjectName, name: f.ObjectName })}
+              currentFolder={folder}
             />
           )
         )}
@@ -378,21 +393,24 @@ export function MediaClient() {
             <DialogTitle>Create Folder</DialogTitle>
             <DialogDescription>Enter a name for the new folder.</DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            <Label htmlFor="folderName" className="text-xs mb-2 block">Folder Name</Label>
-            <Input
-              id="folderName"
-              value={newFolderName}
-              onChange={(e) => setNewFolderName(e.target.value)}
-              placeholder="e.g. yachts-2026"
-              autoFocus
-              onKeyDown={(e) => e.key === "Enter" && handleCreateFolder()}
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateFolderOpen(false)}>Cancel</Button>
-            <Button onClick={handleCreateFolder} style={{ background: "var(--gradient-ocean)", color: "white" }}>Create Folder</Button>
-          </DialogFooter>
+          <form onSubmit={(e) => { e.preventDefault(); handleCreateFolder() }}>
+            <div className="py-4">
+              <Label htmlFor="folderName" className="text-xs mb-2 block">Folder Name</Label>
+              <Input
+                id="folderName"
+                value={newFolderName}
+                onChange={(e) => setNewFolderName(e.target.value)}
+                placeholder="e.g. yachts-2026"
+                autoFocus
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setCreateFolderOpen(false)} disabled={creatingFolder}>Cancel</Button>
+              <Button type="submit" disabled={creatingFolder} style={{ background: "var(--gradient-ocean)", color: "white" }}>
+                {creatingFolder ? "Creating..." : "Create Folder"}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
 
@@ -419,7 +437,7 @@ export function MediaClient() {
   )
 }
 
-function GridView({ files, folders, selected, onToggle, onSelectAll, onFolderClick, onDelete, onDeleteFolder }: {
+function GridView({ files, folders, selected, onToggle, onSelectAll, onFolderClick, onDelete, onDeleteFolder, currentFolder }: {
   files: MediaFile[]
   folders: BunnyFolder[]
   selected: Set<string>
@@ -428,18 +446,19 @@ function GridView({ files, folders, selected, onToggle, onSelectAll, onFolderCli
   onFolderClick: (path: string) => void
   onDelete: (file: MediaFile) => void
   onDeleteFolder: (folder: BunnyFolder) => void
+  currentFolder: string
 }) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
       {/* Folders first */}
       {folders.map((f) => {
-        const path = f.Path.replace(/^\//, "")
+        const folderPath = currentFolder ? `${currentFolder}/${f.ObjectName}` : f.ObjectName
         return (
           <div
-            key={`folder-${path}`}
+            key={`folder-${folderPath}`}
             className="group relative flex flex-col items-center justify-center p-4 rounded-md cursor-pointer transition-all hover:bg-black/5"
             style={{ background: "var(--surface-container-lowest)", boxShadow: "var(--shadow-ambient)" }}
-            onClick={() => onFolderClick(path)}
+            onClick={() => onFolderClick(folderPath)}
           >
             <div className="size-12 flex items-center justify-center mb-2">
               <Folder className="size-10 text-secondary opacity-60" fill="currentColor" />
@@ -460,6 +479,7 @@ function GridView({ files, folders, selected, onToggle, onSelectAll, onFolderCli
       {/* Files */}
       {files.map((file) => {
         const isImg = file.mimeType.startsWith("image/")
+        const isVid = file.mimeType.startsWith("video/")
         const isSelected = selected.has(file.path)
         return (
           <div
@@ -475,7 +495,7 @@ function GridView({ files, folders, selected, onToggle, onSelectAll, onFolderCli
             <div className="aspect-square relative overflow-hidden flex items-center justify-center" style={{ background: "var(--surface-container-high)", position: "relative" }}>
               {isImg ? (
                 <Image src={file.url} alt={file.name} fill className="object-contain" sizes="120px" />
-              ) : (
+              ) : isVid ? (
                 <div className="relative w-full h-full">
                   <video
                     src={file.url}
@@ -490,6 +510,11 @@ function GridView({ files, folders, selected, onToggle, onSelectAll, onFolderCli
                       <Play className="size-4 text-white ml-0.5" fill="white" />
                     </div>
                   </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center gap-1.5">
+                  <FileText className="size-10 opacity-30" />
+                  <span className="text-[9px] font-medium uppercase opacity-40">{file.name.split(".").pop()}</span>
                 </div>
               )}
               {/* Selection Overlay */}
@@ -527,7 +552,7 @@ function GridView({ files, folders, selected, onToggle, onSelectAll, onFolderCli
   )
 }
 
-function ListView({ files, folders, selected, onToggle, onSelectAll, onFolderClick, onDelete, onDeleteFolder }: {
+function ListView({ files, folders, selected, onToggle, onSelectAll, onFolderClick, onDelete, onDeleteFolder, currentFolder }: {
   files: MediaFile[]
   folders: BunnyFolder[]
   selected: Set<string>
@@ -536,6 +561,7 @@ function ListView({ files, folders, selected, onToggle, onSelectAll, onFolderCli
   onFolderClick: (path: string) => void
   onDelete: (file: MediaFile) => void
   onDeleteFolder: (folder: BunnyFolder) => void
+  currentFolder: string
 }) {
   return (
     <div className="rounded-md overflow-hidden" style={{ border: "1px solid var(--outline-variant)", background: "var(--surface-container-lowest)" }}>
@@ -562,9 +588,9 @@ function ListView({ files, folders, selected, onToggle, onSelectAll, onFolderCli
         <tbody className="divide-y" style={{ borderColor: "var(--outline-variant)" }}>
           {/* Folders */}
           {folders.map((f) => {
-            const path = f.Path.replace(/^\//, "")
+            const folderPath = currentFolder ? `${currentFolder}/${f.ObjectName}` : f.ObjectName
             return (
-              <tr key={`folder-${path}`} className="hover:bg-black/[0.02] transition-colors cursor-pointer" onClick={() => onFolderClick(path)}>
+              <tr key={`folder-${folderPath}`} className="hover:bg-black/[0.02] transition-colors cursor-pointer" onClick={() => onFolderClick(folderPath)}>
                 <td className="px-4 py-2.5"></td>
                 <td className="px-4 py-2.5">
                   <div className="flex items-center gap-2.5">
@@ -589,6 +615,7 @@ function ListView({ files, folders, selected, onToggle, onSelectAll, onFolderCli
           {/* Files */}
           {files.map((file) => {
             const isImg = file.mimeType.startsWith("image/")
+            const isVid = file.mimeType.startsWith("video/")
             const isSelected = selected.has(file.path)
             return (
               <tr key={`file-${file.path}`}
@@ -604,11 +631,13 @@ function ListView({ files, folders, selected, onToggle, onSelectAll, onFolderCli
                       style={{ background: "var(--surface-container-high)", borderRadius: "var(--radius-xs)" }}>
                       {isImg ? (
                         <Image src={file.url} alt={file.name} fill className="object-contain" sizes="32px" />
-                      ) : (
+                      ) : isVid ? (
                         <>
                           <video src={file.url} muted preload="metadata" className="absolute inset-0 w-full h-full object-cover" />
                           <Play className="size-3 text-white relative z-10 drop-shadow-md" fill="white" />
                         </>
+                      ) : (
+                        <FileText className="size-4 opacity-40" />
                       )}
                     </div>
                     <span className="text-xs font-medium truncate max-w-[200px]" style={{ color: "var(--on-surface)" }}>{file.name}</span>

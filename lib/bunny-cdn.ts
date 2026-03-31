@@ -68,6 +68,7 @@ export async function listDirectory(folder: string): Promise<BunnyFile[]> {
       AccessKey: storagePassword(),
       accept: "application/json",
     },
+    cache: "no-store",
   })
 
   if (!res.ok) {
@@ -81,20 +82,19 @@ export async function listDirectory(folder: string): Promise<BunnyFile[]> {
 /** Create a folder (Bunny CDN uses trailing-slash PUT) */
 export async function createFolder(folderPath: string): Promise<boolean> {
   const zone = storageZone()
+  const pw = storagePassword()
   // Ensure trailing slash — required by Bunny CDN to create a directory
-  const path = folderPath.endsWith("/") ? folderPath : `${folderPath}/`
-
-  const res = await fetch(`${BUNNY_STORAGE_URL}/${zone}/${path}`, {
+  const dirPath = folderPath.endsWith("/") ? folderPath : `${folderPath}/`
+  const res = await fetch(`${BUNNY_STORAGE_URL}/${zone}/${dirPath}`, {
     method: "PUT",
     headers: {
-      AccessKey: storagePassword(),
-      "Content-Length": "0",
+      AccessKey: pw,
     },
-    body: "",
   })
 
   if (!res.ok) {
-    console.error("[bunny] createFolder failed:", res.status, await res.text())
+    const body = await res.text()
+    console.error("[bunny] createFolder failed:", res.status, body)
   }
   return res.ok
 }

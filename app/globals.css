@@ -104,8 +104,12 @@ body {
 h1, h2, h3, h4,
 .font-display {
   font-family: var(--font-display);
-  color: var(--primary);
   letter-spacing: -0.01em;
+}
+
+/* Default heading color for light surfaces only */
+:where(h1, h2, h3, h4, .font-display) {
+  color: var(--primary);
 }
 
 /* Label caps utility */

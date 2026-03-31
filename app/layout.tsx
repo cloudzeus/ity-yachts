@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { Manrope, Inter } from "next/font/google"
 import { TranslationProvider } from "@/lib/use-translations"
+import { SmoothScroll } from "@/components/smooth-scroll"
 import "./globals.css"
 
 const manrope = Manrope({
@@ -26,6 +27,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${manrope.variable} ${inter.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
+        <SmoothScroll />
         <TranslationProvider>{children}</TranslationProvider>
       </body>
     </html>

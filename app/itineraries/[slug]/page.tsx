@@ -1,6 +1,8 @@
 import { db } from "@/lib/db"
 import { notFound } from "next/navigation"
 import { Metadata } from "next"
+import { SiteHeader } from "@/components/site-header"
+import { SiteFooter } from "@/components/site-footer"
 
 export const dynamic = "force-dynamic"
 
@@ -38,7 +40,13 @@ export default async function ItineraryPage({ params }: { params: Promise<{ slug
   const places = itinerary.places as Array<{ name: string; latitude: number; longitude: number }>
 
   return (
-    <main className="min-h-screen" style={{ background: "var(--surface)" }}>
+    <main>
+      <div
+        className="relative z-10 min-h-screen"
+        style={{ background: "#060c27", clipPath: "polygon(0% 0, 100% 0%, 100% 100%, 0 100%)" }}
+      >
+        <SiteHeader />
+
       {/* Hero */}
       <section className="relative h-[50vh] min-h-[400px]">
         {itinerary.defaultMedia ? (
@@ -74,7 +82,7 @@ export default async function ItineraryPage({ params }: { params: Promise<{ slug
       {/* Overview */}
       <section className="max-w-4xl mx-auto px-6 py-16">
         {shortDesc.en && (
-          <p className="text-xl leading-relaxed mb-8" style={{ color: "var(--on-surface-variant)" }}>
+          <p className="text-xl leading-relaxed mb-8 text-white/60">
             {shortDesc.en}
           </p>
         )}
@@ -86,7 +94,7 @@ export default async function ItineraryPage({ params }: { params: Promise<{ slug
               <span
                 key={i}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm"
-                style={{ background: "rgba(0,99,153,0.08)", color: "var(--secondary)", border: "1px solid rgba(0,99,153,0.15)" }}
+                style={{ background: "rgba(131,119,109,0.15)", color: "#83776d", border: "1px solid rgba(131,119,109,0.25)" }}
               >
                 <svg className="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
                 {p.name}
@@ -99,7 +107,7 @@ export default async function ItineraryPage({ params }: { params: Promise<{ slug
       {/* Day-by-day itinerary */}
       {itinerary.days.length > 0 && (
         <section className="max-w-4xl mx-auto px-6 pb-16">
-          <h2 className="text-2xl font-bold mb-8" style={{ fontFamily: "var(--font-display)", color: "var(--primary)" }}>
+          <h2 className="text-2xl font-bold mb-8 text-white" style={{ fontFamily: "var(--font-display)" }}>
             Day-by-Day Itinerary
           </h2>
 
@@ -111,25 +119,25 @@ export default async function ItineraryPage({ params }: { params: Promise<{ slug
                 <div key={day.id} className="relative">
                   {/* Timeline line */}
                   {dayIdx < itinerary.days.length - 1 && (
-                    <div className="absolute left-5 top-12 bottom-0 w-px" style={{ background: "var(--outline-variant)" }} />
+                    <div className="absolute left-5 top-12 bottom-0 w-px" style={{ background: "rgba(255,255,255,0.1)" }} />
                   )}
 
                   {/* Day header */}
                   <div className="flex items-center gap-4 mb-6">
                     <div
                       className="flex items-center justify-center size-10 rounded-full shrink-0 text-sm font-bold text-white"
-                      style={{ background: "var(--gradient-ocean)" }}
+                      style={{ background: "linear-gradient(135deg, #83776d, #a09389)" }}
                     >
                       {day.dayNumber}
                     </div>
-                    <h3 className="text-xl font-semibold" style={{ fontFamily: "var(--font-display)", color: "var(--on-surface)" }}>
+                    <h3 className="text-xl font-semibold text-white" style={{ fontFamily: "var(--font-display)" }}>
                       Day {day.dayNumber}
                     </h3>
                   </div>
 
                   {/* Day description */}
                   {dayDesc.en && (
-                    <p className="ml-14 text-sm leading-relaxed mb-6" style={{ color: "var(--on-surface-variant)" }}>
+                    <p className="ml-14 text-sm leading-relaxed mb-6 text-white/50">
                       {dayDesc.en}
                     </p>
                   )}
@@ -144,12 +152,12 @@ export default async function ItineraryPage({ params }: { params: Promise<{ slug
                       return (
                         <div key={leg.id}>
                           {legName.en && (
-                            <h4 className="text-lg font-semibold mb-2" style={{ color: "var(--primary)" }}>
+                            <h4 className="text-lg font-semibold mb-2 text-[#83776d]">
                               {legName.en}
                             </h4>
                           )}
                           {legDesc.en && (
-                            <p className="text-sm leading-relaxed mb-4" style={{ color: "var(--on-surface-variant)" }}>
+                            <p className="text-sm leading-relaxed mb-4 text-white/50">
                               {legDesc.en}
                             </p>
                           )}
@@ -176,7 +184,7 @@ export default async function ItineraryPage({ params }: { params: Promise<{ slug
       {/* Map */}
       {itinerary.startLatitude && itinerary.startLongitude && (
         <section className="max-w-4xl mx-auto px-6 pb-16">
-          <div className="rounded-lg overflow-hidden" style={{ border: "1px solid var(--outline-variant)" }}>
+          <div className="rounded-lg overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.1)" }}>
             <iframe
               src={`https://www.openstreetmap.org/export/embed.html?bbox=${itinerary.startLongitude - 0.5}%2C${itinerary.startLatitude - 0.3}%2C${itinerary.startLongitude + 0.5}%2C${itinerary.startLatitude + 0.3}&layer=mapnik&marker=${itinerary.startLatitude}%2C${itinerary.startLongitude}`}
               className="w-full h-64 md:h-96 border-0"
@@ -185,6 +193,9 @@ export default async function ItineraryPage({ params }: { params: Promise<{ slug
           </div>
         </section>
       )}
+      </div>
+
+      <SiteFooter />
     </main>
   )
 }

@@ -32,21 +32,20 @@ export function ItinerariesSection({ itineraries }: { itineraries: ItineraryItem
     <section
       ref={sectionRef}
       className="relative py-24 md:py-32 px-6 md:px-12 overflow-hidden"
-      style={{ background: "var(--surface)" }}
+      style={{ background: "#070c26" }}
     >
       {/* Section Header */}
       <div className="max-w-7xl mx-auto mb-16">
         <TextReveal>
-          <span className="label-sm mb-3 block" style={{ color: "var(--secondary)" }}>
+          <span className="label-sm mb-3 block" style={{ color: "var(--secondary-light)" }}>
             Itineraries
           </span>
         </TextReveal>
         <TextReveal delay={0.1}>
           <h2
-            className="text-4xl md:text-6xl font-bold max-w-3xl"
+            className="text-4xl md:text-6xl font-bold max-w-3xl text-white"
             style={{
               fontFamily: "var(--font-display)",
-              color: "var(--primary)",
               letterSpacing: "-0.02em",
             }}
           >
@@ -55,8 +54,7 @@ export function ItinerariesSection({ itineraries }: { itineraries: ItineraryItem
         </TextReveal>
         <TextReveal delay={0.2}>
           <p
-            className="text-lg mt-4 max-w-xl"
-            style={{ color: "var(--on-surface-variant)" }}
+            className="text-lg mt-4 max-w-xl text-white/50"
           >
             Hand-crafted itineraries through the most captivating waters, designed by our expert skippers.
           </p>
@@ -76,7 +74,7 @@ export function ItinerariesSection({ itineraries }: { itineraries: ItineraryItem
           <Link
             href="/itineraries"
             className="inline-flex items-center gap-2 text-sm font-semibold transition-colors hover:gap-3"
-            style={{ color: "var(--secondary)", fontFamily: "var(--font-display)" }}
+            style={{ color: "var(--secondary-light)", fontFamily: "var(--font-display)" }}
           >
             View all itineraries
             <ArrowRight className="w-4 h-4" />
@@ -151,10 +149,9 @@ function ItineraryCard({ item, index }: { item: ItineraryItem; index: number }) 
         {/* Content */}
         <div className="md:w-2/5 flex flex-col justify-center py-4">
           <h3
-            className="text-2xl md:text-3xl font-bold mb-4 group-hover:text-[#006399] transition-colors"
+            className="text-2xl md:text-3xl font-bold mb-4 text-white group-hover:text-[#0077B6] transition-colors"
             style={{
               fontFamily: "var(--font-display)",
-              color: "var(--primary)",
               letterSpacing: "-0.01em",
             }}
           >
@@ -165,24 +162,24 @@ function ItineraryCard({ item, index }: { item: ItineraryItem; index: number }) 
           <div className="flex flex-wrap gap-4 mb-4">
             {item.startFrom && (
               <div className="flex items-center gap-1.5">
-                <Compass className="w-4 h-4" style={{ color: "var(--secondary)" }} />
-                <span className="text-sm" style={{ color: "var(--on-surface-variant)" }}>
+                <Compass className="w-4 h-4" style={{ color: "var(--secondary-light)" }} />
+                <span className="text-sm text-white/50">
                   From {item.startFrom}
                 </span>
               </div>
             )}
             {item.totalDays > 0 && (
               <div className="flex items-center gap-1.5">
-                <Clock className="w-4 h-4" style={{ color: "var(--secondary)" }} />
-                <span className="text-sm" style={{ color: "var(--on-surface-variant)" }}>
+                <Clock className="w-4 h-4" style={{ color: "var(--secondary-light)" }} />
+                <span className="text-sm text-white/50">
                   {item.totalDays} days
                 </span>
               </div>
             )}
             {item.totalMiles > 0 && (
               <div className="flex items-center gap-1.5">
-                <Navigation className="w-4 h-4" style={{ color: "var(--secondary)" }} />
-                <span className="text-sm" style={{ color: "var(--on-surface-variant)" }}>
+                <Navigation className="w-4 h-4" style={{ color: "var(--secondary-light)" }} />
+                <span className="text-sm text-white/50">
                   {item.totalMiles} nm
                 </span>
               </div>
@@ -190,15 +187,14 @@ function ItineraryCard({ item, index }: { item: ItineraryItem; index: number }) 
           </div>
 
           <p
-            className="text-sm line-clamp-3 mb-6"
-            style={{ color: "var(--on-surface-variant)" }}
+            className="text-sm line-clamp-3 mb-6 text-white/50"
           >
             {item.shortDesc}
           </p>
 
           <span
             className="inline-flex items-center gap-2 text-sm font-semibold group-hover:gap-3 transition-all"
-            style={{ color: "var(--secondary)", fontFamily: "var(--font-display)" }}
+            style={{ color: "var(--secondary-light)", fontFamily: "var(--font-display)" }}
           >
             View itinerary
             <ArrowRight className="w-4 h-4" />

@@ -72,6 +72,10 @@ export function isImage(mimeType: string): boolean {
   return mimeType.startsWith("image/")
 }
 
+export function isSvg(mimeType: string): boolean {
+  return mimeType === "image/svg+xml"
+}
+
 export function isVideo(mimeType: string): boolean {
   return mimeType.startsWith("video/")
 }
