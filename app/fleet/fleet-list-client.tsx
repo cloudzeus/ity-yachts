@@ -571,12 +571,12 @@ function YachtGridCard({ yacht }: { yacht: YachtCard }) {
             style={{ background: "linear-gradient(135deg, #0077B6, #005a8c)" }}
           />
         )}
-        {/* Gradient overlay */}
+        {/* Subtle gradient for text readability */}
         <div
-          className="absolute inset-0"
+          className="absolute inset-x-0 bottom-0 h-1/2"
           style={{
             background:
-              "linear-gradient(to top, rgba(7,12,38,0.6) 0%, rgba(7,12,38,0.05) 45%, transparent 65%)",
+              "linear-gradient(to top, rgba(0,0,0,0.45) 0%, transparent 100%)",
           }}
         />
 
@@ -603,7 +603,7 @@ function YachtGridCard({ yacht }: { yacht: YachtCard }) {
         </button>
 
         {/* Bottom specs on image */}
-        <div className="absolute inset-x-0 bottom-0 p-4 z-10">
+        <div className="absolute inset-x-0 bottom-0 p-4 z-10" style={{ textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
           <h3
             className="text-lg font-bold text-white mb-2 tracking-tight"
             style={{ fontFamily: "var(--font-display)" }}
