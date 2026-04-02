@@ -188,19 +188,20 @@ export function PageComponentsPanel({ pageId }: PageComponentsPanelProps) {
                     <span className="flex-1 font-medium truncate" style={{ color: "var(--on-surface)" }}>
                       {comp.name || def?.label || comp.type}
                     </span>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-6 w-6 p-0 shrink-0"
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      className="inline-flex items-center justify-center h-6 w-6 shrink-0 rounded hover:bg-black/5 transition-colors cursor-pointer"
                       style={{ color: "var(--primary)" }}
                       onClick={(e) => {
                         e.stopPropagation()
                         openPreview(comp)
                       }}
+                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); openPreview(comp) } }}
                       title="Preview component"
                     >
                       <Eye className="size-3.5" />
-                    </Button>
+                    </span>
                     <span
                       className="text-[10px] px-1.5 py-0.5 rounded"
                       style={{

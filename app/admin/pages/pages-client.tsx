@@ -24,6 +24,7 @@ type Page = {
   status: string
   isHomePage: boolean
   showInMenu: boolean
+  centralMenu: boolean
   menuOrder: number
   updatedAt: string
 }
@@ -76,6 +77,19 @@ const COLUMNS: ColumnDef<Page>[] = [
   },
   { key: "status", header: "Status", sortable: true, cell: (row) => statusBadge(row.status) },
   { key: "showInMenu", header: "Menu", sortable: true, cell: (row) => menuBadge(row.showInMenu, row.menuOrder) },
+  {
+    key: "centralMenu",
+    header: "Header",
+    sortable: true,
+    cell: (row) =>
+      row.centralMenu ? (
+        <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium" style={{ background: "rgba(45,106,79,0.12)", color: "#2D6A4F", borderRadius: "var(--radius-xs)" }}>
+          Yes
+        </span>
+      ) : (
+        <span className="text-xs" style={{ color: "var(--on-surface-variant)" }}>—</span>
+      ),
+  },
   {
     key: "updatedAt",
     header: "Updated",

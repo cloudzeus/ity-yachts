@@ -36,6 +36,7 @@ export async function GET(req: NextRequest) {
           status: true,
           isHomePage: true,
           showInMenu: true,
+          centralMenu: true,
           menuOrder: true,
           translations: true,
           updatedAt: true,

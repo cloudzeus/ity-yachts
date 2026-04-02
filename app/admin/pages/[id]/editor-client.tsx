@@ -32,6 +32,7 @@ interface Page {
   metaCanonical?: string
   isHomePage?: boolean
   showInMenu?: boolean
+  centralMenu?: boolean
   menuOrder?: number
   menuLabel?: string
 }
@@ -53,6 +54,7 @@ export function EditorClient({ page: initialPage }: EditorClientProps) {
   const [translations, setTranslations] = useState<Record<string, string>>(page.translations || {})
   const [isHomePage, setIsHomePage] = useState(page.isHomePage ?? false)
   const [showInMenu, setShowInMenu] = useState(page.showInMenu ?? false)
+  const [centralMenu, setCentralMenu] = useState(page.centralMenu ?? false)
   const [menuOrder, setMenuOrder] = useState(page.menuOrder ?? 0)
   const [menuLabel, setMenuLabel] = useState(page.menuLabel ?? "")
   const [saving, setSaving] = useState(false)
@@ -93,6 +95,7 @@ export function EditorClient({ page: initialPage }: EditorClientProps) {
           translations,
           isHomePage,
           showInMenu,
+          centralMenu,
           menuOrder,
           menuLabel: menuLabel || null,
           metaTitle: page.metaTitle,
@@ -113,7 +116,7 @@ export function EditorClient({ page: initialPage }: EditorClientProps) {
     } finally {
       setSaving(false)
     }
-  }, [page.id, name, slug, sections, heroSection, translations, isHomePage, showInMenu, menuOrder, menuLabel, page])
+  }, [page.id, name, slug, sections, heroSection, translations, isHomePage, showInMenu, centralMenu, menuOrder, menuLabel, page])
 
   // Debounced auto-save
   useEffect(() => {
@@ -125,7 +128,7 @@ export function EditorClient({ page: initialPage }: EditorClientProps) {
     return () => {
       if (autoSaveRef.current) clearTimeout(autoSaveRef.current)
     }
-  }, [name, slug, sections, heroSection, translations, isHomePage, showInMenu, menuOrder, menuLabel, autoSave])
+  }, [name, slug, sections, heroSection, translations, isHomePage, showInMenu, centralMenu, menuOrder, menuLabel, autoSave])
 
   async function publish() {
     setSaving(true)
@@ -266,6 +269,15 @@ export function EditorClient({ page: initialPage }: EditorClientProps) {
                   className="h-3.5 w-3.5 rounded border-gray-300 accent-[var(--primary)]"
                 />
                 <span className="text-xs" style={{ color: "var(--on-surface)" }}>Show in navigation menu</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={centralMenu}
+                  onChange={(e) => setCentralMenu(e.target.checked)}
+                  className="h-3.5 w-3.5 rounded border-gray-300 accent-[var(--primary)]"
+                />
+                <span className="text-xs" style={{ color: "var(--on-surface)" }}>Show in top header menu</span>
               </label>
               {showInMenu && (
                 <div className="flex gap-2">

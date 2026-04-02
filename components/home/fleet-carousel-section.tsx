@@ -69,8 +69,10 @@ export function FleetCarouselSection({ yachts: rawYachts }: { yachts: FleetYacht
     [realCount, centerCard]
   )
 
-  const prev = () => scrollToIndex(activeIndex - 3)
-  const next = () => scrollToIndex(activeIndex + 3)
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 768
+  const step = isMobile ? 1 : 3
+  const prev = () => scrollToIndex(activeIndex - step)
+  const next = () => scrollToIndex(activeIndex + step)
 
   // Sync activeIndex with scroll position
   useEffect(() => {
@@ -236,9 +238,8 @@ export function FleetCarouselSection({ yachts: rawYachts }: { yachts: FleetYacht
               <div
                 key={`${yacht.id}-${i}`}
                 ref={(el) => { cardRefs.current[i] = el }}
-                className="flex-shrink-0 transition-all duration-500"
+                className="flex-shrink-0 transition-all duration-500 w-[85vw] md:w-[min(550px,65vw)]"
                 style={{
-                  width: "min(550px, 65vw)",
                   transform: isActive ? "scale(1.12)" : "scale(0.88)",
                   opacity: isActive ? 1 : 0.92,
                   filter: isActive ? "none" : "brightness(0.8)",
@@ -263,8 +264,8 @@ function YachtCarouselCard({ yacht, onClick, isActive }: { yacht: FleetYacht; on
   return (
     <div
       onClick={onClick}
-      className="relative w-full rounded-2xl overflow-hidden group cursor-pointer border border-white/5"
-      style={{ aspectRatio: "16/10", boxShadow: isActive ? "0 40px 80px -20px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.1)" : "0 20px 40px -15px rgba(0,0,0,0.5)", background: "#070c26" }}
+      className="relative w-full rounded-2xl overflow-hidden group cursor-pointer border border-white/5 aspect-square md:aspect-[16/10]"
+      style={{ boxShadow: isActive ? "0 40px 80px -20px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.1)" : "0 20px 40px -15px rgba(0,0,0,0.5)", background: "#070c26" }}
     >
       {/* Background Image */}
       {yacht.image ? (

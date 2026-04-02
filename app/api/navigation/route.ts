@@ -9,6 +9,7 @@ export async function GET() {
       where: {
         status: "published",
         showInMenu: true,
+        centralMenu: true,
       },
       select: {
         id: true,

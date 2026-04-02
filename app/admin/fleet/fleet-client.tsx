@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
 import {
   Search, RefreshCw, Ship, Anchor, Fuel, Bed,
-  ChevronRight, ChevronLeft, DollarSign, Filter, X, Star,
+  ChevronRight, ChevronLeft, DollarSign, Filter, X, Star, Trash2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -98,6 +98,8 @@ export function FleetClient({ total: initialTotal, lastSync }: Props) {
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState(false)
   const [showSyncModal, setShowSyncModal] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   const fetchYachts = useCallback(async (p: number, ps: number, s: string, f: Filters) => {
@@ -219,6 +221,15 @@ export function FleetClient({ total: initialTotal, lastSync }: Props) {
         </div>
         <Button
           size="sm" variant="outline" className="h-9 gap-2 text-xs ml-auto"
+          style={{ borderColor: "var(--error, #D32F2F)", color: "var(--error, #D32F2F)" }}
+          disabled={deleting || total === 0}
+          onClick={() => setShowDeleteConfirm(true)}
+        >
+          <Trash2 className="size-3.5" />
+          Delete All
+        </Button>
+        <Button
+          size="sm" variant="outline" className="h-9 gap-2 text-xs"
           style={{ borderColor: "var(--outline-variant)" }}
           disabled={syncing}
           onClick={handleSync}
@@ -475,6 +486,82 @@ export function FleetClient({ total: initialTotal, lastSync }: Props) {
           onClose={() => setShowSyncModal(false)}
           onComplete={handleSyncComplete}
         />
+      )}
+
+      {/* Delete All Confirmation */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div
+            className="w-full max-w-md p-6 flex flex-col gap-4"
+            style={{
+              background: "var(--surface-container-lowest)",
+              borderRadius: "var(--radius-md)",
+              boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)",
+            }}
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
+                style={{ background: "rgba(211,47,47,0.1)" }}
+              >
+                <Trash2 className="size-5" style={{ color: "#D32F2F" }} />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold" style={{ color: "var(--on-surface)" }}>
+                  Delete All Yachts
+                </h3>
+                <p className="text-xs mt-0.5" style={{ color: "var(--on-surface-variant)" }}>
+                  This will permanently delete all <strong>{total}</strong> yachts and their related data (equipment, services, pricing, bookings). This action cannot be undone.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 text-xs"
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleting}
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                className="h-8 text-xs gap-1.5 text-white"
+                style={{ background: "#D32F2F" }}
+                disabled={deleting}
+                onClick={async () => {
+                  setDeleting(true)
+                  try {
+                    const res = await fetch("/api/admin/fleet/delete-all", { method: "DELETE" })
+                    const data = await res.json()
+                    if (data.success) {
+                      setShowDeleteConfirm(false)
+                      setYachts([])
+                      setTotal(0)
+                      setTotalPages(1)
+                      setPage(1)
+                      router.refresh()
+                    } else {
+                      alert(data.error || "Failed to delete yachts")
+                    }
+                  } catch {
+                    alert("Failed to delete yachts")
+                  } finally {
+                    setDeleting(false)
+                  }
+                }}
+              >
+                {deleting ? (
+                  <RefreshCw className="size-3.5 animate-spin" />
+                ) : (
+                  <Trash2 className="size-3.5" />
+                )}
+                {deleting ? "Deleting..." : "Yes, Delete All"}
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

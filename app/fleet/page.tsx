@@ -1,0 +1,106 @@
+import { db } from "@/lib/db"
+import { SiteHeader } from "@/components/site-header"
+import { SiteFooter } from "@/components/site-footer"
+import { FleetListClient } from "./fleet-list-client"
+
+export const dynamic = "force-dynamic"
+
+export const metadata = {
+  title: "Our Fleet | IYC Yachts",
+  description: "Browse our full fleet of yachts and catamarans available for charter.",
+}
+
+export default async function FleetPage() {
+  // Fetch filter options and initial yachts in parallel
+  const [categories, bases, builders, yachts, total] = await Promise.all([
+    db.nausysYachtCategory.findMany({ orderBy: { id: "asc" } }),
+    db.nausysCharterBase.findMany({
+      where: { disabled: false },
+      include: { location: true },
+      orderBy: { id: "asc" },
+    }),
+    db.nausysYachtBuilder.findMany({ orderBy: { name: "asc" } }),
+    db.nausysYacht.findMany({
+      take: 12,
+      orderBy: { name: "asc" },
+      include: {
+        category: true,
+        model: { include: { builder: true } },
+        base: { include: { location: true } },
+        builder: true,
+        prices: {
+          where: { priceType: "WEEKLY" },
+          orderBy: { price: "asc" },
+          take: 1,
+        },
+      },
+    }),
+    db.nausysYacht.count(),
+  ])
+
+  // Transform for client
+  const categoryOptions = categories.map((c) => ({
+    id: c.id,
+    name: ((c.name as Record<string, string>)?.en || `Category ${c.id}`),
+  }))
+
+  const baseOptions = bases.map((b) => ({
+    id: b.id,
+    name: b.location
+      ? ((b.location.name as Record<string, string>)?.en || `Base ${b.id}`)
+      : `Base ${b.id}`,
+  }))
+
+  const builderOptions = builders
+    .filter((b) => b.name)
+    .map((b) => ({ id: b.id, name: b.name }))
+
+  const yachtCards = yachts.map((y) => transformYacht(y))
+
+  return (
+    <>
+      <SiteHeader />
+      <FleetListClient
+        initialYachts={yachtCards}
+        initialTotal={total}
+        categories={categoryOptions}
+        bases={baseOptions}
+        builders={builderOptions}
+      />
+      <SiteFooter />
+    </>
+  )
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function transformYacht(y: any) {
+  const categoryName = y.category
+    ? ((y.category.name as Record<string, string>)?.en || "Yacht")
+    : "Yacht"
+
+  const websiteImgs = y.websiteImages as Array<{ url: string }> | null
+  const picturesArr = y.picturesUrl as string[] | null
+  const image = websiteImgs?.[0]?.url || y.mainPictureUrl || picturesArr?.[0] || ""
+
+  const locationName = y.base?.location
+    ? ((y.base.location.name as Record<string, string>)?.en || "")
+    : ""
+
+  const builderName = y.builder?.name || y.model?.builder?.name || ""
+  const priceFrom = y.prices?.[0]?.price || 0
+
+  return {
+    id: y.id,
+    name: y.name || y.model?.name || "Yacht",
+    image,
+    category: categoryName,
+    loa: y.loa || 0,
+    cabins: y.cabins || 0,
+    berths: y.berthsTotal || y.maxPersons || 0,
+    baseName: locationName,
+    builder: builderName,
+    buildYear: y.buildYear || 0,
+    priceFrom,
+    charterType: y.charterType || "",
+  }
+}
