@@ -30,6 +30,7 @@ import {
   Languages,
   Newspaper,
   TableProperties,
+  Sparkles,
 } from "lucide-react"
 import {
   Tooltip,
@@ -76,6 +77,7 @@ const navGroups = [
       { label: "Itineraries", href: "/admin/itineraries", icon: Route },
       { label: "Articles", href: "/admin/articles", icon: Newspaper },
       { label: "Reviews", href: "/admin/reviews", icon: Star },
+      { label: "Services", href: "/admin/services", icon: Sparkles },
       { label: "Media", href: "/admin/media", icon: ImageIcon },
     ],
   },

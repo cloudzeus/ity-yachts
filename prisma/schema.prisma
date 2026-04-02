@@ -133,6 +133,7 @@ model Page {
   metaCanonical String?
   isHomePage    Boolean          @default(false)
   showInMenu    Boolean          @default(false)
+  centralMenu   Boolean          @default(false)
   menuOrder     Int              @default(0)
   menuLabel     String?
   textComponents  TextComponent[]
@@ -1078,6 +1079,28 @@ model Article {
   updatedAt        DateTime @updatedAt
 
   @@map("articles")
+}
+
+// Services (homepage "Curated Experiences" section)
+model Service {
+  id               String   @id @default(cuid())
+  title            Json     @default("{}")   // { en, el, de }
+  slug             String   @unique
+  status           String   @default("draft")
+  label            Json     @default("{}")   // { en, el, de } — badge/tag text
+  header           Json     @default("{}")   // { en, el, de } — section header
+  shortDesc        Json     @default("{}")   // { en, el, de }
+  description      Json     @default("{}")   // { en, el, de } — rich text
+  defaultMedia     String?                   // URL to default image or video
+  defaultMediaType String?                   // "image" | "video"
+  icon             String?                   // optional icon identifier or SVG
+  link             String?                   // internal page link e.g. /services/custom-routes
+  showOnHomepage   Boolean  @default(false)
+  sortOrder        Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("services")
 }
 
 // Uploaded documents linked to a booking
