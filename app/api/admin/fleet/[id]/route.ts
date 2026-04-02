@@ -143,6 +143,7 @@ export async function PATCH(
     if (body.youtubeVideos !== undefined) data.youtubeVideos = body.youtubeVideos
     if (body.vimeoVideos !== undefined) data.vimeoVideos = body.vimeoVideos
     if (body.linkFor360tour !== undefined) data.linkFor360tour = body.linkFor360tour
+    if (body.websiteImages !== undefined) data.websiteImages = body.websiteImages
 
     const yacht = await db.nausysYacht.update({
       where: { id: yachtId },

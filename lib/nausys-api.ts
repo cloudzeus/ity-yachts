@@ -243,3 +243,45 @@ export async function fetchAllYachts(creds: NausysCredentials): Promise<RawYacht
   if (data.status !== "OK") throw new Error(`NAUSYS API error: ${JSON.stringify(data).substring(0, 200)}`)
   return data.yachts ?? []
 }
+
+// ── Yacht availability check ──
+
+export interface FreeYachtResult {
+  periodFrom: string
+  periodTo: string
+  yachtId: number
+  locationFromId: number
+  locationToId: number
+  price?: {
+    priceListPrice: string
+    clientPrice: string
+    discounts?: Array<{ discountItemId: number; amount: number; type: string }>
+  }
+}
+
+/**
+ * Check availability for specific yachts in a date range.
+ * Uses the "Free yacht" NAUSYS endpoint (/yachtReservation/v6/freeYachts).
+ * Date format expected by NAUSYS: "DD.MM.YYYY"
+ */
+export async function fetchFreeYacht(
+  creds: NausysCredentials,
+  periodFrom: string,
+  periodTo: string,
+  yachtIds: number[]
+): Promise<FreeYachtResult[]> {
+  const res = await fetch(`${creds.endpoint}/yachtReservation/v6/freeYachts`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({
+      credentials: { username: creds.username, password: creds.password },
+      periodFrom,
+      periodTo,
+      yachts: yachtIds,
+    }),
+    signal: AbortSignal.timeout(30000),
+  })
+  const data = await res.json()
+  if (data.status !== "OK") return []
+  return data.freeYachts ?? []
+}

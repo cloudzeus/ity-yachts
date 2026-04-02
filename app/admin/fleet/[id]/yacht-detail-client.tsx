@@ -125,6 +125,7 @@ export function YachtDetailClient({ yacht: initial, lookups }: { yacht: any; loo
   const [activeTab, setActiveTab] = useState<TabKey>("identity")
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
   const [translatingAll, setTranslatingAll] = useState(false)
+  const [mediaUploading, setMediaUploading] = useState(false)
 
   // ─── Translate All via DeepSeek ──────────────────────────
 
@@ -216,6 +217,7 @@ export function YachtDetailClient({ yacht: initial, lookups }: { yacht: any; loo
           noteTranslations: yacht.noteTranslations,
           mainPictureUrl: yacht.mainPictureUrl, youtubeVideos: yacht.youtubeVideos,
           vimeoVideos: yacht.vimeoVideos, linkFor360tour: yacht.linkFor360tour,
+          websiteImages: yacht.websiteImages,
         }),
       })
       router.refresh()
@@ -588,11 +590,91 @@ export function YachtDetailClient({ yacht: initial, lookups }: { yacht: any; loo
             })()}
           </SectionCard>
 
-          {/* Custom website images - placeholder for Bunny CDN upload */}
-          <SectionCard title="Website Images">
-            <p className="text-xs py-4 text-center" style={{ color: "var(--on-surface-variant)" }}>
-              Custom image upload (Bunny CDN) coming soon. Images will be auto-converted to WebP.
-            </p>
+          {/* Custom website images — Bunny CDN upload */}
+          <SectionCard
+            title="Website Images (CDN)"
+            action={
+              <label className="cursor-pointer">
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*,video/mp4,video/webm,video/quicktime"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const files = e.target.files
+                    if (!files?.length) return
+                    setMediaUploading(true)
+                    const slug = (yacht.name || "yacht").toLowerCase().replace(/[^a-z0-9]+/g, "-")
+                    const folder = `yachts/${yacht.id}-${slug}`
+                    const newImages = [...(yacht.websiteImages || [])]
+
+                    for (const file of Array.from(files)) {
+                      const form = new FormData()
+                      form.append("file", file)
+                      form.append("folder", folder)
+                      try {
+                        const res = await fetch("/api/admin/media/upload", { method: "POST", body: form })
+                        const data = await res.json()
+                        if (data.success && data.file?.url) {
+                          newImages.push({ url: data.file.url, caption: file.name.replace(/\.[^.]+$/, "") })
+                        }
+                      } catch (err) {
+                        console.error("Upload failed:", err)
+                      }
+                    }
+                    setYacht((y: typeof yacht) => ({ ...y, websiteImages: newImages }))
+                    setMediaUploading(false)
+                    e.target.value = ""
+                  }}
+                />
+                <span className="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-semibold rounded-md cursor-pointer transition hover:opacity-80"
+                  style={{ background: "var(--primary)", color: "var(--on-primary)" }}>
+                  {mediaUploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
+                  {mediaUploading ? "Uploading..." : "Upload Images / Videos"}
+                </span>
+              </label>
+            }
+          >
+            {(() => {
+              const wsImages = (yacht.websiteImages || []) as Array<{ url: string; caption?: string }>
+              return wsImages.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  {wsImages.map((img, i) => (
+                    <div key={i} className="relative group">
+                      <div
+                        className="h-36 w-full bg-cover bg-center rounded-lg"
+                        style={{ backgroundImage: `url(${img.url})`, borderRadius: "var(--radius-md)" }}
+                      />
+                      {i === 0 && (
+                        <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 text-[9px] font-bold uppercase text-white rounded"
+                          style={{ background: "var(--primary)" }}>
+                          Featured
+                        </span>
+                      )}
+                      <button
+                        onClick={() => {
+                          const updated = [...wsImages]
+                          updated.splice(i, 1)
+                          setYacht((y: typeof yacht) => ({ ...y, websiteImages: updated }))
+                        }}
+                        className="absolute top-1.5 right-1.5 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                      {img.caption && (
+                        <p className="text-[9px] text-center mt-1 truncate" style={{ color: "var(--on-surface-variant)" }}>
+                          {img.caption}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs py-4 text-center" style={{ color: "var(--on-surface-variant)" }}>
+                  No custom images yet. Upload images to display on the public yacht page. Auto-converted to WebP.
+                </p>
+              )
+            })()}
           </SectionCard>
 
           {/* Videos & Tours */}
