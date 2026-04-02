@@ -551,7 +551,7 @@ function YachtGridCard({ yacht }: { yacht: YachtCard }) {
   const [liked, setLiked] = useState(false)
 
   return (
-    <div className="group relative rounded-2xl overflow-hidden bg-[#070c26] border border-gray-100 shadow-sm hover:shadow-xl transition-shadow duration-300">
+    <div className="group relative rounded-2xl overflow-hidden bg-white border border-gray-100 shadow-sm hover:shadow-xl transition-shadow duration-300">
       {/* Image */}
       <Link
         href={`/fleet/${yacht.id}`}
@@ -568,7 +568,7 @@ function YachtGridCard({ yacht }: { yacht: YachtCard }) {
         ) : (
           <div
             className="w-full h-full"
-            style={{ background: "linear-gradient(135deg, #006399, #002147)" }}
+            style={{ background: "linear-gradient(135deg, #0077B6, #005a8c)" }}
           />
         )}
         {/* Gradient overlay */}
@@ -576,7 +576,7 @@ function YachtGridCard({ yacht }: { yacht: YachtCard }) {
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(to top, rgba(7,12,38,0.7) 0%, rgba(7,12,38,0.1) 50%, transparent 70%)",
+              "linear-gradient(to top, rgba(7,12,38,0.6) 0%, rgba(7,12,38,0.05) 45%, transparent 65%)",
           }}
         />
 

@@ -11,15 +11,11 @@ export const metadata = {
 }
 
 export default async function FleetPage() {
-  // Fetch filter options and initial yachts in parallel
-  const [categories, bases, builders, yachts, total] = await Promise.all([
-    db.nausysYachtCategory.findMany({ orderBy: { id: "asc" } }),
-    db.nausysCharterBase.findMany({
-      where: { disabled: false },
-      include: { location: true },
-      orderBy: { id: "asc" },
-    }),
-    db.nausysYachtBuilder.findMany({ orderBy: { name: "asc" } }),
+  // Fetch filter options based only on yachts we actually have, plus initial yachts
+  const [usedCategoryIds, usedBaseIds, usedBuilderIds, yachts, total] = await Promise.all([
+    db.nausysYacht.findMany({ select: { categoryId: true }, distinct: ["categoryId"], where: { categoryId: { not: null } } }),
+    db.nausysYacht.findMany({ select: { baseId: true }, distinct: ["baseId"], where: { baseId: { not: null } } }),
+    db.nausysYacht.findMany({ select: { builderId: true }, distinct: ["builderId"], where: { builderId: { not: null } } }),
     db.nausysYacht.findMany({
       take: 12,
       orderBy: { name: "asc" },
@@ -36,6 +32,16 @@ export default async function FleetPage() {
       },
     }),
     db.nausysYacht.count(),
+  ])
+
+  const catIds = usedCategoryIds.map((r) => r.categoryId!).filter(Boolean)
+  const bIds = usedBaseIds.map((r) => r.baseId!).filter(Boolean)
+  const bldrIds = usedBuilderIds.map((r) => r.builderId!).filter(Boolean)
+
+  const [categories, bases, builders] = await Promise.all([
+    catIds.length ? db.nausysYachtCategory.findMany({ where: { id: { in: catIds } }, orderBy: { id: "asc" } }) : [],
+    bIds.length ? db.nausysCharterBase.findMany({ where: { id: { in: bIds } }, include: { location: true }, orderBy: { id: "asc" } }) : [],
+    bldrIds.length ? db.nausysYachtBuilder.findMany({ where: { id: { in: bldrIds } }, orderBy: { name: "asc" } }) : [],
   ])
 
   // Transform for client
