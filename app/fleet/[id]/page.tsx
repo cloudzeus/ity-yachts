@@ -94,7 +94,7 @@ export default async function YachtDetailPage({ params }: { params: Promise<{ id
     const serviceName = (s.service?.name as Record<string, string>)?.en || "Service"
     return {
       name: serviceName,
-      price: s.price || 0,
+      price: Number(s.price) || 0,
       currency: s.currency || "EUR",
       obligatory: s.obligatory || false,
     }
@@ -104,7 +104,7 @@ export default async function YachtDetailPage({ params }: { params: Promise<{ id
   const prices = yacht.prices.map((p) => ({
     dateFrom: p.dateFrom.toISOString(),
     dateTo: p.dateTo.toISOString(),
-    price: p.price,
+    price: Number(p.price) || 0,
     currency: p.currency || "EUR",
     priceType: p.priceType || "WEEKLY",
   }))
