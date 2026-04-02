@@ -63,6 +63,7 @@ export function FleetListClient({
 
   // Filter state
   const [search, setSearch] = useState("")
+  const [debouncedSearch, setDebouncedSearch] = useState("")
   const [categoryId, setCategoryId] = useState("")
   const [baseId, setBaseId] = useState("")
   const [builderId, setBuilderId] = useState("")
@@ -83,7 +84,7 @@ export function FleetListClient({
       const params = new URLSearchParams()
       params.set("page", String(pageNum))
       params.set("pageSize", "12")
-      if (search) params.set("search", search)
+      if (debouncedSearch) params.set("search", debouncedSearch)
       if (categoryId) params.set("categoryId", categoryId)
       if (baseId) params.set("baseId", baseId)
       if (builderId) params.set("builderId", builderId)
@@ -137,7 +138,7 @@ export function FleetListClient({
         setLoading(false)
       }
     },
-    [search, categoryId, baseId, builderId, cabinsMin, guestsMin, loaMin, loaMax, yearMin, charterType, sortBy]
+    [debouncedSearch, categoryId, baseId, builderId, cabinsMin, guestsMin, loaMin, loaMax, yearMin, charterType, sortBy]
   )
 
   // Refetch when filters change (skip initial render)
@@ -154,12 +155,13 @@ export function FleetListClient({
     setSearch(val)
     if (searchTimeout.current) clearTimeout(searchTimeout.current)
     searchTimeout.current = setTimeout(() => {
-      // The effect will fire because search state changed
-    }, 300)
+      setDebouncedSearch(val)
+    }, 400)
   }
 
   const clearFilters = () => {
     setSearch("")
+    setDebouncedSearch("")
     setCategoryId("")
     setBaseId("")
     setBuilderId("")
