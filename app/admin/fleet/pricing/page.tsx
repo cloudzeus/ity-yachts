@@ -8,12 +8,12 @@ export const metadata = { title: "Fleet Pricing — IYC Admin" }
 export default async function PricingPage() {
   const [prices, seasons, yachts] = await Promise.all([
     db.nausysYachtPrice.findMany({
-      include: { yacht: { select: { id: true, name: true } } },
+      include: { yacht: { select: { id: true, name: true, categoryId: true } } },
       orderBy: [{ yachtId: "asc" }, { dateFrom: "asc" }],
     }),
     db.nausysSeason.findMany({ orderBy: { dateFrom: "asc" } }),
     db.nausysYacht.findMany({
-      select: { id: true, name: true },
+      select: { id: true, name: true, categoryId: true, category: { select: { id: true, name: true } } },
       orderBy: { name: "asc" },
     }),
   ])
@@ -35,22 +35,25 @@ export default async function PricingPage() {
       <PricingClient
         initialData={{
           prices: prices.map((p) => ({
-            ...p,
+            id: p.id,
+            yachtId: p.yachtId,
             dateFrom: p.dateFrom.toISOString(),
             dateTo: p.dateTo.toISOString(),
-            locationsId: p.locationsId as number[],
-            createdAt: p.createdAt.toISOString(),
-            updatedAt: p.updatedAt.toISOString(),
+            price: p.price,
+            currency: p.currency,
+            priceType: p.priceType,
           })),
           seasons: seasons.map((s) => ({
-            ...s,
+            id: s.id,
+            season: s.season,
             dateFrom: s.dateFrom.toISOString(),
             dateTo: s.dateTo.toISOString(),
-            locationsId: s.locationsId as number[],
-            createdAt: s.createdAt.toISOString(),
-            updatedAt: s.updatedAt.toISOString(),
           })),
-          yachts,
+          yachts: yachts.map((y) => ({
+            id: y.id,
+            name: y.name,
+            categoryName: (y.category?.name as Record<string, string>)?.en || "Uncategorised",
+          })),
         }}
       />
     </div>

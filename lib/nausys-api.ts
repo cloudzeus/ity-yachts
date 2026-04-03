@@ -228,6 +228,46 @@ export const fetchDiscountItems = (c: NausysCredentials) =>
 export const fetchSeasons = (c: NausysCredentials) =>
   nausysPost<{ seasons: RawSeason[] }>(c, "/catalogue/v6/seasons").then((d) => d.seasons)
 
+// ── Clients ──
+
+export interface RawClient {
+  id: number
+  firstName?: string
+  lastName?: string
+  email?: string
+  phone?: string
+  mobile?: string
+  address?: string
+  city?: string
+  country?: string
+  postcode?: string
+  passportNumber?: string
+  dateOfBirth?: string
+  nationality?: string
+  remarks?: string
+}
+
+export async function fetchClients(creds: NausysCredentials): Promise<RawClient[]> {
+  if (!creds.companyId) throw new Error("Charter Company ID not configured")
+  const res = await fetch(`${creds.endpoint}/catalogue/v6/clients/${creds.companyId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({ username: creds.username, password: creds.password }),
+    signal: AbortSignal.timeout(60000),
+  })
+  const text = await res.text()
+  // Debug: if NAUSYS returns HTML, the endpoint doesn't exist
+  if (text.startsWith("<!") || text.startsWith("<html")) {
+    throw new Error(
+      "NAUSYS clients endpoint not found. The API may not support this endpoint for your account."
+    )
+  }
+  const data = JSON.parse(text)
+  if (data.status === "AUTHENTICATION_ERROR") throw new Error("NAUSYS authentication failed")
+  if (data.status !== "OK") throw new Error(`NAUSYS API error: ${JSON.stringify(data).substring(0, 300)}`)
+  return data.clients ?? []
+}
+
 // ── Yacht list (the big one) ──
 
 export async function fetchAllYachts(creds: NausysCredentials): Promise<RawYacht[]> {

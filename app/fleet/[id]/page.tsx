@@ -46,6 +46,15 @@ export default async function YachtDetailPage({ params }: { params: Promise<{ id
 
   if (!yacht) notFound()
 
+  // Pick a random active staff member for the enquire card
+  const allStaff = await db.staff.findMany({
+    where: { status: "active" },
+    select: { name: true, position: true, image: true },
+  })
+  const staffRep = allStaff.length > 0
+    ? allStaff[Math.floor(Math.random() * allStaff.length)]
+    : null
+
   // Transform for client
   const categoryName = yacht.category
     ? ((yacht.category.name as Record<string, string>)?.en || "Yacht")
@@ -151,6 +160,13 @@ export default async function YachtDetailPage({ params }: { params: Promise<{ id
     prices,
     mastLength: yacht.mastLength,
     propulsionType: yacht.propulsionType,
+    staffRep: staffRep
+      ? {
+          name: staffRep.name,
+          position: (staffRep.position as Record<string, string>)?.en || "",
+          image: staffRep.image || "",
+        }
+      : null,
   }
 
   return (

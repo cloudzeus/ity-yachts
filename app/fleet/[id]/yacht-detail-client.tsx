@@ -62,6 +62,7 @@ interface YachtData {
   prices: Array<{ dateFrom: string; dateTo: string; price: number; currency: string; priceType: string }>
   mastLength: number | null
   propulsionType: string | null
+  staffRep: { name: string; position: string; image: string } | null
 }
 
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
@@ -626,13 +627,18 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
 
             {/* Services */}
             {yacht.services.length > 0 && (
-              <div className="mt-10 border-t border-gray-200 pt-8">
+              <div className="mt-10 border-t border-gray-200 pt-8 pb-[100px]">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-lg font-bold">Available Services</h2>
                   <span className="text-xs text-gray-500">Optional add-ons for your charter</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {yacht.services.map((service, i) => {
+                  {[...yacht.services].sort((a, b) => {
+                    // Free / included first, then paid
+                    const aFree = a.price === 0 || a.obligatory ? 0 : 1
+                    const bFree = b.price === 0 || b.obligatory ? 0 : 1
+                    return aFree - bFree
+                  }).map((service, i) => {
                     const isObligatory = service.obligatory
                     return (
                       <div
@@ -668,91 +674,115 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
         </section>
       )}
 
-      {/* Seasonal Pricing */}
+      {/* Seasonal Pricing — Card Grid */}
       {weeklyPrices.length > 0 && (
-        <section className="relative w-full py-16 px-6 md:px-10" style={{ backgroundColor: "#070c26" }}>
-          <div className="max-w-[1400px] mx-auto relative z-10">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-8 gap-4">
-              <div>
-                <div className="flex items-center gap-3 mb-3">
-                  <h2 className="text-white text-2xl font-bold tracking-tight">Charter Rates</h2>
-                  {/* Year toggle */}
-                  <div className="flex rounded-lg overflow-hidden border border-white/20">
-                    {priceYears.map((y) => (
-                      <button
-                        key={y}
-                        onClick={() => setActiveYear(y)}
-                        className={`px-3 py-1 text-[11px] font-semibold transition ${
-                          activeYear === y
-                            ? "bg-white text-[#070c26]"
-                            : "text-white/60 hover:text-white hover:bg-white/10"
-                        }`}
-                      >
-                        {y}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <p className="text-white/50 text-xs">{yacht.name} — Weekly rates per period</p>
-              </div>
-              <Link
-                href="#booking"
-                className="bg-white/10 border border-white/20 text-white hover:bg-white hover:text-[#070c26] transition duration-300 px-5 py-2.5 rounded-lg text-xs font-semibold self-start"
-              >
-                Get a Quote
-              </Link>
-            </div>
+        <section className="relative w-full px-6 md:px-10 overflow-hidden" style={{ backgroundColor: "#070c26", paddingTop: 150, paddingBottom: 150 }}>
+          {/* Background SVG */}
+          <div
+            className="absolute inset-0 pointer-events-none select-none overflow-hidden"
+            aria-hidden
+            style={{ backgroundImage: "url(https://iycweb.b-cdn.net/1774937080534-bg.svg)", backgroundSize: "cover", backgroundPosition: "center", opacity: 0.2 }}
+          />
 
-            {/* Pricing Table */}
-            <div className="overflow-x-auto rounded-xl border border-white/10">
-              <table className="w-full min-w-[600px]">
-                <thead>
-                  <tr className="border-b border-white/10">
-                    <th className="text-left px-4 py-3 text-[10px] uppercase tracking-wider font-semibold text-white/40">Period</th>
-                    <th className="text-left px-4 py-3 text-[10px] uppercase tracking-wider font-semibold text-white/40">Dates</th>
-                    <th className="text-right px-4 py-3 text-[10px] uppercase tracking-wider font-semibold text-white/40">Weekly Rate</th>
-                    <th className="text-right px-4 py-3 text-[10px] uppercase tracking-wider font-semibold text-white/40">Daily Rate</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pricesForYear.map((price, i) => {
-                    const from = new Date(price.dateFrom)
-                    const to = new Date(price.dateTo)
-                    const isCheapest = price.price === cheapestPrice
-                    return (
-                      <tr
-                        key={i}
-                        className={`border-b border-white/5 transition hover:bg-white/5 ${isCheapest ? "bg-white/[0.03]" : ""}`}
+          <div className="max-w-[1400px] mx-auto relative z-10">
+            <div className="flex flex-col lg:flex-row gap-8 items-start">
+              {/* Left: Season info */}
+              <div className="flex flex-col gap-5 shrink-0 lg:w-[220px]">
+                {/* Season / Year toggle */}
+                <div className="flex flex-wrap gap-2">
+                  {priceYears.map((y) => (
+                    <button
+                      key={y}
+                      onClick={() => setActiveYear(y)}
+                      className="px-3.5 py-1.5 text-[11px] font-semibold rounded-md transition"
+                      style={{
+                        background: activeYear === y ? "#8C7D70" : "rgba(255,255,255,0.1)",
+                        color: activeYear === y ? "#fff" : "rgba(255,255,255,0.5)",
+                        border: activeYear === y ? "none" : "1px solid rgba(255,255,255,0.12)",
+                      }}
+                    >
+                      Season {y}
+                    </button>
+                  ))}
+                </div>
+                <div>
+                  <p className="text-lg font-bold tracking-tight mb-1" style={{ color: "#fff" }}>{yacht.name}</p>
+                  <h2 className="text-sm font-semibold whitespace-nowrap" style={{ color: "#8C7D70" }}>
+                    Weekly Rates
+                  </h2>
+                  <div className="w-10 h-[3px] rounded-full mt-3" style={{ background: "#8C7D70" }} />
+                </div>
+                <Link
+                  href="#booking"
+                  className="inline-flex items-center gap-2 hover:opacity-90 transition duration-300 px-4 py-2 rounded-lg text-xs font-semibold self-start"
+                  style={{ background: "rgba(255,255,255,0.1)", color: "#fff", border: "1px solid rgba(255,255,255,0.2)" }}
+                >
+                  Show Details
+                </Link>
+              </div>
+
+              {/* Center: Price cards grid */}
+              <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {pricesForYear.map((price, i) => {
+                  const from = new Date(price.dateFrom)
+                  return (
+                    <div
+                      key={i}
+                      className="px-5 py-4 flex flex-col gap-2 transition hover:opacity-90"
+                      style={{ background: "#070c26", border: "0.5px solid rgba(255,255,255,0.15)", borderRadius: 18 }}
+                    >
+                      <span className="text-white/70 text-sm font-medium">{MONTH_NAMES[from.getMonth()]}</span>
+                      <span className="text-white text-xl font-bold tracking-tight">
+                        {formatPrice(price.price, price.currency)}
+                      </span>
+                      <span
+                        className="text-[10px] font-semibold px-2.5 py-1 rounded-md self-start mt-1"
+                        style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.45)" }}
                       >
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-semibold text-white">
-                              {MONTH_NAMES[from.getMonth()]} — {MONTH_NAMES[to.getMonth()]}
-                            </span>
-                            {isCheapest && (
-                              <span className="text-[8px] bg-green-500/20 text-green-400 border border-green-500/30 px-1.5 py-0.5 rounded-full font-semibold uppercase tracking-wider">
-                                Best Rate
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-white/50 text-xs">
-                          {formatDate(price.dateFrom)} — {formatDate(price.dateTo)}
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <span className="text-white font-bold text-sm">{formatPrice(price.price, price.currency)}</span>
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <span className="text-white/50 text-xs">{formatPrice(Math.round(price.price / 7), price.currency)}</span>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
+                        Per Week+ VAT & APA
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* Right: Enquire CTA */}
+              <div
+                className="hidden lg:flex flex-col gap-4 rounded-xl p-5 shrink-0 w-[260px]"
+                style={{ background: "#0055a9" }}
+              >
+                <p className="text-white text-sm font-medium">Would you like to receive a quote for this yacht?</p>
+                <div className="flex items-center gap-3">
+                  {yacht.staffRep?.image ? (
+                    <Image
+                      src={yacht.staffRep.image}
+                      alt={yacht.staffRep.name}
+                      width={40}
+                      height={40}
+                      className="w-10 h-10 rounded-full object-cover shrink-0"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                      IYC
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-white text-xs font-semibold truncate">{yacht.staffRep?.name || "IYC Charter Team"}</p>
+                      <span className="w-1.5 h-1.5 rounded-full bg-green-400 shrink-0" />
+                    </div>
+                    <span className="text-white/60 text-[10px]">{yacht.staffRep?.position || "Charter Advisor"}</span>
+                  </div>
+                  <Link
+                    href="#booking"
+                    className="px-3 py-1.5 rounded-md text-[11px] font-semibold transition hover:bg-white/30"
+                    style={{ background: "rgba(255,255,255,0.2)", color: "#fff" }}
+                  >
+                    Enquire
+                  </Link>
+                </div>
+              </div>
             </div>
-            <p className="text-white/30 text-[10px] mt-3">All prices are per week, exclusive of VAT and APA (Advance Provisioning Allowance).</p>
           </div>
         </section>
       )}

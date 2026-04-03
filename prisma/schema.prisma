@@ -888,6 +888,7 @@ model NausysSyncLog {
 // Charter customer profile (extends User with charter-specific data)
 model Customer {
   id                  String   @id @default(cuid())
+  nausysClientId      Int?     @unique
   userId              String?  @unique
   user                User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   firstName           String

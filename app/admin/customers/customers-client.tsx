@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { Plus, Trash2, Search, MoreHorizontal, Pencil } from "lucide-react"
+import { Plus, Trash2, Search, MoreHorizontal, Pencil, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -77,6 +77,9 @@ export function CustomersClient({ initialData }: Props) {
   const [newNationality, setNewNationality] = useState("")
   const [creating, setCreating] = useState(false)
 
+  // Nausys sync
+  const [syncing, setSyncing] = useState(false)
+
   // Delete dialog
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
@@ -138,6 +141,24 @@ export function CustomersClient({ initialData }: Props) {
     setNewNationality("")
   }
 
+  async function handleSyncNausys() {
+    setSyncing(true)
+    try {
+      const res = await fetch("/api/admin/customers/sync-nausys", { method: "POST" })
+      const json = await res.json()
+      if (!res.ok) {
+        alert(json.error || "Sync failed")
+        return
+      }
+      alert(`Synced ${json.total} clients from NAUSYS (${json.created} created, ${json.updated} updated)`)
+      fetchData(search)
+    } catch {
+      alert("Failed to connect to NAUSYS")
+    } finally {
+      setSyncing(false)
+    }
+  }
+
   async function handleDelete(id: string) {
     setDeleting(true)
     try {
@@ -166,15 +187,28 @@ export function CustomersClient({ initialData }: Props) {
             style={{ background: "var(--surface-container-lowest)", borderColor: "var(--outline-variant)" }}
           />
         </div>
-        <Button
-          size="sm"
-          className="h-9 gap-2 text-xs text-white"
-          style={{ background: "var(--gradient-ocean)", borderRadius: "var(--radius-xs)" }}
-          onClick={() => setCreateOpen(true)}
-        >
-          <Plus className="size-4" />
-          New Customer
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-9 gap-2 text-xs"
+            style={{ borderColor: "var(--outline-variant)", borderRadius: "var(--radius-xs)" }}
+            onClick={handleSyncNausys}
+            disabled={syncing}
+          >
+            <RefreshCw className={`size-4 ${syncing ? "animate-spin" : ""}`} />
+            {syncing ? "Syncing…" : "Fetch NAUSYS"}
+          </Button>
+          <Button
+            size="sm"
+            className="h-9 gap-2 text-xs text-white"
+            style={{ background: "var(--gradient-ocean)", borderRadius: "var(--radius-xs)" }}
+            onClick={() => setCreateOpen(true)}
+          >
+            <Plus className="size-4" />
+            New Customer
+          </Button>
+        </div>
       </div>
 
       {/* Table */}
