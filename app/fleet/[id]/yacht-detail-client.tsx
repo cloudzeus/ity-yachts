@@ -1,8 +1,10 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect, useCallback, useRef } from "react"
 import Image from "next/image"
 import Link from "next/link"
+import { DayPicker, type DateRange } from "react-day-picker"
+import { format, isWithinInterval, eachDayOfInterval, isBefore, startOfDay } from "date-fns"
 import {
   ChevronLeft,
   ChevronRight,
@@ -24,6 +26,13 @@ import {
   Box,
   BarChart3,
   Circle,
+  X,
+  Mail,
+  User,
+  MessageSquare,
+  Send,
+  CheckCircle2,
+  CalendarDays,
 } from "lucide-react"
 
 interface YachtData {
@@ -114,12 +123,8 @@ const AMENITY_ICONS: Record<string, React.ReactNode> = {
   "bimini top": <Circle className="w-4 h-4 text-[#84776e]" />,
 }
 
-function getAmenityIcon(name: string) {
-  const lower = name.toLowerCase()
-  for (const [key, icon] of Object.entries(AMENITY_ICONS)) {
-    if (lower.includes(key)) return icon
-  }
-  return <Check className="w-4 h-4 text-[#84776e]" />
+function getAmenityIcon(_name: string) {
+  return <Anchor className="w-4 h-4 text-[#84776e]" />
 }
 
 export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
@@ -127,13 +132,108 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
   const [activeTab, setActiveTab] = useState<string | null>(null)
   const [guestCount, setGuestCount] = useState(2)
   const [showGuestDropdown, setShowGuestDropdown] = useState(false)
-  const [checkIn, setCheckIn] = useState("")
-  const [checkOut, setCheckOut] = useState("")
+  const [dateRange, setDateRange] = useState<DateRange | undefined>()
   const [quoteLoading, setQuoteLoading] = useState(false)
   const [quoteResult, setQuoteResult] = useState<{ available: boolean; price?: number; currency?: string } | null>(null)
 
+  const [showCalendar, setShowCalendar] = useState(false)
+  const checkIn = dateRange?.from ? format(dateRange.from, "yyyy-MM-dd") : ""
+  const checkOut = dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : ""
+
+  // Compute available date ranges from pricing periods
+  const { availableDays, unavailableMatcher, firstAvailableMonth } = useMemo(() => {
+    const today = startOfDay(new Date())
+    const allAvailable: Date[] = []
+    for (const p of yacht.prices) {
+      if (p.priceType !== "WEEKLY") continue
+      const from = startOfDay(new Date(p.dateFrom))
+      const to = startOfDay(new Date(p.dateTo))
+      if (isBefore(to, today)) continue
+      const start = isBefore(from, today) ? today : from
+      allAvailable.push(...eachDayOfInterval({ start, end: to }))
+    }
+    const availableSet = new Set(allAvailable.map((d) => d.getTime()))
+    const matcher = (day: Date) => {
+      const d = startOfDay(day)
+      if (isBefore(d, today)) return true
+      return !availableSet.has(d.getTime())
+    }
+    // Find earliest available date to set default month
+    const sortedPrices = yacht.prices
+      .filter((p) => p.priceType === "WEEKLY" && !isBefore(startOfDay(new Date(p.dateTo)), today))
+      .sort((a, b) => new Date(a.dateFrom).getTime() - new Date(b.dateFrom).getTime())
+    const firstDate = sortedPrices.length > 0
+      ? (() => { const d = startOfDay(new Date(sortedPrices[0].dateFrom)); return isBefore(d, today) ? today : d })()
+      : today
+    return { availableDays: allAvailable, unavailableMatcher: matcher, firstAvailableMonth: firstDate }
+  }, [yacht.prices])
+  const [galleryOpen, setGalleryOpen] = useState(false)
+  const [galleryIndex, setGalleryIndex] = useState(0)
+  const [galleryTransition, setGalleryTransition] = useState(false)
+  const [galleryDirection, setGalleryDirection] = useState<"left" | "right">("right")
+  const [enquiryOpen, setEnquiryOpen] = useState(false)
+  const [enquiryForm, setEnquiryForm] = useState({ firstName: "", lastName: "", email: "", phone: "", notes: "" })
+  const [enquirySubmitting, setEnquirySubmitting] = useState(false)
+  const [enquirySuccess, setEnquirySuccess] = useState(false)
+  const enquiryRef = useRef<HTMLDivElement>(null)
+  const calendarRef = useRef<HTMLDivElement>(null)
+
+  // Close calendar on click outside
+  useEffect(() => {
+    if (!showCalendar) return
+    const handler = (e: MouseEvent) => {
+      if (calendarRef.current && !calendarRef.current.contains(e.target as Node)) {
+        setShowCalendar(false)
+      }
+    }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
+  }, [showCalendar])
+
   const images = yacht.images.length > 0 ? yacht.images : []
   const hasImages = images.length > 0
+
+  const openGallery = useCallback((startIndex = 0) => {
+    setGalleryIndex(startIndex)
+    setGalleryOpen(true)
+  }, [])
+
+  const closeGallery = useCallback(() => setGalleryOpen(false), [])
+
+  const transitionTo = useCallback((newIndex: number, direction: "left" | "right") => {
+    if (galleryTransition) return
+    setGalleryDirection(direction)
+    setGalleryTransition(true)
+    setTimeout(() => {
+      setGalleryIndex(newIndex)
+      setTimeout(() => setGalleryTransition(false), 30)
+    }, 250)
+  }, [galleryTransition])
+
+  const galleryPrev = useCallback(() => {
+    const newIndex = galleryIndex === 0 ? images.length - 1 : galleryIndex - 1
+    transitionTo(newIndex, "left")
+  }, [galleryIndex, images.length, transitionTo])
+
+  const galleryNext = useCallback(() => {
+    const newIndex = galleryIndex === images.length - 1 ? 0 : galleryIndex + 1
+    transitionTo(newIndex, "right")
+  }, [galleryIndex, images.length, transitionTo])
+
+  useEffect(() => {
+    if (!galleryOpen) return
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeGallery()
+      if (e.key === "ArrowLeft") galleryPrev()
+      if (e.key === "ArrowRight") galleryNext()
+    }
+    document.body.style.overflow = "hidden"
+    window.addEventListener("keydown", handleKey)
+    return () => {
+      document.body.style.overflow = ""
+      window.removeEventListener("keydown", handleKey)
+    }
+  }, [galleryOpen, closeGallery, galleryPrev, galleryNext])
 
   const categoryTabs = useMemo(() => {
     const entries = Object.entries(yacht.equipmentByCategory)
@@ -204,19 +304,53 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
     [weeklyPrices, activeYear]
   )
 
-  // Get quote based on selected dates
-  const handleGetQuote = async () => {
+  // Auto-check availability when dates change
+  useEffect(() => {
     if (!checkIn || !checkOut) return
     setQuoteLoading(true)
     setQuoteResult(null)
+    const controller = new AbortController()
+    fetch(`/api/fleet/${yacht.id}/availability?checkIn=${checkIn}&checkOut=${checkOut}`, { signal: controller.signal })
+      .then((res) => res.json())
+      .then((data) => setQuoteResult(data))
+      .catch((err) => { if (err.name !== "AbortError") setQuoteResult({ available: false }) })
+      .finally(() => setQuoteLoading(false))
+    return () => controller.abort()
+  }, [checkIn, checkOut, yacht.id])
+
+  // Enquiry modal escape key + body lock
+  useEffect(() => {
+    if (!enquiryOpen) return
+    const handleKey = (e: KeyboardEvent) => { if (e.key === "Escape") setEnquiryOpen(false) }
+    document.body.style.overflow = "hidden"
+    window.addEventListener("keydown", handleKey)
+    return () => { document.body.style.overflow = ""; window.removeEventListener("keydown", handleKey) }
+  }, [enquiryOpen])
+
+  // Submit enquiry
+  const handleSubmitEnquiry = async () => {
+    if (!enquiryForm.firstName || !enquiryForm.email) return
+    setEnquirySubmitting(true)
     try {
-      const res = await fetch(`/api/fleet/${yacht.id}/availability?checkIn=${checkIn}&checkOut=${checkOut}`)
-      const data = await res.json()
-      setQuoteResult(data)
+      await fetch("/api/enquiries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...enquiryForm,
+          yachtId: yacht.id,
+          yachtName: yacht.name,
+          checkIn,
+          checkOut,
+          guests: guestCount,
+          estimatedPrice: selectedDatePrice?.total || null,
+          currency: selectedDatePrice?.currency || "EUR",
+        }),
+      })
+      setEnquirySuccess(true)
     } catch {
-      setQuoteResult({ available: false })
+      // silent fail - form stays open
     } finally {
-      setQuoteLoading(false)
+      setEnquirySubmitting(false)
     }
   }
 
@@ -283,43 +417,162 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
         )}
 
         {/* Bottom gallery bar */}
-        <div className="absolute bottom-8 left-12 right-12 z-20 flex flex-col gap-4 max-w-[1400px] mx-auto">
-          <h1 className="text-2xl text-white">
-            <span className="font-semibold">{yacht.name}</span>{" "}
-            <span className="font-light text-white/70">Gallery</span>
-          </h1>
+        <div className="absolute bottom-8 left-12 right-12 z-20 flex items-end justify-between max-w-[1400px] mx-auto">
+          <h1 className="text-2xl text-white font-semibold">{yacht.name}</h1>
 
-          <div className="flex items-center gap-2">
-            {images.slice(0, 3).map((img, i) => (
-              <button
-                key={i}
-                onClick={() => setCurrentImage(i)}
-                className={`w-16 h-12 rounded-lg overflow-hidden border relative group/thumb cursor-pointer ${
-                  currentImage === i ? "border-white" : "border-white/20"
-                }`}
-              >
-                <Image
-                  src={img}
-                  alt={`${yacht.name} ${i + 1}`}
-                  fill
-                  className={`object-cover transition duration-300 group-hover/thumb:scale-110 ${
-                    currentImage !== i ? "opacity-70" : ""
-                  }`}
-                  sizes="64px"
-                />
-              </button>
-            ))}
-            {images.length > 3 && (
-              <button className="h-12 px-4 bg-white/90 text-xs font-semibold rounded-lg flex items-center justify-center hover:bg-white transition shadow-lg ml-2" style={{ color: "#070c26" }}>
-                +{images.length - 3} Photos
-              </button>
-            )}
-          </div>
+          {/* Avatar-style circular thumbnails */}
+          <button
+            onClick={() => openGallery(0)}
+            className="group/gallery flex flex-col items-end gap-2 cursor-pointer"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-white text-sm font-bold tracking-wide">Gallery</span>
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-gradient-to-r from-[#0055a9] to-[#00a4e4] text-white shadow-lg shadow-blue-500/25">
+                {images.length} Photos
+              </span>
+            </div>
+            <div className="flex items-center">
+              <div className="flex items-center -space-x-3 group-hover/gallery:-space-x-1 transition-all duration-500 ease-out">
+                {images.slice(0, 5).map((img, i) => (
+                  <div
+                    key={i}
+                    className="relative w-11 h-11 rounded-full overflow-hidden border-2 border-white/80 shadow-lg transition-all duration-500 ease-out group-hover/gallery:scale-110 group-hover/gallery:border-white"
+                    style={{ zIndex: 5 - i, transitionDelay: `${i * 40}ms` }}
+                  >
+                    <Image
+                      src={img}
+                      alt={`${yacht.name} ${i + 1}`}
+                      fill
+                      className="object-cover"
+                      sizes="44px"
+                    />
+                  </div>
+                ))}
+              </div>
+              {images.length > 5 && (
+                <div className="relative w-11 h-11 rounded-full bg-white/20 backdrop-blur-sm border-2 border-white/40 flex items-center justify-center text-white text-xs font-semibold shadow-lg transition-all duration-500 ease-out group-hover/gallery:scale-110 group-hover/gallery:bg-white/30 -ml-3 group-hover/gallery:-ml-1"
+                  style={{ zIndex: 0, transitionDelay: "200ms" }}
+                >
+                  +{images.length - 5}
+                </div>
+              )}
+            </div>
+          </button>
         </div>
       </section>
 
+      {/* Fullscreen Gallery Modal */}
+      {galleryOpen && (
+        <div
+          className="fixed inset-0 z-[100] flex flex-col animate-in fade-in duration-300 overflow-hidden"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Image gallery"
+        >
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/98 backdrop-blur-xl" onClick={closeGallery} />
+
+          {/* Top bar */}
+          <div className="relative z-[110] flex items-center justify-between px-6 md:px-10 py-5 shrink-0">
+            <div className="flex items-center gap-4">
+              <span className="text-white/50 text-sm tracking-wider font-light">
+                {String(galleryIndex + 1).padStart(2, "0")}
+              </span>
+              <div className="w-8 h-px bg-white/20" />
+              <span className="text-white/50 text-sm tracking-wider font-light">
+                {String(images.length).padStart(2, "0")}
+              </span>
+            </div>
+
+            <span className="text-white/70 text-sm font-medium tracking-wide hidden md:block">
+              {yacht.name}
+            </span>
+
+            <button
+              onClick={closeGallery}
+              className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors duration-200 ease-out cursor-pointer"
+              aria-label="Close gallery"
+            >
+              <X className="w-5 h-5 text-white/70" />
+            </button>
+          </div>
+
+          {/* Main image area */}
+          <div className="relative z-[110] flex-1 flex items-center justify-center px-16 md:px-24 min-h-0">
+            {/* Previous */}
+            {images.length > 1 && (
+              <button
+                onClick={galleryPrev}
+                className="absolute left-3 md:left-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/15 transition-all duration-200 ease-out cursor-pointer group/nav"
+                aria-label="Previous image"
+              >
+                <ChevronLeft className="w-5 h-5 text-white/60 group-hover/nav:text-white transition-colors duration-200" />
+              </button>
+            )}
+
+            {/* Image with crossfade + slide transition */}
+            <div className="relative w-full h-full max-h-[72vh] flex items-center justify-center overflow-hidden">
+              <div
+                className="absolute inset-0 flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
+                style={{
+                  opacity: galleryTransition ? 0 : 1,
+                  transform: galleryTransition
+                    ? `translateX(${galleryDirection === "right" ? "-40px" : "40px"}) scale(0.97)`
+                    : "translateX(0) scale(1)",
+                }}
+              >
+                <Image
+                  src={images[galleryIndex]}
+                  alt={`${yacht.name} – Photo ${galleryIndex + 1}`}
+                  fill
+                  className="object-contain"
+                  sizes="(max-width: 768px) 100vw, 85vw"
+                  priority
+                />
+              </div>
+            </div>
+
+            {/* Next */}
+            {images.length > 1 && (
+              <button
+                onClick={galleryNext}
+                className="absolute right-3 md:right-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/15 transition-all duration-200 ease-out cursor-pointer group/nav"
+                aria-label="Next image"
+              >
+                <ChevronRight className="w-5 h-5 text-white/60 group-hover/nav:text-white transition-colors duration-200" />
+              </button>
+            )}
+          </div>
+
+          {/* Bottom thumbnail strip */}
+          <div className="relative z-[110] shrink-0 py-3 px-6 md:px-10">
+            <div className="flex items-center justify-center gap-3 max-w-[90vw] mx-auto overflow-hidden">
+              {images.map((img, i) => (
+                <button
+                  key={i}
+                  onClick={() => transitionTo(i, i > galleryIndex ? "right" : "left")}
+                  className={`relative rounded-full overflow-hidden flex-shrink-0 cursor-pointer transition-all duration-300 ease-out ${
+                    galleryIndex === i
+                      ? "w-16 h-16 ring-2 ring-white opacity-100"
+                      : "w-12 h-12 opacity-40 hover:opacity-70 hover:scale-105"
+                  }`}
+                >
+                  <Image
+                    src={img}
+                    alt={`${yacht.name} ${i + 1}`}
+                    fill
+                    className="object-cover"
+                    sizes="64px"
+                  />
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Main Content */}
-      <section className="w-full bg-white py-12 px-6 md:px-10 relative z-10" style={{ color: "#070c26" }}>
+      <section className="w-full bg-white py-12 px-6 md:px-10 relative" style={{ color: "#070c26" }}>
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
           {/* Left Column */}
           <div className="lg:col-span-8 flex flex-col">
@@ -433,7 +686,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
           </div>
 
           {/* Right Column - Booking Planner */}
-          <div className="lg:col-span-4 lg:sticky lg:top-8 z-20" id="booking">
+          <div className="lg:col-span-4 lg:sticky lg:top-8 z-40" id="booking">
             <div className="bg-white rounded-xl p-5 shadow-[0_4px_20px_rgb(0,0,0,0.06)] border border-gray-100">
               {/* Price header */}
               <div className="flex flex-col mb-4 pb-4 border-b border-gray-100">
@@ -452,39 +705,94 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                 </div>
               </div>
 
-              {/* Date pickers */}
+              {/* Date range picker */}
               <div className="flex flex-col gap-3">
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="relative">
-                    <label className="block text-[9px] uppercase font-bold text-gray-500 mb-1">Check-in</label>
-                    <input
-                      type="date"
-                      value={checkIn}
-                      min={new Date().toISOString().split("T")[0]}
-                      onChange={(e) => {
-                        setCheckIn(e.target.value)
-                        setQuoteResult(null)
-                        if (checkOut && e.target.value >= checkOut) setCheckOut("")
-                      }}
-                      className="w-full border border-gray-300 rounded-lg px-2.5 py-2 text-xs font-medium focus:outline-none focus:border-[#0055a9] transition"
-                      style={{ color: "#070c26" }}
-                    />
+                {/* Date selector button */}
+                <button
+                  onClick={() => setShowCalendar(!showCalendar)}
+                  className="w-full border border-gray-300 rounded-lg p-2.5 hover:border-gray-400 transition cursor-pointer flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-3 flex-1">
+                    <CalendarDays className="w-4 h-4 text-[#84776e] shrink-0" />
+                    <div className="grid grid-cols-2 gap-3 flex-1">
+                      <div className="text-left">
+                        <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5">Check-in</span>
+                        <span className="text-xs font-semibold" style={{ color: dateRange?.from ? "#070c26" : "#aaa" }}>
+                          {dateRange?.from ? format(dateRange.from, "dd MMM yyyy") : "Select"}
+                        </span>
+                      </div>
+                      <div className="text-left border-l border-gray-200 pl-3">
+                        <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5">Check-out</span>
+                        <span className="text-xs font-semibold" style={{ color: dateRange?.to ? "#070c26" : "#aaa" }}>
+                          {dateRange?.to ? format(dateRange.to, "dd MMM yyyy") : "Select"}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="relative">
-                    <label className="block text-[9px] uppercase font-bold text-gray-500 mb-1">Check-out</label>
-                    <input
-                      type="date"
-                      value={checkOut}
-                      min={checkIn || new Date().toISOString().split("T")[0]}
-                      onChange={(e) => {
-                        setCheckOut(e.target.value)
-                        setQuoteResult(null)
-                      }}
-                      className="w-full border border-gray-300 rounded-lg px-2.5 py-2 text-xs font-medium focus:outline-none focus:border-[#0055a9] transition"
-                      style={{ color: "#070c26" }}
-                    />
+                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${showCalendar ? "rotate-180" : ""}`} />
+                </button>
+
+                {/* Calendar overlay - 2 months side by side, opens left over content */}
+                {showCalendar && (
+                  <div
+                    ref={calendarRef}
+                    className="absolute right-0 mt-2 z-[70] bg-white rounded-2xl shadow-2xl border border-gray-100 p-5 animate-in fade-in slide-in-from-top-2 duration-200"
+                    style={{ width: "min(680px, 90vw)" }}
+                  >
+                      <DayPicker
+                        mode="range"
+                        selected={dateRange}
+                        onSelect={(range) => {
+                          setDateRange(range)
+                          setQuoteResult(null)
+                          // Only close when a true range is selected (different from/to dates)
+                          if (range?.from && range?.to && range.from.getTime() !== range.to.getTime()) {
+                            setShowCalendar(false)
+                          }
+                        }}
+                        disabled={unavailableMatcher}
+                        numberOfMonths={2}
+                        defaultMonth={firstAvailableMonth}
+                        showOutsideDays={false}
+                        classNames={{
+                          root: "w-full",
+                          months: "flex gap-6",
+                          month: "flex-1 relative",
+                          month_caption: "flex items-center justify-center h-8 mb-3",
+                          caption_label: "text-sm font-bold text-[#070c26]",
+                          nav: "absolute inset-x-0 top-0 flex justify-between z-10",
+                          button_previous: "w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition cursor-pointer",
+                          button_next: "w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition cursor-pointer",
+                          month_grid: "w-full border-collapse",
+                          weekdays: "flex",
+                          weekday: "w-full text-[10px] font-bold text-gray-400 uppercase text-center py-1",
+                          week: "flex w-full",
+                          day: "w-full aspect-square text-center text-xs p-0.5 relative [&:has([aria-selected])]:bg-[#0055a9]/10 first:[&:has([aria-selected])]:rounded-l-lg last:[&:has([aria-selected])]:rounded-r-lg",
+                          day_button: "w-full h-full flex items-center justify-center text-xs font-medium rounded-lg transition-colors hover:bg-[#0055a9]/10 cursor-pointer aria-selected:opacity-100",
+                          selected: "bg-[#0055a9] text-white hover:bg-[#0055a9] rounded-lg font-bold",
+                          range_start: "bg-[#0055a9] text-white rounded-l-lg rounded-r-none font-bold",
+                          range_end: "bg-[#0055a9] text-white rounded-r-lg rounded-l-none font-bold",
+                          range_middle: "bg-[#0055a9]/10 text-[#070c26] rounded-none",
+                          today: "font-bold text-[#0055a9]",
+                          outside: "text-gray-300 opacity-50",
+                          disabled: "text-red-300 line-through opacity-60 cursor-not-allowed hover:bg-transparent",
+                          hidden: "invisible",
+                          chevron: "fill-gray-500 w-4 h-4",
+                        }}
+                      />
+                      {/* Legend */}
+                      <div className="flex items-center justify-center gap-5 pt-4 mt-3 border-t border-gray-100">
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-2.5 h-2.5 rounded-full bg-[#0055a9]" />
+                          <span className="text-[10px] text-gray-500 font-medium">Selected</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-2.5 h-2.5 rounded-full bg-red-300" />
+                          <span className="text-[10px] text-gray-500 font-medium">Unavailable</span>
+                        </div>
+                      </div>
                   </div>
-                </div>
+                )}
 
                 {/* Guests */}
                 <div
@@ -540,8 +848,15 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                   </div>
                 )}
 
-                {/* Quote result */}
-                {quoteResult && (
+                {/* Availability status */}
+                {quoteLoading && (
+                  <div className="flex items-center justify-center gap-2 py-2">
+                    <div className="w-3.5 h-3.5 border-2 border-[#0055a9]/30 border-t-[#0055a9] rounded-full animate-spin" />
+                    <span className="text-xs text-gray-500">Checking availability...</span>
+                  </div>
+                )}
+
+                {quoteResult && !quoteLoading && (
                   <div className={`rounded-lg p-3 border text-xs ${
                     quoteResult.available
                       ? "bg-green-50 border-green-200 text-green-700"
@@ -559,19 +874,13 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                 )}
 
                 <button
-                  onClick={handleGetQuote}
-                  disabled={!checkIn || !checkOut || quoteLoading}
-                  className="w-full text-white py-3 rounded-lg text-xs font-bold hover:opacity-90 transition duration-300 mt-1 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  onClick={() => { setEnquirySuccess(false); setEnquiryOpen(true) }}
+                  disabled={!checkIn || !checkOut}
+                  className="w-full text-white py-3 rounded-lg text-xs font-bold hover:opacity-90 transition duration-300 mt-1 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
                   style={{ backgroundColor: "#0055a9" }}
                 >
-                  {quoteLoading ? (
-                    <>
-                      <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Checking...
-                    </>
-                  ) : (
-                    "Check Availability & Get Quote"
-                  )}
+                  <Send className="w-3.5 h-3.5" />
+                  Get Quote
                 </button>
                 <p className="text-center text-[10px] text-gray-500">You won&apos;t be charged yet</p>
               </div>
@@ -582,7 +891,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
 
       {/* Equipment & Features Tabs */}
       {categoryTabs.length > 0 && (
-        <section className="w-full bg-white py-12 px-6 md:px-10 relative z-10 border-t border-gray-200" style={{ color: "#070c26" }}>
+        <section className="w-full bg-white py-12 px-6 md:px-10 relative z-[1] border-t border-gray-200" style={{ color: "#070c26" }}>
           <div className="max-w-[1400px] mx-auto">
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-lg font-bold">Equipment & Features</h2>
@@ -793,6 +1102,184 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
           <Phone className="w-6 h-6" />
         </button>
       </div>
+
+      {/* Enquiry Modal */}
+      {enquiryOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setEnquiryOpen(false)} />
+          <div
+            ref={enquiryRef}
+            className="relative z-[110] bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 animate-in fade-in zoom-in-95 duration-300 overflow-hidden"
+          >
+            {/* Modal header */}
+            <div className="px-6 pt-6 pb-4 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-bold" style={{ color: "#070c26" }}>Request a Quote</h2>
+                  <p className="text-xs text-gray-500 mt-0.5">{yacht.name}</p>
+                </div>
+                <button
+                  onClick={() => setEnquiryOpen(false)}
+                  className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition cursor-pointer"
+                >
+                  <X className="w-4 h-4 text-gray-500" />
+                </button>
+              </div>
+            </div>
+
+            {enquirySuccess ? (
+              /* Success state */
+              <div className="px-6 py-12 flex flex-col items-center text-center">
+                <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center mb-4">
+                  <CheckCircle2 className="w-8 h-8 text-green-500" />
+                </div>
+                <h3 className="text-lg font-bold mb-2" style={{ color: "#070c26" }}>Quote Request Sent!</h3>
+                <p className="text-sm text-gray-500 max-w-xs mb-6">
+                  We&apos;ve received your request and sent a confirmation to your email. Our team will get back to you within 24 hours.
+                </p>
+                <button
+                  onClick={() => setEnquiryOpen(false)}
+                  className="px-6 py-2.5 rounded-lg text-sm font-semibold text-white transition hover:opacity-90 cursor-pointer"
+                  style={{ backgroundColor: "#0055a9" }}
+                >
+                  Done
+                </button>
+              </div>
+            ) : (
+              /* Form */
+              <div className="px-6 py-5">
+                {/* Booking summary */}
+                <div className="bg-gray-50 rounded-xl p-4 mb-5 border border-gray-100">
+                  <div className="grid grid-cols-3 gap-3 text-center">
+                    <div>
+                      <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5">Check-in</span>
+                      <span className="text-xs font-semibold" style={{ color: "#070c26" }}>
+                        {checkIn ? new Date(checkIn).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "—"}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5">Check-out</span>
+                      <span className="text-xs font-semibold" style={{ color: "#070c26" }}>
+                        {checkOut ? new Date(checkOut).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "—"}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5">Guests</span>
+                      <span className="text-xs font-semibold" style={{ color: "#070c26" }}>{guestCount}</span>
+                    </div>
+                  </div>
+                  {selectedDatePrice && (
+                    <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-200">
+                      <span className="text-xs font-bold text-gray-500">Estimated Total</span>
+                      <span className="text-base font-bold" style={{ color: "#070c26" }}>
+                        {formatPrice(selectedDatePrice.total, selectedDatePrice.currency)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Contact fields */}
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[9px] uppercase font-bold text-gray-500 mb-1">First Name *</label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                        <input
+                          type="text"
+                          value={enquiryForm.firstName}
+                          onChange={(e) => setEnquiryForm({ ...enquiryForm, firstName: e.target.value })}
+                          placeholder="John"
+                          className="w-full border border-gray-300 rounded-lg pl-9 pr-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[#0055a9] transition"
+                          style={{ color: "#070c26" }}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-[9px] uppercase font-bold text-gray-500 mb-1">Last Name</label>
+                      <input
+                        type="text"
+                        value={enquiryForm.lastName}
+                        onChange={(e) => setEnquiryForm({ ...enquiryForm, lastName: e.target.value })}
+                        placeholder="Doe"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[#0055a9] transition"
+                        style={{ color: "#070c26" }}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[9px] uppercase font-bold text-gray-500 mb-1">Email *</label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                      <input
+                        type="email"
+                        value={enquiryForm.email}
+                        onChange={(e) => setEnquiryForm({ ...enquiryForm, email: e.target.value })}
+                        placeholder="john@example.com"
+                        className="w-full border border-gray-300 rounded-lg pl-9 pr-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[#0055a9] transition"
+                        style={{ color: "#070c26" }}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[9px] uppercase font-bold text-gray-500 mb-1">Phone</label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                      <input
+                        type="tel"
+                        value={enquiryForm.phone}
+                        onChange={(e) => setEnquiryForm({ ...enquiryForm, phone: e.target.value })}
+                        placeholder="+30 123 456 7890"
+                        className="w-full border border-gray-300 rounded-lg pl-9 pr-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[#0055a9] transition"
+                        style={{ color: "#070c26" }}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[9px] uppercase font-bold text-gray-500 mb-1">Notes</label>
+                    <div className="relative">
+                      <MessageSquare className="absolute left-3 top-3 w-3.5 h-3.5 text-gray-400" />
+                      <textarea
+                        value={enquiryForm.notes}
+                        onChange={(e) => setEnquiryForm({ ...enquiryForm, notes: e.target.value })}
+                        placeholder="Any special requests or questions..."
+                        rows={3}
+                        className="w-full border border-gray-300 rounded-lg pl-9 pr-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[#0055a9] transition resize-none"
+                        style={{ color: "#070c26" }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleSubmitEnquiry}
+                  disabled={!enquiryForm.firstName || !enquiryForm.email || enquirySubmitting}
+                  className="w-full text-white py-3 rounded-lg text-xs font-bold hover:opacity-90 transition duration-300 mt-5 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+                  style={{ backgroundColor: "#0055a9" }}
+                >
+                  {enquirySubmitting ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-3.5 h-3.5" />
+                      Submit Quote Request
+                    </>
+                  )}
+                </button>
+                <p className="text-center text-[10px] text-gray-400 mt-2">
+                  We&apos;ll send a confirmation to your email
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
