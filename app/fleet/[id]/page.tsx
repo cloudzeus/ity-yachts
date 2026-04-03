@@ -3,7 +3,6 @@ import { notFound } from "next/navigation"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { YachtDetailClient } from "./yacht-detail-client"
-import { fetchFreeYacht } from "@/lib/nausys-api"
 
 export const dynamic = "force-dynamic"
 
@@ -170,28 +169,10 @@ export default async function YachtDetailPage({ params }: { params: Promise<{ id
       : null,
   }
 
-  // Pre-fetch NAUSYS availability for the next 6 months (covers calendar view)
-  let nausysFreePeriods: Array<{ from: string; to: string }> = []
-  try {
-    const nausysSetting = await db.setting.findUnique({ where: { key: "nausys" } })
-    if (nausysSetting?.value) {
-      const creds = nausysSetting.value as { username: string; password: string; endpoint: string; companyId: string }
-      const now = new Date()
-      const sixMonthsLater = new Date(now.getFullYear(), now.getMonth() + 6, now.getDate())
-      const fmt = (d: Date) => `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${d.getFullYear()}`
-      const results = await fetchFreeYacht(creds, fmt(now), fmt(sixMonthsLater), [yacht.id])
-      nausysFreePeriods = results
-        .filter((r) => r.yachtId === yacht.id)
-        .map((r) => ({ from: r.periodFrom, to: r.periodTo }))
-    }
-  } catch {
-    // NAUSYS unavailable — calendar will use local price data only
-  }
-
   return (
     <>
       <SiteHeader />
-      <YachtDetailClient yacht={yachtData} nausysFreePeriods={nausysFreePeriods} />
+      <YachtDetailClient yacht={yachtData} />
       <SiteFooter />
     </>
   )

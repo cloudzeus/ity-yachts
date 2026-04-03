@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useCallback, useRef } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { DayPicker, type DateRange } from "react-day-picker"
-import { format, isWithinInterval, eachDayOfInterval, isBefore, startOfDay } from "date-fns"
+import { format, eachDayOfInterval, isBefore, startOfDay } from "date-fns"
 import "./yacht-calendar.css"
 import {
   ChevronLeft,
@@ -128,58 +128,29 @@ function getAmenityIcon(_name: string) {
   return <Anchor className="w-4 h-4 text-[#84776e]" />
 }
 
-export function YachtDetailClient({ yacht, nausysFreePeriods = [] }: { yacht: YachtData; nausysFreePeriods?: Array<{ from: string; to: string }> }) {
+export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
   const [currentImage, setCurrentImage] = useState(0)
   const [activeTab, setActiveTab] = useState<string | null>(null)
-  const [guestCount, setGuestCount] = useState(2)
-  const [showGuestDropdown, setShowGuestDropdown] = useState(false)
-  const [dateRange, setDateRange] = useState<DateRange | undefined>()
-  const [quoteLoading, setQuoteLoading] = useState(false)
-  const [quoteResult, setQuoteResult] = useState<{ available: boolean; price?: number; currency?: string } | null>(null)
 
+  // Booking sidebar state (specific dates)
+  const [dateRange, setDateRange] = useState<DateRange | undefined>()
   const [showCalendar, setShowCalendar] = useState(false)
   const [calendarKey, setCalendarKey] = useState(0)
   const [calendarMonth, setCalendarMonth] = useState<Date | undefined>(undefined)
+  const [guestCount, setGuestCount] = useState(2)
+  const [showGuestDropdown, setShowGuestDropdown] = useState(false)
+  const [bookingOpen, setBookingOpen] = useState(false)
+  const [bookingSubmitting, setBookingSubmitting] = useState(false)
+  const [bookingSuccess, setBookingSuccess] = useState(false)
+  const [bookingForm, setBookingForm] = useState({ firstName: "", lastName: "", email: "", phone: "", notes: "" })
+  const calendarRef = useRef<HTMLDivElement>(null)
   const checkIn = dateRange?.from ? format(dateRange.from, "yyyy-MM-dd") : ""
   const checkOut = dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : ""
 
-  // Compute available date ranges from pricing periods + NAUSYS free periods
-  const { availableDays, unavailableMatcher, firstAvailableMonth } = useMemo(() => {
-    const today = startOfDay(new Date())
-    const allAvailable: Date[] = []
-    // Local price-based availability
-    for (const p of yacht.prices) {
-      if (p.priceType !== "WEEKLY") continue
-      const from = startOfDay(new Date(p.dateFrom))
-      const to = startOfDay(new Date(p.dateTo))
-      if (isBefore(to, today)) continue
-      const start = isBefore(from, today) ? today : from
-      allAvailable.push(...eachDayOfInterval({ start, end: to }))
-    }
-    // Merge NAUSYS free periods (format: DD.MM.YYYY)
-    for (const period of nausysFreePeriods) {
-      const parseDMY = (s: string) => { const [d, m, y] = s.split(".").map(Number); return startOfDay(new Date(y, m - 1, d)) }
-      const from = parseDMY(period.from)
-      const to = parseDMY(period.to)
-      if (isBefore(to, today)) continue
-      const start = isBefore(from, today) ? today : from
-      allAvailable.push(...eachDayOfInterval({ start, end: to }))
-    }
-    const availableSet = new Set(allAvailable.map((d) => d.getTime()))
-    const matcher = (day: Date) => {
-      const d = startOfDay(day)
-      if (isBefore(d, today)) return true
-      return !availableSet.has(d.getTime())
-    }
-    // Find earliest available date to set default month
-    const sortedPrices = yacht.prices
-      .filter((p) => p.priceType === "WEEKLY" && !isBefore(startOfDay(new Date(p.dateTo)), today))
-      .sort((a, b) => new Date(a.dateFrom).getTime() - new Date(b.dateFrom).getTime())
-    const firstDate = sortedPrices.length > 0
-      ? (() => { const d = startOfDay(new Date(sortedPrices[0].dateFrom)); return isBefore(d, today) ? today : d })()
-      : today
-    return { availableDays: allAvailable, unavailableMatcher: matcher, firstAvailableMonth: firstDate }
-  }, [yacht.prices, nausysFreePeriods])
+  // Enquiry modal state (flexible planning)
+  const [selectedMonths, setSelectedMonths] = useState<string[]>([])
+  const [enquiryGuestCount, setEnquiryGuestCount] = useState(2)
+
   const [galleryOpen, setGalleryOpen] = useState(false)
   const [galleryIndex, setGalleryIndex] = useState(0)
   const [galleryTransition, setGalleryTransition] = useState(false)
@@ -189,9 +160,6 @@ export function YachtDetailClient({ yacht, nausysFreePeriods = [] }: { yacht: Ya
   const [enquirySubmitting, setEnquirySubmitting] = useState(false)
   const [enquirySuccess, setEnquirySuccess] = useState(false)
   const enquiryRef = useRef<HTMLDivElement>(null)
-  const calendarRef = useRef<HTMLDivElement>(null)
-
-  // Calendar closes only when a full range is selected (via onSelect) or user clicks toggle button
 
   const images = yacht.images.length > 0 ? yacht.images : []
   const hasImages = images.length > 0
@@ -307,59 +275,36 @@ export function YachtDetailClient({ yacht, nausysFreePeriods = [] }: { yacht: Ya
     [weeklyPrices, activeYear]
   )
 
-  // Auto-check availability when both dates are selected (and different)
-  useEffect(() => {
-    if (!checkIn || !checkOut || checkIn === checkOut) return
-    setQuoteLoading(true)
-    setQuoteResult(null)
-    const controller = new AbortController()
-    fetch(`/api/fleet/${yacht.id}/availability?checkIn=${checkIn}&checkOut=${checkOut}`, { signal: controller.signal })
-      .then((res) => res.json())
-      .then((data) => setQuoteResult(data))
-      .catch((err) => { if (err.name !== "AbortError") setQuoteResult({ available: false }) })
-      .finally(() => setQuoteLoading(false))
-    return () => controller.abort()
-  }, [checkIn, checkOut, yacht.id])
-
-  // Enquiry modal escape key + body lock
-  useEffect(() => {
-    if (!enquiryOpen) return
-    const handleKey = (e: KeyboardEvent) => { if (e.key === "Escape") setEnquiryOpen(false) }
-    document.body.style.overflow = "hidden"
-    window.addEventListener("keydown", handleKey)
-    return () => { document.body.style.overflow = ""; window.removeEventListener("keydown", handleKey) }
-  }, [enquiryOpen])
-
-  // Submit enquiry
-  const handleSubmitEnquiry = async () => {
-    if (!enquiryForm.firstName || !enquiryForm.email) return
-    setEnquirySubmitting(true)
-    try {
-      await fetch("/api/enquiries", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...enquiryForm,
-          yachtId: yacht.id,
-          yachtName: yacht.name,
-          checkIn,
-          checkOut,
-          guests: guestCount,
-          estimatedPrice: selectedDatePrice?.total || null,
-          currency: selectedDatePrice?.currency || "EUR",
-        }),
-      })
-      setEnquirySuccess(true)
-    } catch {
-      // silent fail - form stays open
-    } finally {
-      setEnquirySubmitting(false)
+  // Compute available dates for calendar from pricing periods
+  const { unavailableMatcher, firstAvailableMonth } = useMemo(() => {
+    const today = startOfDay(new Date())
+    const allAvailable: Date[] = []
+    for (const p of yacht.prices) {
+      if (p.priceType !== "WEEKLY") continue
+      const from = startOfDay(new Date(p.dateFrom))
+      const to = startOfDay(new Date(p.dateTo))
+      if (isBefore(to, today)) continue
+      const start = isBefore(from, today) ? today : from
+      allAvailable.push(...eachDayOfInterval({ start, end: to }))
     }
-  }
+    const availableSet = new Set(allAvailable.map((d) => d.getTime()))
+    const matcher = (day: Date) => {
+      const d = startOfDay(day)
+      if (isBefore(d, today)) return true
+      return !availableSet.has(d.getTime())
+    }
+    const sortedPrices = yacht.prices
+      .filter((p) => p.priceType === "WEEKLY" && !isBefore(startOfDay(new Date(p.dateTo)), today))
+      .sort((a, b) => new Date(a.dateFrom).getTime() - new Date(b.dateFrom).getTime())
+    const firstDate = sortedPrices.length > 0
+      ? (() => { const d = startOfDay(new Date(sortedPrices[0].dateFrom)); return isBefore(d, today) ? today : d })()
+      : today
+    return { unavailableMatcher: matcher, firstAvailableMonth: firstDate }
+  }, [yacht.prices])
 
-  // Compute price for selected dates from local price data
+  // Compute price for selected dates
   const selectedDatePrice = useMemo(() => {
-    if (!checkIn || !checkOut) return null
+    if (!checkIn || !checkOut || checkIn === checkOut) return null
     const cin = new Date(checkIn)
     const cout = new Date(checkOut)
     const matchingPrice = weeklyPrices.find((p) => {
@@ -377,6 +322,97 @@ export function YachtDetailClient({ yacht, nausysFreePeriods = [] }: { yacht: Ya
       currency: matchingPrice.currency,
     }
   }, [checkIn, checkOut, weeklyPrices])
+
+  // Submit booking request
+  const handleSubmitBooking = async () => {
+    if (!bookingForm.firstName || !bookingForm.email || !checkIn || !checkOut) return
+    setBookingSubmitting(true)
+    try {
+      await fetch("/api/enquiries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...bookingForm,
+          yachtId: yacht.id,
+          yachtName: yacht.name,
+          checkIn,
+          checkOut,
+          guests: guestCount,
+          estimatedPrice: selectedDatePrice?.total || null,
+          currency: selectedDatePrice?.currency || "EUR",
+          type: "booking",
+        }),
+      })
+      setBookingSuccess(true)
+    } catch {
+      // silent
+    } finally {
+      setBookingSubmitting(false)
+    }
+  }
+
+  // Modal escape key + body lock
+  useEffect(() => {
+    const isOpen = enquiryOpen || bookingOpen
+    if (!isOpen) return
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { setEnquiryOpen(false); setBookingOpen(false) }
+    }
+    document.body.style.overflow = "hidden"
+    window.addEventListener("keydown", handleKey)
+    return () => { document.body.style.overflow = ""; window.removeEventListener("keydown", handleKey) }
+  }, [enquiryOpen, bookingOpen])
+
+  // Submit enquiry
+  const handleSubmitEnquiry = async () => {
+    if (!enquiryForm.firstName || !enquiryForm.email) return
+    setEnquirySubmitting(true)
+    try {
+      await fetch("/api/enquiries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...enquiryForm,
+          yachtId: yacht.id,
+          yachtName: yacht.name,
+          preferredMonths: selectedMonths,
+          guests: enquiryGuestCount,
+          type: "enquiry",
+        }),
+      })
+      setEnquirySuccess(true)
+    } catch {
+      // silent fail - form stays open
+    } finally {
+      setEnquirySubmitting(false)
+    }
+  }
+
+  // Build available months from pricing periods for the month picker
+  const availableMonths = useMemo(() => {
+    const now = new Date()
+    const months = new Set<string>()
+    for (const p of yacht.prices) {
+      if (p.priceType !== "WEEKLY") continue
+      const from = new Date(p.dateFrom)
+      const to = new Date(p.dateTo)
+      if (to < now) continue
+      // Add all months this period spans
+      const cursor = new Date(Math.max(from.getTime(), now.getTime()))
+      cursor.setDate(1)
+      while (cursor <= to) {
+        months.add(`${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}`)
+        cursor.setMonth(cursor.getMonth() + 1)
+      }
+    }
+    return Array.from(months).sort()
+  }, [yacht.prices])
+
+  const toggleMonth = (month: string) => {
+    setSelectedMonths((prev) =>
+      prev.includes(month) ? prev.filter((m) => m !== month) : [...prev, month].sort()
+    )
+  }
 
   const prevImage = () => setCurrentImage((prev) => (prev === 0 ? images.length - 1 : prev - 1))
   const nextImage = () => setCurrentImage((prev) => (prev === images.length - 1 ? 0 : prev + 1))
@@ -690,187 +726,171 @@ export function YachtDetailClient({ yacht, nausysFreePeriods = [] }: { yacht: Ya
 
           {/* Right Column - Booking Planner */}
           <div className="lg:col-span-4 lg:sticky lg:top-8 z-40" id="booking">
-            <div className="bg-white rounded-xl p-5 shadow-[0_4px_20px_rgb(0,0,0,0.06)] border border-gray-100">
-              {/* Price header */}
-              <div className="flex flex-col mb-4 pb-4 border-b border-gray-100">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <span className="text-[#84776e] text-xs font-medium">From</span>
-                    <div className="flex items-end gap-1">
-                      <span className="text-2xl font-bold tracking-tight" style={{ color: "#070c26" }}>
-                        {cheapestPrice ? formatPrice(cheapestPrice, "EUR") : "On Request"}
-                      </span>
-                      {cheapestPrice && (
-                        <span className="text-gray-500 text-sm font-medium mb-0.5">/ week</span>
-                      )}
-                    </div>
+            <div className="bg-white rounded-2xl shadow-[0_8px_40px_rgb(0,0,0,0.08)] border border-gray-100/80">
+              {/* Premium header */}
+              <div className="relative px-5 pt-5 pb-4 rounded-t-2xl" style={{ background: "linear-gradient(135deg, #070c26 0%, #0055a9 100%)" }}>
+                <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")" }} />
+                <div className="relative">
+                  <span className="text-white/60 text-[10px] uppercase tracking-widest font-semibold">Starting from</span>
+                  <div className="flex items-end gap-1.5 mt-1">
+                    <span className="text-2xl font-bold text-white tracking-tight">
+                      {cheapestPrice ? formatPrice(cheapestPrice, "EUR") : "On Request"}
+                    </span>
+                    {cheapestPrice && (
+                      <span className="text-white/50 text-xs font-medium mb-1">/ week</span>
+                    )}
                   </div>
                 </div>
               </div>
 
-              {/* Date range picker */}
-              <div className="flex flex-col gap-3 relative">
-                {/* Date selector button */}
-                <button
-                  onClick={() => {
-                    if (!showCalendar) {
-                      setDateRange(undefined)
-                      setQuoteResult(null)
-                      setCalendarMonth(firstAvailableMonth)
-                      setCalendarKey((k) => k + 1)
-                    }
-                    setShowCalendar(!showCalendar)
-                  }}
-                  className="w-full border border-gray-300 rounded-lg p-2.5 hover:border-gray-400 transition cursor-pointer flex items-center justify-between"
-                >
-                  <div className="flex items-center gap-3 flex-1">
-                    <CalendarDays className="w-4 h-4 text-[#84776e] shrink-0" />
-                    <div className="grid grid-cols-2 gap-3 flex-1">
-                      <div className="text-left">
-                        <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5">Check-in</span>
-                        <span className="text-xs font-semibold" style={{ color: dateRange?.from ? "#070c26" : "#aaa" }}>
-                          {dateRange?.from ? format(dateRange.from, "dd MMM yyyy") : "Select date"}
-                        </span>
-                      </div>
-                      <div className="text-left border-l border-gray-200 pl-3">
-                        <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5">Check-out</span>
-                        <span className="text-xs font-semibold" style={{ color: dateRange?.to ? "#070c26" : "#aaa" }}>
-                          {dateRange?.to ? format(dateRange.to, "dd MMM yyyy") : "Select date"}
-                        </span>
-                      </div>
-                    </div>
+              <div className="p-5 flex flex-col gap-4">
+                {/* Step 1: Select Dates */}
+                <div className="relative">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-5 h-5 rounded-full bg-[#0055a9] flex items-center justify-center text-white text-[9px] font-bold shrink-0">1</div>
+                    <span className="text-[11px] font-bold text-gray-800 uppercase tracking-wide">Select Dates</span>
                   </div>
-                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${showCalendar ? "rotate-180" : ""}`} />
-                </button>
-
-                {/* Calendar overlay - 2 months side by side */}
-                {showCalendar && (
-                  <div
-                    ref={calendarRef}
-                    className="absolute top-full right-0 mt-1 z-[70] bg-white rounded-2xl shadow-2xl border border-gray-200 p-5"
-                    style={{ width: "620px" }}
+                  <button
+                    onClick={() => {
+                      if (!showCalendar) {
+                        setDateRange(undefined)
+                        setBookingSuccess(false)
+                        setCalendarMonth(firstAvailableMonth)
+                        setCalendarKey((k) => k + 1)
+                      }
+                      setShowCalendar(!showCalendar)
+                    }}
+                    className="w-full border border-gray-200 rounded-xl p-3 hover:border-gray-300 transition cursor-pointer flex items-center justify-between bg-gray-50/50"
                   >
-                    <DayPicker
-                      key={calendarKey}
-                      className="yacht-cal"
-                      mode="range"
-                      selected={dateRange}
-                      month={calendarMonth}
-                      onMonthChange={setCalendarMonth}
-                      onSelect={(range) => {
-                        setDateRange(range)
-                        setQuoteResult(null)
-                        if (range?.from && range?.to && range.from.getTime() !== range.to.getTime()) {
-                          setTimeout(() => setShowCalendar(false), 300)
-                        }
-                      }}
-                      disabled={unavailableMatcher}
-                      numberOfMonths={2}
-                      showOutsideDays={false}
-                    />
-                    {/* Legend */}
-                    <div className="flex items-center justify-center gap-5 pt-3 mt-3 border-t border-gray-100">
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-2.5 h-2.5 rounded-full bg-[#0055a9]" />
-                        <span className="text-[10px] text-gray-500 font-medium">Selected</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-2.5 h-2.5 rounded-full bg-red-300" />
-                        <span className="text-[10px] text-gray-500 font-medium">Unavailable</span>
+                    <div className="flex items-center gap-3 flex-1">
+                      <CalendarDays className="w-4 h-4 text-[#0055a9] shrink-0" />
+                      <div className="grid grid-cols-2 gap-3 flex-1">
+                        <div className="text-left">
+                          <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5 tracking-wide">Check-in</span>
+                          <span className="text-xs font-semibold" style={{ color: dateRange?.from ? "#070c26" : "#aaa" }}>
+                            {dateRange?.from ? format(dateRange.from, "dd MMM yyyy") : "Select date"}
+                          </span>
+                        </div>
+                        <div className="text-left border-l border-gray-200 pl-3">
+                          <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5 tracking-wide">Check-out</span>
+                          <span className="text-xs font-semibold" style={{ color: dateRange?.to ? "#070c26" : "#aaa" }}>
+                            {dateRange?.to ? format(dateRange.to, "dd MMM yyyy") : "Select date"}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                    <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${showCalendar ? "rotate-180" : ""}`} />
+                  </button>
 
-                {/* Guests */}
-                <div
-                  className="border border-gray-300 rounded-lg p-2.5 hover:border-gray-400 transition cursor-pointer relative flex justify-between items-center"
-                  onClick={() => setShowGuestDropdown(!showGuestDropdown)}
-                >
-                  <div>
-                    <label className="block text-[9px] uppercase font-bold text-gray-500 mb-0.5">Guests</label>
-                    <div className="text-xs font-medium" style={{ color: "#070c26" }}>
-                      {guestCount} guest{guestCount !== 1 ? "s" : ""}
-                    </div>
-                  </div>
-                  <ChevronDown className="w-4 h-4 text-gray-400" />
-                  {showGuestDropdown && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-30 p-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium">Guests</span>
-                        <div className="flex items-center gap-3">
-                          <button
-                            onClick={(e) => { e.stopPropagation(); setGuestCount(Math.max(1, guestCount - 1)) }}
-                            className="w-7 h-7 rounded-full border border-gray-300 flex items-center justify-center text-sm hover:bg-gray-50"
-                          >
-                            -
-                          </button>
-                          <span className="text-sm font-semibold w-4 text-center">{guestCount}</span>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setGuestCount(Math.min(yacht.maxPersons || 20, guestCount + 1))
-                            }}
-                            className="w-7 h-7 rounded-full border border-gray-300 flex items-center justify-center text-sm hover:bg-gray-50"
-                          >
-                            +
-                          </button>
+                  {/* Calendar dropdown */}
+                  {showCalendar && (
+                    <div
+                      ref={calendarRef}
+                      className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-[200] bg-white rounded-2xl shadow-2xl border border-gray-200 p-5"
+                      style={{ width: "620px" }}
+                    >
+                      <DayPicker
+                        key={calendarKey}
+                        className="yacht-cal"
+                        mode="range"
+                        selected={dateRange}
+                        month={calendarMonth}
+                        onMonthChange={setCalendarMonth}
+                        onSelect={(range) => {
+                          setDateRange(range)
+                          if (range?.from && range?.to && range.from.getTime() !== range.to.getTime()) {
+                            setTimeout(() => setShowCalendar(false), 300)
+                          }
+                        }}
+                        disabled={unavailableMatcher}
+                        numberOfMonths={2}
+                        showOutsideDays={false}
+                      />
+                      <div className="flex items-center justify-center gap-5 pt-3 mt-3 border-t border-gray-100">
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-2.5 h-2.5 rounded-full bg-[#0055a9]" />
+                          <span className="text-[10px] text-gray-500 font-medium">Selected</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
+                          <span className="text-[10px] text-gray-500 font-medium">Unavailable</span>
                         </div>
                       </div>
                     </div>
                   )}
                 </div>
 
+                {/* Step 2: Guests */}
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-5 h-5 rounded-full bg-[#0055a9] flex items-center justify-center text-white text-[9px] font-bold shrink-0">2</div>
+                    <span className="text-[11px] font-bold text-gray-800 uppercase tracking-wide">Party Size</span>
+                  </div>
+                  <div className="flex items-center justify-between bg-gray-50/50 rounded-xl p-3 border border-gray-200">
+                    <div className="flex items-center gap-2">
+                      <User className="w-4 h-4 text-[#84776e]" />
+                      <span className="text-xs font-medium text-gray-700">{guestCount} guest{guestCount !== 1 ? "s" : ""}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setGuestCount(Math.max(1, guestCount - 1))}
+                        className="w-7 h-7 rounded-lg border border-gray-200 flex items-center justify-center text-sm text-gray-500 hover:bg-white hover:border-gray-300 transition cursor-pointer"
+                      >-</button>
+                      <span className="text-sm font-bold w-5 text-center" style={{ color: "#070c26" }}>{guestCount}</span>
+                      <button
+                        onClick={() => setGuestCount(Math.min(yacht.maxPersons || 20, guestCount + 1))}
+                        className="w-7 h-7 rounded-lg border border-gray-200 flex items-center justify-center text-sm text-gray-500 hover:bg-white hover:border-gray-300 transition cursor-pointer"
+                      >+</button>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Price estimate */}
                 {selectedDatePrice && (
-                  <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
-                    <div className="flex justify-between items-center mb-1.5">
-                      <span className="text-xs text-gray-500">{formatPrice(selectedDatePrice.perWeek, selectedDatePrice.currency)} × {selectedDatePrice.days} days</span>
-                      <span className="text-xs font-semibold">{formatPrice(selectedDatePrice.total, selectedDatePrice.currency)}</span>
+                  <div className="rounded-xl p-4 border border-[#0055a9]/15" style={{ background: "linear-gradient(135deg, rgba(0,85,169,0.04) 0%, rgba(7,12,38,0.03) 100%)" }}>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-xs text-gray-500">{formatPrice(selectedDatePrice.perWeek, selectedDatePrice.currency)} x {selectedDatePrice.days} days</span>
+                      <span className="text-xs font-semibold" style={{ color: "#070c26" }}>{formatPrice(selectedDatePrice.total, selectedDatePrice.currency)}</span>
                     </div>
-                    <div className="flex justify-between items-center pt-1.5 border-t border-gray-200">
-                      <span className="text-xs font-bold">Estimated Total</span>
-                      <span className="text-sm font-bold" style={{ color: "#070c26" }}>{formatPrice(selectedDatePrice.total, selectedDatePrice.currency)}</span>
+                    <div className="flex justify-between items-center pt-2 border-t border-[#0055a9]/10">
+                      <span className="text-xs font-bold" style={{ color: "#070c26" }}>Estimated Total</span>
+                      <span className="text-base font-bold" style={{ color: "#0055a9" }}>{formatPrice(selectedDatePrice.total, selectedDatePrice.currency)}</span>
                     </div>
-                    <p className="text-[9px] text-gray-400 mt-1">Excl. VAT & APA. Final price on request.</p>
+                    <p className="text-[9px] text-gray-400 mt-1.5">Excl. VAT & APA. Final price confirmed in proposal.</p>
                   </div>
                 )}
 
-                {/* Availability status */}
-                {quoteLoading && (
-                  <div className="flex items-center justify-center gap-2 py-2">
-                    <div className="w-3.5 h-3.5 border-2 border-[#0055a9]/30 border-t-[#0055a9] rounded-full animate-spin" />
-                    <span className="text-xs text-gray-500">Checking availability...</span>
-                  </div>
-                )}
-
-                {quoteResult && !quoteLoading && (
-                  <div className={`rounded-lg p-3 border text-xs ${
-                    quoteResult.available
-                      ? "bg-green-50 border-green-200 text-green-700"
-                      : "bg-red-50 border-red-200 text-red-700"
-                  }`}>
-                    {quoteResult.available ? (
-                      <div className="flex items-center gap-2">
-                        <Check className="w-4 h-4" />
-                        <span className="font-semibold">Available for these dates!</span>
-                      </div>
-                    ) : (
-                      <span className="font-semibold">Not available for these dates. Try different dates.</span>
-                    )}
-                  </div>
-                )}
-
+                {/* Booking CTA */}
                 <button
-                  onClick={() => { setEnquirySuccess(false); setEnquiryOpen(true) }}
-                  disabled={!checkIn || !checkOut}
-                  className="w-full text-white py-3 rounded-lg text-xs font-bold hover:opacity-90 transition duration-300 mt-1 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
-                  style={{ backgroundColor: "#0055a9" }}
+                  onClick={() => { setBookingSuccess(false); setBookingOpen(true) }}
+                  disabled={!checkIn || !checkOut || checkIn === checkOut}
+                  className="w-full text-white py-3.5 rounded-xl text-xs font-bold transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer hover:shadow-lg hover:shadow-[#0055a9]/20 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{ background: "linear-gradient(135deg, #0055a9 0%, #003d7a 100%)" }}
                 >
                   <Send className="w-3.5 h-3.5" />
-                  Get Quote
+                  {checkIn && checkOut && checkIn !== checkOut ? "Request This Booking" : "Select dates to continue"}
                 </button>
-                <p className="text-center text-[10px] text-gray-500">You won&apos;t be charged yet</p>
+
+                <p className="text-center text-[10px] text-gray-400">You won&apos;t be charged &middot; Free cancellation</p>
+
+                {/* Staff advisor */}
+                {yacht.staffRep && (
+                  <div className="flex items-center gap-2.5 pt-4 mt-2 border-t border-gray-100">
+                    {yacht.staffRep.image ? (
+                      <Image src={yacht.staffRep.image} alt={yacht.staffRep.name} width={36} height={36} className="w-9 h-9 rounded-full object-cover shrink-0 border-2 border-gray-100" />
+                    ) : (
+                      <div className="w-9 h-9 rounded-full bg-[#070c26] flex items-center justify-center text-white text-[9px] font-bold shrink-0">IYC</div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[11px] font-semibold text-gray-800 truncate">{yacht.staffRep.name}</p>
+                      <p className="text-[9px] text-gray-400">{yacht.staffRep.position || "Charter Advisor"}</p>
+                    </div>
+                    <span className="flex items-center gap-1 text-[9px] text-green-600 font-medium">
+                      <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                      Online
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -929,7 +949,7 @@ export function YachtDetailClient({ yacht, nausysFreePeriods = [] }: { yacht: Ya
                   <h2 className="text-lg font-bold">Available Services</h2>
                   <span className="text-xs text-gray-500">Optional add-ons for your charter</span>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-x-2 gap-y-4">
                   {[...yacht.services].sort((a, b) => {
                     // Free / included first, then paid
                     const aFree = a.price === 0 || a.obligatory ? 0 : 1
@@ -1070,18 +1090,205 @@ export function YachtDetailClient({ yacht, nausysFreePeriods = [] }: { yacht: Ya
                     </div>
                     <span className="text-white/60 text-[10px]">{yacht.staffRep?.position || "Charter Advisor"}</span>
                   </div>
-                  <Link
-                    href="#booking"
-                    className="px-3 py-1.5 rounded-md text-[11px] font-semibold transition hover:bg-white/30"
+                  <button
+                    onClick={() => { setEnquirySuccess(false); setEnquiryOpen(true) }}
+                    className="px-3 py-1.5 rounded-md text-[11px] font-semibold transition hover:bg-white/30 cursor-pointer"
                     style={{ background: "rgba(255,255,255,0.2)", color: "#fff" }}
                   >
                     Enquire
-                  </Link>
+                  </button>
                 </div>
               </div>
             </div>
           </div>
         </section>
+      )}
+
+      {/* Booking Modal */}
+      {bookingOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setBookingOpen(false)} />
+          <div className="relative z-[110] bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden max-h-[90vh] overflow-y-auto">
+
+            {bookingSuccess ? (
+              /* Success */
+              <div className="relative overflow-hidden">
+                <div className="relative px-8 pt-10 pb-8 text-center" style={{ background: "linear-gradient(135deg, #070c26 0%, #0055a9 60%, #0077cc 100%)" }}>
+                  <button onClick={() => setBookingOpen(false)} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition cursor-pointer">
+                    <X className="w-4 h-4 text-white/70" />
+                  </button>
+                  <div className="relative">
+                    <div className="w-16 h-16 rounded-full bg-white/15 flex items-center justify-center mx-auto mb-5 backdrop-blur-sm border border-white/20">
+                      <CheckCircle2 className="w-8 h-8 text-white" />
+                    </div>
+                    <h3 className="text-xl font-bold mb-2 tracking-tight" style={{ color: "#ffffff" }}>
+                      {bookingForm.firstName ? `Excellent Choice, ${bookingForm.firstName}!` : "Excellent Choice!"}
+                    </h3>
+                    <p className="text-white/70 text-sm leading-relaxed max-w-sm mx-auto">
+                      Your booking request for <span className="text-white font-semibold">{yacht.name}</span> has been received.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="px-8 -mt-4 relative z-10">
+                  <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-5">
+                    {/* Booking summary */}
+                    <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-100">
+                      <div className="text-center flex-1">
+                        <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5">Check-in</span>
+                        <span className="text-xs font-bold" style={{ color: "#070c26" }}>{dateRange?.from ? format(dateRange.from, "dd MMM yyyy") : "—"}</span>
+                      </div>
+                      <div className="w-8 flex items-center justify-center">
+                        <ChevronRight className="w-4 h-4 text-gray-300" />
+                      </div>
+                      <div className="text-center flex-1">
+                        <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5">Check-out</span>
+                        <span className="text-xs font-bold" style={{ color: "#070c26" }}>{dateRange?.to ? format(dateRange.to, "dd MMM yyyy") : "—"}</span>
+                      </div>
+                      <div className="text-center flex-1 border-l border-gray-100 pl-3">
+                        <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5">Guests</span>
+                        <span className="text-xs font-bold" style={{ color: "#070c26" }}>{guestCount}</span>
+                      </div>
+                    </div>
+
+                    {selectedDatePrice && (
+                      <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-100">
+                        <span className="text-xs text-gray-500">Estimated total</span>
+                        <span className="text-base font-bold" style={{ color: "#0055a9" }}>{formatPrice(selectedDatePrice.total, selectedDatePrice.currency)}</span>
+                      </div>
+                    )}
+
+                    {/* Staff advisor */}
+                    {yacht.staffRep && (
+                      <div className="flex items-center gap-3">
+                        {yacht.staffRep.image ? (
+                          <Image src={yacht.staffRep.image} alt={yacht.staffRep.name} width={44} height={44} className="w-11 h-11 rounded-full object-cover shrink-0 border-2 border-gray-100" />
+                        ) : (
+                          <div className="w-11 h-11 rounded-full bg-[#070c26] flex items-center justify-center text-white text-xs font-bold shrink-0">IYC</div>
+                        )}
+                        <div className="flex-1">
+                          <p className="text-xs font-semibold text-gray-800">{yacht.staffRep.name}</p>
+                          <p className="text-[10px] text-gray-400">{yacht.staffRep.position || "Charter Advisor"}</p>
+                        </div>
+                        <span className="text-[9px] text-green-600 font-medium flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                          Will confirm shortly
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="px-8 pt-5 pb-8 text-center">
+                  <button onClick={() => setBookingOpen(false)} className="px-8 py-3 rounded-xl text-xs font-bold text-white transition-all duration-300 hover:shadow-lg hover:shadow-[#0055a9]/20 active:scale-[0.98] cursor-pointer" style={{ background: "linear-gradient(135deg, #0055a9 0%, #003d7a 100%)" }}>
+                    Continue Browsing
+                  </button>
+                  <p className="text-[10px] text-gray-400 mt-3">A confirmation email has been sent to {bookingForm.email || "your inbox"}</p>
+                </div>
+              </div>
+            ) : (
+              /* Booking form */
+              <>
+                <div className="relative px-6 pt-6 pb-4 rounded-t-2xl" style={{ background: "linear-gradient(135deg, #070c26 0%, #0055a9 100%)" }}>
+                  <button onClick={() => setBookingOpen(false)} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition cursor-pointer">
+                    <X className="w-4 h-4 text-white/70" />
+                  </button>
+                  <div className="flex items-center gap-3">
+                    {yacht.staffRep?.image ? (
+                      <Image src={yacht.staffRep.image} alt={yacht.staffRep.name} width={48} height={48} className="w-12 h-12 rounded-full object-cover shrink-0 border-2 border-white/20" />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-white/15 flex items-center justify-center text-white font-bold text-sm shrink-0 border border-white/20">IYC</div>
+                    )}
+                    <div>
+                      <h2 className="text-base font-bold text-white">Confirm Your Booking</h2>
+                      <p className="text-[11px] text-white/60 mt-0.5">{yacht.name}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="px-6 py-5">
+                  {/* Booking summary card */}
+                  <div className="bg-gray-50 rounded-xl p-4 mb-5 border border-gray-100">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="text-center flex-1">
+                        <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5">Check-in</span>
+                        <span className="text-xs font-bold" style={{ color: "#070c26" }}>{dateRange?.from ? format(dateRange.from, "dd MMM yyyy") : "—"}</span>
+                      </div>
+                      <div className="w-6 flex items-center justify-center">
+                        <ChevronRight className="w-3.5 h-3.5 text-gray-300" />
+                      </div>
+                      <div className="text-center flex-1">
+                        <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5">Check-out</span>
+                        <span className="text-xs font-bold" style={{ color: "#070c26" }}>{dateRange?.to ? format(dateRange.to, "dd MMM yyyy") : "—"}</span>
+                      </div>
+                      <div className="text-center flex-1 border-l border-gray-200 pl-3">
+                        <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5">Guests</span>
+                        <span className="text-xs font-bold" style={{ color: "#070c26" }}>{guestCount}</span>
+                      </div>
+                    </div>
+                    {selectedDatePrice && (
+                      <div className="flex justify-between items-center pt-3 border-t border-gray-200">
+                        <span className="text-xs font-bold text-gray-500">Estimated Total</span>
+                        <span className="text-base font-bold" style={{ color: "#0055a9" }}>{formatPrice(selectedDatePrice.total, selectedDatePrice.currency)}</span>
+                      </div>
+                    )}
+                    <p className="text-[9px] text-gray-400 mt-1.5">Excl. VAT & APA. Final price confirmed in proposal.</p>
+                  </div>
+
+                  {/* Contact fields */}
+                  <div className="flex items-center gap-2 mb-3">
+                    <User className="w-4 h-4 text-[#0055a9]" />
+                    <span className="text-[11px] font-bold text-gray-800 uppercase tracking-wide">Your Details</span>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">First Name *</label>
+                        <input type="text" value={bookingForm.firstName} onChange={(e) => setBookingForm({ ...bookingForm, firstName: e.target.value })} placeholder="John" className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[#0055a9] focus:ring-1 focus:ring-[#0055a9]/20 transition bg-gray-50/50" style={{ color: "#070c26" }} />
+                      </div>
+                      <div>
+                        <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">Last Name</label>
+                        <input type="text" value={bookingForm.lastName} onChange={(e) => setBookingForm({ ...bookingForm, lastName: e.target.value })} placeholder="Doe" className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[#0055a9] focus:ring-1 focus:ring-[#0055a9]/20 transition bg-gray-50/50" style={{ color: "#070c26" }} />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">Email *</label>
+                      <input type="email" value={bookingForm.email} onChange={(e) => setBookingForm({ ...bookingForm, email: e.target.value })} placeholder="john@example.com" className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[#0055a9] focus:ring-1 focus:ring-[#0055a9]/20 transition bg-gray-50/50" style={{ color: "#070c26" }} />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">Phone</label>
+                      <input type="tel" value={bookingForm.phone} onChange={(e) => setBookingForm({ ...bookingForm, phone: e.target.value })} placeholder="+30 123 456 7890" className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[#0055a9] focus:ring-1 focus:ring-[#0055a9]/20 transition bg-gray-50/50" style={{ color: "#070c26" }} />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">Special Requests</label>
+                      <textarea value={bookingForm.notes} onChange={(e) => setBookingForm({ ...bookingForm, notes: e.target.value })} placeholder="Celebrations, dietary needs, preferred destinations..." rows={3} className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[#0055a9] focus:ring-1 focus:ring-[#0055a9]/20 transition resize-none bg-gray-50/50" style={{ color: "#070c26" }} />
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={handleSubmitBooking}
+                    disabled={!bookingForm.firstName || !bookingForm.email || bookingSubmitting}
+                    className="w-full text-white py-3.5 rounded-xl text-xs font-bold transition-all duration-300 mt-5 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer hover:shadow-lg hover:shadow-[#0055a9]/20 active:scale-[0.98]"
+                    style={{ background: "linear-gradient(135deg, #0055a9 0%, #003d7a 100%)" }}
+                  >
+                    {bookingSubmitting ? (
+                      <>
+                        <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Confirming your request...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-3.5 h-3.5" />
+                        Confirm Booking Request
+                      </>
+                    )}
+                  </button>
+                  <p className="text-center text-[10px] text-gray-400 mt-2.5">No payment required &middot; Free cancellation</p>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
       )}
 
       {/* Floating phone button */}
@@ -1094,176 +1301,293 @@ export function YachtDetailClient({ yacht, nausysFreePeriods = [] }: { yacht: Ya
       {/* Enquiry Modal */}
       {enquiryOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setEnquiryOpen(false)} />
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setEnquiryOpen(false)} />
           <div
             ref={enquiryRef}
-            className="relative z-[110] bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 animate-in fade-in zoom-in-95 duration-300 overflow-hidden"
+            className="relative z-[110] bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden max-h-[90vh] overflow-y-auto"
           >
-            {/* Modal header */}
-            <div className="px-6 pt-6 pb-4 border-b border-gray-100">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-lg font-bold" style={{ color: "#070c26" }}>Request a Quote</h2>
-                  <p className="text-xs text-gray-500 mt-0.5">{yacht.name}</p>
-                </div>
-                <button
-                  onClick={() => setEnquiryOpen(false)}
-                  className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition cursor-pointer"
-                >
-                  <X className="w-4 h-4 text-gray-500" />
-                </button>
-              </div>
-            </div>
-
             {enquirySuccess ? (
-              /* Success state */
-              <div className="px-6 py-12 flex flex-col items-center text-center">
-                <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center mb-4">
-                  <CheckCircle2 className="w-8 h-8 text-green-500" />
+              /* Success state — personalized marketing message */
+              <div className="relative overflow-hidden">
+                {/* Gradient hero */}
+                <div className="relative px-8 pt-10 pb-8 text-center" style={{ background: "linear-gradient(135deg, #070c26 0%, #0055a9 60%, #0077cc 100%)" }}>
+                  <div className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")" }} />
+
+                  {/* Close button */}
+                  <button
+                    onClick={() => setEnquiryOpen(false)}
+                    className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition cursor-pointer"
+                  >
+                    <X className="w-4 h-4 text-white/70" />
+                  </button>
+
+                  <div className="relative">
+                    {/* Animated checkmark */}
+                    <div className="w-16 h-16 rounded-full bg-white/15 flex items-center justify-center mx-auto mb-5 backdrop-blur-sm border border-white/20">
+                      <CheckCircle2 className="w-8 h-8 text-white" />
+                    </div>
+
+                    <h3 className="text-xl font-bold text-white mb-2 tracking-tight">
+                      {enquiryForm.firstName ? `Thank You, ${enquiryForm.firstName}!` : "Thank You!"}
+                    </h3>
+                    <p className="text-white/70 text-sm leading-relaxed max-w-sm mx-auto">
+                      Your personalized charter proposal for <span className="text-white font-semibold">{yacht.name}</span> is being prepared.
+                    </p>
+                  </div>
                 </div>
-                <h3 className="text-lg font-bold mb-2" style={{ color: "#070c26" }}>Quote Request Sent!</h3>
-                <p className="text-sm text-gray-500 max-w-xs mb-6">
-                  We&apos;ve received your request and sent a confirmation to your email. Our team will get back to you within 24 hours.
-                </p>
-                <button
-                  onClick={() => setEnquiryOpen(false)}
-                  className="px-6 py-2.5 rounded-lg text-sm font-semibold text-white transition hover:opacity-90 cursor-pointer"
-                  style={{ backgroundColor: "#0055a9" }}
-                >
-                  Done
-                </button>
+
+                {/* Details card */}
+                <div className="px-8 -mt-4 relative z-10">
+                  <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-5">
+                    {/* Staff advisor */}
+                    {yacht.staffRep && (
+                      <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-100">
+                        {yacht.staffRep.image ? (
+                          <Image src={yacht.staffRep.image} alt={yacht.staffRep.name} width={44} height={44} className="w-11 h-11 rounded-full object-cover shrink-0 border-2 border-gray-100" />
+                        ) : (
+                          <div className="w-11 h-11 rounded-full bg-[#070c26] flex items-center justify-center text-white text-xs font-bold shrink-0">IYC</div>
+                        )}
+                        <div className="flex-1">
+                          <p className="text-xs font-semibold text-gray-800">{yacht.staffRep.name}</p>
+                          <p className="text-[10px] text-gray-400">{yacht.staffRep.position || "Charter Advisor"}</p>
+                        </div>
+                        <span className="text-[9px] text-green-600 font-medium flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                          Will respond shortly
+                        </span>
+                      </div>
+                    )}
+
+                    {/* What happens next */}
+                    <div className="space-y-3">
+                      <div className="flex items-start gap-3">
+                        <div className="w-6 h-6 rounded-full bg-[#0055a9]/10 flex items-center justify-center shrink-0 mt-0.5">
+                          <Mail className="w-3 h-3 text-[#0055a9]" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-gray-800">Confirmation sent</p>
+                          <p className="text-[10px] text-gray-400">Check your inbox at {enquiryForm.email || "your email"}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="w-6 h-6 rounded-full bg-[#0055a9]/10 flex items-center justify-center shrink-0 mt-0.5">
+                          <CalendarDays className="w-3 h-3 text-[#0055a9]" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-gray-800">Tailored proposal within 24h</p>
+                          <p className="text-[10px] text-gray-400">
+                            {selectedMonths.length > 0
+                              ? `Availability & pricing for ${selectedMonths.map((m) => { const [y, mo] = m.split("-"); return `${MONTH_NAMES[parseInt(mo) - 1]} ${y}` }).join(", ")}`
+                              : "Best available dates and pricing options"
+                            }
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="w-6 h-6 rounded-full bg-[#0055a9]/10 flex items-center justify-center shrink-0 mt-0.5">
+                          <Anchor className="w-3 h-3 text-[#0055a9]" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-gray-800">Itinerary suggestions included</p>
+                          <p className="text-[10px] text-gray-400">Routes curated for {enquiryGuestCount} guest{enquiryGuestCount !== 1 ? "s" : ""} aboard {yacht.name}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom CTA */}
+                <div className="px-8 pt-5 pb-8 text-center">
+                  <button
+                    onClick={() => setEnquiryOpen(false)}
+                    className="px-8 py-3 rounded-xl text-xs font-bold text-white transition-all duration-300 hover:shadow-lg hover:shadow-[#0055a9]/20 active:scale-[0.98] cursor-pointer"
+                    style={{ background: "linear-gradient(135deg, #0055a9 0%, #003d7a 100%)" }}
+                  >
+                    Continue Browsing
+                  </button>
+                  <p className="text-[10px] text-gray-400 mt-3">
+                    Have questions? Call us at <span className="font-semibold text-gray-500">+30 210 XXX XXXX</span>
+                  </p>
+                </div>
               </div>
             ) : (
               /* Form */
-              <div className="px-6 py-5">
-                {/* Booking summary */}
-                <div className="bg-gray-50 rounded-xl p-4 mb-5 border border-gray-100">
-                  <div className="grid grid-cols-3 gap-3 text-center">
+              <>
+                {/* Modal header with gradient */}
+                <div className="relative px-6 pt-6 pb-4" style={{ background: "linear-gradient(135deg, #070c26 0%, #0055a9 100%)" }}>
+                  <button
+                    onClick={() => setEnquiryOpen(false)}
+                    className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition cursor-pointer"
+                  >
+                    <X className="w-4 h-4 text-white/70" />
+                  </button>
+                  <div className="flex items-center gap-3">
+                    {yacht.staffRep?.image ? (
+                      <Image src={yacht.staffRep.image} alt={yacht.staffRep.name} width={48} height={48} className="w-12 h-12 rounded-full object-cover shrink-0 border-2 border-white/20" />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-white/15 flex items-center justify-center text-white font-bold text-sm shrink-0 border border-white/20">IYC</div>
+                    )}
                     <div>
-                      <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5">Check-in</span>
-                      <span className="text-xs font-semibold" style={{ color: "#070c26" }}>
-                        {checkIn ? new Date(checkIn).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "—"}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5">Check-out</span>
-                      <span className="text-xs font-semibold" style={{ color: "#070c26" }}>
-                        {checkOut ? new Date(checkOut).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "—"}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5">Guests</span>
-                      <span className="text-xs font-semibold" style={{ color: "#070c26" }}>{guestCount}</span>
+                      <h2 className="text-base font-bold text-white">Plan Your Charter</h2>
+                      <p className="text-[11px] text-white/60 mt-0.5">
+                        {yacht.staffRep ? `${yacht.staffRep.name} will prepare your proposal` : `Personalized proposal for ${yacht.name}`}
+                      </p>
                     </div>
                   </div>
-                  {selectedDatePrice && (
-                    <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-200">
-                      <span className="text-xs font-bold text-gray-500">Estimated Total</span>
-                      <span className="text-base font-bold" style={{ color: "#070c26" }}>
-                        {formatPrice(selectedDatePrice.total, selectedDatePrice.currency)}
-                      </span>
-                    </div>
-                  )}
                 </div>
 
-                {/* Contact fields */}
-                <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-[9px] uppercase font-bold text-gray-500 mb-1">First Name *</label>
-                      <div className="relative">
-                        <User className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                <div className="px-6 py-5">
+                  {/* Charter preferences */}
+                  <div className="mb-5">
+                    <div className="flex items-center gap-2 mb-3">
+                      <CalendarDays className="w-4 h-4 text-[#0055a9]" />
+                      <span className="text-[11px] font-bold text-gray-800 uppercase tracking-wide">Preferred Period</span>
+                    </div>
+                    <div className="bg-gray-50 rounded-xl p-3.5 border border-gray-100">
+                      {(() => {
+                        const byYear: Record<number, string[]> = {}
+                        for (const m of availableMonths) {
+                          const y = parseInt(m.split("-")[0])
+                          if (!byYear[y]) byYear[y] = []
+                          byYear[y].push(m)
+                        }
+                        return Object.entries(byYear).map(([year, months]) => (
+                          <div key={year} className="mb-2 last:mb-0">
+                            <span className="text-[9px] uppercase font-bold text-gray-400 tracking-wider mb-1.5 block">{year}</span>
+                            <div className="flex flex-wrap gap-1.5">
+                              {months.map((m) => {
+                                const selected = selectedMonths.includes(m)
+                                const monthIdx = parseInt(m.split("-")[1]) - 1
+                                return (
+                                  <button
+                                    key={m}
+                                    type="button"
+                                    onClick={() => toggleMonth(m)}
+                                    className={`px-2.5 py-1.5 rounded-lg text-[10px] font-semibold transition-all duration-200 cursor-pointer border ${
+                                      selected
+                                        ? "text-white border-transparent shadow-sm"
+                                        : "border-gray-200 text-gray-500 hover:border-[#0055a9]/40 hover:text-[#0055a9] hover:bg-[#0055a9]/5"
+                                    }`}
+                                    style={selected ? { backgroundColor: "#0055a9" } : undefined}
+                                  >
+                                    {MONTH_NAMES[monthIdx]}
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        ))
+                      })()}
+                      {availableMonths.length === 0 && (
+                        <p className="text-[10px] text-gray-400 italic">No availability data yet</p>
+                      )}
+
+                      {/* Guests inline */}
+                      <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-200">
+                        <div className="flex items-center gap-1.5">
+                          <User className="w-3.5 h-3.5 text-gray-400" />
+                          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">Guests</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button type="button" onClick={() => setGuestCount(Math.max(1, guestCount - 1))} className="w-6 h-6 rounded-lg border border-gray-200 flex items-center justify-center text-xs text-gray-500 hover:bg-white hover:border-gray-300 transition cursor-pointer">-</button>
+                          <span className="text-xs font-bold w-4 text-center" style={{ color: "#070c26" }}>{guestCount}</span>
+                          <button type="button" onClick={() => setGuestCount(Math.min(yacht.maxPersons || 20, guestCount + 1))} className="w-6 h-6 rounded-lg border border-gray-200 flex items-center justify-center text-xs text-gray-500 hover:bg-white hover:border-gray-300 transition cursor-pointer">+</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Contact fields */}
+                  <div className="flex items-center gap-2 mb-3">
+                    <Mail className="w-4 h-4 text-[#0055a9]" />
+                    <span className="text-[11px] font-bold text-gray-800 uppercase tracking-wide">Your Details</span>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">First Name *</label>
                         <input
                           type="text"
                           value={enquiryForm.firstName}
                           onChange={(e) => setEnquiryForm({ ...enquiryForm, firstName: e.target.value })}
                           placeholder="John"
-                          className="w-full border border-gray-300 rounded-lg pl-9 pr-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[#0055a9] transition"
+                          className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[#0055a9] focus:ring-1 focus:ring-[#0055a9]/20 transition bg-gray-50/50"
+                          style={{ color: "#070c26" }}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">Last Name</label>
+                        <input
+                          type="text"
+                          value={enquiryForm.lastName}
+                          onChange={(e) => setEnquiryForm({ ...enquiryForm, lastName: e.target.value })}
+                          placeholder="Doe"
+                          className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[#0055a9] focus:ring-1 focus:ring-[#0055a9]/20 transition bg-gray-50/50"
                           style={{ color: "#070c26" }}
                         />
                       </div>
                     </div>
-                    <div>
-                      <label className="block text-[9px] uppercase font-bold text-gray-500 mb-1">Last Name</label>
-                      <input
-                        type="text"
-                        value={enquiryForm.lastName}
-                        onChange={(e) => setEnquiryForm({ ...enquiryForm, lastName: e.target.value })}
-                        placeholder="Doe"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[#0055a9] transition"
-                        style={{ color: "#070c26" }}
-                      />
-                    </div>
-                  </div>
 
-                  <div>
-                    <label className="block text-[9px] uppercase font-bold text-gray-500 mb-1">Email *</label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                    <div>
+                      <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">Email *</label>
                       <input
                         type="email"
                         value={enquiryForm.email}
                         onChange={(e) => setEnquiryForm({ ...enquiryForm, email: e.target.value })}
                         placeholder="john@example.com"
-                        className="w-full border border-gray-300 rounded-lg pl-9 pr-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[#0055a9] transition"
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[#0055a9] focus:ring-1 focus:ring-[#0055a9]/20 transition bg-gray-50/50"
                         style={{ color: "#070c26" }}
                       />
                     </div>
-                  </div>
 
-                  <div>
-                    <label className="block text-[9px] uppercase font-bold text-gray-500 mb-1">Phone</label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                    <div>
+                      <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">Phone</label>
                       <input
                         type="tel"
                         value={enquiryForm.phone}
                         onChange={(e) => setEnquiryForm({ ...enquiryForm, phone: e.target.value })}
                         placeholder="+30 123 456 7890"
-                        className="w-full border border-gray-300 rounded-lg pl-9 pr-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[#0055a9] transition"
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[#0055a9] focus:ring-1 focus:ring-[#0055a9]/20 transition bg-gray-50/50"
                         style={{ color: "#070c26" }}
                       />
                     </div>
-                  </div>
 
-                  <div>
-                    <label className="block text-[9px] uppercase font-bold text-gray-500 mb-1">Notes</label>
-                    <div className="relative">
-                      <MessageSquare className="absolute left-3 top-3 w-3.5 h-3.5 text-gray-400" />
+                    <div>
+                      <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">Special Requests</label>
                       <textarea
                         value={enquiryForm.notes}
                         onChange={(e) => setEnquiryForm({ ...enquiryForm, notes: e.target.value })}
-                        placeholder="Any special requests or questions..."
+                        placeholder="Celebrations, dietary needs, preferred destinations..."
                         rows={3}
-                        className="w-full border border-gray-300 rounded-lg pl-9 pr-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[#0055a9] transition resize-none"
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[#0055a9] focus:ring-1 focus:ring-[#0055a9]/20 transition resize-none bg-gray-50/50"
                         style={{ color: "#070c26" }}
                       />
                     </div>
                   </div>
-                </div>
 
-                <button
-                  onClick={handleSubmitEnquiry}
-                  disabled={!enquiryForm.firstName || !enquiryForm.email || enquirySubmitting}
-                  className="w-full text-white py-3 rounded-lg text-xs font-bold hover:opacity-90 transition duration-300 mt-5 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
-                  style={{ backgroundColor: "#0055a9" }}
-                >
-                  {enquirySubmitting ? (
-                    <>
-                      <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Submitting...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="w-3.5 h-3.5" />
-                      Submit Quote Request
-                    </>
-                  )}
-                </button>
-                <p className="text-center text-[10px] text-gray-400 mt-2">
-                  We&apos;ll send a confirmation to your email
-                </p>
-              </div>
+                  <button
+                    onClick={handleSubmitEnquiry}
+                    disabled={!enquiryForm.firstName || !enquiryForm.email || enquirySubmitting}
+                    className="w-full text-white py-3.5 rounded-xl text-xs font-bold transition-all duration-300 mt-5 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer hover:shadow-lg hover:shadow-[#0055a9]/20 active:scale-[0.98]"
+                    style={{ background: "linear-gradient(135deg, #0055a9 0%, #003d7a 100%)" }}
+                  >
+                    {enquirySubmitting ? (
+                      <>
+                        <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Preparing your request...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-3.5 h-3.5" />
+                        Send My Charter Request
+                      </>
+                    )}
+                  </button>
+                  <p className="text-center text-[10px] text-gray-400 mt-2.5">
+                    No commitment &middot; Free personalized proposal
+                  </p>
+                </div>
+              </>
             )}
           </div>
         </div>
