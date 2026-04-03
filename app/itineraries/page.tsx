@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 
 export default async function ItinerariesListPage() {
   const itineraries = await db.itinerary.findMany({
-    where: { status: "published" },
+    // where: { status: "published" }, // TODO: re-enable after testing
     orderBy: { updatedAt: "desc" },
     include: { _count: { select: { days: true } } },
   })

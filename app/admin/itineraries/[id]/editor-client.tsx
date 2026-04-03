@@ -17,6 +17,7 @@ import {
 import { MediaPicker, type PickedMedia } from "@/components/admin/media-picker"
 import { MapLegPicker, type MapLegResult } from "@/components/admin/itineraries/map-leg-picker"
 import { RouteMap, type RoutePoint } from "@/components/admin/itineraries/route-map"
+import { RouteMapEditor } from "@/components/admin/itineraries/route-map-editor"
 import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from "@/components/ui/tooltip"
@@ -734,6 +735,9 @@ export function ItineraryEditorClient({ itinerary }: Props) {
   const [geocoding, setGeocoding] = useState(false)
   const [generatingStory, setGeneratingStory] = useState(false)
 
+  // Map editor modal
+  const [mapEditorOpen, setMapEditorOpen] = useState(false)
+
   // Media pickers
   const [heroPickerOpen, setHeroPickerOpen] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -1275,6 +1279,17 @@ export function ItineraryEditorClient({ itinerary }: Props) {
                   return `${count} point${count !== 1 ? "s" : ""}`
                 })()}
               </span>
+              <div className="flex-1" />
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-6 text-[10px] gap-1 px-2"
+                style={{ borderColor: "var(--primary)", color: "var(--primary)" }}
+                onClick={() => setMapEditorOpen(true)}
+              >
+                <MapPin className="size-3" />
+                Edit All Points
+              </Button>
             </div>
             {(() => {
               const routePoints: RoutePoint[] = []
@@ -1317,6 +1332,35 @@ export function ItineraryEditorClient({ itinerary }: Props) {
               )
             })()}
           </div>
+
+          {/* Route Map Editor Modal */}
+          <RouteMapEditor
+            open={mapEditorOpen}
+            onOpenChange={setMapEditorOpen}
+            startLatitude={startLatitude}
+            startLongitude={startLongitude}
+            startFrom={startFrom}
+            places={places}
+            days={days}
+            onStartDrag={(lat, lng) => {
+              setStartLatitude(lat)
+              setStartLongitude(lng)
+            }}
+            onPlaceDrag={(placeIndex, lat, lng) => {
+              const newPlaces = [...places]
+              newPlaces[placeIndex] = { ...newPlaces[placeIndex], latitude: lat, longitude: lng }
+              setPlaces(newPlaces)
+            }}
+            onLegDrag={(dayIndex, legIndex, lat, lng) => {
+              const newDays = [...days]
+              const day = { ...newDays[dayIndex] }
+              const legs = [...day.legs]
+              legs[legIndex] = { ...legs[legIndex], latitude: lat, longitude: lng }
+              day.legs = legs
+              newDays[dayIndex] = day
+              setDays(newDays)
+            }}
+          />
         </div>
       </div>
     </div>
