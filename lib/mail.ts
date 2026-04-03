@@ -11,6 +11,7 @@ interface MailOptions {
 interface EmailSettings {
   mailgunApiKey: string
   mailgunDomain: string
+  mailgunRegion: "us" | "eu"
   fromName: string
   fromEmail: string
 }
@@ -25,6 +26,7 @@ async function getEmailSettings(): Promise<EmailSettings> {
   return {
     mailgunApiKey: s.mailgunApiKey,
     mailgunDomain: s.mailgunDomain,
+    mailgunRegion: (s.mailgunRegion as "us" | "eu") || "eu",
     fromName: s.fromName || "IYC Yachts",
     fromEmail: s.fromEmail || `noreply@${s.mailgunDomain}`,
   }
@@ -46,8 +48,10 @@ export async function sendMail(options: MailOptions): Promise<void> {
 
   const credentials = Buffer.from(`api:${config.mailgunApiKey}`).toString("base64")
 
+  const apiBase = config.mailgunRegion === "eu" ? "api.eu.mailgun.net" : "api.mailgun.net"
+
   const res = await fetch(
-    `https://api.mailgun.net/v3/${config.mailgunDomain}/messages`,
+    `https://${apiBase}/v3/${config.mailgunDomain}/messages`,
     {
       method: "POST",
       headers: {

@@ -5,6 +5,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { DayPicker, type DateRange } from "react-day-picker"
 import { format, isWithinInterval, eachDayOfInterval, isBefore, startOfDay } from "date-fns"
+import "./yacht-calendar.css"
 import {
   ChevronLeft,
   ChevronRight,
@@ -127,7 +128,7 @@ function getAmenityIcon(_name: string) {
   return <Anchor className="w-4 h-4 text-[#84776e]" />
 }
 
-export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
+export function YachtDetailClient({ yacht, nausysFreePeriods = [] }: { yacht: YachtData; nausysFreePeriods?: Array<{ from: string; to: string }> }) {
   const [currentImage, setCurrentImage] = useState(0)
   const [activeTab, setActiveTab] = useState<string | null>(null)
   const [guestCount, setGuestCount] = useState(2)
@@ -137,17 +138,29 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
   const [quoteResult, setQuoteResult] = useState<{ available: boolean; price?: number; currency?: string } | null>(null)
 
   const [showCalendar, setShowCalendar] = useState(false)
+  const [calendarKey, setCalendarKey] = useState(0)
+  const [calendarMonth, setCalendarMonth] = useState<Date | undefined>(undefined)
   const checkIn = dateRange?.from ? format(dateRange.from, "yyyy-MM-dd") : ""
   const checkOut = dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : ""
 
-  // Compute available date ranges from pricing periods
+  // Compute available date ranges from pricing periods + NAUSYS free periods
   const { availableDays, unavailableMatcher, firstAvailableMonth } = useMemo(() => {
     const today = startOfDay(new Date())
     const allAvailable: Date[] = []
+    // Local price-based availability
     for (const p of yacht.prices) {
       if (p.priceType !== "WEEKLY") continue
       const from = startOfDay(new Date(p.dateFrom))
       const to = startOfDay(new Date(p.dateTo))
+      if (isBefore(to, today)) continue
+      const start = isBefore(from, today) ? today : from
+      allAvailable.push(...eachDayOfInterval({ start, end: to }))
+    }
+    // Merge NAUSYS free periods (format: DD.MM.YYYY)
+    for (const period of nausysFreePeriods) {
+      const parseDMY = (s: string) => { const [d, m, y] = s.split(".").map(Number); return startOfDay(new Date(y, m - 1, d)) }
+      const from = parseDMY(period.from)
+      const to = parseDMY(period.to)
       if (isBefore(to, today)) continue
       const start = isBefore(from, today) ? today : from
       allAvailable.push(...eachDayOfInterval({ start, end: to }))
@@ -166,7 +179,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
       ? (() => { const d = startOfDay(new Date(sortedPrices[0].dateFrom)); return isBefore(d, today) ? today : d })()
       : today
     return { availableDays: allAvailable, unavailableMatcher: matcher, firstAvailableMonth: firstDate }
-  }, [yacht.prices])
+  }, [yacht.prices, nausysFreePeriods])
   const [galleryOpen, setGalleryOpen] = useState(false)
   const [galleryIndex, setGalleryIndex] = useState(0)
   const [galleryTransition, setGalleryTransition] = useState(false)
@@ -178,17 +191,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
   const enquiryRef = useRef<HTMLDivElement>(null)
   const calendarRef = useRef<HTMLDivElement>(null)
 
-  // Close calendar on click outside
-  useEffect(() => {
-    if (!showCalendar) return
-    const handler = (e: MouseEvent) => {
-      if (calendarRef.current && !calendarRef.current.contains(e.target as Node)) {
-        setShowCalendar(false)
-      }
-    }
-    document.addEventListener("mousedown", handler)
-    return () => document.removeEventListener("mousedown", handler)
-  }, [showCalendar])
+  // Calendar closes only when a full range is selected (via onSelect) or user clicks toggle button
 
   const images = yacht.images.length > 0 ? yacht.images : []
   const hasImages = images.length > 0
@@ -304,9 +307,9 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
     [weeklyPrices, activeYear]
   )
 
-  // Auto-check availability when dates change
+  // Auto-check availability when both dates are selected (and different)
   useEffect(() => {
-    if (!checkIn || !checkOut) return
+    if (!checkIn || !checkOut || checkIn === checkOut) return
     setQuoteLoading(true)
     setQuoteResult(null)
     const controller = new AbortController()
@@ -706,10 +709,18 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
               </div>
 
               {/* Date range picker */}
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-3 relative">
                 {/* Date selector button */}
                 <button
-                  onClick={() => setShowCalendar(!showCalendar)}
+                  onClick={() => {
+                    if (!showCalendar) {
+                      setDateRange(undefined)
+                      setQuoteResult(null)
+                      setCalendarMonth(firstAvailableMonth)
+                      setCalendarKey((k) => k + 1)
+                    }
+                    setShowCalendar(!showCalendar)
+                  }}
                   className="w-full border border-gray-300 rounded-lg p-2.5 hover:border-gray-400 transition cursor-pointer flex items-center justify-between"
                 >
                   <div className="flex items-center gap-3 flex-1">
@@ -718,13 +729,13 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                       <div className="text-left">
                         <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5">Check-in</span>
                         <span className="text-xs font-semibold" style={{ color: dateRange?.from ? "#070c26" : "#aaa" }}>
-                          {dateRange?.from ? format(dateRange.from, "dd MMM yyyy") : "Select"}
+                          {dateRange?.from ? format(dateRange.from, "dd MMM yyyy") : "Select date"}
                         </span>
                       </div>
                       <div className="text-left border-l border-gray-200 pl-3">
                         <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5">Check-out</span>
                         <span className="text-xs font-semibold" style={{ color: dateRange?.to ? "#070c26" : "#aaa" }}>
-                          {dateRange?.to ? format(dateRange.to, "dd MMM yyyy") : "Select"}
+                          {dateRange?.to ? format(dateRange.to, "dd MMM yyyy") : "Select date"}
                         </span>
                       </div>
                     </div>
@@ -732,65 +743,42 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                   <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${showCalendar ? "rotate-180" : ""}`} />
                 </button>
 
-                {/* Calendar overlay - 2 months side by side, opens left over content */}
+                {/* Calendar overlay - 2 months side by side */}
                 {showCalendar && (
                   <div
                     ref={calendarRef}
-                    className="absolute right-0 mt-2 z-[70] bg-white rounded-2xl shadow-2xl border border-gray-100 p-5 animate-in fade-in slide-in-from-top-2 duration-200"
-                    style={{ width: "min(680px, 90vw)" }}
+                    className="absolute top-full right-0 mt-1 z-[70] bg-white rounded-2xl shadow-2xl border border-gray-200 p-5"
+                    style={{ width: "620px" }}
                   >
-                      <DayPicker
-                        mode="range"
-                        selected={dateRange}
-                        onSelect={(range) => {
-                          setDateRange(range)
-                          setQuoteResult(null)
-                          // Only close when a true range is selected (different from/to dates)
-                          if (range?.from && range?.to && range.from.getTime() !== range.to.getTime()) {
-                            setShowCalendar(false)
-                          }
-                        }}
-                        disabled={unavailableMatcher}
-                        numberOfMonths={2}
-                        defaultMonth={firstAvailableMonth}
-                        showOutsideDays={false}
-                        classNames={{
-                          root: "w-full",
-                          months: "flex gap-6",
-                          month: "flex-1 relative",
-                          month_caption: "flex items-center justify-center h-8 mb-3",
-                          caption_label: "text-sm font-bold text-[#070c26]",
-                          nav: "absolute inset-x-0 top-0 flex justify-between z-10",
-                          button_previous: "w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition cursor-pointer",
-                          button_next: "w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition cursor-pointer",
-                          month_grid: "w-full border-collapse",
-                          weekdays: "flex",
-                          weekday: "w-full text-[10px] font-bold text-gray-400 uppercase text-center py-1",
-                          week: "flex w-full",
-                          day: "w-full aspect-square text-center text-xs p-0.5 relative [&:has([aria-selected])]:bg-[#0055a9]/10 first:[&:has([aria-selected])]:rounded-l-lg last:[&:has([aria-selected])]:rounded-r-lg",
-                          day_button: "w-full h-full flex items-center justify-center text-xs font-medium rounded-lg transition-colors hover:bg-[#0055a9]/10 cursor-pointer aria-selected:opacity-100",
-                          selected: "bg-[#0055a9] text-white hover:bg-[#0055a9] rounded-lg font-bold",
-                          range_start: "bg-[#0055a9] text-white rounded-l-lg rounded-r-none font-bold",
-                          range_end: "bg-[#0055a9] text-white rounded-r-lg rounded-l-none font-bold",
-                          range_middle: "bg-[#0055a9]/10 text-[#070c26] rounded-none",
-                          today: "font-bold text-[#0055a9]",
-                          outside: "text-gray-300 opacity-50",
-                          disabled: "text-red-300 line-through opacity-60 cursor-not-allowed hover:bg-transparent",
-                          hidden: "invisible",
-                          chevron: "fill-gray-500 w-4 h-4",
-                        }}
-                      />
-                      {/* Legend */}
-                      <div className="flex items-center justify-center gap-5 pt-4 mt-3 border-t border-gray-100">
-                        <div className="flex items-center gap-1.5">
-                          <div className="w-2.5 h-2.5 rounded-full bg-[#0055a9]" />
-                          <span className="text-[10px] text-gray-500 font-medium">Selected</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <div className="w-2.5 h-2.5 rounded-full bg-red-300" />
-                          <span className="text-[10px] text-gray-500 font-medium">Unavailable</span>
-                        </div>
+                    <DayPicker
+                      key={calendarKey}
+                      className="yacht-cal"
+                      mode="range"
+                      selected={dateRange}
+                      month={calendarMonth}
+                      onMonthChange={setCalendarMonth}
+                      onSelect={(range) => {
+                        setDateRange(range)
+                        setQuoteResult(null)
+                        if (range?.from && range?.to && range.from.getTime() !== range.to.getTime()) {
+                          setTimeout(() => setShowCalendar(false), 300)
+                        }
+                      }}
+                      disabled={unavailableMatcher}
+                      numberOfMonths={2}
+                      showOutsideDays={false}
+                    />
+                    {/* Legend */}
+                    <div className="flex items-center justify-center gap-5 pt-3 mt-3 border-t border-gray-100">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-2.5 h-2.5 rounded-full bg-[#0055a9]" />
+                        <span className="text-[10px] text-gray-500 font-medium">Selected</span>
                       </div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-2.5 h-2.5 rounded-full bg-red-300" />
+                        <span className="text-[10px] text-gray-500 font-medium">Unavailable</span>
+                      </div>
+                    </div>
                   </div>
                 )}
 

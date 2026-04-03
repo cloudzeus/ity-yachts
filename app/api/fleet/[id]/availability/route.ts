@@ -3,7 +3,7 @@ import { db } from "@/lib/db"
 import { fetchFreeYacht } from "@/lib/nausys-api"
 
 function toNausysDate(isoDate: string): string {
-  const d = new Date(isoDate)
+  const d = new Date(isoDate + "T00:00:00")
   return `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${d.getFullYear()}`
 }
 
@@ -28,12 +28,14 @@ export async function GET(
   const setting = await db.setting.findUnique({ where: { key: "nausys" } })
   if (!setting?.value) {
     // No NAUSYS credentials — fall back to local price data check
+    // Check if check-in date falls within any price period (user picks within a season)
+    const checkInDate = new Date(checkIn + "T00:00:00")
     const price = await db.nausysYachtPrice.findFirst({
       where: {
         yachtId,
         priceType: "WEEKLY",
-        dateFrom: { lte: new Date(checkIn) },
-        dateTo: { gte: new Date(checkOut) },
+        dateFrom: { lte: checkInDate },
+        dateTo: { gte: checkInDate },
       },
     })
     return NextResponse.json({
@@ -66,15 +68,31 @@ export async function GET(
       })
     }
 
-    return NextResponse.json({ available: false, source: "nausys" })
+    // NAUSYS didn't return this yacht — fall back to local price data
+    const checkInDate = new Date(checkIn + "T00:00:00")
+    const localPrice = await db.nausysYachtPrice.findFirst({
+      where: {
+        yachtId,
+        priceType: "WEEKLY",
+        dateFrom: { lte: checkInDate },
+        dateTo: { gte: checkInDate },
+      },
+    })
+    return NextResponse.json({
+      available: !!localPrice,
+      price: localPrice ? Number(localPrice.price) : undefined,
+      currency: localPrice?.currency || "EUR",
+      source: "local_fallback",
+    })
   } catch {
     // NAUSYS call failed — fall back to local data
+    const checkInDate = new Date(checkIn + "T00:00:00")
     const price = await db.nausysYachtPrice.findFirst({
       where: {
         yachtId,
         priceType: "WEEKLY",
-        dateFrom: { lte: new Date(checkIn) },
-        dateTo: { gte: new Date(checkOut) },
+        dateFrom: { lte: checkInDate },
+        dateTo: { gte: checkInDate },
       },
     })
     return NextResponse.json({

@@ -1,0 +1,30 @@
+.yacht-cal { width: 100%; position: relative; }
+.yacht-cal .rdp-root { width: 100%; position: relative; }
+.yacht-cal .rdp-months { display: flex; gap: 24px; }
+.yacht-cal .rdp-month { flex: 1; overflow: hidden; }
+.yacht-cal .rdp-month_caption { display: flex; align-items: center; justify-content: center; height: 40px; margin-bottom: 12px; }
+.yacht-cal .rdp-caption_label { font-size: 14px; font-weight: 700; color: #070c26; }
+.yacht-cal .rdp-nav { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; height: 40px; pointer-events: none; z-index: 1; }
+.yacht-cal .rdp-button_previous,
+.yacht-cal .rdp-button_next { width: 32px; height: 32px; border-radius: 50%; background: #f3f4f6; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid #e5e7eb; flex-shrink: 0; pointer-events: auto; }
+.yacht-cal .rdp-button_previous:hover,
+.yacht-cal .rdp-button_next:hover { background: #e5e7eb; }
+.yacht-cal .rdp-chevron { width: 16px; height: 16px; fill: #374151; }
+.yacht-cal .rdp-weekdays { display: flex; }
+.yacht-cal .rdp-weekday { flex: 1; text-align: center; font-size: 10px; font-weight: 700; color: #9ca3af; text-transform: uppercase; padding: 4px 0; }
+.yacht-cal .rdp-week { display: flex; }
+.yacht-cal .rdp-month_grid { width: 100%; border-collapse: collapse; }
+.yacht-cal .rdp-day { flex: 1; text-align: center; font-size: 12px; padding: 2px; }
+.yacht-cal .rdp-day_button { width: 36px; height: 36px; margin: 0 auto; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.15s ease; border: none; background: transparent; color: #070c26; }
+.yacht-cal .rdp-day_button:hover { background: #e0edfa; }
+.yacht-cal .rdp-today .rdp-day_button { font-weight: 700; color: #0055a9; border: 2px solid #0055a9; }
+.yacht-cal .rdp-range_start .rdp-day_button { background: #0055a9 !important; color: #ffffff !important; font-weight: 700; border-radius: 8px 4px 4px 8px; }
+.yacht-cal .rdp-range_end .rdp-day_button { background: #0055a9 !important; color: #ffffff !important; font-weight: 700; border-radius: 4px 8px 8px 4px; }
+.yacht-cal .rdp-range_start.rdp-range_end .rdp-day_button { border-radius: 8px; }
+.yacht-cal .rdp-range_middle { background: #e0edfa; }
+.yacht-cal .rdp-range_middle .rdp-day_button { background: transparent !important; color: #0055a9 !important; font-weight: 600; border-radius: 0; }
+.yacht-cal .rdp-selected:not(.rdp-range_start):not(.rdp-range_end) .rdp-day_button { background: transparent !important; color: #0055a9 !important; font-weight: 600; }
+.yacht-cal .rdp-disabled .rdp-day_button { color: #ffffff !important; background: #ef4444 !important; text-decoration: line-through; opacity: 0.8; cursor: not-allowed; border-radius: 8px; }
+.yacht-cal .rdp-disabled .rdp-day_button:hover { background: #ef4444 !important; }
+.yacht-cal .rdp-outside .rdp-day_button { color: #d1d5db; opacity: 0.3; }
+.yacht-cal .rdp-hidden { visibility: hidden; }

@@ -9,11 +9,12 @@ import { Button } from "@/components/ui/button"
 interface EmailData {
   mailgunApiKey: string
   mailgunDomain: string
+  mailgunRegion: "us" | "eu"
   fromName: string
   fromEmail: string
 }
 
-const defaults: EmailData = { mailgunApiKey: "", mailgunDomain: "", fromName: "", fromEmail: "" }
+const defaults: EmailData = { mailgunApiKey: "", mailgunDomain: "", mailgunRegion: "eu", fromName: "", fromEmail: "" }
 
 export function EmailTab({ initialData }: { initialData?: Partial<EmailData> }) {
   const [data, setData] = useState<EmailData>({ ...defaults, ...initialData })
@@ -122,6 +123,29 @@ export function EmailTab({ initialData }: { initialData?: Partial<EmailData> }) 
           <Label className="text-xs" style={{ color: "var(--on-surface-variant)" }}>Mailgun Domain</Label>
           <Input value={data.mailgunDomain} onChange={(e) => setData((p) => ({ ...p, mailgunDomain: e.target.value }))} placeholder="mg.yourdomain.com" className="font-mono text-xs" />
           <p className="text-[11px]" style={{ color: "var(--on-surface-variant)" }}>The sending domain configured in your Mailgun account.</p>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <Label className="text-xs" style={{ color: "var(--on-surface-variant)" }}>Mailgun Region</Label>
+          <div className="flex gap-2">
+            <button type="button" onClick={() => setData((p) => ({ ...p, mailgunRegion: "eu" }))}
+              className="flex-1 px-3 py-2 rounded-md text-xs font-medium transition-all border"
+              style={data.mailgunRegion === "eu"
+                ? { background: "var(--secondary)", color: "white", borderColor: "var(--secondary)" }
+                : { background: "var(--surface-container-lowest)", color: "var(--on-surface-variant)", borderColor: "var(--outline-variant)" }
+              }>
+              🇪🇺 EU (api.eu.mailgun.net)
+            </button>
+            <button type="button" onClick={() => setData((p) => ({ ...p, mailgunRegion: "us" }))}
+              className="flex-1 px-3 py-2 rounded-md text-xs font-medium transition-all border"
+              style={data.mailgunRegion === "us"
+                ? { background: "var(--secondary)", color: "white", borderColor: "var(--secondary)" }
+                : { background: "var(--surface-container-lowest)", color: "var(--on-surface-variant)", borderColor: "var(--outline-variant)" }
+              }>
+              🇺🇸 US (api.mailgun.net)
+            </button>
+          </div>
+          <p className="text-[11px]" style={{ color: "var(--on-surface-variant)" }}>Must match the region your Mailgun domain is registered in.</p>
         </div>
       </div>
 
