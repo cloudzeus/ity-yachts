@@ -1,10 +1,10 @@
 import { db } from "@/lib/db"
 import { getSession } from "@/lib/auth-session"
 import { uploadToBunnyCDN, createFolder } from "@/lib/bunny-cdn"
-import { processImage, processVideo, isImage, isSvg, isVideo, slugify } from "@/lib/media-processor"
+import { processImage, isImage, isSvg, isVideo, slugify } from "@/lib/media-processor"
 import { NextRequest, NextResponse } from "next/server"
 
-export const maxDuration = 60
+export const maxDuration = 300
 
 export async function POST(req: NextRequest) {
   try {
@@ -54,11 +54,8 @@ export async function POST(req: NextRequest) {
       height = processed.height
       fileName = `${Date.now()}-${slugify(baseName)}.webp`
     } else if (isVideo(originalMime)) {
-      // Convert all video formats to H.264 MP4
-      const processed = await processVideo(buffer)
-      buffer = Buffer.from(processed.buffer)
-      mimeType = processed.mimeType
-      fileName = `${Date.now()}-${slugify(baseName)}.mp4`
+      // Upload video as-is — server-side transcoding is slow and requires ffmpeg
+      fileName = `${Date.now()}-${slugify(baseName)}.${ext}`
     } else {
       // PDFs, documents, and other files — upload as-is
       fileName = `${Date.now()}-${slugify(baseName)}.${ext}`

@@ -16,6 +16,10 @@ import {
   Compass,
   Maximize2,
   Anchor,
+  Thermometer,
+  Wind,
+  Droplets,
+  Waves,
 } from "lucide-react"
 import { LocationMap } from "./location-map"
 
@@ -206,6 +210,25 @@ export function LocationDetailClient({ location }: { location: LocationData }) {
     if (!allImages.includes(img)) allImages.push(img)
   }
 
+  // ── Weather fetch ─────────────────────────────────────────────────────
+  const [weather, setWeather] = useState<{
+    temp_c: number
+    condition: string
+    wind_kph: number
+    humidity: number
+    wave_height_m: number | null
+  } | null>(null)
+
+  useEffect(() => {
+    const q = hasCoords
+      ? `${location.latitude},${location.longitude}`
+      : location.name
+    fetch(`/api/weather?q=${encodeURIComponent(q)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => d && setWeather(d))
+      .catch(() => {})
+  }, [])
+
   // ── Hero parallax ─────────────────────────────────────────────────────
   useEffect(() => {
     if (!heroImgRef.current) return
@@ -229,50 +252,49 @@ export function LocationDetailClient({ location }: { location: LocationData }) {
   useEffect(() => {
     if (!contentRef.current) return
     const sections = contentRef.current.querySelectorAll("[data-reveal]")
-    sections.forEach((el, i) => {
-      gsap.fromTo(
-        el,
-        { opacity: 0, y: 50 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.8,
-          delay: i * 0.1,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: el,
-            start: "top 88%",
-            toggleActions: "play none none none",
-          },
-        }
-      )
+    sections.forEach((el) => {
+      gsap.set(el, { opacity: 0, y: 40 })
+      gsap.to(el, {
+        opacity: 1,
+        y: 0,
+        duration: 0.8,
+        ease: "power3.out",
+        scrollTrigger: {
+          trigger: el,
+          start: "top 90%",
+          toggleActions: "play none none none",
+        },
+      })
     })
     return () => {
       ScrollTrigger.getAll().forEach((t) => t.kill())
     }
   }, [])
 
-  // ── Gallery stagger ───────────────────────────────────────────────────
+  // ── Gallery stagger (after section reveals) ────────────────────────────
   useEffect(() => {
     if (!galleryRef.current) return
     const items = galleryRef.current.querySelectorAll("[data-gallery-item]")
-    gsap.fromTo(
-      items,
-      { opacity: 0, y: 40, scale: 0.95 },
-      {
+    // Set initial state, animate after a short delay to let section reveal first
+    items.forEach((el) => {
+      ;(el as HTMLElement).style.opacity = "0"
+      ;(el as HTMLElement).style.transform = "translateY(20px)"
+    })
+    const timer = setTimeout(() => {
+      gsap.to(items, {
         opacity: 1,
         y: 0,
-        scale: 1,
-        duration: 0.6,
-        stagger: 0.08,
-        ease: "power3.out",
+        duration: 0.5,
+        stagger: 0.06,
+        ease: "power2.out",
         scrollTrigger: {
           trigger: galleryRef.current,
-          start: "top 85%",
+          start: "top 92%",
           toggleActions: "play none none none",
         },
-      }
-    )
+      })
+    }, 300)
+    return () => clearTimeout(timer)
   }, [])
 
   const hasCoords = location.latitude && location.longitude
@@ -335,15 +357,39 @@ export function LocationDetailClient({ location }: { location: LocationData }) {
           </Link>
         </div>
 
-        {/* Coordinates chip */}
-        {hasCoords && (
-          <div className="absolute top-28 right-6 md:right-12 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/30 backdrop-blur-md border border-white/10">
-            <Navigation className="w-3.5 h-3.5 text-[#0077B6]/80" />
-            <span className="text-[11px] font-mono text-white/50 tracking-wider">
-              {formatCoord(location.latitude!, true)} / {formatCoord(location.longitude!, false)}
-            </span>
-          </div>
-        )}
+        {/* Coordinates + Weather chips */}
+        <div className="absolute top-28 right-6 md:right-12 z-20 flex flex-col items-end gap-2">
+          {hasCoords && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/30 backdrop-blur-md border border-white/10">
+              <Navigation className="w-3.5 h-3.5 text-[#0077B6]/80" />
+              <span className="text-[11px] font-mono text-white/50 tracking-wider">
+                {formatCoord(location.latitude!, true)} / {formatCoord(location.longitude!, false)}
+              </span>
+            </div>
+          )}
+          {weather && (
+            <div className="flex items-center gap-3 px-3 py-1.5 rounded-full bg-black/30 backdrop-blur-md border border-white/10">
+              <div className="flex items-center gap-1">
+                <Thermometer className="w-3.5 h-3.5 text-[#0077B6]/80" />
+                <span className="text-[11px] font-mono text-white/50">{weather.temp_c}°C</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Wind className="w-3.5 h-3.5 text-[#0077B6]/80" />
+                <span className="text-[11px] font-mono text-white/50">{weather.wind_kph} kn</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Droplets className="w-3.5 h-3.5 text-[#0077B6]/80" />
+                <span className="text-[11px] font-mono text-white/50">{weather.humidity}%</span>
+              </div>
+              {weather.wave_height_m !== null && (
+                <div className="flex items-center gap-1">
+                  <Waves className="w-3.5 h-3.5 text-[#0077B6]/80" />
+                  <span className="text-[11px] font-mono text-white/50">{weather.wave_height_m}m</span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Fullscreen button on hero */}
         {location.defaultMedia && (
@@ -411,7 +457,7 @@ export function LocationDetailClient({ location }: { location: LocationData }) {
       <div ref={contentRef} className="relative">
         {/* Description section */}
         {location.description && (
-          <section data-reveal className="px-6 md:px-12 pt-16 pb-12" style={{ opacity: 0 }}>
+          <section data-reveal className="px-6 md:px-12 pt-16 pb-12">
             <div className="max-w-5xl mx-auto">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
                 {/* Left label */}
@@ -445,14 +491,14 @@ export function LocationDetailClient({ location }: { location: LocationData }) {
 
         {/* Divider */}
         {location.description && location.images.length > 0 && (
-          <div data-reveal className="max-w-5xl mx-auto px-6 md:px-12" style={{ opacity: 0 }}>
+          <div data-reveal className="max-w-5xl mx-auto px-6 md:px-12">
             <div className="h-[1px] bg-gradient-to-r from-transparent via-white/8 to-transparent" />
           </div>
         )}
 
         {/* ── Gallery ────────────────────────────────────────────────────── */}
         {location.images.length > 0 && (
-          <section data-reveal className="px-6 md:px-12 py-16" style={{ opacity: 0 }}>
+          <section data-reveal className="px-6 md:px-12 py-16">
             <div className="max-w-5xl mx-auto">
               <div className="flex items-center gap-3 mb-8">
                 <div className="w-8 h-[1px] bg-[#0077B6]/40" />
@@ -467,14 +513,16 @@ export function LocationDetailClient({ location }: { location: LocationData }) {
                   // First image large, others standard
                   const isLarge = i === 0
                   return (
-                    <button
+                    <div
                       key={i}
                       data-gallery-item
+                      role="button"
+                      tabIndex={0}
                       onClick={() => setLightbox({ images: location.images, index: i })}
                       className={`group relative overflow-hidden rounded-lg cursor-pointer ${
                         isLarge ? "col-span-2 row-span-2 aspect-[4/3]" : "aspect-[4/3]"
                       }`}
-                      style={{ border: "1px solid rgba(255,255,255,0.06)", opacity: 0 }}
+                      style={{ border: "1px solid rgba(255,255,255,0.06)" }}
                     >
                       {isVideo ? (
                         <video
@@ -501,7 +549,7 @@ export function LocationDetailClient({ location }: { location: LocationData }) {
                           <Maximize2 className="w-4 h-4 text-white" />
                         </div>
                       </div>
-                    </button>
+                    </div>
                   )
                 })}
               </div>
@@ -511,7 +559,7 @@ export function LocationDetailClient({ location }: { location: LocationData }) {
 
         {/* ── Map ────────────────────────────────────────────────────────── */}
         {hasCoords && (
-          <section ref={mapSectionRef} data-reveal className="px-6 md:px-12 pb-20 pt-4" style={{ opacity: 0 }}>
+          <section ref={mapSectionRef} data-reveal className="px-6 md:px-12 pb-20 pt-4">
             <div className="max-w-5xl mx-auto">
               <div className="flex items-center gap-3 mb-8">
                 <div className="w-8 h-[1px] bg-[#0077B6]/40" />
@@ -556,7 +604,7 @@ export function LocationDetailClient({ location }: { location: LocationData }) {
         )}
 
         {/* ── CTA / Other destinations ───────────────────────────────────── */}
-        <section data-reveal className="px-6 md:px-12 pb-24" style={{ opacity: 0 }}>
+        <section data-reveal className="px-6 md:px-12 pb-24">
           <div className="max-w-5xl mx-auto text-center">
             <div className="h-[1px] bg-gradient-to-r from-transparent via-white/8 to-transparent mb-12" />
             <p className="text-white/40 text-sm mb-4">Want to explore more?</p>
