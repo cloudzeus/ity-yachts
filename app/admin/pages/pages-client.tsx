@@ -1,10 +1,29 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback, useEffect, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Plus, Pencil, Trash2, Menu, ExternalLink, Home } from "lucide-react"
-import { DataTable, type ColumnDef, type SortDirection } from "@/components/ui/data-table"
+import {
+  Plus, Pencil, Trash2, Menu, ExternalLink, Home, GripVertical,
+  MoreHorizontal, ChevronRight, Search,
+} from "lucide-react"
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core"
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
+  sortableKeyboardCoordinates,
+} from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -13,9 +32,17 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { PageContentBlocks } from "@/components/admin/pages/page-content-blocks"
+import { cn } from "@/lib/utils"
 
 type Page = {
   id: string
@@ -26,6 +53,7 @@ type Page = {
   showInMenu: boolean
   centralMenu: boolean
   menuOrder: number
+  sortOrder: number
   updatedAt: string
 }
 
@@ -52,51 +80,226 @@ const menuBadge = (showInMenu: boolean, menuOrder: number) => {
   )
 }
 
-const COLUMNS: ColumnDef<Page>[] = [
-  {
-    key: "name",
-    header: "Name",
-    sortable: true,
-    cell: (row) => (
-      <Link href={`/admin/pages/${row.id}`} className="inline-flex items-center gap-1.5 font-medium hover:underline" style={{ color: "var(--primary)" }}>
-        {row.isHomePage && <Home className="size-3.5" style={{ color: "var(--primary)" }} />}
-        {row.name}
-      </Link>
-    ),
-  },
-  {
-    key: "slug",
-    header: "Slug",
-    sortable: true,
-    cell: (row) => (
-      <a href={row.isHomePage ? "/" : `/${row.slug}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 hover:underline">
-        <code className="text-xs" style={{ color: "var(--on-surface-variant)" }}>/{row.slug}</code>
-        <ExternalLink className="size-3" style={{ color: "var(--on-surface-variant)" }} />
-      </a>
-    ),
-  },
-  { key: "status", header: "Status", sortable: true, cell: (row) => statusBadge(row.status) },
-  { key: "showInMenu", header: "Menu", sortable: true, cell: (row) => menuBadge(row.showInMenu, row.menuOrder) },
-  {
-    key: "centralMenu",
-    header: "Header",
-    sortable: true,
-    cell: (row) =>
-      row.centralMenu ? (
-        <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium" style={{ background: "rgba(45,106,79,0.12)", color: "#2D6A4F", borderRadius: "var(--radius-xs)" }}>
-          Yes
-        </span>
-      ) : (
-        <span className="text-xs" style={{ color: "var(--on-surface-variant)" }}>—</span>
-      ),
-  },
-  {
-    key: "updatedAt",
-    header: "Updated",
-    sortable: true,
-    cell: (row) => new Date(row.updatedAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
-  },
-]
+// Grid column template for all rows
+const GRID = "40px 32px 1fr 1fr 80px 80px 64px 100px 48px"
+
+function RowContent({ row, expandedId, onToggleExpand, onEdit, onDelete }: {
+  row: Page
+  expandedId: string | null
+  onToggleExpand: (id: string) => void
+  onEdit: (id: string) => void
+  onDelete: (id: string) => void
+}) {
+  const isExpanded = expandedId === row.id
+  return (
+    <>
+      {/* Expand toggle */}
+      <div className="flex items-center justify-center">
+        <button
+          onClick={() => onToggleExpand(row.id)}
+          className="flex items-center justify-center rounded p-0.5 transition-colors hover:bg-black/10"
+          style={{ color: "var(--on-surface-variant)" }}
+        >
+          <ChevronRight className={cn("size-4 transition-transform duration-200", isExpanded && "rotate-90")} />
+        </button>
+      </div>
+
+      {/* Name */}
+      <div className="flex items-center min-w-0">
+        <Link href={`/admin/pages/${row.id}`} className="inline-flex items-center gap-1.5 font-medium hover:underline truncate" style={{ color: "var(--primary)" }}>
+          {row.isHomePage && <Home className="size-3.5 shrink-0" style={{ color: "var(--primary)" }} />}
+          <span className="truncate">{row.name}</span>
+        </Link>
+      </div>
+
+      {/* Slug */}
+      <div className="flex items-center min-w-0">
+        <a href={row.isHomePage ? "/" : `/${row.slug}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 hover:underline truncate">
+          <code className="text-xs truncate" style={{ color: "var(--on-surface-variant)" }}>/{row.slug}</code>
+          <ExternalLink className="size-3 shrink-0" style={{ color: "var(--on-surface-variant)" }} />
+        </a>
+      </div>
+
+      {/* Status */}
+      <div className="flex items-center">{statusBadge(row.status)}</div>
+
+      {/* Menu */}
+      <div className="flex items-center">{menuBadge(row.showInMenu, row.menuOrder)}</div>
+
+      {/* Header */}
+      <div className="flex items-center">
+        {row.centralMenu ? (
+          <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium" style={{ background: "rgba(45,106,79,0.12)", color: "#2D6A4F", borderRadius: "var(--radius-xs)" }}>
+            Yes
+          </span>
+        ) : (
+          <span className="text-xs" style={{ color: "var(--on-surface-variant)" }}>—</span>
+        )}
+      </div>
+
+      {/* Updated */}
+      <div className="flex items-center text-sm" style={{ color: "var(--on-surface)" }}>
+        {new Date(row.updatedAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center justify-end">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" className="h-7 w-7 p-0 opacity-50 hover:opacity-100">
+              <MoreHorizontal className="size-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-40">
+            <DropdownMenuItem onClick={() => onEdit(row.id)}>
+              <Pencil className="size-3.5 mr-2" />
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => onDelete(row.id)} className="text-destructive focus:text-destructive">
+              <Trash2 className="size-3.5 mr-2" />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </>
+  )
+}
+
+function SortablePageRow({ row, isLast, expandedId, onToggleExpand, onEdit, onDelete }: {
+  row: Page
+  isLast: boolean
+  expandedId: string | null
+  onToggleExpand: (id: string) => void
+  onEdit: (id: string) => void
+  onDelete: (id: string) => void
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: row.id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : undefined,
+    position: isDragging ? "relative" as const : undefined,
+  }
+
+  const isExpanded = expandedId === row.id
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <div
+        className={cn(
+          "grid items-center gap-0 px-1 text-sm transition-colors hover:bg-black/[0.02]",
+          isDragging && "opacity-90 shadow-md rounded"
+        )}
+        style={{
+          gridTemplateColumns: GRID,
+          minHeight: 44,
+          borderBottom: (!isExpanded && !isLast) ? "1px solid var(--outline-variant)" : undefined,
+          background: isDragging ? "var(--surface-container-lowest)" : undefined,
+        }}
+      >
+        {/* Drag handle */}
+        <div className="flex items-center justify-center">
+          <button
+            {...attributes}
+            {...listeners}
+            className="flex items-center justify-center rounded p-1 cursor-grab active:cursor-grabbing transition-colors hover:bg-black/5"
+            style={{ color: "var(--on-surface-variant)" }}
+          >
+            <GripVertical className="size-4" />
+          </button>
+        </div>
+
+        <RowContent row={row} expandedId={expandedId} onToggleExpand={onToggleExpand} onEdit={onEdit} onDelete={onDelete} />
+      </div>
+
+      {/* Expanded panel */}
+      {isExpanded && (
+        <div
+          className="px-6 py-4"
+          style={{
+            background: "rgba(0,33,71,0.03)",
+            borderBottom: !isLast ? "1px solid var(--outline-variant)" : undefined,
+          }}
+        >
+          <div
+            className="rounded p-4"
+            style={{
+              background: "var(--surface-container-low)",
+              borderRadius: "var(--radius-md)",
+              borderLeft: "3px solid var(--secondary-light)",
+            }}
+          >
+            <PageContentBlocks pageId={row.id} />
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function StaticPageRow({ row, isLast, expandedId, onToggleExpand, onEdit, onDelete }: {
+  row: Page
+  isLast: boolean
+  expandedId: string | null
+  onToggleExpand: (id: string) => void
+  onEdit: (id: string) => void
+  onDelete: (id: string) => void
+}) {
+  const isExpanded = expandedId === row.id
+
+  return (
+    <div>
+      <div
+        className="grid items-center gap-0 px-1 text-sm transition-colors hover:bg-black/[0.02]"
+        style={{
+          gridTemplateColumns: GRID,
+          minHeight: 44,
+          borderBottom: (!isExpanded && !isLast) ? "1px solid var(--outline-variant)" : undefined,
+        }}
+      >
+        {/* Drag handle placeholder */}
+        <div className="flex items-center justify-center">
+          <span className="flex items-center justify-center rounded p-1" style={{ color: "var(--on-surface-variant)" }}>
+            <GripVertical className="size-4 opacity-30" />
+          </span>
+        </div>
+
+        <RowContent row={row} expandedId={expandedId} onToggleExpand={onToggleExpand} onEdit={onEdit} onDelete={onDelete} />
+      </div>
+
+      {isExpanded && (
+        <div
+          className="px-6 py-4"
+          style={{
+            background: "rgba(0,33,71,0.03)",
+            borderBottom: !isLast ? "1px solid var(--outline-variant)" : undefined,
+          }}
+        >
+          <div
+            className="rounded p-4"
+            style={{
+              background: "var(--surface-container-low)",
+              borderRadius: "var(--radius-md)",
+              borderLeft: "3px solid var(--secondary-light)",
+            }}
+          >
+            <PageContentBlocks pageId={row.id} />
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
 
 interface Props {
   initialData: { pages: Page[]; total: number }
@@ -107,9 +310,12 @@ export function PagesClient({ initialData }: Props) {
   const [data, setData] = useState(initialData.pages)
   const [total, setTotal] = useState(initialData.total)
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(10)
+  const [pageSize, setPageSize] = useState(50)
   const [search, setSearch] = useState("")
+  const [searchValue, setSearchValue] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [expandedId, setExpandedId] = useState<string | null>(null)
   const [newPageOpen, setNewPageOpen] = useState(false)
   const [newPageName, setNewPageName] = useState("")
   const [newPageNameEl, setNewPageNameEl] = useState("")
@@ -120,7 +326,15 @@ export function PagesClient({ initialData }: Props) {
   const [translatingName, setTranslatingName] = useState(false)
   const [deletePageId, setDeletePageId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
-  const fetchData = async (params: { page: number; pageSize: number; search: string }) => {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  )
+
+  const fetchData = useCallback(async (params: { page: number; pageSize: number; search: string }) => {
     setIsLoading(true)
     try {
       const qs = new URLSearchParams({
@@ -138,13 +352,50 @@ export function PagesClient({ initialData }: Props) {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [])
 
   function refresh() {
     fetchData({ page, pageSize, search })
   }
 
-  // Auto-generate slug from name
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+
+    const oldIndex = data.findIndex((p) => p.id === active.id)
+    const newIndex = data.findIndex((p) => p.id === over.id)
+    if (oldIndex === -1 || newIndex === -1) return
+
+    const reordered = arrayMove(data, oldIndex, newIndex)
+    // Update menuOrder optimistically for pages shown in menu
+    let menuPos = 0
+    const withUpdatedMenu = reordered.map((p) => ({
+      ...p,
+      menuOrder: p.showInMenu ? menuPos++ : p.menuOrder,
+    }))
+    const prevData = data
+    setData(withUpdatedMenu)
+
+    // Persist to server
+    setIsSaving(true)
+    try {
+      const res = await fetch("/api/admin/pages/reorder", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderedIds: reordered.map((p) => p.id) }),
+      })
+      if (!res.ok) {
+        setData(prevData)
+        console.error("Failed to save order")
+      }
+    } catch (err) {
+      setData(prevData)
+      console.error("[handleDragEnd]", err)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   function handleNameChange(val: string) {
     setNewPageName(val)
     if (!slugOverridden) {
@@ -237,31 +488,42 @@ export function PagesClient({ initialData }: Props) {
     }
   }
 
+  const handleSearch = useCallback((value: string) => {
+    setSearchValue(value)
+    const timeout = setTimeout(() => {
+      setSearch(value)
+      setPage(1)
+      fetchData({ page: 1, pageSize, search: value })
+    }, 300)
+    return () => clearTimeout(timeout)
+  }, [fetchData, pageSize])
+
+  const headers = ["", "", "Name", "Slug", "Status", "Menu", "Header", "Updated", ""]
+
+  const rowProps = (row: Page, i: number) => ({
+    row,
+    isLast: i === data.length - 1,
+    expandedId,
+    onToggleExpand: (id: string) => setExpandedId((prev) => (prev === id ? null : id)),
+    onEdit: (id: string) => router.push(`/admin/pages/${id}`),
+    onDelete: (id: string) => setDeletePageId(id),
+  })
+
   return (
     <>
-      <DataTable
-        tableKey="pages"
-        data={data}
-        columns={COLUMNS}
-        searchPlaceholder="Search by name or slug..."
-        isLoading={isLoading}
-        pagination={{ page, pageSize, total }}
-        onPageChange={(p) => {
-          setPage(p)
-          fetchData({ page: p, pageSize, search })
-        }}
-        onPageSizeChange={(ps) => {
-          setPageSize(ps)
-          setPage(1)
-          fetchData({ page: 1, pageSize: ps, search })
-        }}
-        onSearchChange={(q) => {
-          setSearch(q)
-          setPage(1)
-          fetchData({ page: 1, pageSize, search: q })
-        }}
-        onSortChange={() => {}}
-        toolbar={
+      {/* Toolbar */}
+      <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <div className="relative flex-1 max-w-xs">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4" style={{ color: "var(--on-surface-variant)" }} />
+            <Input
+              placeholder="Search by name or slug..."
+              value={searchValue}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="pl-8 h-9 text-sm"
+              style={{ background: "var(--surface-container-lowest)", borderColor: "var(--outline-variant)" }}
+            />
+          </div>
           <Button
             size="sm"
             className="h-9 gap-2 text-xs text-white"
@@ -271,23 +533,66 @@ export function PagesClient({ initialData }: Props) {
             <Plus className="size-4" />
             New Page
           </Button>
-        }
-        rowExpand={(row) => <PageContentBlocks pageId={row.id} />}
-        rowActions={(row) => [
-          {
-            label: "Edit",
-            icon: <Pencil className="size-3.5" />,
-            onClick: () => router.push(`/admin/pages/${row.id}`),
-          },
-          {
-            label: "Delete",
-            icon: <Trash2 className="size-3.5" />,
-            onClick: () => setDeletePageId(row.id),
-            variant: "destructive",
-            separator: true,
-          },
-        ]}
-      />
+        </div>
+        {isSaving && (
+          <span className="text-xs animate-pulse" style={{ color: "var(--on-surface-variant)" }}>
+            Saving order...
+          </span>
+        )}
+      </div>
+
+      {/* List */}
+      <div style={{ background: "var(--surface-container-lowest)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-ambient)", overflow: "hidden" }}>
+        {/* Header row */}
+        <div
+          className="grid items-center gap-0 px-1 text-xs font-semibold select-none"
+          style={{
+            gridTemplateColumns: GRID,
+            minHeight: 40,
+            borderBottom: "1px solid var(--outline-variant)",
+            color: "var(--on-surface-variant)",
+            fontFamily: "var(--font-display)",
+          }}
+        >
+          {headers.map((h, i) => (
+            <div key={i} className="px-1">{h}</div>
+          ))}
+        </div>
+
+        {/* Body */}
+        {isLoading ? (
+          <div className="px-4 py-12 text-center text-sm" style={{ color: "var(--on-surface-variant)" }}>
+            Loading...
+          </div>
+        ) : data.length === 0 ? (
+          <div className="px-4 py-12 text-center text-sm" style={{ color: "var(--on-surface-variant)" }}>
+            No pages found
+          </div>
+        ) : mounted ? (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext items={data.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+              {data.map((row, i) => (
+                <SortablePageRow key={row.id} {...rowProps(row, i)} />
+              ))}
+            </SortableContext>
+          </DndContext>
+        ) : (
+          data.map((row, i) => (
+            <StaticPageRow key={row.id} {...rowProps(row, i)} />
+          ))
+        )}
+      </div>
+
+      {/* Page count */}
+      <div className="flex items-center justify-between mt-4">
+        <span className="text-xs" style={{ color: "var(--on-surface-variant)" }}>
+          {data.length} of {total} pages
+        </span>
+      </div>
 
       {/* New Page Dialog */}
       <Dialog open={newPageOpen} onOpenChange={setNewPageOpen}>
@@ -299,7 +604,6 @@ export function PagesClient({ initialData }: Props) {
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-3">
-            {/* Page names — all 3 languages in one row */}
             <div className="flex gap-2">
               <div className="flex flex-col gap-1 flex-1">
                 <Label className="text-[10px] uppercase tracking-wide" style={{ color: "var(--on-surface-variant)" }}>EN *</Label>

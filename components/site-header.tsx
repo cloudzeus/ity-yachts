@@ -6,6 +6,7 @@ import Image from "next/image"
 import gsap from "gsap"
 import { Menu, X, User, Anchor } from "lucide-react"
 import { SearchModal } from "@/components/search-modal"
+import { LanguageSwitcher } from "@/components/language-switcher"
 import { useTranslations } from "@/lib/use-translations"
 import { useNavigation } from "@/lib/use-navigation"
 
@@ -17,13 +18,13 @@ export function SiteHeader() {
   const [scrolled, setScrolled] = useState(false)
   const mobileMenuRef = useRef<HTMLDivElement>(null)
   const menuItemsRef = useRef<HTMLDivElement>(null)
-  const { t } = useTranslations()
+  const { t, locale } = useTranslations()
   const { items: navItems } = useNavigation()
 
   const navLinks = navItems
     .filter((item) => !item.isHomePage)
     .map((item) => ({
-      label: item.translations?.en || item.label,
+      label: item.translations?.[locale] || item.translations?.en || item.label,
       href: item.href,
     }))
 
@@ -151,6 +152,10 @@ export function SiteHeader() {
               {t("header.startPlanning", "Start Planning")}
             </Link>
 
+            <div className="mx-2">
+              <LanguageSwitcher />
+            </div>
+
             <button
               onClick={() => setSearchOpen(true)}
               className="flex h-8 w-8 items-center justify-center text-white/70 transition-colors hover:text-white"
@@ -223,6 +228,9 @@ export function SiteHeader() {
             >
               {t("header.startPlanning", "Start Planning")}
             </Link>
+            <div className="mt-4 flex justify-center">
+              <LanguageSwitcher />
+            </div>
           </div>
         </div>
       </header>

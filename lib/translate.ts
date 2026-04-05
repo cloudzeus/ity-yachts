@@ -29,7 +29,7 @@ export async function translate(
       messages: [
         {
           role: "system",
-          content: `You are a professional translator for a luxury yacht charter website. The website supports three languages: English (en), Greek (el), and German (de). Translate the following text from ${sourceLang} to ${targetLang}. Use formal, professional language appropriate for a high-end maritime tourism brand. Return only the translated text with no explanation or extra commentary.`,
+          content: `You are a professional translator and an expert skipper, yacht specialist, and naval expert working for a luxury yacht charter website. You have deep knowledge of maritime terminology, sailing equipment, navigation instruments, yacht services, and charter industry vocabulary. The website supports three languages: English (en), Greek (el), and German (de). Translate the following text from ${sourceLang} to ${targetLang}. Use the correct industry-standard maritime/nautical terminology in the target language. Use formal, professional language appropriate for a high-end yacht charter brand. If a term has no established translation in the target language (e.g. brand names, universal technical terms), keep the original English. Return only the translated text with no explanation or extra commentary.`,
         },
         {
           role: "user",
@@ -69,7 +69,7 @@ export async function translateBatch(
       messages: [
         {
           role: "system",
-          content: `You are a professional translator for a luxury yacht charter website. The website supports three languages: English (en), Greek (el), and German (de). Translate each numbered item from ${sourceLang} to ${targetLang}. Use formal, professional language appropriate for a high-end maritime tourism brand. Return the same numbered list with only the translated text. Do not add explanations.`,
+          content: `You are a professional translator and an expert skipper, yacht specialist, and naval expert working for a luxury yacht charter website. You have deep knowledge of maritime terminology, sailing equipment, navigation instruments, yacht services, and charter industry vocabulary. The website supports three languages: English (en), Greek (el), and German (de). Translate each numbered item from ${sourceLang} to ${targetLang}. Use the correct industry-standard maritime/nautical terminology in the target language. Use formal, professional language appropriate for a high-end yacht charter brand. If a term has no established translation in the target language (e.g. brand names, universal technical terms), keep the original English. Return the same numbered list with only the translated text. Do not add explanations.`,
         },
         {
           role: "user",

@@ -18,16 +18,20 @@ import {
   Heart,
   Loader2,
 } from "lucide-react"
+import { useTranslations } from "@/lib/use-translations"
+import { removeGreekTonos } from "@/lib/greek-utils"
 
 interface YachtCard {
   id: number
   name: string
   image: string
   category: string
+  categoryTranslations?: Record<string, string> | null
   loa: number
   cabins: number
   berths: number
   baseName: string
+  baseNameTranslations?: Record<string, string> | null
   builder: string
   buildYear: number
   priceFrom: number
@@ -37,6 +41,7 @@ interface YachtCard {
 interface FilterOption {
   id: number
   name: string
+  nameTranslations?: Record<string, string> | null
 }
 
 interface FleetListProps {
@@ -54,6 +59,7 @@ export function FleetListClient({
   bases,
   builders,
 }: FleetListProps) {
+  const { locale, t, tUpper } = useTranslations()
   const [yachts, setYachts] = useState<YachtCard[]>(initialYachts)
   const [total, setTotal] = useState(initialTotal)
   const [page, setPage] = useState(1)
@@ -103,24 +109,22 @@ export function FleetListClient({
         // Transform the API response
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const cards: YachtCard[] = (data.yachts || []).map((y: any) => {
-          const categoryName = y.category
-            ? ((y.category?.name as Record<string, string>)?.en || "Yacht")
-            : "Yacht"
+          const catName = y.category?.name as Record<string, string> | undefined
           const websiteImgs = y.websiteImages as Array<{ url: string }> | null
           const picturesArr = y.picturesUrl as string[] | null
           const image = websiteImgs?.[0]?.url || y.mainPictureUrl || picturesArr?.[0] || ""
-          const locationName = y.base?.location
-            ? ((y.base.location.name as Record<string, string>)?.en || "")
-            : ""
+          const locName = y.base?.location?.name as Record<string, string> | undefined
           return {
             id: y.id,
             name: y.name || y.model?.name || "Yacht",
             image,
-            category: categoryName,
+            category: catName?.en || "Yacht",
+            categoryTranslations: catName || null,
             loa: y.loa || 0,
             cabins: y.cabins || 0,
             berths: y.berthsTotal || y.maxPersons || 0,
-            baseName: locationName,
+            baseName: locName?.en || "",
+            baseNameTranslations: locName || null,
             builder: y.builder?.name || y.model?.builder?.name || "",
             buildYear: y.buildYear || 0,
             priceFrom: y.prices?.[0]?.price || 0,
@@ -138,7 +142,7 @@ export function FleetListClient({
         setLoading(false)
       }
     },
-    [debouncedSearch, categoryId, baseId, builderId, cabinsMin, guestsMin, loaMin, loaMax, yearMin, charterType, sortBy]
+    [debouncedSearch, categoryId, baseId, builderId, cabinsMin, guestsMin, loaMin, loaMax, yearMin, charterType, sortBy, locale]
   )
 
   // Refetch when filters change (skip initial render)
@@ -196,18 +200,17 @@ export function FleetListClient({
               className="text-xs font-semibold uppercase tracking-widest"
               style={{ color: "#0077B6" }}
             >
-              Our Fleet
+              {removeGreekTonos(t("fleet.badge", "Our Fleet"))}
             </span>
           </div>
           <h1
             className="text-4xl md:text-6xl font-bold text-white mb-4"
             style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em" }}
           >
-            Yachts & Catamarans
+            {t("fleet.title", "Yachts & Catamarans")}
           </h1>
           <p className="text-white/60 text-sm md:text-base max-w-[600px] leading-relaxed">
-            Browse our curated fleet of sailing yachts and catamarans available for
-            charter in the Greek islands.
+            {t("fleet.subtitle", "Browse our curated fleet of sailing yachts and catamarans available for charter in the Greek islands.")}
           </p>
 
           {/* Search Bar */}
@@ -218,7 +221,7 @@ export function FleetListClient({
                 type="text"
                 value={search}
                 onChange={(e) => handleSearchChange(e.target.value)}
-                placeholder="Search by name, model, or builder..."
+                placeholder={t("fleet.searchPlaceholder", "Search by name, model, or builder...")}
                 className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-white/10 border border-white/15 text-white text-sm placeholder:text-white/40 focus:outline-none focus:border-white/30 focus:bg-white/15 transition"
               />
               {search && (
@@ -239,7 +242,7 @@ export function FleetListClient({
               }`}
             >
               <SlidersHorizontal className="w-4 h-4" />
-              Filters
+              {t("fleet.filters", "Filters")}
               {hasActiveFilters && (
                 <span className="w-2 h-2 rounded-full bg-[#0077B6]" />
               )}
@@ -250,13 +253,13 @@ export function FleetListClient({
                 onChange={(e) => setSortBy(e.target.value)}
                 className="appearance-none px-5 py-3.5 pr-10 rounded-xl bg-white/10 border border-white/15 text-white text-sm focus:outline-none focus:border-white/30 transition cursor-pointer"
               >
-                <option value="name">Sort: Name A-Z</option>
-                <option value="newest">Sort: Newest</option>
-                <option value="loa_desc">Sort: Length (longest)</option>
-                <option value="loa_asc">Sort: Length (shortest)</option>
-                <option value="year_desc">Sort: Year (newest)</option>
-                <option value="year_asc">Sort: Year (oldest)</option>
-                <option value="cabins_desc">Sort: Cabins (most)</option>
+                <option value="name">{t("fleet.sort.nameAZ", "Sort: Name A-Z")}</option>
+                <option value="newest">{t("fleet.sort.newest", "Sort: Newest")}</option>
+                <option value="loa_desc">{t("fleet.sort.lengthLong", "Sort: Length (longest)")}</option>
+                <option value="loa_asc">{t("fleet.sort.lengthShort", "Sort: Length (shortest)")}</option>
+                <option value="year_desc">{t("fleet.sort.yearNew", "Sort: Year (newest)")}</option>
+                <option value="year_asc">{t("fleet.sort.yearOld", "Sort: Year (oldest)")}</option>
+                <option value="cabins_desc">{t("fleet.sort.cabinsMost", "Sort: Cabins (most)")}</option>
               </select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 pointer-events-none" />
             </div>
@@ -269,17 +272,17 @@ export function FleetListClient({
                 {/* Category */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[10px] uppercase tracking-wider text-white/50 font-semibold">
-                    Category
+                    {tUpper("fleet.filter.category", "Category")}
                   </label>
                   <select
                     value={categoryId}
                     onChange={(e) => setCategoryId(e.target.value)}
                     className="px-3 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white text-xs focus:outline-none focus:border-white/30 transition"
                   >
-                    <option value="">All Categories</option>
+                    <option value="">{t("fleet.filter.allCategories", "All Categories")}</option>
                     {categories.map((c) => (
                       <option key={c.id} value={c.id}>
-                        {c.name}
+                        {c.nameTranslations?.[locale] || c.name}
                       </option>
                     ))}
                   </select>
@@ -288,17 +291,17 @@ export function FleetListClient({
                 {/* Base / Location */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[10px] uppercase tracking-wider text-white/50 font-semibold">
-                    Location
+                    {tUpper("fleet.filter.location", "Location")}
                   </label>
                   <select
                     value={baseId}
                     onChange={(e) => setBaseId(e.target.value)}
                     className="px-3 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white text-xs focus:outline-none focus:border-white/30 transition"
                   >
-                    <option value="">All Locations</option>
+                    <option value="">{t("fleet.filter.allLocations", "All Locations")}</option>
                     {bases.map((b) => (
                       <option key={b.id} value={b.id}>
-                        {b.name}
+                        {b.nameTranslations?.[locale] || b.name}
                       </option>
                     ))}
                   </select>
@@ -307,14 +310,14 @@ export function FleetListClient({
                 {/* Builder */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[10px] uppercase tracking-wider text-white/50 font-semibold">
-                    Builder
+                    {tUpper("fleet.filter.builder", "Builder")}
                   </label>
                   <select
                     value={builderId}
                     onChange={(e) => setBuilderId(e.target.value)}
                     className="px-3 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white text-xs focus:outline-none focus:border-white/30 transition"
                   >
-                    <option value="">All Builders</option>
+                    <option value="">{t("fleet.filter.allBuilders", "All Builders")}</option>
                     {builders.map((b) => (
                       <option key={b.id} value={b.id}>
                         {b.name}
@@ -326,33 +329,33 @@ export function FleetListClient({
                 {/* Charter Type */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[10px] uppercase tracking-wider text-white/50 font-semibold">
-                    Charter Type
+                    {tUpper("fleet.filter.charterType", "Charter Type")}
                   </label>
                   <select
                     value={charterType}
                     onChange={(e) => setCharterType(e.target.value)}
                     className="px-3 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white text-xs focus:outline-none focus:border-white/30 transition"
                   >
-                    <option value="">All Types</option>
-                    <option value="BAREBOAT">Bareboat</option>
-                    <option value="CREWED">Crewed</option>
+                    <option value="">{t("fleet.filter.allTypes", "All Types")}</option>
+                    <option value="BAREBOAT">{t("fleet.filter.bareboat", "Bareboat")}</option>
+                    <option value="CREWED">{t("fleet.filter.crewed", "Crewed")}</option>
                   </select>
                 </div>
 
                 {/* Cabins Min */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[10px] uppercase tracking-wider text-white/50 font-semibold">
-                    Min Cabins
+                    {tUpper("fleet.filter.minCabins", "Min Cabins")}
                   </label>
                   <select
                     value={cabinsMin}
                     onChange={(e) => setCabinsMin(e.target.value)}
                     className="px-3 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white text-xs focus:outline-none focus:border-white/30 transition"
                   >
-                    <option value="">Any</option>
+                    <option value="">{t("fleet.filter.any", "Any")}</option>
                     {[1, 2, 3, 4, 5, 6, 8].map((n) => (
                       <option key={n} value={n}>
-                        {n}+ cabins
+                        {n}+ {t("fleet.filter.cabins", "cabins")}
                       </option>
                     ))}
                   </select>
@@ -361,17 +364,17 @@ export function FleetListClient({
                 {/* Guests Min */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[10px] uppercase tracking-wider text-white/50 font-semibold">
-                    Min Guests
+                    {tUpper("fleet.filter.minGuests", "Min Guests")}
                   </label>
                   <select
                     value={guestsMin}
                     onChange={(e) => setGuestsMin(e.target.value)}
                     className="px-3 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white text-xs focus:outline-none focus:border-white/30 transition"
                   >
-                    <option value="">Any</option>
+                    <option value="">{t("fleet.filter.any", "Any")}</option>
                     {[2, 4, 6, 8, 10, 12].map((n) => (
                       <option key={n} value={n}>
-                        {n}+ guests
+                        {n}+ {t("fleet.filter.guests", "guests")}
                       </option>
                     ))}
                   </select>
@@ -380,7 +383,7 @@ export function FleetListClient({
                 {/* Length Min */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[10px] uppercase tracking-wider text-white/50 font-semibold">
-                    Min Length (m)
+                    {tUpper("fleet.filter.minLength", "Min Length (m)")}
                   </label>
                   <input
                     type="number"
@@ -394,7 +397,7 @@ export function FleetListClient({
                 {/* Length Max */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[10px] uppercase tracking-wider text-white/50 font-semibold">
-                    Max Length (m)
+                    {tUpper("fleet.filter.maxLength", "Max Length (m)")}
                   </label>
                   <input
                     type="number"
@@ -408,7 +411,7 @@ export function FleetListClient({
                 {/* Year Min */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[10px] uppercase tracking-wider text-white/50 font-semibold">
-                    Built After
+                    {tUpper("fleet.filter.builtAfter", "Built After")}
                   </label>
                   <input
                     type="number"
@@ -425,7 +428,7 @@ export function FleetListClient({
                     onClick={clearFilters}
                     className="px-3 py-2.5 rounded-lg border border-white/15 text-white/60 text-xs font-medium hover:bg-white/10 hover:text-white transition"
                   >
-                    Clear All Filters
+                    {t("fleet.filter.clearAll", "Clear All Filters")}
                   </button>
                 </div>
               </div>
@@ -435,14 +438,13 @@ export function FleetListClient({
           {/* Results count */}
           <div className="mt-6 flex items-center justify-between">
             <p className="text-white/50 text-sm">
-              <span className="text-white font-semibold">{total}</span> yacht
-              {total !== 1 ? "s" : ""} found
+              <span className="text-white font-semibold">{total}</span> {t("fleet.yachtsFound", "yachts found")}
               {hasActiveFilters && (
                 <button
                   onClick={clearFilters}
                   className="ml-3 text-[#0077B6] text-xs font-medium hover:underline"
                 >
-                  Clear filters
+                  {t("fleet.filter.clearFilters", "Clear filters")}
                 </button>
               )}
             </p>
@@ -463,17 +465,17 @@ export function FleetListClient({
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <Sailboat className="w-16 h-16 text-gray-300 mb-4" />
               <h3 className="text-xl font-semibold text-gray-700 mb-2">
-                No yachts found
+                {t("fleet.noResults", "No yachts found")}
               </h3>
               <p className="text-gray-400 text-sm mb-6 max-w-md">
-                Try adjusting your filters or search terms to find available yachts.
+                {t("fleet.noResultsHint", "Try adjusting your filters or search terms to find available yachts.")}
               </p>
               <button
                 onClick={clearFilters}
                 className="px-6 py-2.5 rounded-lg text-sm font-medium text-white transition"
                 style={{ backgroundColor: "#0055a9" }}
               >
-                Clear All Filters
+                {t("fleet.filter.clearAll", "Clear All Filters")}
               </button>
             </div>
           )}
@@ -549,6 +551,9 @@ export function FleetListClient({
 
 function YachtGridCard({ yacht }: { yacht: YachtCard }) {
   const [liked, setLiked] = useState(false)
+  const { locale, t, tUpper } = useTranslations()
+  const category = yacht.categoryTranslations?.[locale] || yacht.category
+  const baseName = yacht.baseNameTranslations?.[locale] || yacht.baseName
 
   return (
     <div className="group relative rounded-2xl overflow-hidden bg-white border border-gray-100 shadow-sm hover:shadow-xl transition-shadow duration-300">
@@ -584,7 +589,7 @@ function YachtGridCard({ yacht }: { yacht: YachtCard }) {
         <span
           className="absolute top-3 left-3 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider rounded-full text-white bg-white/15 backdrop-blur-md border border-white/15 z-10"
         >
-          {yacht.category}
+          {removeGreekTonos(category)}
         </span>
 
         {/* Like button */}
@@ -620,13 +625,13 @@ function YachtGridCard({ yacht }: { yacht: YachtCard }) {
             {yacht.cabins > 0 && (
               <div className="flex items-center gap-1">
                 <DoorOpen className="w-3 h-3" />
-                <span>{yacht.cabins} cabins</span>
+                <span>{yacht.cabins} {t("fleet.card.cabins", "cabins")}</span>
               </div>
             )}
             {yacht.berths > 0 && (
               <div className="flex items-center gap-1">
                 <Users className="w-3 h-3" />
-                <span>{yacht.berths} guests</span>
+                <span>{yacht.berths} {t("fleet.card.guests", "guests")}</span>
               </div>
             )}
           </div>
@@ -636,11 +641,11 @@ function YachtGridCard({ yacht }: { yacht: YachtCard }) {
       {/* Bottom info bar */}
       <div className="bg-white px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-4 text-xs text-gray-500">
-          {yacht.baseName && (
+          {baseName && (
             <div className="flex items-center gap-1">
               <Anchor className="w-3 h-3" style={{ color: "#0055a9" }} />
               <span className="font-medium" style={{ color: "#0055a9" }}>
-                {yacht.baseName}
+                {baseName}
               </span>
             </div>
           )}
@@ -655,11 +660,11 @@ function YachtGridCard({ yacht }: { yacht: YachtCard }) {
         <div className="flex items-center gap-2">
           {yacht.priceFrom > 0 && (
             <span className="text-xs">
-              <span className="text-gray-400">from </span>
+              <span className="text-gray-400">{t("fleet.card.from", "from")} </span>
               <span className="font-bold" style={{ color: "#070c26" }}>
-                €{yacht.priceFrom.toLocaleString()}
+                €{yacht.priceFrom.toLocaleString("en-US")}
               </span>
-              <span className="text-gray-400">/wk</span>
+              <span className="text-gray-400">/{t("fleet.card.week", "wk")}</span>
             </span>
           )}
           <Link
@@ -667,7 +672,7 @@ function YachtGridCard({ yacht }: { yacht: YachtCard }) {
             className="px-3 py-1.5 rounded-lg text-[11px] font-semibold text-white transition hover:opacity-90"
             style={{ backgroundColor: "#0055a9" }}
           >
-            Details
+            {t("fleet.card.details", "Details")}
           </Link>
         </div>
       </div>

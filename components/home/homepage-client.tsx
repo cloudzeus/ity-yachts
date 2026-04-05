@@ -1,8 +1,10 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useMemo } from "react"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
+import { useTranslations } from "@/lib/use-translations"
+import { removeGreekTonos } from "@/components/locale-text"
 import { CharterSearchForm } from "./charter-search-form"
 import { FleetCarouselSection } from "./fleet-carousel-section"
 import { LocationsSection } from "./locations-section"
@@ -15,10 +17,12 @@ if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger)
 }
 
+type T = Record<string, string> | null
+
 interface HeroData {
-  overSubheading: string
-  heading: string
-  subheading: string
+  overSubheading: string | T
+  heading: string | T
+  subheading: string | T
 }
 
 interface HomepageProps {
@@ -26,21 +30,23 @@ interface HomepageProps {
   destinations: Array<{
     id: string
     name: string
+    nameT?: T
     slug: string
     image: string
     mediaType?: string
-    shortDesc: string
+    shortDesc: string | T
     yachtCount?: number
     latitude?: number | null
     longitude?: number | null
-    prefecture?: string
+    prefecture?: string | T
   }>
   itineraries: Array<{
     id: string
     name: string
+    nameT?: T
     slug: string
     image: string
-    shortDesc: string
+    shortDesc: string | T
     totalDays: number
     totalMiles: number
     startFrom: string
@@ -51,10 +57,12 @@ interface HomepageProps {
     slug: string
     image: string
     category: string
+    categoryT?: T
     loa: number
     cabins: number
     berths: number
     baseName: string
+    baseNameT?: T
     priceFrom?: number
   }>
   fleetYachts?: Array<{
@@ -63,23 +71,70 @@ interface HomepageProps {
     slug: string
     image: string
     category: string
+    categoryT?: T
     loa: number
     cabins: number
     berths: number
     baseName: string
+    baseNameT?: T
   }>
   reviews: Array<{
     id: string
     name: string
     content: string
+    contentT?: T
     rating: number
     image?: string | null
     date: string
   }>
 }
 
+function r(field: string | T | undefined, locale: string): string {
+  if (!field) return ""
+  if (typeof field === "string") return field
+  return field[locale] || field.en || ""
+}
+
 export function HomepageClient({ hero, destinations, itineraries, yachts, fleetYachts, reviews }: HomepageProps) {
+  const { locale } = useTranslations()
   const heroVideoRef = useRef<HTMLVideoElement>(null)
+
+  // Resolve all translation objects to current locale strings
+  const heroResolved = useMemo(() => ({
+    overSubheading: r(hero.overSubheading, locale),
+    heading: r(hero.heading, locale),
+    subheading: r(hero.subheading, locale),
+  }), [hero, locale])
+
+  const destResolved = useMemo(() => destinations.map((d) => ({
+    ...d,
+    name: r(d.nameT, locale) || d.name,
+    shortDesc: r(d.shortDesc, locale),
+    prefecture: r(d.prefecture, locale),
+  })), [destinations, locale])
+
+  const itinResolved = useMemo(() => itineraries.map((it) => ({
+    ...it,
+    name: r(it.nameT, locale) || it.name,
+    shortDesc: r(it.shortDesc, locale),
+  })), [itineraries, locale])
+
+  const yachtResolved = useMemo(() => yachts.map((y) => ({
+    ...y,
+    category: r(y.categoryT, locale) || y.category,
+    baseName: r(y.baseNameT, locale) || y.baseName,
+  })), [yachts, locale])
+
+  const fleetResolved = useMemo(() => fleetYachts?.map((y) => ({
+    ...y,
+    category: r(y.categoryT, locale) || y.category,
+    baseName: r(y.baseNameT, locale) || y.baseName,
+  })), [fleetYachts, locale])
+
+  const reviewResolved = useMemo(() => reviews.map((rv) => ({
+    ...rv,
+    content: r(rv.contentT, locale) || rv.content,
+  })), [reviews, locale])
 
   useEffect(() => {
     // Ensure hero video plays and loops
@@ -157,18 +212,18 @@ export function HomepageClient({ hero, destinations, itineraries, yachts, fleetY
           {/* Hero Text — absolute center */}
           <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
             <div className="text-center pointer-events-auto">
-              {hero.overSubheading && (
+              {heroResolved.overSubheading && (
                 <div className="mb-5 inline-block rounded-sm border border-white/20 px-4 py-1.5">
                   <span
                     className="text-xs font-semibold uppercase tracking-widest text-white/70"
                     style={{ fontFamily: "var(--font-body)" }}
                   >
-                    {hero.overSubheading}
+                    {removeGreekTonos(heroResolved.overSubheading)}
                   </span>
                 </div>
               )}
 
-              {hero.heading && (
+              {heroResolved.heading && (
                 <h1
                   className="hero-heading mb-5 text-4xl font-bold leading-tight md:text-6xl lg:text-7xl"
                   style={{
@@ -179,16 +234,16 @@ export function HomepageClient({ hero, destinations, itineraries, yachts, fleetY
                     textShadow: "0 2px 30px rgba(255,255,255,0.15)",
                   }}
                 >
-                  {hero.heading}
+                  {heroResolved.heading}
                 </h1>
               )}
 
-              {hero.subheading && (
+              {heroResolved.subheading && (
                 <p
                   className="hero-subheading mx-auto max-w-xl text-lg text-white/90"
                   style={{ fontFamily: "var(--font-body)", opacity: 0, textShadow: "0 1px 10px rgba(0,0,0,0.2)" }}
                 >
-                  {hero.subheading}
+                  {heroResolved.subheading}
                 </p>
               )}
             </div>
@@ -202,21 +257,21 @@ export function HomepageClient({ hero, destinations, itineraries, yachts, fleetY
       </section>
 
       {/* Fleet Carousel */}
-      {fleetYachts && fleetYachts.length > 0 && (
-        <FleetCarouselSection yachts={fleetYachts} />
+      {fleetResolved && fleetResolved.length > 0 && (
+        <FleetCarouselSection yachts={fleetResolved} />
       )}
 
       {/* Locations - Mythic Grid */}
-      <LocationsSection destinations={destinations} />
+      <LocationsSection destinations={destResolved} />
 
       {/* Services — Curated Experiences */}
       <ServicesSection />
 
       {/* Itineraries - Parallax Cards */}
-      <ItinerariesSection itineraries={itineraries} />
+      <ItinerariesSection itineraries={itinResolved} />
 
       {/* Testimonials */}
-      <TestimonialsSection reviews={reviews} />
+      <TestimonialsSection reviews={reviewResolved} />
 
     </>
   )

@@ -5,6 +5,7 @@ import Image from "next/image"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { Star, ChevronLeft, ChevronRight, Quote } from "lucide-react"
+import { useTranslations } from "@/lib/use-translations"
 import { TextReveal } from "./scroll-animations"
 
 if (typeof window !== "undefined") {
@@ -21,6 +22,7 @@ interface ReviewItem {
 }
 
 export function TestimonialsSection({ reviews }: { reviews: ReviewItem[] }) {
+  const { t } = useTranslations()
   const [current, setCurrent] = useState(0)
   const trackRef = useRef<HTMLDivElement>(null)
 
@@ -46,7 +48,7 @@ export function TestimonialsSection({ reviews }: { reviews: ReviewItem[] }) {
           <div>
             <TextReveal>
               <span className="label-sm mb-3 block" style={{ color: "var(--secondary-light)" }}>
-                Testimonials
+                {t("home.testimonials.badge", "Testimonials")}
               </span>
             </TextReveal>
             <TextReveal delay={0.1}>
@@ -54,7 +56,7 @@ export function TestimonialsSection({ reviews }: { reviews: ReviewItem[] }) {
                 className="text-4xl md:text-6xl font-bold text-white"
                 style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em" }}
               >
-                What Our Guests Say
+                {t("home.testimonials.title", "What Our Guests Say")}
               </h2>
             </TextReveal>
           </div>

@@ -6,6 +6,7 @@ import Link from "next/link"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { Compass, Clock, Navigation, ArrowRight } from "lucide-react"
+import { useTranslations } from "@/lib/use-translations"
 import { TextReveal, ParallaxImage } from "./scroll-animations"
 
 if (typeof window !== "undefined") {
@@ -24,6 +25,7 @@ interface ItineraryItem {
 }
 
 export function ItinerariesSection({ itineraries }: { itineraries: ItineraryItem[] }) {
+  const { t } = useTranslations()
   const sectionRef = useRef<HTMLDivElement>(null)
 
   if (itineraries.length === 0) return null
@@ -38,7 +40,7 @@ export function ItinerariesSection({ itineraries }: { itineraries: ItineraryItem
       <div className="max-w-7xl mx-auto mb-16">
         <TextReveal>
           <span className="label-sm mb-3 block" style={{ color: "var(--secondary-light)" }}>
-            Itineraries
+            {t("home.itineraries.label", "Itineraries")}
           </span>
         </TextReveal>
         <TextReveal delay={0.1}>
@@ -49,14 +51,14 @@ export function ItinerariesSection({ itineraries }: { itineraries: ItineraryItem
               letterSpacing: "-0.02em",
             }}
           >
-            Curated Sailing Routes
+            {t("home.itineraries.badge", "Curated Sailing Routes")}
           </h2>
         </TextReveal>
         <TextReveal delay={0.2}>
           <p
             className="text-lg mt-4 max-w-xl text-white/50"
           >
-            Hand-crafted itineraries through the most captivating waters, designed by our expert skippers.
+            {t("home.itineraries.description", "Hand-crafted itineraries through the most captivating waters, designed by our expert skippers.")}
           </p>
         </TextReveal>
       </div>
@@ -76,7 +78,7 @@ export function ItinerariesSection({ itineraries }: { itineraries: ItineraryItem
             className="inline-flex items-center gap-2 text-sm font-semibold transition-colors hover:gap-3"
             style={{ color: "var(--secondary-light)", fontFamily: "var(--font-display)" }}
           >
-            View all itineraries
+            {t("home.itineraries.viewAll", "View all itineraries")}
             <ArrowRight className="w-4 h-4" />
           </Link>
         </TextReveal>
@@ -86,6 +88,7 @@ export function ItinerariesSection({ itineraries }: { itineraries: ItineraryItem
 }
 
 function ItineraryCard({ item, index }: { item: ItineraryItem; index: number }) {
+  const { t } = useTranslations()
   const cardRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -164,7 +167,7 @@ function ItineraryCard({ item, index }: { item: ItineraryItem; index: number }) 
               <div className="flex items-center gap-1.5">
                 <Compass className="w-4 h-4" style={{ color: "var(--secondary-light)" }} />
                 <span className="text-sm text-white/50">
-                  From {item.startFrom}
+                  {t("home.itineraries.from", "From")} {item.startFrom}
                 </span>
               </div>
             )}
@@ -172,7 +175,7 @@ function ItineraryCard({ item, index }: { item: ItineraryItem; index: number }) 
               <div className="flex items-center gap-1.5">
                 <Clock className="w-4 h-4" style={{ color: "var(--secondary-light)" }} />
                 <span className="text-sm text-white/50">
-                  {item.totalDays} days
+                  {item.totalDays} {t("home.itineraries.days", "days")}
                 </span>
               </div>
             )}
@@ -196,7 +199,7 @@ function ItineraryCard({ item, index }: { item: ItineraryItem; index: number }) 
             className="inline-flex items-center gap-2 text-sm font-semibold group-hover:gap-3 transition-all"
             style={{ color: "var(--secondary-light)", fontFamily: "var(--font-display)" }}
           >
-            View itinerary
+            {t("home.itineraries.viewItinerary", "View itinerary")}
             <ArrowRight className="w-4 h-4" />
           </span>
         </div>

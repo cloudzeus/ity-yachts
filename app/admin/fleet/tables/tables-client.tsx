@@ -94,6 +94,8 @@ export function TablesClient({ counts }: Props) {
   const [aiSuggestingLogo, setAiSuggestingLogo] = useState<number | null>(null)
   const [logoInfo, setLogoInfo] = useState<Record<number, any>>({})
   const [translating, setTranslating] = useState(false)
+  const [bulkTranslating, setBulkTranslating] = useState(false)
+  const [bulkResult, setBulkResult] = useState<{ translated: number; total: number } | null>(null)
 
   const tabDef = TABS.find((t) => t.key === activeTab)!
 
@@ -256,6 +258,33 @@ export function TablesClient({ counts }: Props) {
     }
   }
 
+  // Bulk translate all items missing Greek
+  async function translateAllToGreek() {
+    if (!tabDef.isJsonName) return
+    setBulkTranslating(true)
+    setBulkResult(null)
+    try {
+      const res = await fetch("/api/admin/fleet/tables/translate-all", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ table: activeTab, lang: "el" }),
+      })
+      if (res.ok) {
+        const json = await res.json()
+        setBulkResult({ translated: json.translated, total: json.total ?? json.translated })
+        // Refresh the table
+        fetchItems(activeTab)
+      } else {
+        const err = await res.json()
+        alert(err.error || "Bulk translation failed")
+      }
+    } catch {
+      alert("Bulk translation failed")
+    } finally {
+      setBulkTranslating(false)
+    }
+  }
+
   // Filter items by search
   const filtered = items.filter((item) => {
     if (!search) return true
@@ -351,6 +380,40 @@ export function TablesClient({ counts }: Props) {
             style={inputStyle}
           />
         </div>
+        {tabDef.isJsonName && (
+          <Button
+            onClick={translateAllToGreek}
+            disabled={bulkTranslating}
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-1.5 text-xs h-8"
+            style={{
+              background: "rgba(21,101,192,0.08)",
+              color: "var(--primary)",
+              borderColor: "rgba(21,101,192,0.25)",
+            }}
+          >
+            {bulkTranslating ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <Languages className="size-3.5" />
+            )}
+            {bulkTranslating ? "Translating..." : "Translate All to Greek"}
+          </Button>
+        )}
+        {bulkResult && (
+          <div
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px]"
+            style={{
+              background: "rgba(56,142,60,0.08)",
+              border: "1px solid rgba(56,142,60,0.2)",
+              color: "#388E3C",
+            }}
+          >
+            <Check className="size-3.5" />
+            Translated {bulkResult.translated} of {bulkResult.total} items
+          </div>
+        )}
         <div
           className="flex items-center gap-2 px-3 py-1.5 rounded-md text-[11px]"
           style={{

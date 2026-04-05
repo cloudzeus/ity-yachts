@@ -3,6 +3,7 @@ import { Metadata } from "next"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { LocationsGrid } from "@/components/locations/locations-grid"
+import { LocaleText } from "@/components/locale-text"
 
 export const dynamic = "force-dynamic"
 
@@ -27,11 +28,12 @@ export default async function LocationsListPage() {
     return {
       id: loc.id,
       name: names?.en || loc.name,
+      nameTranslations: loc.nameTranslations as Record<string, string> | null,
       slug: loc.slug,
       image: loc.defaultMedia,
       imageType: loc.defaultMediaType,
-      shortDesc: (loc.shortDesc as Record<string, string>)?.en || "",
-      prefecture: (loc.prefecture as Record<string, string>)?.en || "",
+      shortDesc: loc.shortDesc as Record<string, string> | null,
+      prefecture: loc.prefecture as Record<string, string> | null,
       city: /[\u0370-\u03FF\u1F00-\u1FFF]/.test(loc.city) ? "" : loc.city,
       latitude: loc.latitude,
       longitude: loc.longitude,
@@ -52,20 +54,17 @@ export default async function LocationsListPage() {
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
               <div>
                 <span className="mb-4 inline-block rounded-full border border-[#0077B6]/30 bg-[#0077B6]/5 px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-[#0077B6] backdrop-blur-sm">
-                  Charter Destinations
+                  <LocaleText tKey="locations.badge" fallback="Charter Destinations" uppercase />
                 </span>
                 <h1
                   className="text-4xl md:text-5xl lg:text-6xl font-bold mt-4"
                   style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.03em", color: "#fff" }}
                 >
-                  Discover the
-                  <br />
-                  Ionian Sea
+                  <LocaleText tKey="locations.title" fallback="Discover the Ionian Sea" />
                 </h1>
               </div>
               <p className="text-base text-white/50 max-w-md md:text-right leading-relaxed md:pb-1">
-                Explore Lefkada and the Ionian islands — from secluded
-                turquoise bays to vibrant seaside harbours.
+                <LocaleText tKey="locations.subtitle" fallback="Explore Lefkada and the Ionian islands — from secluded turquoise bays to vibrant seaside harbours." />
               </p>
             </div>
 

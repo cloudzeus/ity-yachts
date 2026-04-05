@@ -15,6 +15,8 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react"
+import { useTranslations } from "@/lib/use-translations"
+import { removeGreekTonos } from "@/components/locale-text"
 
 interface SearchField {
   icon: React.ElementType
@@ -106,6 +108,7 @@ function RangeCalendar({
   flexibleDates: boolean
   onFlexibleToggle: () => void
 }) {
+  const { t } = useTranslations()
   const today = new Date()
   const [viewMonth, setViewMonth] = useState(today.getMonth())
   const [viewYear, setViewYear] = useState(today.getFullYear())
@@ -206,7 +209,7 @@ function RangeCalendar({
         {renderMonth(nextViewYear, nextViewMonth)}
       </div>
       <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
-        <span className="text-xs text-gray-500">Flexible dates (+/- 3 days)</span>
+        <span className="text-xs text-gray-500">{t("search.flexibleDates", "Flexible dates (+/- 3 days)")}</span>
         <button
           onClick={onFlexibleToggle}
           className={`w-9 h-5 rounded-full transition-colors relative ${flexibleDates ? "bg-[#006399]" : "bg-gray-200"}`}
@@ -221,6 +224,7 @@ function RangeCalendar({
 /* ─── Main Search Form ───────────────────────────────────────────────── */
 
 export function CharterSearchForm() {
+  const { t } = useTranslations()
   const router = useRouter()
   const formRef = useRef<HTMLDivElement>(null)
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
@@ -274,8 +278,8 @@ export function CharterSearchForm() {
   const dateLabel = startDate
     ? endDate
       ? `${formatDate(startDate)} — ${formatDate(endDate)}`
-      : `${formatDate(startDate)} — Check-out`
-    : "Select dates"
+      : `${formatDate(startDate)} — ${t("search.checkout", "Check-out")}`
+    : t("search.selectDates", "Select dates")
 
   const bottomFields: SearchField[] = [
     { icon: Wallet, label: "Budget", key: "budget", options: BUDGET_RANGES },
@@ -309,7 +313,7 @@ export function CharterSearchForm() {
               <CalendarDays className="w-[18px] h-[18px] text-[#006399] shrink-0" />
               <div className="flex-1">
                 <div className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-0.5">
-                  Charter Dates
+                  {removeGreekTonos(t("search.charterDates", "Charter Dates"))}
                 </div>
                 <div className="text-[13px] text-gray-800 font-medium whitespace-nowrap">
                   {dateLabel}
@@ -343,7 +347,7 @@ export function CharterSearchForm() {
               <Ship className="w-[18px] h-[18px] text-[#006399] shrink-0" />
               <div className="flex-1">
                 <div className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-0.5">
-                  Yacht Type
+                  {removeGreekTonos(t("search.yachtType", "Yacht Type"))}
                 </div>
                 <div className="text-[13px] text-gray-700 font-medium whitespace-nowrap">
                   {yachtTypeOption?.label || "All Types"}
@@ -384,7 +388,7 @@ export function CharterSearchForm() {
             }}
           >
             <Search className="w-4 h-4" />
-            Search Yachts
+            {t("search.searchYachts", "Search Yachts")}
           </button>
         </div>
 

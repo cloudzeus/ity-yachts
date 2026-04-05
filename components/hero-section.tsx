@@ -5,6 +5,7 @@ import Link from "next/link"
 import Image from "next/image"
 import gsap from "gsap"
 import { useTranslations } from "@/lib/use-translations"
+import { removeGreekTonos } from "@/lib/greek-utils"
 
 export interface HeroSectionProps {
   /** Admin-configured hero data from page.heroSection */
@@ -95,7 +96,7 @@ export function HeroSection({ data }: HeroSectionProps) {
                 className="text-xs font-semibold uppercase tracking-widest text-white/70"
                 style={{ fontFamily: "var(--font-body)" }}
               >
-                {overSubheading}
+                {removeGreekTonos(overSubheading)}
               </span>
             </div>
           )}

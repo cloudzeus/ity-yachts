@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
+import { useTranslations } from "@/lib/use-translations"
+import { removeGreekTonos } from "@/components/locale-text"
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger)
@@ -36,6 +38,7 @@ function kphToKnots(kph: number) {
 }
 
 export function ServicesSection() {
+  const { t, tUpper } = useTranslations()
   const sectionRef = useRef<HTMLDivElement>(null)
   const [weather, setWeather] = useState<WeatherData | null>(null)
   const [services, setServices] = useState<ServiceItem[]>([])
@@ -115,7 +118,7 @@ export function ServicesSection() {
                 </svg>
               </div>
               <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#84776e" }}>
-                Curated Experiences
+                {tUpper("home.services.badge", "Curated Experiences")}
               </span>
             </div>
 
@@ -126,9 +129,7 @@ export function ServicesSection() {
             </h2>
 
             <p className="svc-subtitle text-sm md:text-base leading-relaxed max-w-[620px]" style={{ fontFamily: "var(--font-body)", color: "#8a9ab3", opacity: 0 }}>
-              Beyond <span className="text-white font-semibold">exceptional vessels</span>, we curate every detail of your journey. From{" "}
-              <span className="text-white font-semibold">masterfully crafted itineraries</span> to world-class dining, experience true{" "}
-              <span className="text-white font-semibold">mythic luxury</span>.
+              {t("home.services.description", "Beyond exceptional vessels, we curate every detail of your journey. From masterfully crafted itineraries to world-class dining, experience true mythic luxury.")}
             </p>
           </div>
         </div>
@@ -151,7 +152,7 @@ export function ServicesSection() {
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-2">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#84776e" strokeWidth="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
-                  <span className="text-xs font-medium tracking-wider uppercase" style={{ color: "#84776e" }}>Lefkada Marina</span>
+                  <span className="text-xs font-medium tracking-wider uppercase" style={{ color: "#84776e" }}>{tUpper("home.services.lefkadaMarina", "Lefkada Marina")}</span>
                 </div>
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#84776e" strokeWidth="1"><circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" /></svg>
               </div>
@@ -166,21 +167,21 @@ export function ServicesSection() {
                 <div className="text-center">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#84776e" strokeWidth="1.5" className="mx-auto mb-2"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2" /></svg>
                   <span className="text-white text-sm font-medium">{weather ? `${kphToKnots(weather.wind_kph)} kt` : "—"}</span>
-                  <span className="text-[10px] uppercase tracking-wider block mt-1" style={{ color: "rgba(132,119,110,0.7)" }}>Wind</span>
+                  <span className="text-[10px] uppercase tracking-wider block mt-1" style={{ color: "rgba(132,119,110,0.7)" }}>{tUpper("home.services.wind", "Wind")}</span>
                 </div>
                 <div className="text-center">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#84776e" strokeWidth="1.5" className="mx-auto mb-2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" /></svg>
                   <span className="text-white text-sm font-medium">{weather ? `${weather.humidity}%` : "—"}</span>
-                  <span className="text-[10px] uppercase tracking-wider block mt-1" style={{ color: "rgba(132,119,110,0.7)" }}>Humidity</span>
+                  <span className="text-[10px] uppercase tracking-wider block mt-1" style={{ color: "rgba(132,119,110,0.7)" }}>{tUpper("home.services.humidity", "Humidity")}</span>
                 </div>
                 <div className="text-center">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#84776e" strokeWidth="1.5" className="mx-auto mb-2"><path d="M2 6s2-2 4-2 4 2 4 2 2-2 4-2 4 2 4 2 2-2 4-2" /><path d="M2 12s2-2 4-2 4 2 4 2 2-2 4-2 4 2 4 2 2-2 4-2" /></svg>
                   <span className="text-white text-sm font-medium">{weather?.wave_height_m != null ? `${weather.wave_height_m}m` : "—"}</span>
-                  <span className="text-[10px] uppercase tracking-wider block mt-1" style={{ color: "rgba(132,119,110,0.7)" }}>Waves</span>
+                  <span className="text-[10px] uppercase tracking-wider block mt-1" style={{ color: "rgba(132,119,110,0.7)" }}>{tUpper("home.services.waves", "Waves")}</span>
                 </div>
               </div>
               <div className="mt-4 text-center">
-                <span className="text-[10px] uppercase tracking-widest" style={{ color: "rgba(132,119,110,0.6)" }}>Perfect Sailing Conditions</span>
+                <span className="text-[10px] uppercase tracking-widest" style={{ color: "rgba(132,119,110,0.6)" }}>{tUpper("home.services.perfectConditions", "Perfect Sailing Conditions")}</span>
               </div>
             </div>
           </div>
@@ -205,20 +206,20 @@ export function ServicesSection() {
               />
             </div>
             <h4 className="text-xl mb-4 uppercase tracking-wide font-light" style={{ fontFamily: "var(--font-display)", color: "#ffffff" }}>
-              The Odyssey
+              {tUpper("home.services.theOdyssey", "The Odyssey")}
             </h4>
             <p className="text-sm leading-relaxed mb-6" style={{ color: "rgba(255,255,255,0.75)" }}>
-              Since 2015, we&apos;ve been crafting mythic voyages through the Ionian Isles. Every journey honors the spirit of exploration.
+              {t("home.services.odysseyDescription", "Since 2015, we've been crafting mythic voyages through the Ionian Isles. Every journey honors the spirit of exploration.")}
             </p>
             <div className="flex gap-4">
               <div className="text-center">
                 <span className="text-2xl font-light text-white">500+</span>
-                <span className="text-[10px] uppercase tracking-wider block" style={{ color: "rgba(255,255,255,0.6)" }}>Voyages</span>
+                <span className="text-[10px] uppercase tracking-wider block" style={{ color: "rgba(255,255,255,0.6)" }}>{tUpper("home.services.voyages", "Voyages")}</span>
               </div>
               <div className="w-px" style={{ background: "rgba(255,255,255,0.25)" }} />
               <div className="text-center">
                 <span className="text-2xl font-light text-white">18+</span>
-                <span className="text-[10px] uppercase tracking-wider block" style={{ color: "rgba(255,255,255,0.6)" }}>Yachts</span>
+                <span className="text-[10px] uppercase tracking-wider block" style={{ color: "rgba(255,255,255,0.6)" }}>{tUpper("home.services.yachts", "Yachts")}</span>
               </div>
             </div>
           </div>
@@ -315,9 +316,10 @@ function ServiceCard({
   horizontal?: boolean
   titleSize?: string
 }) {
-  const title = service.title?.en || "Service"
-  const labelText = service.label?.en || ""
-  const desc = service.shortDesc?.en || ""
+  const { locale } = useTranslations()
+  const title = removeGreekTonos(service.title?.[locale] || service.title?.en || "Service")
+  const labelText = removeGreekTonos(service.label?.[locale] || service.label?.en || "")
+  const desc = service.shortDesc?.[locale] || service.shortDesc?.en || ""
   const media = service.defaultMedia
   const mediaType = service.defaultMediaType
   const href = service.link || "#"

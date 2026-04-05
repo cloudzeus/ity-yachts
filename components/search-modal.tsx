@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react"
 import gsap from "gsap"
 import { Search, X, ArrowRight } from "lucide-react"
 import { useTranslations } from "@/lib/use-translations"
+import { removeGreekTonos } from "@/components/locale-text"
 
 interface SearchModalProps {
   open: boolean
@@ -130,7 +131,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
       <button
         onClick={onClose}
         className="absolute right-6 top-6 flex h-12 w-12 items-center justify-center rounded-sm text-white/60 transition-colors hover:text-white"
-        aria-label="Close search"
+        aria-label={t("search.closeLabel", "Close search")}
       >
         <X className="h-6 w-6" />
       </button>
@@ -160,7 +161,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
             className="mb-4 text-xs font-semibold uppercase tracking-widest text-white/40"
             style={{ fontFamily: "var(--font-body)" }}
           >
-            {t("search.quickLinks", "Quick Links")}
+            {removeGreekTonos(t("search.quickLinks", "Quick Links"))}
           </p>
           <div ref={linksRef} className="grid gap-1 sm:grid-cols-2">
             {quickLinks.map((link) => (
@@ -184,7 +185,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
 
         {/* Keyboard hint */}
         <p className="mt-10 text-center text-sm text-white/25">
-          Press <kbd className="rounded border border-white/15 px-1.5 py-0.5 text-xs text-white/40">ESC</kbd> to close
+          {t("search.pressEsc", "Press")} <kbd className="rounded border border-white/15 px-1.5 py-0.5 text-xs text-white/40">ESC</kbd> {t("search.toClose", "to close")}
         </p>
       </div>
     </div>

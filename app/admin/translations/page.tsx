@@ -10,5 +10,9 @@ export default async function TranslationsPage() {
     orderBy: [{ namespace: "asc" }, { key: "asc" }],
   })
 
-  return <TranslationsClient initialData={translations} />
+  return (
+    <div className="h-[calc(100vh-7rem)] flex flex-col overflow-hidden">
+      <TranslationsClient initialData={translations} />
+    </div>
+  )
 }

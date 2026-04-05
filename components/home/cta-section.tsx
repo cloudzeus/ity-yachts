@@ -5,12 +5,14 @@ import Link from "next/link"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { ArrowRight } from "lucide-react"
+import { useTranslations } from "@/lib/use-translations"
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger)
 }
 
 export function CTASection() {
+  const { t } = useTranslations()
   const sectionRef = useRef<HTMLDivElement>(null)
   const bgRef = useRef<HTMLDivElement>(null)
 
@@ -90,11 +92,10 @@ export function CTASection() {
           className="text-4xl md:text-6xl font-bold text-white mb-6"
           style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em" }}
         >
-          Your Voyage Starts Here
+          {t("home.cta.title", "Your Voyage Starts Here")}
         </h2>
         <p className="text-lg text-white/70 mb-10 max-w-xl mx-auto">
-          Let our charter specialists craft the perfect sailing experience tailored to your desires.
-          Contact us today to begin planning.
+          {t("home.cta.description", "Let our charter specialists craft the perfect sailing experience tailored to your desires. Contact us today to begin planning.")}
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link
@@ -105,7 +106,7 @@ export function CTASection() {
               fontFamily: "var(--font-display)",
             }}
           >
-            Plan My Charter
+            {t("home.cta.planCharter", "Plan My Charter")}
             <ArrowRight className="w-4 h-4" />
           </Link>
           <Link
@@ -113,7 +114,7 @@ export function CTASection() {
             className="inline-flex items-center justify-center gap-2 px-8 py-4 text-sm font-semibold text-white rounded-md border border-white/20 transition-all hover:bg-white/10 hover:border-white/40"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            Explore Fleet
+            {t("home.cta.exploreFleet", "Explore Fleet")}
           </Link>
         </div>
       </div>

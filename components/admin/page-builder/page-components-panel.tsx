@@ -21,6 +21,7 @@ import {
 import { cn } from "@/lib/utils"
 import { COMPONENT_REGISTRY, getComponentTypes } from "@/lib/page-components"
 import { TeamGrid, type StaffMember } from "@/components/page-components/team-grid"
+import { SkipperAcademyEditor } from "@/components/admin/page-builder/skipper-academy-editor"
 
 interface PageComponentItem {
   id: string
@@ -230,6 +231,12 @@ export function PageComponentsPanel({ pageId }: PageComponentsPanelProps) {
                       {/* Type-specific props */}
                       {comp.type === "team-grid" && (
                         <TeamGridPropsEditor
+                          props={comp.props}
+                          onChange={(props) => updateComponent(comp.id, { props })}
+                        />
+                      )}
+                      {comp.type === "skipper-academy" && (
+                        <SkipperAcademyEditor
                           props={comp.props}
                           onChange={(props) => updateComponent(comp.id, { props })}
                         />

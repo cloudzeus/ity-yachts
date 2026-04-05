@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
     const [pages, total] = await Promise.all([
       db.page.findMany({
         where,
-        orderBy: { updatedAt: "desc" },
+        orderBy: { sortOrder: "asc" },
         skip: (page - 1) * pageSize,
         take: pageSize,
         select: {
@@ -39,6 +39,7 @@ export async function GET(req: NextRequest) {
           centralMenu: true,
           menuOrder: true,
           translations: true,
+          sortOrder: true,
           updatedAt: true,
         },
       }),

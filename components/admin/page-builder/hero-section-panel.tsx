@@ -16,6 +16,9 @@ export interface HeroSectionData {
   subheading: Record<string, string> // { en, el, de }
   buttonText: Record<string, string> // { en, el, de }
   buttonLink: string
+  // Optional secondary background (e.g. CTA section on Skipper Academy)
+  ctaMediaUrl?: string
+  ctaMediaType?: "image" | "video"
 }
 
 const EMPTY_HERO: HeroSectionData = {
@@ -26,6 +29,8 @@ const EMPTY_HERO: HeroSectionData = {
   subheading: { en: "", el: "", de: "" },
   buttonText: { en: "", el: "", de: "" },
   buttonLink: "",
+  ctaMediaUrl: "",
+  ctaMediaType: "image",
 }
 
 const LANGS = ["en", "el", "de"] as const
@@ -39,6 +44,7 @@ interface HeroSectionPanelProps {
 export function HeroSectionPanel({ data, onChange }: HeroSectionPanelProps) {
   const hero = data ?? EMPTY_HERO
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false)
+  const [ctaMediaPickerOpen, setCtaMediaPickerOpen] = useState(false)
   const [translatingField, setTranslatingField] = useState<string | null>(null)
 
   function update(patch: Partial<HeroSectionData>) {
@@ -134,6 +140,18 @@ export function HeroSectionPanel({ data, onChange }: HeroSectionPanelProps) {
 
   function removeMedia() {
     update({ mediaUrl: "", mediaType: "image" })
+  }
+
+  function handleCtaMediaSelect(media: PickedMedia | PickedMedia[]) {
+    const m = Array.isArray(media) ? media[0] : media
+    if (!m) return
+    const isVideo = m.mimeType.startsWith("video/")
+    update({ ctaMediaUrl: m.url, ctaMediaType: isVideo ? "video" : "image" })
+    setCtaMediaPickerOpen(false)
+  }
+
+  function removeCtaMedia() {
+    update({ ctaMediaUrl: "", ctaMediaType: "image" })
   }
 
   const enabled = !!data
@@ -252,6 +270,65 @@ export function HeroSectionPanel({ data, onChange }: HeroSectionPanelProps) {
             )}
           </div>
 
+          {/* CTA Background (optional secondary image/video) */}
+          <div className="flex flex-col gap-1.5">
+            <span
+              className="text-[10px] uppercase tracking-wide font-medium"
+              style={{ color: "var(--on-surface-variant)" }}
+            >
+              CTA Section Background (optional)
+            </span>
+            {hero.ctaMediaUrl ? (
+              <div className="relative rounded-md overflow-hidden" style={{ border: "1px solid var(--outline-variant)" }}>
+                {hero.ctaMediaType === "video" ? (
+                  <div className="flex items-center justify-center h-20 bg-black/80">
+                    <Play className="size-6 text-white/60" />
+                    <span className="text-xs text-white/60 ml-2 truncate max-w-[200px]">
+                      {hero.ctaMediaUrl.split("/").pop()}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="relative h-20">
+                    <Image
+                      src={hero.ctaMediaUrl}
+                      alt="CTA background"
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                )}
+                <div className="absolute top-1 right-1 flex gap-1">
+                  <button
+                    onClick={() => setCtaMediaPickerOpen(true)}
+                    className="flex items-center justify-center h-6 w-6 rounded bg-black/60 text-white hover:bg-black/80 transition-colors"
+                  >
+                    <Upload className="size-3" />
+                  </button>
+                  <button
+                    onClick={removeCtaMedia}
+                    className="flex items-center justify-center h-6 w-6 rounded bg-black/60 text-white hover:bg-red-600 transition-colors"
+                  >
+                    <X className="size-3" />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setCtaMediaPickerOpen(true)}
+                className="flex flex-col items-center justify-center gap-1 h-20 rounded-md transition-colors hover:bg-[var(--surface-container-high)]"
+                style={{
+                  border: "2px dashed var(--outline-variant)",
+                  color: "var(--on-surface-variant)",
+                }}
+              >
+                <ImageIcon className="size-4" />
+                <span className="text-[10px] uppercase tracking-wide font-medium">
+                  Choose CTA Background
+                </span>
+              </button>
+            )}
+          </div>
+
           {/* Over Subheading */}
           <TranslatableField
             label="Over Subheading"
@@ -319,6 +396,12 @@ export function HeroSectionPanel({ data, onChange }: HeroSectionPanelProps) {
         open={mediaPickerOpen}
         onClose={() => setMediaPickerOpen(false)}
         onSelect={handleMediaSelect}
+        accept="all"
+      />
+      <MediaPicker
+        open={ctaMediaPickerOpen}
+        onClose={() => setCtaMediaPickerOpen(false)}
+        onSelect={handleCtaMediaSelect}
         accept="all"
       />
     </div>

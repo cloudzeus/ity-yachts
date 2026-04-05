@@ -35,14 +35,24 @@ import {
   CheckCircle2,
   CalendarDays,
 } from "lucide-react"
+import { useTranslations } from "@/lib/use-translations"
+
+type TranslatedField = Record<string, string> | null | undefined
+
+function resolveT(field: TranslatedField, locale: string, fallback = ""): string {
+  if (!field) return fallback
+  return field[locale] || field.en || fallback
+}
 
 interface YachtData {
   id: number
   name: string
   modelName: string
   category: string
+  categoryTranslations?: TranslatedField
   images: string[]
   location: string
+  locationTranslations?: TranslatedField
   loa: number | null
   beam: number | null
   draft: number | null
@@ -66,13 +76,15 @@ interface YachtData {
   showers: number | null
   charterType: string | null
   description: string
+  descriptionTranslations?: TranslatedField
   note: string
-  equipmentByCategory: Record<string, { categoryName: string; items: string[] }>
-  services: Array<{ name: string; price: number; currency: string; obligatory: boolean }>
+  noteTranslations?: TranslatedField
+  equipmentByCategory: Record<string, { categoryName: string; categoryNameTranslations?: TranslatedField; items: Array<{ name: string; nameTranslations?: TranslatedField; quantity: number }> }>
+  services: Array<{ name: string; nameTranslations?: TranslatedField; price: number; currency: string; obligatory: boolean }>
   prices: Array<{ dateFrom: string; dateTo: string; price: number; currency: string; priceType: string }>
   mastLength: number | null
   propulsionType: string | null
-  staffRep: { name: string; position: string; image: string } | null
+  staffRep: { name: string; position: string; positionTranslations?: TranslatedField; image: string } | null
 }
 
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
@@ -129,6 +141,12 @@ function getAmenityIcon(_name: string) {
 }
 
 export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
+  const { locale, t, tUpper } = useTranslations()
+  const yachtCategory = resolveT(yacht.categoryTranslations, locale, yacht.category)
+  const yachtLocation = resolveT(yacht.locationTranslations, locale, yacht.location)
+  const yachtDescription = resolveT(yacht.descriptionTranslations, locale, yacht.description)
+  const yachtNote = resolveT(yacht.noteTranslations, locale, yacht.note)
+  const staffPosition = yacht.staffRep ? resolveT(yacht.staffRep.positionTranslations, locale, yacht.staffRep.position) : ""
   const [currentImage, setCurrentImage] = useState(0)
   const [activeTab, setActiveTab] = useState<string | null>(null)
 
@@ -210,11 +228,14 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
     const entries = Object.entries(yacht.equipmentByCategory)
     return entries.map(([id, data], i) => ({
       id,
-      name: data.categoryName,
-      items: data.items,
+      name: resolveT(data.categoryNameTranslations, locale, data.categoryName),
+      items: data.items.map((item) => {
+        const name = resolveT(item.nameTranslations, locale, item.name)
+        return item.quantity > 1 ? `${name} (x${item.quantity})` : name
+      }),
       theme: THEME_LIST[i % THEME_LIST.length],
     }))
-  }, [yacht.equipmentByCategory])
+  }, [yacht.equipmentByCategory, locale])
 
   // Set initial active tab
   const initialTab = categoryTabs.length > 0 ? categoryTabs[0].id : null
@@ -222,37 +243,37 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
     setActiveTab(initialTab)
   }
 
-  const currentTab = categoryTabs.find((t) => t.id === activeTab)
+  const currentTab = categoryTabs.find((tab) => tab.id === activeTab)
 
   // Build specs list
   const specs: Array<{ label: string; value: string }> = []
-  if (yacht.category) specs.push({ label: "Yacht Type", value: yacht.category })
-  if (yacht.loa) specs.push({ label: "Length", value: `${yacht.loa.toFixed(2)} Meters` })
-  if (yacht.beam) specs.push({ label: "Beam", value: `${yacht.beam.toFixed(2)} Meters` })
-  if (yacht.draft) specs.push({ label: "Draft", value: `${yacht.draft.toFixed(2)} Meters` })
+  if (yachtCategory) specs.push({ label: t("yacht.spec.yachtType", "Yacht Type"), value: yachtCategory })
+  if (yacht.loa) specs.push({ label: t("yacht.spec.length", "Length"), value: `${yacht.loa.toFixed(2)} Meters` })
+  if (yacht.beam) specs.push({ label: t("yacht.spec.beam", "Beam"), value: `${yacht.beam.toFixed(2)} Meters` })
+  if (yacht.draft) specs.push({ label: t("yacht.spec.draft", "Draft"), value: `${yacht.draft.toFixed(2)} Meters` })
   if (yacht.engineBuilder || yacht.enginePower) {
     const engineStr = [yacht.engineBuilder, yacht.enginePower ? `${yacht.enginePower}HP` : ""].filter(Boolean).join(" ")
-    specs.push({ label: "Engine", value: engineStr })
+    specs.push({ label: t("yacht.spec.engine", "Engine"), value: engineStr })
   }
   if (yacht.fuelType || yacht.fuelTank) {
     const fuelStr = [yacht.fuelType, yacht.fuelTank ? `${yacht.fuelTank}L` : ""].filter(Boolean).join(", ")
-    specs.push({ label: "Fuel", value: fuelStr })
+    specs.push({ label: t("yacht.spec.fuel", "Fuel"), value: fuelStr })
   }
-  if (yacht.waterTank) specs.push({ label: "Water Tank", value: `${yacht.waterTank} Liters` })
-  if (yacht.fuelConsumption) specs.push({ label: "Fuel Consumption", value: `${yacht.fuelConsumption}L/hour` })
-  if (yacht.buildYear) specs.push({ label: "Year Built", value: String(yacht.buildYear) })
-  if (yacht.renewed) specs.push({ label: "Renewed", value: String(yacht.renewed) })
-  if (yacht.cruisingSpeed) specs.push({ label: "Cruising Speed", value: `${yacht.cruisingSpeed} knots` })
-  if (yacht.maxSpeed) specs.push({ label: "Max Speed", value: `${yacht.maxSpeed} knots` })
-  if (yacht.berthsTotal) specs.push({ label: "Berths", value: `${yacht.berthsTotal}${yacht.cabins ? ` (${yacht.cabins} Cabins)` : ""}` })
-  if (yacht.wc) specs.push({ label: "Toilets", value: String(yacht.wc) })
-  if (yacht.showers) specs.push({ label: "Showers", value: String(yacht.showers) })
-  if (yacht.mastLength) specs.push({ label: "Mast Length", value: `${yacht.mastLength}m` })
-  if (yacht.propulsionType) specs.push({ label: "Propulsion", value: yacht.propulsionType })
-  if (yacht.builder) specs.push({ label: "Builder", value: yacht.builder })
+  if (yacht.waterTank) specs.push({ label: t("yacht.spec.waterTank", "Water Tank"), value: `${yacht.waterTank} Liters` })
+  if (yacht.fuelConsumption) specs.push({ label: t("yacht.spec.fuelConsumption", "Fuel Consumption"), value: `${yacht.fuelConsumption}L/hour` })
+  if (yacht.buildYear) specs.push({ label: t("yacht.spec.yearBuilt", "Year Built"), value: String(yacht.buildYear) })
+  if (yacht.renewed) specs.push({ label: t("yacht.spec.renewed", "Renewed"), value: String(yacht.renewed) })
+  if (yacht.cruisingSpeed) specs.push({ label: t("yacht.spec.cruisingSpeed", "Cruising Speed"), value: `${yacht.cruisingSpeed} knots` })
+  if (yacht.maxSpeed) specs.push({ label: t("yacht.spec.maxSpeed", "Max Speed"), value: `${yacht.maxSpeed} knots` })
+  if (yacht.berthsTotal) specs.push({ label: t("yacht.spec.berths", "Berths"), value: `${yacht.berthsTotal}${yacht.cabins ? ` (${yacht.cabins} Cabins)` : ""}` })
+  if (yacht.wc) specs.push({ label: t("yacht.spec.toilets", "Toilets"), value: String(yacht.wc) })
+  if (yacht.showers) specs.push({ label: t("yacht.spec.showers", "Showers"), value: String(yacht.showers) })
+  if (yacht.mastLength) specs.push({ label: t("yacht.spec.mastLength", "Mast Length"), value: `${yacht.mastLength}m` })
+  if (yacht.propulsionType) specs.push({ label: t("yacht.spec.propulsion", "Propulsion"), value: yacht.propulsionType })
+  if (yacht.builder) specs.push({ label: t("yacht.spec.builder", "Builder"), value: yacht.builder })
 
   // Quick amenities from all equipment (first 13)
-  const allEquipmentItems = categoryTabs.flatMap((t) => t.items)
+  const allEquipmentItems = categoryTabs.flatMap((tab) => tab.items)
   const quickAmenities = allEquipmentItems.slice(0, 13)
 
   // Cheapest weekly price
@@ -465,7 +486,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
             className="group/gallery flex flex-col items-end gap-2 cursor-pointer"
           >
             <div className="flex items-center gap-2">
-              <span className="text-white text-sm font-bold tracking-wide">Gallery</span>
+              <span className="text-white text-sm font-bold tracking-wide">{t("yacht.gallery", "Gallery")}</span>
               <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-gradient-to-r from-[#0055a9] to-[#00a4e4] text-white shadow-lg shadow-blue-500/25">
                 {images.length} Photos
               </span>
@@ -616,10 +637,10 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
           {/* Left Column */}
           <div className="lg:col-span-8 flex flex-col">
             <h1 className="text-3xl font-bold mb-2">{yacht.modelName || yacht.name}</h1>
-            {yacht.location && (
+            {yachtLocation && (
               <div className="flex items-center gap-2 text-gray-500 mb-8">
                 <MapPin className="w-5 h-5 text-[#84776e]" />
-                <span className="text-[15px] font-medium">{yacht.location}</span>
+                <span className="text-[15px] font-medium">{yachtLocation}</span>
               </div>
             )}
 
@@ -628,7 +649,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
               {yacht.loa && (
                 <>
                   <div className="flex flex-col">
-                    <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wider mb-0.5">Length</span>
+                    <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wider mb-0.5">{tUpper("yacht.stat.length", "Length")}</span>
                     <span className="text-sm font-semibold">{yacht.loa}m</span>
                   </div>
                   <div className="w-px h-6 bg-gray-200" />
@@ -637,7 +658,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
               {yacht.cabins && (
                 <>
                   <div className="flex flex-col">
-                    <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wider mb-0.5">Cabins</span>
+                    <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wider mb-0.5">{tUpper("yacht.stat.cabins", "Cabins")}</span>
                     <span className="text-sm font-semibold">{yacht.cabins}</span>
                   </div>
                   <div className="w-px h-6 bg-gray-200" />
@@ -646,7 +667,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
               {yacht.maxPersons && (
                 <>
                   <div className="flex flex-col">
-                    <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wider mb-0.5">Guests</span>
+                    <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wider mb-0.5">{tUpper("yacht.stat.guests", "Guests")}</span>
                     <span className="text-sm font-semibold">{yacht.maxPersons}</span>
                   </div>
                   <div className="w-px h-6 bg-gray-200" />
@@ -655,7 +676,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
               {yacht.buildYear && (
                 <>
                   <div className="flex flex-col">
-                    <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wider mb-0.5">Year</span>
+                    <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wider mb-0.5">{tUpper("yacht.stat.year", "Year")}</span>
                     <span className="text-sm font-semibold">{yacht.buildYear}</span>
                   </div>
                   <div className="w-px h-6 bg-gray-200" />
@@ -664,30 +685,30 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
               {yacht.builder && (
                 <>
                   <div className="flex flex-col">
-                    <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wider mb-0.5">Builder</span>
+                    <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wider mb-0.5">{tUpper("yacht.stat.builder", "Builder")}</span>
                     <span className="text-sm font-semibold">{yacht.builder}</span>
                   </div>
                   <div className="w-px h-6 bg-gray-200" />
                 </>
               )}
-              {yacht.category && (
+              {yachtCategory && (
                 <div className="flex flex-col">
-                  <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wider mb-0.5">Hull Type</span>
-                  <span className="text-sm font-semibold">{yacht.category}</span>
+                  <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wider mb-0.5">{tUpper("yacht.stat.hullType", "Hull Type")}</span>
+                  <span className="text-sm font-semibold">{yachtCategory}</span>
                 </div>
               )}
             </div>
 
             {/* About */}
-            {(yacht.description || yacht.note) && (
+            {(yachtDescription || yachtNote) && (
               <>
-                <h2 className="text-sm font-bold mb-2">About this Yacht</h2>
+                <h2 className="text-sm font-bold mb-2">{t("yacht.aboutHeading", "About this Yacht")}</h2>
                 <div className="prose max-w-none text-gray-600 leading-relaxed mb-6 text-xs">
-                  {yacht.description && (
-                    <p className="mb-3 whitespace-pre-line">{yacht.description}</p>
+                  {yachtDescription && (
+                    <p className="mb-3 whitespace-pre-line">{yachtDescription}</p>
                   )}
-                  {yacht.note && (
-                    <p className="whitespace-pre-line">{yacht.note}</p>
+                  {yachtNote && (
+                    <p className="whitespace-pre-line">{yachtNote}</p>
                   )}
                 </div>
               </>
@@ -696,7 +717,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
             {/* Full Specifications */}
             {specs.length > 0 && (
               <>
-                <h2 className="text-sm font-bold mb-3">Full Specifications</h2>
+                <h2 className="text-sm font-bold mb-3">{t("yacht.fullSpecsHeading", "Full Specifications")}</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-1 mb-8">
                   {specs.map((s, i) => (
                     <div key={i} className="flex justify-between items-center py-2 border-b border-gray-100">
@@ -711,7 +732,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
             {/* Quick Equipment & Amenities */}
             {quickAmenities.length > 0 && (
               <>
-                <h2 className="text-sm font-bold mb-3">Equipment & Amenities</h2>
+                <h2 className="text-sm font-bold mb-3">{t("yacht.equipmentHeading", "Equipment & Amenities")}</h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-y-4 gap-x-4">
                   {quickAmenities.map((item, i) => (
                     <div key={i} className="flex items-center gap-2">
@@ -731,10 +752,10 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
               <div className="relative px-5 pt-5 pb-4 rounded-t-2xl" style={{ background: "linear-gradient(135deg, #070c26 0%, #0055a9 100%)" }}>
                 <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")" }} />
                 <div className="relative">
-                  <span className="text-white/60 text-[10px] uppercase tracking-widest font-semibold">Starting from</span>
+                  <span className="text-white/60 text-[10px] uppercase tracking-widest font-semibold">{tUpper("yacht.startingFrom", "Starting from")}</span>
                   <div className="flex items-end gap-1.5 mt-1">
                     <span className="text-2xl font-bold text-white tracking-tight">
-                      {cheapestPrice ? formatPrice(cheapestPrice, "EUR") : "On Request"}
+                      {cheapestPrice ? formatPrice(cheapestPrice, "EUR") : t("yacht.onRequest", "On Request")}
                     </span>
                     {cheapestPrice && (
                       <span className="text-white/50 text-xs font-medium mb-1">/ week</span>
@@ -748,7 +769,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                 <div className="relative">
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-5 h-5 rounded-full bg-[#0055a9] flex items-center justify-center text-white text-[9px] font-bold shrink-0">1</div>
-                    <span className="text-[11px] font-bold text-gray-800 uppercase tracking-wide">Select Dates</span>
+                    <span className="text-[11px] font-bold text-gray-800 uppercase tracking-wide">{tUpper("yacht.selectDates", "Select Dates")}</span>
                   </div>
                   <button
                     onClick={() => {
@@ -766,15 +787,15 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                       <CalendarDays className="w-4 h-4 text-[#0055a9] shrink-0" />
                       <div className="grid grid-cols-2 gap-3 flex-1">
                         <div className="text-left">
-                          <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5 tracking-wide">Check-in</span>
+                          <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5 tracking-wide">{tUpper("yacht.checkIn", "Check-in")}</span>
                           <span className="text-xs font-semibold" style={{ color: dateRange?.from ? "#070c26" : "#aaa" }}>
-                            {dateRange?.from ? format(dateRange.from, "dd MMM yyyy") : "Select date"}
+                            {dateRange?.from ? format(dateRange.from, "dd MMM yyyy") : t("yacht.selectDate", "Select date")}
                           </span>
                         </div>
                         <div className="text-left border-l border-gray-200 pl-3">
-                          <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5 tracking-wide">Check-out</span>
+                          <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5 tracking-wide">{tUpper("yacht.checkOut", "Check-out")}</span>
                           <span className="text-xs font-semibold" style={{ color: dateRange?.to ? "#070c26" : "#aaa" }}>
-                            {dateRange?.to ? format(dateRange.to, "dd MMM yyyy") : "Select date"}
+                            {dateRange?.to ? format(dateRange.to, "dd MMM yyyy") : t("yacht.selectDate", "Select date")}
                           </span>
                         </div>
                       </div>
@@ -809,11 +830,11 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                       <div className="flex items-center justify-center gap-5 pt-3 mt-3 border-t border-gray-100">
                         <div className="flex items-center gap-1.5">
                           <div className="w-2.5 h-2.5 rounded-full bg-[#0055a9]" />
-                          <span className="text-[10px] text-gray-500 font-medium">Selected</span>
+                          <span className="text-[10px] text-gray-500 font-medium">{t("yacht.selected", "Selected")}</span>
                         </div>
                         <div className="flex items-center gap-1.5">
                           <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
-                          <span className="text-[10px] text-gray-500 font-medium">Unavailable</span>
+                          <span className="text-[10px] text-gray-500 font-medium">{t("yacht.unavailable", "Unavailable")}</span>
                         </div>
                       </div>
                     </div>
@@ -824,7 +845,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                 <div>
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-5 h-5 rounded-full bg-[#0055a9] flex items-center justify-center text-white text-[9px] font-bold shrink-0">2</div>
-                    <span className="text-[11px] font-bold text-gray-800 uppercase tracking-wide">Party Size</span>
+                    <span className="text-[11px] font-bold text-gray-800 uppercase tracking-wide">{tUpper("yacht.partySize", "Party Size")}</span>
                   </div>
                   <div className="flex items-center justify-between bg-gray-50/50 rounded-xl p-3 border border-gray-200">
                     <div className="flex items-center gap-2">
@@ -853,10 +874,10 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                       <span className="text-xs font-semibold" style={{ color: "#070c26" }}>{formatPrice(selectedDatePrice.total, selectedDatePrice.currency)}</span>
                     </div>
                     <div className="flex justify-between items-center pt-2 border-t border-[#0055a9]/10">
-                      <span className="text-xs font-bold" style={{ color: "#070c26" }}>Estimated Total</span>
+                      <span className="text-xs font-bold" style={{ color: "#070c26" }}>{t("yacht.estimatedTotal", "Estimated Total")}</span>
                       <span className="text-base font-bold" style={{ color: "#0055a9" }}>{formatPrice(selectedDatePrice.total, selectedDatePrice.currency)}</span>
                     </div>
-                    <p className="text-[9px] text-gray-400 mt-1.5">Excl. VAT & APA. Final price confirmed in proposal.</p>
+                    <p className="text-[9px] text-gray-400 mt-1.5">{t("yacht.priceDisclaimer", "Excl. VAT & APA. Final price confirmed in proposal.")}</p>
                   </div>
                 )}
 
@@ -868,7 +889,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                   style={{ background: "linear-gradient(135deg, #0055a9 0%, #003d7a 100%)" }}
                 >
                   <Send className="w-3.5 h-3.5" />
-                  {checkIn && checkOut && checkIn !== checkOut ? "Request This Booking" : "Select dates to continue"}
+                  {checkIn && checkOut && checkIn !== checkOut ? t("yacht.requestBooking", "Request This Booking") : t("yacht.selectDatesToContinue", "Select dates to continue")}
                 </button>
 
                 <p className="text-center text-[10px] text-gray-400">You won&apos;t be charged &middot; Free cancellation</p>
@@ -883,7 +904,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                     )}
                     <div className="flex-1 min-w-0">
                       <p className="text-[11px] font-semibold text-gray-800 truncate">{yacht.staffRep.name}</p>
-                      <p className="text-[9px] text-gray-400">{yacht.staffRep.position || "Charter Advisor"}</p>
+                      <p className="text-[9px] text-gray-400">{staffPosition || t("yacht.charterAdvisor", "Charter Advisor")}</p>
                     </div>
                     <span className="flex items-center gap-1 text-[9px] text-green-600 font-medium">
                       <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
@@ -902,7 +923,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
         <section className="w-full bg-white py-12 px-6 md:px-10 relative z-[1] border-t border-gray-200" style={{ color: "#070c26" }}>
           <div className="max-w-[1400px] mx-auto">
             <div className="flex items-center justify-between mb-8">
-              <h2 className="text-lg font-bold">Equipment & Features</h2>
+              <h2 className="text-lg font-bold">{t("yacht.equipmentFeaturesHeading", "Equipment & Features")}</h2>
               <div className="flex items-center gap-2 text-xs text-gray-500">
                 <span className="text-white px-2 py-1 rounded" style={{ backgroundColor: "#070c26" }}>{categoryTabs.length}</span>
                 <span>categories</span>
@@ -946,8 +967,8 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
             {yacht.services.length > 0 && (
               <div className="mt-10 border-t border-gray-200 pt-8 pb-[100px]">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-lg font-bold">Available Services</h2>
-                  <span className="text-xs text-gray-500">Optional add-ons for your charter</span>
+                  <h2 className="text-lg font-bold">{t("yacht.availableServices", "Available Services")}</h2>
+                  <span className="text-xs text-gray-500">{t("yacht.optionalAddons", "Optional add-ons for your charter")}</span>
                 </div>
                 <div className="flex flex-wrap gap-x-2 gap-y-4">
                   {[...yacht.services].sort((a, b) => {
@@ -980,7 +1001,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                         ) : (
                           <Plus className="w-3.5 h-3.5" />
                         )}
-                        {service.name}
+                        {resolveT(service.nameTranslations, locale, service.name)}
                       </div>
                     )
                   })}
@@ -1068,7 +1089,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                 className="hidden lg:flex flex-col gap-4 rounded-xl p-5 shrink-0 w-[260px]"
                 style={{ background: "#0055a9" }}
               >
-                <p className="text-white text-sm font-medium">Would you like to receive a quote for this yacht?</p>
+                <p className="text-white text-sm font-medium">{t("yacht.receiveQuote", "Would you like to receive a quote for this yacht?")}</p>
                 <div className="flex items-center gap-3">
                   {yacht.staffRep?.image ? (
                     <Image
@@ -1088,7 +1109,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                       <p className="text-white text-xs font-semibold truncate">{yacht.staffRep?.name || "IYC Charter Team"}</p>
                       <span className="w-1.5 h-1.5 rounded-full bg-green-400 shrink-0" />
                     </div>
-                    <span className="text-white/60 text-[10px]">{yacht.staffRep?.position || "Charter Advisor"}</span>
+                    <span className="text-white/60 text-[10px]">{yacht.staffRep?.position || t("yacht.charterAdvisor", "Charter Advisor")}</span>
                   </div>
                   <button
                     onClick={() => { setEnquirySuccess(false); setEnquiryOpen(true) }}
@@ -1122,7 +1143,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                       <CheckCircle2 className="w-8 h-8 text-white" />
                     </div>
                     <h3 className="text-xl font-bold mb-2 tracking-tight" style={{ color: "#ffffff" }}>
-                      {bookingForm.firstName ? `Excellent Choice, ${bookingForm.firstName}!` : "Excellent Choice!"}
+                      {bookingForm.firstName ? `${t("yacht.excellentChoice", "Excellent Choice")}, ${bookingForm.firstName}!` : t("yacht.excellentChoiceAlt", "Excellent Choice!")}
                     </h3>
                     <p className="text-white/70 text-sm leading-relaxed max-w-sm mx-auto">
                       Your booking request for <span className="text-white font-semibold">{yacht.name}</span> has been received.
@@ -1135,25 +1156,25 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                     {/* Booking summary */}
                     <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-100">
                       <div className="text-center flex-1">
-                        <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5">Check-in</span>
+                        <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5">{tUpper("yacht.checkIn", "Check-in")}</span>
                         <span className="text-xs font-bold" style={{ color: "#070c26" }}>{dateRange?.from ? format(dateRange.from, "dd MMM yyyy") : "—"}</span>
                       </div>
                       <div className="w-8 flex items-center justify-center">
                         <ChevronRight className="w-4 h-4 text-gray-300" />
                       </div>
                       <div className="text-center flex-1">
-                        <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5">Check-out</span>
+                        <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5">{tUpper("yacht.checkOut", "Check-out")}</span>
                         <span className="text-xs font-bold" style={{ color: "#070c26" }}>{dateRange?.to ? format(dateRange.to, "dd MMM yyyy") : "—"}</span>
                       </div>
                       <div className="text-center flex-1 border-l border-gray-100 pl-3">
-                        <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5">Guests</span>
+                        <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5">{tUpper("yacht.stat.guests", "Guests")}</span>
                         <span className="text-xs font-bold" style={{ color: "#070c26" }}>{guestCount}</span>
                       </div>
                     </div>
 
                     {selectedDatePrice && (
                       <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-100">
-                        <span className="text-xs text-gray-500">Estimated total</span>
+                        <span className="text-xs text-gray-500">{t("yacht.estimatedTotal", "Estimated Total")}</span>
                         <span className="text-base font-bold" style={{ color: "#0055a9" }}>{formatPrice(selectedDatePrice.total, selectedDatePrice.currency)}</span>
                       </div>
                     )}
@@ -1168,7 +1189,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                         )}
                         <div className="flex-1">
                           <p className="text-xs font-semibold text-gray-800">{yacht.staffRep.name}</p>
-                          <p className="text-[10px] text-gray-400">{yacht.staffRep.position || "Charter Advisor"}</p>
+                          <p className="text-[10px] text-gray-400">{staffPosition || t("yacht.charterAdvisor", "Charter Advisor")}</p>
                         </div>
                         <span className="text-[9px] text-green-600 font-medium flex items-center gap-1">
                           <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
@@ -1200,7 +1221,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                       <div className="w-12 h-12 rounded-full bg-white/15 flex items-center justify-center text-white font-bold text-sm shrink-0 border border-white/20">IYC</div>
                     )}
                     <div>
-                      <h2 className="text-base font-bold text-white">Confirm Your Booking</h2>
+                      <h2 className="text-base font-bold text-white">{t("yacht.confirmBooking", "Confirm Your Booking")}</h2>
                       <p className="text-[11px] text-white/60 mt-0.5">{yacht.name}</p>
                     </div>
                   </div>
@@ -1211,56 +1232,56 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                   <div className="bg-gray-50 rounded-xl p-4 mb-5 border border-gray-100">
                     <div className="flex items-center justify-between mb-3">
                       <div className="text-center flex-1">
-                        <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5">Check-in</span>
+                        <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5">{tUpper("yacht.checkIn", "Check-in")}</span>
                         <span className="text-xs font-bold" style={{ color: "#070c26" }}>{dateRange?.from ? format(dateRange.from, "dd MMM yyyy") : "—"}</span>
                       </div>
                       <div className="w-6 flex items-center justify-center">
                         <ChevronRight className="w-3.5 h-3.5 text-gray-300" />
                       </div>
                       <div className="text-center flex-1">
-                        <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5">Check-out</span>
+                        <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5">{tUpper("yacht.checkOut", "Check-out")}</span>
                         <span className="text-xs font-bold" style={{ color: "#070c26" }}>{dateRange?.to ? format(dateRange.to, "dd MMM yyyy") : "—"}</span>
                       </div>
                       <div className="text-center flex-1 border-l border-gray-200 pl-3">
-                        <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5">Guests</span>
+                        <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5">{tUpper("yacht.stat.guests", "Guests")}</span>
                         <span className="text-xs font-bold" style={{ color: "#070c26" }}>{guestCount}</span>
                       </div>
                     </div>
                     {selectedDatePrice && (
                       <div className="flex justify-between items-center pt-3 border-t border-gray-200">
-                        <span className="text-xs font-bold text-gray-500">Estimated Total</span>
+                        <span className="text-xs font-bold text-gray-500">{t("yacht.estimatedTotal", "Estimated Total")}</span>
                         <span className="text-base font-bold" style={{ color: "#0055a9" }}>{formatPrice(selectedDatePrice.total, selectedDatePrice.currency)}</span>
                       </div>
                     )}
-                    <p className="text-[9px] text-gray-400 mt-1.5">Excl. VAT & APA. Final price confirmed in proposal.</p>
+                    <p className="text-[9px] text-gray-400 mt-1.5">{t("yacht.priceDisclaimer", "Excl. VAT & APA. Final price confirmed in proposal.")}</p>
                   </div>
 
                   {/* Contact fields */}
                   <div className="flex items-center gap-2 mb-3">
                     <User className="w-4 h-4 text-[#0055a9]" />
-                    <span className="text-[11px] font-bold text-gray-800 uppercase tracking-wide">Your Details</span>
+                    <span className="text-[11px] font-bold text-gray-800 uppercase tracking-wide">{tUpper("yacht.yourDetails", "Your Details")}</span>
                   </div>
                   <div className="space-y-3">
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">First Name *</label>
+                        <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">{tUpper("yacht.firstName", "First Name")} *</label>
                         <input type="text" value={bookingForm.firstName} onChange={(e) => setBookingForm({ ...bookingForm, firstName: e.target.value })} placeholder="John" className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[#0055a9] focus:ring-1 focus:ring-[#0055a9]/20 transition bg-gray-50/50" style={{ color: "#070c26" }} />
                       </div>
                       <div>
-                        <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">Last Name</label>
+                        <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">{tUpper("yacht.lastName", "Last Name")}</label>
                         <input type="text" value={bookingForm.lastName} onChange={(e) => setBookingForm({ ...bookingForm, lastName: e.target.value })} placeholder="Doe" className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[#0055a9] focus:ring-1 focus:ring-[#0055a9]/20 transition bg-gray-50/50" style={{ color: "#070c26" }} />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">Email *</label>
+                      <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">{tUpper("yacht.email", "Email")} *</label>
                       <input type="email" value={bookingForm.email} onChange={(e) => setBookingForm({ ...bookingForm, email: e.target.value })} placeholder="john@example.com" className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[#0055a9] focus:ring-1 focus:ring-[#0055a9]/20 transition bg-gray-50/50" style={{ color: "#070c26" }} />
                     </div>
                     <div>
-                      <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">Phone</label>
+                      <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">{tUpper("yacht.phone", "Phone")}</label>
                       <input type="tel" value={bookingForm.phone} onChange={(e) => setBookingForm({ ...bookingForm, phone: e.target.value })} placeholder="+30 123 456 7890" className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[#0055a9] focus:ring-1 focus:ring-[#0055a9]/20 transition bg-gray-50/50" style={{ color: "#070c26" }} />
                     </div>
                     <div>
-                      <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">Special Requests</label>
+                      <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">{tUpper("yacht.specialRequests", "Special Requests")}</label>
                       <textarea value={bookingForm.notes} onChange={(e) => setBookingForm({ ...bookingForm, notes: e.target.value })} placeholder="Celebrations, dietary needs, preferred destinations..." rows={3} className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[#0055a9] focus:ring-1 focus:ring-[#0055a9]/20 transition resize-none bg-gray-50/50" style={{ color: "#070c26" }} />
                     </div>
                   </div>
@@ -1279,7 +1300,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                     ) : (
                       <>
                         <Send className="w-3.5 h-3.5" />
-                        Confirm Booking Request
+                        {t("yacht.confirmBookingRequest", "Confirm Booking Request")}
                       </>
                     )}
                   </button>
@@ -1349,7 +1370,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                         )}
                         <div className="flex-1">
                           <p className="text-xs font-semibold text-gray-800">{yacht.staffRep.name}</p>
-                          <p className="text-[10px] text-gray-400">{yacht.staffRep.position || "Charter Advisor"}</p>
+                          <p className="text-[10px] text-gray-400">{staffPosition || t("yacht.charterAdvisor", "Charter Advisor")}</p>
                         </div>
                         <span className="text-[9px] text-green-600 font-medium flex items-center gap-1">
                           <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
@@ -1365,7 +1386,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                           <Mail className="w-3 h-3 text-[#0055a9]" />
                         </div>
                         <div>
-                          <p className="text-xs font-semibold text-gray-800">Confirmation sent</p>
+                          <p className="text-xs font-semibold text-gray-800">{t("yacht.confirmationSent", "Confirmation sent")}</p>
                           <p className="text-[10px] text-gray-400">Check your inbox at {enquiryForm.email || "your email"}</p>
                         </div>
                       </div>
@@ -1388,7 +1409,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                           <Anchor className="w-3 h-3 text-[#0055a9]" />
                         </div>
                         <div>
-                          <p className="text-xs font-semibold text-gray-800">Itinerary suggestions included</p>
+                          <p className="text-xs font-semibold text-gray-800">{t("yacht.itinerarySuggestions", "Itinerary suggestions included")}</p>
                           <p className="text-[10px] text-gray-400">Routes curated for {enquiryGuestCount} guest{enquiryGuestCount !== 1 ? "s" : ""} aboard {yacht.name}</p>
                         </div>
                       </div>
@@ -1428,7 +1449,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                       <div className="w-12 h-12 rounded-full bg-white/15 flex items-center justify-center text-white font-bold text-sm shrink-0 border border-white/20">IYC</div>
                     )}
                     <div>
-                      <h2 className="text-base font-bold text-white">Plan Your Charter</h2>
+                      <h2 className="text-base font-bold text-white">{t("yacht.planYourCharter", "Plan Your Charter")}</h2>
                       <p className="text-[11px] text-white/60 mt-0.5">
                         {yacht.staffRep ? `${yacht.staffRep.name} will prepare your proposal` : `Personalized proposal for ${yacht.name}`}
                       </p>
@@ -1441,7 +1462,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                   <div className="mb-5">
                     <div className="flex items-center gap-2 mb-3">
                       <CalendarDays className="w-4 h-4 text-[#0055a9]" />
-                      <span className="text-[11px] font-bold text-gray-800 uppercase tracking-wide">Preferred Period</span>
+                      <span className="text-[11px] font-bold text-gray-800 uppercase tracking-wide">{tUpper("yacht.preferredPeriod", "Preferred Period")}</span>
                     </div>
                     <div className="bg-gray-50 rounded-xl p-3.5 border border-gray-100">
                       {(() => {
@@ -1486,7 +1507,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                       <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-200">
                         <div className="flex items-center gap-1.5">
                           <User className="w-3.5 h-3.5 text-gray-400" />
-                          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">Guests</span>
+                          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">{tUpper("yacht.stat.guests", "Guests")}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <button type="button" onClick={() => setGuestCount(Math.max(1, guestCount - 1))} className="w-6 h-6 rounded-lg border border-gray-200 flex items-center justify-center text-xs text-gray-500 hover:bg-white hover:border-gray-300 transition cursor-pointer">-</button>
@@ -1500,12 +1521,12 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                   {/* Contact fields */}
                   <div className="flex items-center gap-2 mb-3">
                     <Mail className="w-4 h-4 text-[#0055a9]" />
-                    <span className="text-[11px] font-bold text-gray-800 uppercase tracking-wide">Your Details</span>
+                    <span className="text-[11px] font-bold text-gray-800 uppercase tracking-wide">{tUpper("yacht.yourDetails", "Your Details")}</span>
                   </div>
                   <div className="space-y-3">
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">First Name *</label>
+                        <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">{tUpper("yacht.firstName", "First Name")} *</label>
                         <input
                           type="text"
                           value={enquiryForm.firstName}
@@ -1516,7 +1537,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                         />
                       </div>
                       <div>
-                        <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">Last Name</label>
+                        <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">{tUpper("yacht.lastName", "Last Name")}</label>
                         <input
                           type="text"
                           value={enquiryForm.lastName}
@@ -1529,7 +1550,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                     </div>
 
                     <div>
-                      <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">Email *</label>
+                      <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">{tUpper("yacht.email", "Email")} *</label>
                       <input
                         type="email"
                         value={enquiryForm.email}
@@ -1541,7 +1562,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                     </div>
 
                     <div>
-                      <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">Phone</label>
+                      <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">{tUpper("yacht.phone", "Phone")}</label>
                       <input
                         type="tel"
                         value={enquiryForm.phone}
@@ -1553,7 +1574,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                     </div>
 
                     <div>
-                      <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">Special Requests</label>
+                      <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">{tUpper("yacht.specialRequests", "Special Requests")}</label>
                       <textarea
                         value={enquiryForm.notes}
                         onChange={(e) => setEnquiryForm({ ...enquiryForm, notes: e.target.value })}
@@ -1579,7 +1600,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                     ) : (
                       <>
                         <Send className="w-3.5 h-3.5" />
-                        Send My Charter Request
+                        {t("yacht.sendEnquiry", "Send My Charter Request")}
                       </>
                     )}
                   </button>

@@ -4,18 +4,19 @@ import Link from "next/link"
 import Image from "next/image"
 import { Anchor, Mail, Phone, MapPin, ArrowUpRight } from "lucide-react"
 import { useTranslations } from "@/lib/use-translations"
+import { removeGreekTonos } from "@/components/locale-text"
 import { useNavigation } from "@/lib/use-navigation"
 
 const iconColor = "#0055a9"
 
 export function SiteFooter() {
-  const { t } = useTranslations()
+  const { t, locale } = useTranslations()
   const { items: navItems } = useNavigation()
 
   const company = navItems
     .filter((item) => !item.isHomePage)
     .map((item) => ({
-      label: item.translations?.en || item.label,
+      label: item.translations?.[locale] || item.translations?.en || item.label,
       href: item.href,
     }))
   return (
@@ -78,7 +79,7 @@ export function SiteFooter() {
                 className="mb-4 text-xs font-semibold uppercase tracking-widest text-white/30"
                 style={{ fontFamily: "var(--font-body)" }}
               >
-                {t("footer.company", "Company")}
+                {removeGreekTonos(t("footer.company", "Company"))}
               </h4>
               <ul className="flex flex-col gap-2.5">
                 {company.map((link) => (
@@ -100,7 +101,7 @@ export function SiteFooter() {
                 className="mb-3 text-xs font-semibold uppercase tracking-widest text-white/30"
                 style={{ fontFamily: "var(--font-body)" }}
               >
-                {t("footer.stayUpdated", "Stay Updated")}
+                {removeGreekTonos(t("footer.stayUpdated", "Stay Updated"))}
               </h4>
               <div className="flex gap-2">
                 <input

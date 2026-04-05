@@ -402,7 +402,7 @@ export function ItineraryStoryMap({ points, activeIndex, onPointClick, onImageCl
         <Map
           defaultCenter={{ lat: points[0].lat, lng: points[0].lng }}
           defaultZoom={8}
-          gestureHandling="cooperative"
+          gestureHandling="none"
           disableDefaultUI
           zoomControl={false}
           colorScheme={ColorScheme.DARK}

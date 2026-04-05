@@ -5,6 +5,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { Anchor, Users, DoorOpen, Ruler, ArrowRight } from "lucide-react"
 import { TextReveal, StaggerReveal } from "./scroll-animations"
+import { removeGreekTonos } from "@/lib/greek-utils"
 
 interface FeaturedYacht {
   id: number
@@ -193,7 +194,7 @@ function YachtCardInner({ yacht }: { yacht: FeaturedYacht }) {
           className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider rounded-sm text-white"
           style={{ background: "rgba(0, 99, 153, 0.8)", backdropFilter: "blur(8px)" }}
         >
-          {yacht.category}
+          {removeGreekTonos(yacht.category)}
         </span>
       </div>
 

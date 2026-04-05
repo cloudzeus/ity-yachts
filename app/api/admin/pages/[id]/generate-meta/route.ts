@@ -15,18 +15,24 @@ function extractPageText(sections: PageSection[]): string {
   const texts: string[] = []
 
   for (const section of sections) {
+    if (!Array.isArray(section?.areas)) continue
     for (const area of section.areas) {
+      if (!Array.isArray(area?.blocks)) continue
       for (const block of area.blocks) {
         if ("content" in block && block.content) {
-          texts.push(block.content)
+          // Strip HTML tags from richtext content
+          const plain = String(block.content).replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim()
+          if (plain) texts.push(plain)
         } else if (block.type === "image" && "alt" in block && block.alt) {
-          texts.push(block.alt)
+          texts.push(String(block.alt))
         }
       }
     }
+    // Also extract section name if present
+    if (section.name) texts.push(section.name)
   }
 
-  return texts.join("\n").slice(0, 2000) // Limit to 2000 chars
+  return texts.join("\n").slice(0, 2000)
 }
 
 export async function POST(
@@ -40,21 +46,18 @@ export async function POST(
     }
 
     const { content, slug } = await req.json()
-    if (!Array.isArray(content)) {
-      return NextResponse.json({ error: "Invalid content" }, { status: 400 })
-    }
+    const sections = Array.isArray(content) ? content : []
 
     const apiKey = await getDeepSeekKey()
-    const pageText = extractPageText(content)
+    const pageText = extractPageText(sections)
 
-    if (!pageText.trim()) {
-      return NextResponse.json({ error: "No content to analyze" }, { status: 400 })
-    }
+    // Even if no section text, use slug as context
+    const contextText = pageText.trim() || `Page: ${slug || "unnamed page"}`
 
     const prompt = `You are an SEO expert for a luxury yacht charter website (Greek, English, German markets).
 Generate comprehensive SEO metadata for a page with the following content:
 
-${pageText}
+${contextText}
 
 Return a JSON object with these fields:
 - metaTitle (max 60 chars): compelling page title
@@ -92,26 +95,29 @@ Return ONLY valid JSON with these exact field names. No markdown code blocks.`
     if (!res.ok) {
       const err = await res.text()
       console.error("[DeepSeek error]", res.status, err)
-      return NextResponse.json({ error: "DeepSeek API error" }, { status: 500 })
+      return NextResponse.json({ error: `DeepSeek API error (${res.status})` }, { status: 500 })
     }
 
     const json = await res.json()
-    const message = json.choices?.[0]?.message?.content
+    const message = json.choices?.[0]?.message?.content?.trim()
     if (!message) {
+      console.error("[DeepSeek] Empty response", JSON.stringify(json).slice(0, 500))
       return NextResponse.json({ error: "No response from DeepSeek" }, { status: 500 })
     }
 
-    // Parse the JSON response
+    // Parse the JSON response — strip markdown fences if present
+    let cleaned = message.replace(/^```(?:json)?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim()
     let metas: Record<string, string>
     try {
-      metas = JSON.parse(message)
+      metas = JSON.parse(cleaned)
     } catch {
-      // Try to extract JSON from markdown code blocks
-      const match = message.match(/```(?:json)?\s*([\s\S]*?)```/)
+      // Last resort: try to find any JSON object in the response
+      const match = cleaned.match(/\{[\s\S]*\}/)
       if (match) {
-        metas = JSON.parse(match[1])
+        metas = JSON.parse(match[0])
       } else {
-        throw new Error("Invalid JSON response")
+        console.error("[DeepSeek] Could not parse:", message.slice(0, 300))
+        throw new Error("Could not parse AI response as JSON")
       }
     }
 

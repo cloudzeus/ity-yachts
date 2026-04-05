@@ -6,19 +6,24 @@ import Link from "next/link"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { MapPin, ArrowRight, Compass, Navigation } from "lucide-react"
+import { useTranslations } from "@/lib/use-translations"
+import { removeGreekTonos } from "@/lib/greek-utils"
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger)
 }
 
+type TranslatedField = Record<string, string> | null | undefined
+
 interface LocationItem {
   id: string
   name: string
+  nameTranslations?: TranslatedField
   slug: string
   image: string | null
   imageType: string | null
-  shortDesc: string
-  prefecture: string
+  shortDesc: string | TranslatedField
+  prefecture: string | TranslatedField
   city: string
   latitude: number | null
   longitude: number | null
@@ -33,9 +38,17 @@ function formatCoord(val: number, isLat: boolean) {
   return `${deg}°${min}'${dir}`
 }
 
+/** Resolve a field that may be a translated JSON or a plain string */
+function resolveField(field: string | TranslatedField, locale: string): string {
+  if (!field) return ""
+  if (typeof field === "string") return field
+  return field[locale] || field.en || ""
+}
+
 /* ─── Main Grid ─────────────────────────────────────────────────────────── */
 
 export function LocationsGrid({ locations }: { locations: LocationItem[] }) {
+  const { t } = useTranslations()
   const gridRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -70,7 +83,7 @@ export function LocationsGrid({ locations }: { locations: LocationItem[] }) {
   if (locations.length === 0) {
     return (
       <p className="text-center text-white/40 py-20 text-lg">
-        No destinations available yet. Check back soon.
+        {t("locations.noDestinations", "No destinations available yet. Check back soon.")}
       </p>
     )
   }
@@ -119,6 +132,10 @@ export function LocationsGrid({ locations }: { locations: LocationItem[] }) {
 /* ─── Featured Card ─────────────────────────────────────────────────────── */
 
 function FeaturedCard({ location }: { location: LocationItem }) {
+  const { locale, t } = useTranslations()
+  const locName = resolveField(location.nameTranslations, locale) || location.name
+  const locShortDesc = resolveField(location.shortDesc, locale)
+  const locPrefecture = resolveField(location.prefecture, locale)
   const cardRef = useRef<HTMLAnchorElement>(null)
   const imgRef = useRef<HTMLDivElement>(null)
   const [mouse, setMouse] = useState({ x: 0.5, y: 0.5 })
@@ -209,7 +226,7 @@ function FeaturedCard({ location }: { location: LocationItem }) {
       <div className="absolute top-5 left-5 z-10 flex items-center gap-2">
         <span className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] rounded-full bg-white/10 text-white/80 backdrop-blur-md border border-white/10">
           <Compass className="w-3 h-3 inline-block mr-1.5 -mt-0.5" />
-          Featured Destination
+          {removeGreekTonos(t("locations.featuredDestination", "Featured Destination"))}
         </span>
       </div>
 
@@ -226,11 +243,11 @@ function FeaturedCard({ location }: { location: LocationItem }) {
       {/* Content */}
       <div className="absolute inset-x-0 bottom-0 p-8 md:p-12 z-10">
         <div className="max-w-2xl">
-          {(location.prefecture || location.city) && (
+          {(locPrefecture || location.city) && (
             <div className="flex items-center gap-2 mb-3">
               <MapPin className="w-3.5 h-3.5 text-[#0077B6]" />
               <span className="text-xs uppercase tracking-[0.15em] text-white/50 font-medium">
-                {[location.prefecture, location.city].filter(Boolean).join(" · ")}
+                {removeGreekTonos([locPrefecture, location.city].filter(Boolean).join(" · "))}
               </span>
             </div>
           )}
@@ -238,15 +255,15 @@ function FeaturedCard({ location }: { location: LocationItem }) {
             className="text-3xl md:text-5xl font-bold mb-3 transition-colors duration-500 group-hover:!text-[#0077B6]"
             style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em", color: "#fff" }}
           >
-            {location.name}
+            {locName}
           </h2>
-          {location.shortDesc && (
+          {locShortDesc && (
             <p className="text-base text-white/50 line-clamp-2 max-w-lg mb-5">
-              {location.shortDesc}
+              {locShortDesc}
             </p>
           )}
           <div className="flex items-center gap-2.5 text-[#0077B6] text-sm font-semibold opacity-0 group-hover:opacity-100 translate-y-3 group-hover:translate-y-0 transition-all duration-500">
-            Explore destination
+            {t("locations.exploreDestination", "Explore destination")}
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </div>
         </div>
@@ -261,6 +278,10 @@ function FeaturedCard({ location }: { location: LocationItem }) {
 /* ─── Standard Card ─────────────────────────────────────────────────────── */
 
 function LocationCard({ location, tall }: { location: LocationItem; tall: boolean }) {
+  const { locale, t } = useTranslations()
+  const locName = resolveField(location.nameTranslations, locale) || location.name
+  const locShortDesc = resolveField(location.shortDesc, locale)
+  const locPrefecture = resolveField(location.prefecture, locale)
   const cardRef = useRef<HTMLAnchorElement>(null)
   const imgRef = useRef<HTMLDivElement>(null)
   const glowRef = useRef<HTMLDivElement>(null)
@@ -356,11 +377,11 @@ function LocationCard({ location, tall }: { location: LocationItem; tall: boolea
 
         {/* Bottom name overlay (on image) */}
         <div className="absolute bottom-0 inset-x-0 p-5 z-10">
-          {(location.prefecture || location.city) && (
+          {(locPrefecture || location.city) && (
             <div className="flex items-center gap-1.5 mb-2">
               <MapPin className="w-3 h-3 text-[#0077B6]/80" />
               <span className="text-[10px] uppercase tracking-[0.15em] text-white/40 font-medium">
-                {[location.prefecture, location.city].filter(Boolean).join(" · ")}
+                {removeGreekTonos([locPrefecture, location.city].filter(Boolean).join(" · "))}
               </span>
             </div>
           )}
@@ -368,21 +389,21 @@ function LocationCard({ location, tall }: { location: LocationItem; tall: boolea
             className="text-xl md:text-2xl font-bold transition-colors duration-500 group-hover:!text-[#0077B6]"
             style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.01em", color: "#fff" }}
           >
-            {location.name}
+            {locName}
           </h3>
         </div>
       </div>
 
       {/* Content area */}
       <div className="p-5 pt-3">
-        {location.shortDesc && (
+        {locShortDesc && (
           <p className="text-sm text-white/45 line-clamp-2 mb-4">
-            {location.shortDesc}
+            {locShortDesc}
           </p>
         )}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-[#0077B6] text-xs font-semibold opacity-0 group-hover:opacity-100 translate-y-1 group-hover:translate-y-0 transition-all duration-400">
-            Explore
+            {t("locations.explore", "Explore")}
             <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
           </div>
           <div className="w-8 h-[1px] bg-white/10 group-hover:bg-[#0077B6]/30 group-hover:w-12 transition-all duration-500" />

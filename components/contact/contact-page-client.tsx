@@ -9,6 +9,7 @@ import {
   MessageSquare, Users, Ship, ChevronDown,
 } from "lucide-react"
 import { TeamGrid, type StaffMember } from "@/components/page-components/team-grid"
+import { useTranslations } from "@/lib/use-translations"
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -46,14 +47,16 @@ const offices = [
   },
 ]
 
-const subjects = [
-  { value: "charter", label: "Charter Enquiry", icon: Ship },
-  { value: "general", label: "General Question", icon: MessageSquare },
-  { value: "group", label: "Group / Corporate", icon: Users },
-  { value: "other", label: "Something Else", icon: Globe },
+const subjectDefs = [
+  { value: "charter", labelKey: "contact.subject.charter", labelFallback: "Charter Enquiry", icon: Ship },
+  { value: "general", labelKey: "contact.subject.general", labelFallback: "General Question", icon: MessageSquare },
+  { value: "group", labelKey: "contact.subject.group", labelFallback: "Group / Corporate", icon: Users },
+  { value: "other", labelKey: "contact.subject.other", labelFallback: "Something Else", icon: Globe },
 ]
 
 export function ContactPageClient({ staff }: ContactPageClientProps) {
+  const { t, tUpper } = useTranslations()
+  const subjects = subjectDefs.map((s) => ({ ...s, label: t(s.labelKey, s.labelFallback) }))
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -182,29 +185,28 @@ export function ContactPageClient({ staff }: ContactPageClientProps) {
 
         <div className="max-w-6xl mx-auto text-center relative z-10">
           <span data-hero-text className="mb-4 inline-block rounded-full border border-[#83776d]/30 bg-[#070c26]/20 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-[#83776d] backdrop-blur-sm">
-            Get In Touch
+            {tUpper("contact.badge", "Get In Touch")}
           </span>
           <h1
             data-hero-text
             className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-5"
             style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em" }}
           >
-            Let&apos;s Plan Your
+            {t("contact.title", "Let's Plan Your")}
             <span className="block mt-1" style={{ background: "linear-gradient(135deg, #0077B6, #A7EDFF)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-              Perfect Charter
+              {t("contact.titleAccent", "Perfect Charter")}
             </span>
           </h1>
           <p data-hero-text className="text-lg text-white/50 max-w-xl mx-auto mb-12">
-            Whether you have a question, want to book a yacht, or just want to say hello —
-            our family team is here for you since 1979.
+            {t("contact.subtitle", "Whether you have a question, want to book a yacht, or just want to say hello — our family team is here for you since 1979.")}
           </p>
 
           {/* Stats row */}
           <div className="flex flex-wrap justify-center gap-8 md:gap-16">
             {[
-              { num: "45+", label: "Years of Experience" },
-              { num: "2", label: "Offices Worldwide" },
-              { num: "24h", label: "Response Time" },
+              { num: "45+", label: tUpper("contact.stat.experience", "Years of Experience") },
+              { num: "2", label: tUpper("contact.stat.offices", "Offices Worldwide") },
+              { num: "24h", label: tUpper("contact.stat.response", "Response Time") },
             ].map((stat) => (
               <div key={stat.label} data-stat className="text-center">
                 <div className="text-2xl md:text-3xl font-bold text-white" style={{ fontFamily: "var(--font-display)" }}>
@@ -219,7 +221,7 @@ export function ContactPageClient({ staff }: ContactPageClientProps) {
         {/* Scroll indicator */}
         <div className="flex justify-center mt-16">
           <div className="flex flex-col items-center gap-2 text-white/20">
-            <span className="text-[10px] uppercase tracking-widest">Scroll</span>
+            <span className="text-[10px] uppercase tracking-widest">{tUpper("contact.scroll", "Scroll")}</span>
             <ChevronDown className="h-4 w-4 animate-bounce" />
           </div>
         </div>
@@ -239,32 +241,32 @@ export function ContactPageClient({ staff }: ContactPageClientProps) {
                       <CheckCircle2 className="h-8 w-8 text-[#0077B6]" />
                     </div>
                     <h3 className="text-2xl font-bold text-white mb-3" style={{ fontFamily: "var(--font-display)" }}>
-                      Message Sent!
+                      {t("contact.form.sent", "Message Sent!")}
                     </h3>
                     <p className="text-white/50 max-w-sm mb-8">
-                      Thank you for reaching out. We&apos;ll get back to you within 24 hours.
+                      {t("contact.form.sentDesc", "Thank you for reaching out. We'll get back to you within 24 hours.")}
                     </p>
                     <button
                       onClick={() => setStatus("idle")}
                       className="text-sm text-[#0077B6] hover:text-[#A7EDFF] transition-colors flex items-center gap-2"
                     >
-                      Send another message <ArrowRight className="h-3.5 w-3.5" />
+                      {t("contact.form.sendAnother", "Send another message")} <ArrowRight className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 ) : (
                   <>
                     <div className="mb-8">
                       <h2 className="text-2xl font-bold text-white mb-2" style={{ fontFamily: "var(--font-display)" }}>
-                        Send Us a Message
+                        {t("contact.form.heading", "Send Us a Message")}
                       </h2>
-                      <p className="text-sm text-white/40">All fields marked with * are required</p>
+                      <p className="text-sm text-white/40">{t("contact.form.required", "All fields marked with * are required")}</p>
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-5">
                       {/* Subject selector */}
                       <div data-form-reveal>
                         <label className="text-xs font-semibold uppercase tracking-wider text-white/40 mb-3 block">
-                          What can we help with?
+                          {tUpper("contact.form.helpWith", "What can we help with?")}
                         </label>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                           {subjects.map((s) => {
@@ -293,7 +295,7 @@ export function ContactPageClient({ staff }: ContactPageClientProps) {
                       {/* Name row */}
                       <div data-form-reveal className="grid md:grid-cols-2 gap-4">
                         <div>
-                          <label className="text-xs font-semibold uppercase tracking-wider text-white/40 mb-2 block">First Name *</label>
+                          <label className="text-xs font-semibold uppercase tracking-wider text-white/40 mb-2 block">{tUpper("contact.form.firstName", "First Name")} *</label>
                           <input
                             type="text"
                             required
@@ -305,7 +307,7 @@ export function ContactPageClient({ staff }: ContactPageClientProps) {
                           />
                         </div>
                         <div>
-                          <label className="text-xs font-semibold uppercase tracking-wider text-white/40 mb-2 block">Last Name</label>
+                          <label className="text-xs font-semibold uppercase tracking-wider text-white/40 mb-2 block">{tUpper("contact.form.lastName", "Last Name")}</label>
                           <input
                             type="text"
                             value={form.lastName}
@@ -320,7 +322,7 @@ export function ContactPageClient({ staff }: ContactPageClientProps) {
                       {/* Email + Phone */}
                       <div data-form-reveal className="grid md:grid-cols-2 gap-4">
                         <div>
-                          <label className="text-xs font-semibold uppercase tracking-wider text-white/40 mb-2 block">Email *</label>
+                          <label className="text-xs font-semibold uppercase tracking-wider text-white/40 mb-2 block">{tUpper("contact.form.email", "Email")} *</label>
                           <input
                             type="email"
                             required
@@ -332,7 +334,7 @@ export function ContactPageClient({ staff }: ContactPageClientProps) {
                           />
                         </div>
                         <div>
-                          <label className="text-xs font-semibold uppercase tracking-wider text-white/40 mb-2 block">Phone</label>
+                          <label className="text-xs font-semibold uppercase tracking-wider text-white/40 mb-2 block">{tUpper("contact.form.phone", "Phone")}</label>
                           <input
                             type="tel"
                             value={form.phone}
@@ -346,7 +348,7 @@ export function ContactPageClient({ staff }: ContactPageClientProps) {
 
                       {/* Message */}
                       <div data-form-reveal>
-                        <label className="text-xs font-semibold uppercase tracking-wider text-white/40 mb-2 block">Message *</label>
+                        <label className="text-xs font-semibold uppercase tracking-wider text-white/40 mb-2 block">{tUpper("contact.form.message", "Message")} *</label>
                         <textarea
                           required
                           rows={5}
@@ -354,7 +356,7 @@ export function ContactPageClient({ staff }: ContactPageClientProps) {
                           onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
                           className="w-full rounded-lg px-4 py-3 text-sm text-white placeholder-white/20 outline-none resize-none transition-all duration-200 focus:ring-1 focus:ring-[#0077B6]/50"
                           style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
-                          placeholder="Tell us about your dream charter, ask us anything..."
+                          placeholder={t("contact.form.messagePlaceholder", "Tell us about your dream charter, ask us anything...")}
                         />
                       </div>
 
@@ -369,17 +371,17 @@ export function ContactPageClient({ staff }: ContactPageClientProps) {
                           {status === "sending" ? (
                             <>
                               <Loader2 className="h-4 w-4 animate-spin" />
-                              Sending...
+                              {t("contact.form.sending", "Sending...")}
                             </>
                           ) : (
                             <>
                               <Send className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                              Send Message
+                              {t("contact.form.send", "Send Message")}
                             </>
                           )}
                         </button>
                         {status === "error" && (
-                          <span className="text-sm text-red-400">Something went wrong. Please try again.</span>
+                          <span className="text-sm text-red-400">{t("contact.form.error", "Something went wrong. Please try again.")}</span>
                         )}
                       </div>
                     </form>
@@ -392,7 +394,7 @@ export function ContactPageClient({ staff }: ContactPageClientProps) {
             <div className="lg:col-span-2 flex flex-col gap-4">
               {/* Direct contact card */}
               <div data-form-reveal className="rounded-xl p-6" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                <h3 className="text-sm font-semibold uppercase tracking-wider text-white/50 mb-5">Direct Contact</h3>
+                <h3 className="text-sm font-semibold uppercase tracking-wider text-white/50 mb-5">{tUpper("contact.directContact", "Direct Contact")}</h3>
                 <div className="space-y-4">
                   <a href="mailto:info@iyc.de" className="group flex items-start gap-3 text-white/60 hover:text-white transition-colors">
                     <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg" style={{ background: "rgba(0,119,182,0.1)" }}>
@@ -400,7 +402,7 @@ export function ContactPageClient({ staff }: ContactPageClientProps) {
                     </div>
                     <div>
                       <div className="text-sm font-medium text-white/80 group-hover:text-white transition-colors">info@iyc.de</div>
-                      <div className="text-xs text-white/30">General enquiries</div>
+                      <div className="text-xs text-white/30">{t("contact.generalEnquiries", "General enquiries")}</div>
                     </div>
                   </a>
                   <a href="mailto:bookings@iyc.de" className="group flex items-start gap-3 text-white/60 hover:text-white transition-colors">
@@ -409,7 +411,7 @@ export function ContactPageClient({ staff }: ContactPageClientProps) {
                     </div>
                     <div>
                       <div className="text-sm font-medium text-white/80 group-hover:text-white transition-colors">bookings@iyc.de</div>
-                      <div className="text-xs text-white/30">Charter bookings</div>
+                      <div className="text-xs text-white/30">{t("contact.charterBookings", "Charter bookings")}</div>
                     </div>
                   </a>
                   <a href="tel:+4916099279870" className="group flex items-start gap-3 text-white/60 hover:text-white transition-colors">
@@ -418,7 +420,7 @@ export function ContactPageClient({ staff }: ContactPageClientProps) {
                     </div>
                     <div>
                       <div className="text-sm font-medium text-white/80 group-hover:text-white transition-colors">+49 160 99279870</div>
-                      <div className="text-xs text-white/30">Munich office</div>
+                      <div className="text-xs text-white/30">{t("contact.munichOffice", "Munich office")}</div>
                     </div>
                   </a>
                 </div>
@@ -426,7 +428,7 @@ export function ContactPageClient({ staff }: ContactPageClientProps) {
 
               {/* Office hours card */}
               <div data-form-reveal className="rounded-xl p-6" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                <h3 className="text-sm font-semibold uppercase tracking-wider text-white/50 mb-5">Office Hours</h3>
+                <h3 className="text-sm font-semibold uppercase tracking-wider text-white/50 mb-5">{tUpper("contact.officeHours", "Office Hours")}</h3>
                 <div className="space-y-3">
                   <div className="flex items-start gap-3">
                     <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg" style={{ background: "rgba(0,119,182,0.1)" }}>
@@ -444,7 +446,7 @@ export function ContactPageClient({ staff }: ContactPageClientProps) {
                     <div>
                       <div className="text-sm font-medium text-white/80">Lefkada</div>
                       <div className="text-xs text-white/40">Mon – Sat: 08:00 – 20:00 EEST</div>
-                      <div className="text-[10px] text-white/25 mt-0.5">Charter season: April – October</div>
+                      <div className="text-[10px] text-white/25 mt-0.5">{t("contact.charterSeason", "Charter season: April – October")}</div>
                     </div>
                   </div>
                 </div>
@@ -454,11 +456,10 @@ export function ContactPageClient({ staff }: ContactPageClientProps) {
               <div data-form-reveal className="rounded-xl p-6 text-center" style={{ background: "linear-gradient(135deg, rgba(0,99,153,0.1), rgba(0,33,71,0.15))", border: "1px solid rgba(0,119,182,0.15)" }}>
                 <div className="text-3xl mb-2">⚓</div>
                 <h3 className="text-sm font-bold text-white mb-1" style={{ fontFamily: "var(--font-display)" }}>
-                  Family Business Since 1979
+                  {t("contact.familyBusiness", "Family Business Since 1979")}
                 </h3>
                 <p className="text-xs text-white/40 leading-relaxed">
-                  German-Greek family operation with deep roots in the Ionian Sea.
-                  Personal service, not a call center.
+                  {t("contact.familyDesc", "German-Greek family operation with deep roots in the Ionian Sea. Personal service, not a call center.")}
                 </p>
               </div>
             </div>
@@ -471,10 +472,10 @@ export function ContactPageClient({ staff }: ContactPageClientProps) {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
             <span className="mb-3 inline-block rounded-full border border-[#83776d]/30 bg-[#070c26]/20 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-[#83776d]">
-              Our Offices
+              {tUpper("contact.offices.badge", "Our Offices")}
             </span>
             <h2 className="text-3xl md:text-4xl font-bold text-white" style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em" }}>
-              Two Offices, One Family
+              {t("contact.offices.title", "Two Offices, One Family")}
             </h2>
           </div>
 
@@ -532,7 +533,7 @@ export function ContactPageClient({ staff }: ContactPageClientProps) {
                   <div className="flex items-center gap-3">
                     <Phone className="h-4 w-4 text-[#0077B6] shrink-0" />
                     <a href={`tel:${selectedOffice.mobile.replace(/\s/g, "")}`} className="text-sm text-white/70 hover:text-white transition-colors">
-                      {selectedOffice.mobile} <span className="text-white/30 text-xs">(Mobile)</span>
+                      {selectedOffice.mobile} <span className="text-white/30 text-xs">({t("contact.mobile", "Mobile")})</span>
                     </a>
                   </div>
                 )}
@@ -573,10 +574,10 @@ export function ContactPageClient({ staff }: ContactPageClientProps) {
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-12">
               <span className="mb-3 inline-block rounded-full border border-[#83776d]/30 bg-[#070c26]/20 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-[#83776d]">
-                Our Team
+                {tUpper("contact.team.badge", "Our Team")}
               </span>
               <h2 className="text-3xl md:text-4xl font-bold text-white" style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em" }}>
-                Meet the People Behind IYC
+                {t("contact.team.title", "Meet the People Behind IYC")}
               </h2>
             </div>
 
@@ -604,24 +605,24 @@ export function ContactPageClient({ staff }: ContactPageClientProps) {
 
             <div className="relative z-10">
               <h2 className="text-2xl md:text-3xl font-bold text-white mb-3" style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em" }}>
-                Ready to Set Sail?
+                {t("contact.cta.title", "Ready to Set Sail?")}
               </h2>
               <p className="text-white/60 mb-8 max-w-md mx-auto">
-                Browse our fleet and find the perfect yacht for your Ionian adventure.
+                {t("contact.cta.desc", "Browse our fleet and find the perfect yacht for your Ionian adventure.")}
               </p>
               <div className="flex flex-wrap justify-center gap-3">
                 <a
                   href="/fleet"
                   className="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 text-sm font-semibold text-[#002147] transition-all hover:bg-white/90 hover:shadow-lg"
                 >
-                  Explore Fleet <ArrowRight className="h-4 w-4" />
+                  {t("contact.cta.exploreFleet", "Explore Fleet")} <ArrowRight className="h-4 w-4" />
                 </a>
                 <a
                   href="/locations"
                   className="inline-flex items-center gap-2 rounded-lg px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-white/10"
                   style={{ border: "1px solid rgba(255,255,255,0.2)" }}
                 >
-                  View Destinations
+                  {t("contact.cta.viewDestinations", "View Destinations")}
                 </a>
               </div>
             </div>

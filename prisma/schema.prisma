@@ -136,6 +136,7 @@ model Page {
   centralMenu   Boolean          @default(false)
   menuOrder     Int              @default(0)
   menuLabel     String?
+  sortOrder     Int              @default(0)
   textComponents  TextComponent[]
   pageComponents  PageComponent[]
   createdAt       DateTime         @default(now())
@@ -508,6 +509,36 @@ model NausysSeason {
   updatedAt       DateTime @updatedAt
 
   @@map("nausys_seasons")
+}
+
+// Contacts from NAUSYS contacts2 endpoint
+model NausysContact {
+  id              Int      @id                      // NAUSYS contact id
+  contactType     String   @default("")             // CLIENT, AGENT, SKIPPER, CREW, OTHER
+  title           String   @default("")
+  firstName       String   @default("")
+  lastName        String   @default("")
+  company         String   @default("")
+  email           String   @default("")
+  phone           String   @default("")
+  mobile          String   @default("")
+  fax             String   @default("")
+  address         String   @default("")
+  city            String   @default("")
+  country         String   @default("")
+  postcode        String   @default("")
+  nationality     String   @default("")
+  passportNumber  String   @default("")
+  dateOfBirth     DateTime?
+  language        String   @default("")
+  taxNumber       String   @default("")
+  remarks         String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([contactType])
+  @@index([email])
+  @@map("nausys_contacts")
 }
 
 // ──────────────────────────────

@@ -4,6 +4,8 @@ import { useState, useRef, useCallback, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Heart, ChevronLeft, ChevronRight, ArrowUpRight, Ruler, BedDouble, Users, Sailboat, Anchor } from "lucide-react"
+import { useTranslations } from "@/lib/use-translations"
+import { removeGreekTonos } from "@/components/locale-text"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 
@@ -24,6 +26,7 @@ interface FleetYacht {
 }
 
 export function FleetCarouselSection({ yachts: rawYachts }: { yachts: FleetYacht[] }) {
+  const { t } = useTranslations()
   // Infinite loop: triple the array so we always have cards on both sides
   const yachts = [...rawYachts, ...rawYachts, ...rawYachts]
   const realCount = rawYachts.length
@@ -162,7 +165,7 @@ export function FleetCarouselSection({ yachts: rawYachts }: { yachts: FleetYacht
             <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "rgba(0, 119, 182, 0.15)" }}>
               <Sailboat className="w-5 h-5" style={{ color: "var(--secondary-light)" }} />
             </div>
-            <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--secondary-light)" }}>Our Fleet</span>
+            <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--secondary-light)" }}>{removeGreekTonos(t("home.fleet.badge", "Our Fleet"))}</span>
           </div>
           <h2
             className="text-4xl md:text-5xl lg:text-6xl mb-5 tracking-wide"
@@ -175,7 +178,7 @@ export function FleetCarouselSection({ yachts: rawYachts }: { yachts: FleetYacht
             <span className="fleet-title-word inline-block font-extrabold" style={{ opacity: 0 }}>Charter</span>
           </h2>
           <p className="fleet-desc text-[#8a9ab3] text-sm md:text-base leading-relaxed max-w-[620px]" style={{ opacity: 0 }}>
-            We do not simply list boats; we curate <span className="text-white font-semibold">legendary journeys</span>. Explore our privately owned fleet in the Ionian Sea—hand-picked for <span className="text-white font-semibold">superior comfort</span> and <span className="text-white font-semibold">exceptional crews</span>. From our base in Lefkada, follow the wake of Odysseus on a voyage tailored just for you.
+            {t("home.fleet.description", "We do not simply list boats; we curate legendary journeys. Explore our privately owned fleet in the Ionian Sea—hand-picked for superior comfort and exceptional crews. From our base in Lefkada, follow the wake of Odysseus on a voyage tailored just for you.")}
           </p>
         </div>
         <div className="fleet-cta" style={{ opacity: 0 }}>
@@ -184,7 +187,7 @@ export function FleetCarouselSection({ yachts: rawYachts }: { yachts: FleetYacht
             className="flex items-center gap-2 text-white hover:text-gray-300 transition-colors group"
           >
             <span className="text-[11px] font-medium border-b border-white/60 pb-[2px] group-hover:border-gray-300 transition-colors tracking-wider uppercase">
-              Discover Fleet
+              {removeGreekTonos(t("home.fleet.cta", "Discover Fleet"))}
             </span>
             <div className="border border-white/30 p-1 rounded-sm group-hover:border-white/60 transition-colors">
               <ArrowUpRight className="w-3 h-3" />
@@ -259,6 +262,7 @@ export function FleetCarouselSection({ yachts: rawYachts }: { yachts: FleetYacht
 }
 
 function YachtCarouselCard({ yacht, onClick, isActive }: { yacht: FleetYacht; onClick: () => void; isActive: boolean }) {
+  const { t } = useTranslations()
   const [liked, setLiked] = useState(false)
 
   return (
@@ -293,7 +297,7 @@ function YachtCarouselCard({ yacht, onClick, isActive }: { yacht: FleetYacht; on
       {/* Top badges */}
       <div className="absolute top-4 inset-x-4 flex justify-between items-start z-20">
         <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider text-white bg-white/10 backdrop-blur-[12px] border border-white/15">
-          {yacht.category}
+          {removeGreekTonos(yacht.category)}
         </span>
         <button
           onClick={(e) => { e.stopPropagation(); setLiked(!liked) }}
@@ -325,13 +329,13 @@ function YachtCarouselCard({ yacht, onClick, isActive }: { yacht: FleetYacht; on
           {yacht.cabins > 0 && (
             <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-[12px] border border-white/15">
               <BedDouble className="w-3 h-3 text-slate-400" />
-              <span className="text-[11px] text-gray-300 font-medium">{yacht.cabins} Cabins</span>
+              <span className="text-[11px] text-gray-300 font-medium">{yacht.cabins} {t("home.fleet.cabins", "Cabins")}</span>
             </div>
           )}
           {yacht.berths > 0 && (
             <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-[12px] border border-white/15">
               <Users className="w-3 h-3 text-slate-400" />
-              <span className="text-[11px] text-gray-300 font-medium">{yacht.berths} Guests</span>
+              <span className="text-[11px] text-gray-300 font-medium">{yacht.berths} {t("home.fleet.guests", "Guests")}</span>
             </div>
           )}
         </div>
@@ -342,7 +346,7 @@ function YachtCarouselCard({ yacht, onClick, isActive }: { yacht: FleetYacht; on
           <div className="inline-flex items-center gap-1.5">
             <Anchor className="w-3 h-3" style={{ color: "#0055a9" }} />
             <span className="text-[10px] font-medium uppercase tracking-widest" style={{ color: "#0055a9" }}>
-              {yacht.baseName || "Ionian Sea"}
+              {removeGreekTonos(yacht.baseName || "Ionian Sea")}
             </span>
           </div>
           <Link
@@ -350,7 +354,7 @@ function YachtCarouselCard({ yacht, onClick, isActive }: { yacht: FleetYacht; on
             onClick={(e) => e.stopPropagation()}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-[12px] border border-white/15 hover:bg-white/20 hover:border-white/30 transition-all duration-300"
           >
-            <span className="text-[11px] text-gray-300 font-medium">Details</span>
+            <span className="text-[11px] text-gray-300 font-medium">{t("home.fleet.details", "Details")}</span>
             <ArrowUpRight className="w-3 h-3 text-gray-300" />
           </Link>
         </div>

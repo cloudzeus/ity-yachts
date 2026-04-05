@@ -48,6 +48,7 @@ export default async function FleetPage() {
   const categoryOptions = categories.map((c) => ({
     id: c.id,
     name: ((c.name as Record<string, string>)?.en || `Category ${c.id}`),
+    nameTranslations: c.name as Record<string, string> | null,
   }))
 
   const baseOptions = bases.map((b) => ({
@@ -55,6 +56,7 @@ export default async function FleetPage() {
     name: b.location
       ? ((b.location.name as Record<string, string>)?.en || `Base ${b.id}`)
       : `Base ${b.id}`,
+    nameTranslations: (b.location?.name as Record<string, string>) ?? null,
   }))
 
   const builderOptions = builders
@@ -80,17 +82,15 @@ export default async function FleetPage() {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function transformYacht(y: any) {
-  const categoryName = y.category
-    ? ((y.category.name as Record<string, string>)?.en || "Yacht")
-    : "Yacht"
+  const catNames = y.category?.name as Record<string, string> | undefined
+  const categoryName = catNames?.en || "Yacht"
 
   const websiteImgs = y.websiteImages as Array<{ url: string }> | null
   const picturesArr = y.picturesUrl as string[] | null
   const image = websiteImgs?.[0]?.url || y.mainPictureUrl || picturesArr?.[0] || ""
 
-  const locationName = y.base?.location
-    ? ((y.base.location.name as Record<string, string>)?.en || "")
-    : ""
+  const locNames = y.base?.location?.name as Record<string, string> | undefined
+  const locationName = locNames?.en || ""
 
   const builderName = y.builder?.name || y.model?.builder?.name || ""
   const priceFrom = y.prices?.[0]?.price || 0
@@ -100,10 +100,12 @@ export function transformYacht(y: any) {
     name: y.name || y.model?.name || "Yacht",
     image,
     category: categoryName,
+    categoryTranslations: catNames || null,
     loa: y.loa || 0,
     cabins: y.cabins || 0,
     berths: y.berthsTotal || y.maxPersons || 0,
     baseName: locationName,
+    baseNameTranslations: locNames || null,
     builder: builderName,
     buildYear: y.buildYear || 0,
     priceFrom,

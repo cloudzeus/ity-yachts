@@ -56,9 +56,8 @@ export default async function YachtDetailPage({ params }: { params: Promise<{ id
     : null
 
   // Transform for client
-  const categoryName = yacht.category
-    ? ((yacht.category.name as Record<string, string>)?.en || "Yacht")
-    : "Yacht"
+  const catNames = yacht.category?.name as Record<string, string> | undefined
+  const categoryName = catNames?.en || "Yacht"
 
   const websiteImgs = yacht.websiteImages as Array<{ url: string; caption?: string }> | null
   const picturesArr = yacht.picturesUrl as string[] | null
@@ -75,34 +74,34 @@ export default async function YachtDetailPage({ params }: { params: Promise<{ id
     }
   }
 
-  const locationName = yacht.base?.location
-    ? ((yacht.base.location.name as Record<string, string>)?.en || "")
-    : ""
+  const locNames = yacht.base?.location?.name as Record<string, string> | undefined
+  const locationName = locNames?.en || ""
 
   const builderName = yacht.builder?.name || yacht.model?.builder?.name || ""
 
   // Group equipment by category
-  const equipmentByCategory: Record<string, { categoryName: string; items: string[] }> = {}
+  const equipmentByCategory: Record<string, { categoryName: string; categoryNameTranslations: Record<string, string> | null; items: Array<{ name: string; nameTranslations: Record<string, string> | null; quantity: number }> }> = {}
   for (const eq of yacht.equipment) {
-    const catName = eq.equipment?.category
-      ? ((eq.equipment.category.name as Record<string, string>)?.en || "Other")
-      : "Other"
+    const eqCatNames = eq.equipment?.category?.name as Record<string, string> | undefined
+    const catName = eqCatNames?.en || "Other"
     const catId = eq.equipment?.category?.id?.toString() || "other"
     if (!equipmentByCategory[catId]) {
-      equipmentByCategory[catId] = { categoryName: catName, items: [] }
+      equipmentByCategory[catId] = { categoryName: catName, categoryNameTranslations: eqCatNames || null, items: [] }
     }
-    const eqName = (eq.equipment?.name as Record<string, string>)?.en || ""
+    const eqNames = eq.equipment?.name as Record<string, string> | undefined
+    const eqName = eqNames?.en || ""
     if (eqName) {
-      const label = eq.quantity && eq.quantity > 1 ? `${eqName} (x${eq.quantity})` : eqName
-      equipmentByCategory[catId].items.push(label)
+      equipmentByCategory[catId].items.push({ name: eqName, nameTranslations: eqNames || null, quantity: eq.quantity || 1 })
     }
   }
 
   // Services
   const services = yacht.services.map((s) => {
-    const serviceName = (s.service?.name as Record<string, string>)?.en || "Service"
+    const serviceNames = s.service?.name as Record<string, string> | undefined
+    const serviceName = serviceNames?.en || "Service"
     return {
       name: serviceName,
+      nameTranslations: serviceNames || null,
       price: Number(s.price) || 0,
       currency: s.currency || "EUR",
       obligatory: s.obligatory || false,
@@ -129,8 +128,10 @@ export default async function YachtDetailPage({ params }: { params: Promise<{ id
     name: yacht.name || yacht.model?.name || "Yacht",
     modelName: yacht.model?.name || "",
     category: categoryName,
+    categoryTranslations: catNames || null,
     images: allImages,
     location: locationName,
+    locationTranslations: locNames || null,
     loa: yacht.loa,
     beam: yacht.beam,
     draft: yacht.draft,
@@ -154,7 +155,9 @@ export default async function YachtDetailPage({ params }: { params: Promise<{ id
     showers: yacht.showers,
     charterType: yacht.charterType,
     description,
+    descriptionTranslations: highlightsT,
     note,
+    noteTranslations: noteT,
     equipmentByCategory,
     services,
     prices,
@@ -164,6 +167,7 @@ export default async function YachtDetailPage({ params }: { params: Promise<{ id
       ? {
           name: staffRep.name,
           position: (staffRep.position as Record<string, string>)?.en || "",
+          positionTranslations: staffRep.position as Record<string, string> | null,
           image: staffRep.image || "",
         }
       : null,

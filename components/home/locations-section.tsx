@@ -6,6 +6,8 @@ import Link from "next/link"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { ArrowRight, Globe, Activity, ChevronsUpDown, Anchor, Shield, Compass } from "lucide-react"
+import { useTranslations } from "@/lib/use-translations"
+import { removeGreekTonos } from "@/components/locale-text"
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger)
@@ -38,6 +40,7 @@ function formatCoord(lat?: number | null, lng?: number | null) {
 }
 
 export function LocationsSection({ destinations }: { destinations: Location[] }) {
+  const { t } = useTranslations()
   const sectionRef = useRef<HTMLDivElement>(null)
   const [activeFilter, setActiveFilter] = useState<FilterType>("all")
 
@@ -97,17 +100,17 @@ export function LocationsSection({ destinations }: { destinations: Location[] })
   const filters: { key: FilterType; label: string; icon: React.ReactNode }[] = [
     {
       key: "all",
-      label: "All Routes",
+      label: t("home.locations.filterAll", "All Routes"),
       icon: <Globe className="w-3.5 h-3.5" />,
     },
     {
       key: "legendary",
-      label: "Legendary Isles",
+      label: t("home.locations.filterLegendary", "Legendary Isles"),
       icon: <Activity className="w-3.5 h-3.5" />,
     },
     {
       key: "hidden",
-      label: "Hidden Bays",
+      label: t("home.locations.filterHidden", "Hidden Bays"),
       icon: <ChevronsUpDown className="w-3.5 h-3.5" />,
     },
   ]
@@ -164,7 +167,7 @@ export function LocationsSection({ destinations }: { destinations: Location[] })
                 <Compass className="w-5 h-5" style={{ color: "#84776e" }} />
               </div>
               <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#84776e" }}>
-                The Mythic Ionian
+                {removeGreekTonos(t("home.locations.badge", "The Mythic Ionian"))}
               </span>
             </div>
 
@@ -181,8 +184,7 @@ export function LocationsSection({ destinations }: { destinations: Location[] })
               className="loc-subtitle text-[#8a9ab3] text-sm md:text-base leading-relaxed max-w-[620px]"
               style={{ fontFamily: "var(--font-body)", opacity: 0 }}
             >
-              Trace the wake of <span className="text-white font-semibold">ancient heroes</span>. Discover secluded sanctuaries, monumental cliffs, and sapphire
-              waters aboard our <span className="text-white font-semibold">premium fleet</span> where legendary myth meets <span className="text-white font-semibold">modern luxury</span>.
+              {t("home.locations.description", "Trace the wake of ancient heroes. Discover secluded sanctuaries, monumental cliffs, and sapphire waters aboard our premium fleet where legendary myth meets modern luxury.")}
             </p>
           </div>
 
@@ -272,7 +274,7 @@ export function LocationsSection({ destinations }: { destinations: Location[] })
             }}
           >
             <span className="border-b border-transparent group-hover:border-[#84776e] pb-1 transition-all">
-              Unveil All Destinations
+              {t("home.locations.cta", "Unveil All Destinations")}
             </span>
             <ArrowRight className="w-5 h-5 transform group-hover:translate-x-2 transition-transform" />
           </Link>
@@ -284,6 +286,7 @@ export function LocationsSection({ destinations }: { destinations: Location[] })
 
 /* ---------- Primary Card (tall, left column) ---------- */
 function PrimaryCard({ location }: { location: Location }) {
+  const { t } = useTranslations()
   const coords = formatCoord(location.latitude, location.longitude)
 
   return (
@@ -323,7 +326,7 @@ function PrimaryCard({ location }: { location: Location }) {
             className="px-3 py-1 rounded-full text-xs font-medium tracking-wider uppercase"
             style={{ background: "#84776e", color: "#ffffff" }}
           >
-            {location.prefecture || "Ionian Sea"}
+            {removeGreekTonos(location.prefecture || "Ionian Sea")}
           </span>
           <div
             className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 group-hover:bg-[#84776e] group-hover:text-[#070c26]"
@@ -374,7 +377,7 @@ function PrimaryCard({ location }: { location: Location }) {
               </span>
             )}
             {coords && <span>•</span>}
-            <span>DEEP DRAFT</span>
+            <span>{t("home.locations.deepDraft", "DEEP DRAFT")}</span>
           </div>
         </div>
       </div>
@@ -421,7 +424,7 @@ function HorizontalCard({ location, icon }: { location: Location; icon: React.Re
             className="text-xs font-medium tracking-wider uppercase mb-2 block"
             style={{ color: "#84776e" }}
           >
-            {location.prefecture || "Ionian Sea"}
+            {removeGreekTonos(location.prefecture || "Ionian Sea")}
           </span>
           <h3
             className="text-2xl mb-2 tracking-wide"

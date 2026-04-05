@@ -228,7 +228,7 @@ export const fetchDiscountItems = (c: NausysCredentials) =>
 export const fetchSeasons = (c: NausysCredentials) =>
   nausysPost<{ seasons: RawSeason[] }>(c, "/catalogue/v6/seasons").then((d) => d.seasons)
 
-// ── Clients ──
+// ── Clients (deprecated — use contacts2 instead) ──
 
 export interface RawClient {
   id: number
@@ -247,6 +247,7 @@ export interface RawClient {
   remarks?: string
 }
 
+/** @deprecated Use fetchContacts2 instead */
 export async function fetchClients(creds: NausysCredentials): Promise<RawClient[]> {
   if (!creds.companyId) throw new Error("Charter Company ID not configured")
   const res = await fetch(`${creds.endpoint}/catalogue/v6/clients/${creds.companyId}`, {
@@ -256,7 +257,6 @@ export async function fetchClients(creds: NausysCredentials): Promise<RawClient[
     signal: AbortSignal.timeout(60000),
   })
   const text = await res.text()
-  // Debug: if NAUSYS returns HTML, the endpoint doesn't exist
   if (text.startsWith("<!") || text.startsWith("<html")) {
     throw new Error(
       "NAUSYS clients endpoint not found. The API may not support this endpoint for your account."
@@ -266,6 +266,62 @@ export async function fetchClients(creds: NausysCredentials): Promise<RawClient[
   if (data.status === "AUTHENTICATION_ERROR") throw new Error("NAUSYS authentication failed")
   if (data.status !== "OK") throw new Error(`NAUSYS API error: ${JSON.stringify(data).substring(0, 300)}`)
   return data.clients ?? []
+}
+
+// ── Contacts2 (new endpoint — replaces clients) ──
+
+export interface RawContact2 {
+  id: number
+  firstName?: string
+  lastName?: string
+  email?: string
+  phone?: string
+  mobile?: string
+  address?: string
+  city?: string
+  country?: string
+  postcode?: string
+  passportNumber?: string
+  dateOfBirth?: string
+  nationality?: string
+  remarks?: string
+  company?: string
+  contactType?: string          // CLIENT, AGENT, SKIPPER, CREW, OTHER
+  title?: string
+  language?: string
+  taxNumber?: string
+  fax?: string
+}
+
+export async function fetchContacts2(creds: NausysCredentials): Promise<RawContact2[]> {
+  if (!creds.companyId) throw new Error("Charter Company ID not configured")
+
+  // Try known path variations for the contacts2 endpoint
+  const paths = [
+    `/catalogue/v6/contacts2/${creds.companyId}`,
+    `/catalogue/v6/contacts/${creds.companyId}`,
+  ]
+
+  for (const path of paths) {
+    const res = await fetch(`${creds.endpoint}${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ username: creds.username, password: creds.password }),
+      signal: AbortSignal.timeout(90000),
+    })
+    const text = await res.text()
+    // HTML response means endpoint doesn't exist — try next path
+    if (text.startsWith("<!") || text.startsWith("<html")) continue
+
+    const data = JSON.parse(text)
+    if (data.status === "AUTHENTICATION_ERROR") throw new Error("NAUSYS authentication failed")
+    if (data.status !== "OK") throw new Error(`NAUSYS API error: ${JSON.stringify(data).substring(0, 300)}`)
+    return data.contacts ?? data.clients ?? []
+  }
+
+  throw new Error(
+    `NAUSYS contacts endpoint not found. Tried paths: ${paths.join(", ")}. The API may not support contacts for your account.`
+  )
 }
 
 // ── Yacht list (the big one) ──

@@ -2,6 +2,7 @@
 
 import { TeamMemberCard } from "./team-member-card"
 import { cn } from "@/lib/utils"
+import { useTranslations } from "@/lib/use-translations"
 
 export interface StaffMember {
   id: string
@@ -27,8 +28,8 @@ export function TeamGrid({
   columns = 4,
   variant = "minimal",
   maxMembers = 0,
-  lang = "en",
 }: TeamGridProps) {
+  const { locale } = useTranslations()
   const members = maxMembers > 0 ? staff.slice(0, maxMembers) : staff
 
   const gridCols = {
@@ -45,7 +46,7 @@ export function TeamGrid({
         <TeamMemberCard
           key={member.id}
           name={member.name}
-          position={member.position?.[lang] || member.position?.en || ""}
+          position={member.position?.[locale] || member.position?.en || ""}
           image={member.image}
           variant={variant}
         />

@@ -5,6 +5,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
+import { LocaleText } from "@/components/locale-text"
 import { ArrowLeft } from "lucide-react"
 
 export const dynamic = "force-dynamic"
@@ -37,10 +38,11 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
   const article = await db.article.findUnique({ where: { slug } })
   if (!article || article.status !== "published") notFound()
 
-  const title = (article.title as Record<string, string>)?.en || "Untitled"
-  const category = (article.category as Record<string, string>)?.en || ""
-  const shortDesc = (article.shortDesc as Record<string, string>)?.en || ""
-  const description = (article.description as Record<string, string>)?.en || ""
+  const titleObj = article.title as Record<string, string>
+  const categoryObj = article.category as Record<string, string>
+  const shortDescObj = article.shortDesc as Record<string, string>
+  const descriptionObj = article.description as Record<string, string>
+  const titleEn = titleObj?.en || "Untitled"
   const media = article.media as string[]
 
   return (
@@ -63,7 +65,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
             ) : (
               <Image
                 src={article.defaultMedia}
-                alt={title}
+                alt={titleEn}
                 fill
                 className="object-cover"
                 priority
@@ -72,22 +74,22 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-[#060c27] via-[#060c27]/40 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-8 md:p-16 max-w-4xl mx-auto">
-              {category && (
+              {categoryObj?.en && (
                 <span className="inline-block px-3 py-1 text-[10px] font-semibold uppercase tracking-wider rounded-full bg-[#83776d]/90 text-white mb-4">
-                  {category}
+                  <LocaleText translations={categoryObj} uppercase />
                 </span>
               )}
               <h1
                 className="text-3xl md:text-5xl font-bold text-white"
                 style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em" }}
               >
-                {title}
+                <LocaleText translations={titleObj} fallback="Untitled" />
               </h1>
               <div className="flex items-center gap-4 mt-4 text-sm text-white/50">
                 <time>
                   {new Date(article.date).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" })}
                 </time>
-                {article.author && <span>By {article.author}</span>}
+                {article.author && <span><LocaleText tKey="news.by" fallback="By" /> {article.author}</span>}
               </div>
             </div>
           </section>
@@ -97,22 +99,22 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
         {!article.defaultMedia && (
           <section className="pt-32 pb-8 px-6">
             <div className="max-w-4xl mx-auto">
-              {category && (
+              {categoryObj?.en && (
                 <span className="inline-block px-3 py-1 text-[10px] font-semibold uppercase tracking-wider rounded-full bg-[#83776d]/90 text-white mb-4">
-                  {category}
+                  <LocaleText translations={categoryObj} uppercase />
                 </span>
               )}
               <h1
                 className="text-3xl md:text-5xl font-bold text-white mb-4"
                 style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em" }}
               >
-                {title}
+                <LocaleText translations={titleObj} fallback="Untitled" />
               </h1>
               <div className="flex items-center gap-4 text-sm text-white/50">
                 <time>
                   {new Date(article.date).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" })}
                 </time>
-                {article.author && <span>By {article.author}</span>}
+                {article.author && <span><LocaleText tKey="news.by" fallback="By" /> {article.author}</span>}
               </div>
             </div>
           </section>
@@ -126,20 +128,21 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
               className="inline-flex items-center gap-2 text-sm text-[#83776d] hover:text-[#83776d]/80 transition-colors mb-8"
             >
               <ArrowLeft className="size-4" />
-              Back to News
+              <LocaleText tKey="news.backToNews" fallback="Back to News" />
             </Link>
 
-            {shortDesc && (
+            {shortDescObj?.en && (
               <p className="text-xl leading-relaxed text-white/70 mb-10 border-l-2 border-[#83776d] pl-6">
-                {shortDesc}
+                <LocaleText translations={shortDescObj} />
               </p>
             )}
 
-            {description && (
-              <div
+            {descriptionObj?.en && (
+              <LocaleText
+                translations={descriptionObj}
+                html
                 className="prose prose-lg prose-invert max-w-none"
                 style={{ color: "rgba(255,255,255,0.75)" }}
-                dangerouslySetInnerHTML={{ __html: description }}
               />
             )}
           </div>
@@ -156,7 +159,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
                     {isVideo ? (
                       <video src={url} controls muted preload="metadata" className="w-full h-full object-cover" />
                     ) : (
-                      <Image src={url} alt={`${title} ${i + 1}`} fill className="object-cover !relative" sizes="(max-width: 768px) 50vw, 33vw" />
+                      <Image src={url} alt={`${titleEn} ${i + 1}`} fill className="object-cover !relative" sizes="(max-width: 768px) 50vw, 33vw" />
                     )}
                   </div>
                 )

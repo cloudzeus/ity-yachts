@@ -8,9 +8,9 @@ export const metadata = { title: "Pages — IYC Admin" }
 export default async function PagesPage() {
   const [pages, total] = await Promise.all([
     db.page.findMany({
-      orderBy: { updatedAt: "desc" },
-      take: 10,
-      select: { id: true, name: true, slug: true, status: true, isHomePage: true, showInMenu: true, centralMenu: true, menuOrder: true, updatedAt: true },
+      orderBy: { sortOrder: "asc" },
+      take: 200,
+      select: { id: true, name: true, slug: true, status: true, isHomePage: true, showInMenu: true, centralMenu: true, menuOrder: true, sortOrder: true, updatedAt: true },
     }),
     db.page.count(),
   ])

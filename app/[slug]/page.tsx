@@ -6,6 +6,7 @@ import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { PageRenderer } from "@/components/page-renderer"
 import { PageComponentRenderer, getPageComponents } from "@/components/page-components"
+import { LocaleText } from "@/components/locale-text"
 import { PageSection } from "@/types/page"
 
 export const dynamic = "force-dynamic"
@@ -108,7 +109,7 @@ export default async function DynamicPage({ params }: PageProps) {
               <div className="max-w-3xl">
                 {heroSection.overSubheading?.en && (
                   <span className="mb-6 inline-block rounded-full border border-[#83776d]/30 bg-[#070c26]/20 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-[#83776d] backdrop-blur-sm">
-                    {heroSection.overSubheading.en}
+                    <LocaleText translations={heroSection.overSubheading} uppercase />
                   </span>
                 )}
                 {heroSection.heading?.en && (
@@ -116,12 +117,12 @@ export default async function DynamicPage({ params }: PageProps) {
                     className="mb-6 text-5xl font-light leading-[1.1] text-white md:text-6xl lg:text-7xl"
                     style={{ textWrap: "balance" as never }}
                   >
-                    {heroSection.heading.en}
+                    <LocaleText translations={heroSection.heading} />
                   </h1>
                 )}
                 {heroSection.subheading?.en && (
                   <p className="max-w-2xl border-l-2 border-[#83776d] pl-6 text-lg font-light leading-relaxed text-gray-300 md:text-xl">
-                    {heroSection.subheading.en}
+                    <LocaleText translations={heroSection.subheading} />
                   </p>
                 )}
               </div>
@@ -143,7 +144,7 @@ export default async function DynamicPage({ params }: PageProps) {
         {pageComponents.length > 0 && (
           <div className="py-16">
             <div className="mx-auto max-w-7xl px-6">
-              <PageComponentRenderer components={pageComponents} lang="en" />
+              <PageComponentRenderer components={pageComponents} />
             </div>
           </div>
         )}

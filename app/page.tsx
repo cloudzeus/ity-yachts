@@ -46,82 +46,70 @@ export default async function Home() {
   } | null
 
   const heroData = {
-    overSubheading: heroJson?.overSubheading?.en || "Luxury Yacht Charters",
-    heading: heroJson?.heading?.en || "IONISCHE YACHT CHARTER",
-    subheading: heroJson?.subheading?.en || "Bespoke yacht charters and luxury maritime experiences crafted for the most discerning travellers.",
+    overSubheading: heroJson?.overSubheading || { en: "Luxury Yacht Charters" },
+    heading: heroJson?.heading || { en: "IONISCHE YACHT CHARTER" },
+    subheading: heroJson?.subheading || { en: "Bespoke yacht charters and luxury maritime experiences crafted for the most discerning travellers." },
   }
 
-  // Transform data for client components
-  const destinationData = locations.map((loc) => {
-    const nameT = loc.nameTranslations as Record<string, string>
-    const descT = loc.shortDesc as Record<string, string>
-    const prefT = loc.prefecture as Record<string, string>
-    return {
-      id: loc.id,
-      name: nameT?.en || loc.name,
-      slug: loc.slug,
-      image: loc.defaultMedia || "",
-      mediaType: loc.defaultMediaType || "image",
-      shortDesc: descT?.en || "",
-      latitude: loc.latitude,
-      longitude: loc.longitude,
-      prefecture: prefT?.en || "",
-    }
-  })
+  // Transform data for client components — pass full translation objects
+  const destinationData = locations.map((loc) => ({
+    id: loc.id,
+    name: (loc.nameTranslations as Record<string, string>)?.en || loc.name,
+    nameT: loc.nameTranslations as Record<string, string> | null,
+    slug: loc.slug,
+    image: loc.defaultMedia || "",
+    mediaType: loc.defaultMediaType || "image",
+    shortDesc: loc.shortDesc as Record<string, string> | null,
+    latitude: loc.latitude,
+    longitude: loc.longitude,
+    prefecture: loc.prefecture as Record<string, string> | null,
+  }))
 
-  const itineraryData = itineraries.map((it) => {
-    const nameT = it.name as Record<string, string>
-    const descT = it.shortDesc as Record<string, string>
-    return {
-      id: it.id,
-      name: nameT?.en || "Untitled",
-      slug: it.slug,
-      image: it.defaultMedia || "",
-      shortDesc: descT?.en || "",
-      totalDays: it.totalDays,
-      totalMiles: it.totalMiles,
-      startFrom: it.startFrom,
-    }
-  })
+  const itineraryData = itineraries.map((it) => ({
+    id: it.id,
+    name: (it.name as Record<string, string>)?.en || "Untitled",
+    nameT: it.name as Record<string, string> | null,
+    slug: it.slug,
+    image: it.defaultMedia || "",
+    shortDesc: it.shortDesc as Record<string, string> | null,
+    totalDays: it.totalDays,
+    totalMiles: it.totalMiles,
+    startFrom: it.startFrom,
+  }))
 
   const yachtData = yachts.map((y) => {
-    const categoryName = y.category
-      ? (y.category.name as Record<string, string>)?.en || "Yacht"
-      : "Yacht"
-    // Use website images first, fall back to NAUSYS main picture, then pictures array
+    const catT = y.category?.name as Record<string, string> | undefined
     const websiteImgs = y.websiteImages as Array<{ url: string }> | null
     const picturesArr = y.picturesUrl as string[] | null
     const image = websiteImgs?.[0]?.url || y.mainPictureUrl || picturesArr?.[0] || ""
-    const locationName = y.base?.location
-      ? (y.base.location.name as Record<string, string>)?.en || ""
-      : ""
+    const locT = y.base?.location?.name as Record<string, string> | undefined
     return {
       id: y.id,
       name: y.name || y.model?.name || "Yacht",
       slug: String(y.id),
       image,
-      category: categoryName,
+      category: catT?.en || "Yacht",
+      categoryT: catT || null,
       loa: y.loa || 0,
       cabins: y.cabins || 0,
       berths: y.berthsTotal || y.maxPersons || 0,
-      baseName: locationName || (y.base?.id ? String(y.base.id) : ""),
+      baseName: locT?.en || (y.base?.id ? String(y.base.id) : ""),
+      baseNameT: locT || null,
       priceFrom: 0,
       year: y.buildYear || undefined,
       rating: 4.8,
     }
   })
 
-  const reviewData = reviews.map((r) => {
-    const contentT = r.content as Record<string, string>
-    return {
-      id: r.id,
-      name: r.name,
-      content: contentT?.en || "",
-      rating: r.rating,
-      image: r.image,
-      date: r.date.toISOString(),
-    }
-  })
+  const reviewData = reviews.map((r) => ({
+    id: r.id,
+    name: r.name,
+    content: (r.content as Record<string, string>)?.en || "",
+    contentT: r.content as Record<string, string> | null,
+    rating: r.rating,
+    image: r.image,
+    date: r.date.toISOString(),
+  }))
 
   return (
     <main>

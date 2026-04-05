@@ -36,19 +36,16 @@ export default async function LocationPage({ params }: { params: Promise<{ slug:
   if (!location || location.status !== "published") notFound()
 
   const names = location.nameTranslations as Record<string, string>
-  const name = names?.en || location.name
-  const shortDesc = (location.shortDesc as Record<string, string>)?.en || ""
-  const desc = (location.description as Record<string, string>)?.en || ""
-  const pref = (location.prefecture as Record<string, string>)?.en || ""
   const city = /[\u0370-\u03FF\u1F00-\u1FFF]/.test(location.city) ? "" : location.city
   const imgs = location.images as string[]
 
   const data = {
-    name,
+    name: names?.en || location.name,
+    nameTranslations: location.nameTranslations as Record<string, string> | null,
     slug: location.slug,
-    shortDesc,
-    description: desc,
-    prefecture: pref,
+    shortDesc: location.shortDesc as Record<string, string> | null,
+    description: location.description as Record<string, string> | null,
+    prefecture: location.prefecture as Record<string, string> | null,
     city,
     latitude: location.latitude,
     longitude: location.longitude,

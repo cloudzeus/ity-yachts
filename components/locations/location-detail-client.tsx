@@ -22,6 +22,8 @@ import {
   Waves,
 } from "lucide-react"
 import { LocationMap } from "./location-map"
+import { useTranslations } from "@/lib/use-translations"
+import { removeGreekTonos } from "@/lib/greek-utils"
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger)
@@ -29,18 +31,27 @@ if (typeof window !== "undefined") {
 
 /* ─── Types ──────────────────────────────────────────────────────────────── */
 
+type TranslatedField = Record<string, string> | null | undefined
+
 type LocationData = {
   name: string
+  nameTranslations?: TranslatedField
   slug: string
-  shortDesc: string
-  description: string
-  prefecture: string
+  shortDesc: string | TranslatedField
+  description: string | TranslatedField
+  prefecture: string | TranslatedField
   city: string
   latitude: number | null
   longitude: number | null
   defaultMedia: string | null
   defaultMediaType: string | null
   images: string[]
+}
+
+function resolveField(field: string | TranslatedField, locale: string): string {
+  if (!field) return ""
+  if (typeof field === "string") return field
+  return field[locale] || field.en || ""
 }
 
 /* ─── Coordinate formatter ──────────────────────────────────────────────── */
@@ -196,6 +207,11 @@ function Lightbox({
    ═══════════════════════════════════════════════════════════════════════════ */
 
 export function LocationDetailClient({ location }: { location: LocationData }) {
+  const { locale, t, tUpper } = useTranslations()
+  const locName = resolveField(location.nameTranslations, locale) || location.name
+  const locShortDesc = resolveField(location.shortDesc, locale)
+  const locDescription = resolveField(location.description, locale)
+  const locPrefecture = resolveField(location.prefecture, locale)
   const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null)
   const heroRef = useRef<HTMLDivElement>(null)
   const heroImgRef = useRef<HTMLDivElement>(null)
@@ -353,7 +369,7 @@ export function LocationDetailClient({ location }: { location: LocationData }) {
             className="group inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/5 backdrop-blur-md border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition-all duration-300 text-sm"
           >
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-            All Destinations
+            {t("locationDetail.allDestinations", "All Destinations")}
           </Link>
         </div>
 
@@ -398,18 +414,18 @@ export function LocationDetailClient({ location }: { location: LocationData }) {
             className="absolute bottom-8 right-6 md:right-12 z-20 flex items-center gap-2 px-3.5 py-2 rounded-full bg-white/5 backdrop-blur-md border border-white/10 text-white/60 hover:text-white hover:bg-white/10 transition-all duration-300 text-xs"
           >
             <Maximize2 className="w-3.5 h-3.5" />
-            View fullscreen
+            {t("locationDetail.viewFullscreen", "View fullscreen")}
           </button>
         )}
 
         {/* Hero content */}
         <div className="absolute bottom-0 inset-x-0 z-10 px-6 md:px-12 pb-12">
           <div className="max-w-5xl mx-auto">
-            {(location.prefecture || location.city) && (
+            {(locPrefecture || location.city) && (
               <div className="flex items-center gap-2 mb-4">
                 <MapPin className="w-4 h-4 text-[#0077B6]" />
                 <span className="text-xs uppercase tracking-[0.15em] text-white/50 font-medium">
-                  {[location.prefecture, location.city].filter(Boolean).join(" · ")}
+                  {removeGreekTonos([locPrefecture, location.city].filter(Boolean).join(" · "))}
                 </span>
               </div>
             )}
@@ -417,11 +433,11 @@ export function LocationDetailClient({ location }: { location: LocationData }) {
               className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4"
               style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.03em", color: "#fff" }}
             >
-              {location.name}
+              {locName}
             </h1>
-            {location.shortDesc && (
+            {locShortDesc && (
               <p className="text-lg md:text-xl text-white/60 max-w-2xl leading-relaxed">
-                {location.shortDesc}
+                {locShortDesc}
               </p>
             )}
 
@@ -433,7 +449,7 @@ export function LocationDetailClient({ location }: { location: LocationData }) {
                   className="flex items-center gap-2 text-white/40 hover:text-white/70 transition-colors text-sm"
                 >
                   <Compass className="w-4 h-4" />
-                  {allImages.length} photos
+                  {t("locationDetail.photosCount", "{count} photos").replace("{count}", String(allImages.length))}
                 </button>
               )}
               {hasCoords && (
@@ -442,7 +458,7 @@ export function LocationDetailClient({ location }: { location: LocationData }) {
                   className="flex items-center gap-2 text-white/40 hover:text-white/70 transition-colors text-sm cursor-pointer"
                 >
                   <MapPin className="w-4 h-4" />
-                  View on map
+                  {t("locationDetail.viewOnMap", "View on map")}
                 </button>
               )}
             </div>
@@ -456,7 +472,7 @@ export function LocationDetailClient({ location }: { location: LocationData }) {
       {/* ── Content ─────────────────────────────────────────────────────── */}
       <div ref={contentRef} className="relative">
         {/* Description section */}
-        {location.description && (
+        {locDescription && (
           <section data-reveal className="px-6 md:px-12 pt-16 pb-12">
             <div className="max-w-5xl mx-auto">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
@@ -465,14 +481,14 @@ export function LocationDetailClient({ location }: { location: LocationData }) {
                   <div className="flex items-center gap-3 mb-3">
                     <div className="w-8 h-[1px] bg-[#0077B6]/40" />
                     <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0077B6]">
-                      About
+                      {tUpper("locationDetail.about", "About")}
                     </span>
                   </div>
                   <h2
                     className="text-2xl font-bold"
                     style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em", color: "#fff" }}
                   >
-                    {location.name}
+                    {locName}
                   </h2>
                 </div>
 
@@ -481,7 +497,7 @@ export function LocationDetailClient({ location }: { location: LocationData }) {
                   <div
                     className="prose prose-lg prose-invert max-w-none"
                     style={{ color: "rgba(255,255,255,0.65)", textAlign: "justify" }}
-                    dangerouslySetInnerHTML={{ __html: location.description }}
+                    dangerouslySetInnerHTML={{ __html: locDescription }}
                   />
                 </div>
               </div>
@@ -490,7 +506,7 @@ export function LocationDetailClient({ location }: { location: LocationData }) {
         )}
 
         {/* Divider */}
-        {location.description && location.images.length > 0 && (
+        {locDescription && location.images.length > 0 && (
           <div data-reveal className="max-w-5xl mx-auto px-6 md:px-12">
             <div className="h-[1px] bg-gradient-to-r from-transparent via-white/8 to-transparent" />
           </div>
@@ -503,7 +519,7 @@ export function LocationDetailClient({ location }: { location: LocationData }) {
               <div className="flex items-center gap-3 mb-8">
                 <div className="w-8 h-[1px] bg-[#0077B6]/40" />
                 <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0077B6]">
-                  Gallery
+                  {tUpper("locationDetail.gallery", "Gallery")}
                 </span>
               </div>
 
@@ -564,7 +580,7 @@ export function LocationDetailClient({ location }: { location: LocationData }) {
               <div className="flex items-center gap-3 mb-8">
                 <div className="w-8 h-[1px] bg-[#0077B6]/40" />
                 <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0077B6]">
-                  Location
+                  {tUpper("locationDetail.location", "Location")}
                 </span>
               </div>
 
@@ -594,7 +610,7 @@ export function LocationDetailClient({ location }: { location: LocationData }) {
                     rel="noopener noreferrer"
                     className="flex items-center gap-1.5 text-xs text-[#0077B6]/70 hover:text-[#0077B6] transition-colors"
                   >
-                    Open in Google Maps
+                    {t("locationDetail.openInGoogleMaps", "Open in Google Maps")}
                     <ArrowRight className="w-3 h-3" />
                   </a>
                 </div>
@@ -607,12 +623,12 @@ export function LocationDetailClient({ location }: { location: LocationData }) {
         <section data-reveal className="px-6 md:px-12 pb-24">
           <div className="max-w-5xl mx-auto text-center">
             <div className="h-[1px] bg-gradient-to-r from-transparent via-white/8 to-transparent mb-12" />
-            <p className="text-white/40 text-sm mb-4">Want to explore more?</p>
+            <p className="text-white/40 text-sm mb-4">{t("locationDetail.exploreMorePrompt", "Want to explore more?")}</p>
             <Link
               href="/locations"
               className="inline-flex items-center gap-2.5 px-6 py-3 rounded-full bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all duration-300 text-sm font-medium"
             >
-              Browse all destinations
+              {t("locationDetail.browseAllDestinations", "Browse all destinations")}
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
