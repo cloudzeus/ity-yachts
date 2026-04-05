@@ -41,8 +41,22 @@ interface HeroSectionPanelProps {
   onChange: (data: HeroSectionData) => void
 }
 
+const EMPTY_LANG = { en: "", el: "", de: "" }
+
+function ensureHero(data: HeroSectionData | null): HeroSectionData {
+  if (!data) return EMPTY_HERO
+  return {
+    ...EMPTY_HERO,
+    ...data,
+    overSubheading: { ...EMPTY_LANG, ...data.overSubheading },
+    heading: { ...EMPTY_LANG, ...data.heading },
+    subheading: { ...EMPTY_LANG, ...data.subheading },
+    buttonText: { ...EMPTY_LANG, ...data.buttonText },
+  }
+}
+
 export function HeroSectionPanel({ data, onChange }: HeroSectionPanelProps) {
-  const hero = data ?? EMPTY_HERO
+  const hero = ensureHero(data)
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false)
   const [ctaMediaPickerOpen, setCtaMediaPickerOpen] = useState(false)
   const [translatingField, setTranslatingField] = useState<string | null>(null)
@@ -427,6 +441,7 @@ function TranslatableField({
   translating: boolean
   multiline?: boolean
 }) {
+  const safeValues = { en: "", el: "", de: "", ...values }
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-center justify-between">
@@ -442,7 +457,7 @@ function TranslatableField({
           className="h-5 text-[10px] px-2"
           style={{ color: "var(--primary)" }}
           onClick={() => onTranslate(field)}
-          disabled={translating || !values.en}
+          disabled={translating || !safeValues.en}
         >
           {translating ? "Translating\u2026" : "DeepSeek"}
         </Button>
@@ -458,7 +473,7 @@ function TranslatableField({
             </span>
             {multiline ? (
               <Textarea
-                value={values[lang] || ""}
+                value={safeValues[lang] || ""}
                 onChange={(e) => onChange(field, lang, e.target.value)}
                 placeholder={lang === "en" ? `${label} (English)` : ""}
                 className="text-xs min-h-[56px] resize-none"
@@ -469,7 +484,7 @@ function TranslatableField({
               />
             ) : (
               <Input
-                value={values[lang] || ""}
+                value={safeValues[lang] || ""}
                 onChange={(e) => onChange(field, lang, e.target.value)}
                 placeholder={lang === "en" ? `${label} (English)` : ""}
                 className="h-7 text-xs"
