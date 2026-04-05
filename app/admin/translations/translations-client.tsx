@@ -277,7 +277,7 @@ export function TranslationsClient({ initialData }: { initialData: SiteTranslati
   }, [scanResult])
 
   const handleTranslateAll = useCallback(async () => {
-    if (!confirm("Translate all missing labels AND content (pages, locations, itineraries, staff, reviews) with DeepSeek?\n\nThis may take a few minutes.")) return
+    if (!confirm("Translate all missing labels AND content (pages, hero sections, page components, locations, itineraries, staff, reviews) with DeepSeek?\n\nThis may take a few minutes.")) return
     setBulkTranslating(true)
     try {
       const res = await fetch("/api/admin/site-translations/translate-all", { method: "POST" })

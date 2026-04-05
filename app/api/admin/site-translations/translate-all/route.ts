@@ -227,7 +227,132 @@ export async function POST() {
       }
     }
 
-    // ── 6. Reviews ──
+    // ── 6. Page hero sections ──
+    const pagesWithHero = await db.page.findMany({
+      where: { heroSection: { not: null } },
+      select: { id: true, name: true, heroSection: true },
+    })
+    for (const p of pagesWithHero) {
+      try {
+        const hero = p.heroSection as Record<string, unknown> | null
+        if (!hero) continue
+        const fields = ["overSubheading", "heading", "subheading", "buttonText"]
+        const updates = await translateJsonFields(hero, fields)
+        if (updates) {
+          await db.page.update({
+            where: { id: p.id },
+            data: { heroSection: { ...hero, ...updates } },
+          })
+          stats.content.translated++
+        }
+      } catch {
+        stats.content.failed++
+        stats.errors.push(`hero:${p.name}`)
+      }
+    }
+
+    // ── 7. Page components (Skipper Academy, etc.) ──
+    const pageComponents = await db.pageComponent.findMany({
+      select: { id: true, type: true, name: true, props: true },
+    })
+    for (const comp of pageComponents) {
+      try {
+        const props = (comp.props || {}) as Record<string, unknown>
+        let anyChanged = false
+        const updatedProps = { ...props }
+
+        // Helper to translate a single { en, el, de } object
+        async function translateT(obj: unknown): Promise<{ changed: boolean; value: Record<string, string> }> {
+          const t = (obj && typeof obj === "object" ? obj : {}) as Record<string, string>
+          if (!t.en) return { changed: false, value: t }
+          let changed = false
+          const result = { ...t }
+          for (const lang of ["el", "de"] as const) {
+            if (!result[lang]) {
+              try {
+                result[lang] = await translate(t.en, lang, "en")
+                changed = true
+              } catch { /* skip */ }
+            }
+          }
+          return { changed, value: result }
+        }
+
+        // Translate simple top-level { en, el, de } fields in nested objects
+        async function translateNestedObj(key: string, fields: string[]) {
+          const obj = (updatedProps[key] || {}) as Record<string, unknown>
+          let objChanged = false
+          const updated = { ...obj }
+          for (const f of fields) {
+            const { changed, value } = await translateT(obj[f])
+            if (changed) { updated[f] = value; objChanged = true }
+          }
+          if (objChanged) { updatedProps[key] = updated; anyChanged = true }
+        }
+
+        // Translate arrays of { ..., title: T, description: T } etc.
+        async function translateArray(key: string, fields: string[]) {
+          const arr = (updatedProps[key] || []) as Record<string, unknown>[]
+          if (!arr.length) return
+          let arrChanged = false
+          const updated = arr.map((item) => ({ ...item }))
+          for (let i = 0; i < updated.length; i++) {
+            for (const f of fields) {
+              const { changed, value } = await translateT(updated[i][f])
+              if (changed) { updated[i][f] = value; arrChanged = true }
+            }
+          }
+          if (arrChanged) { updatedProps[key] = updated; anyChanged = true }
+        }
+
+        // Translate array of bare T objects (like curriculum, audience)
+        async function translateTArray(parentKey: string, arrayKey: string) {
+          const parent = (updatedProps[parentKey] || {}) as Record<string, unknown>
+          const arr = (parent[arrayKey] || []) as Record<string, string>[]
+          if (!arr.length) return
+          let arrChanged = false
+          const updated = [...arr]
+          for (let i = 0; i < updated.length; i++) {
+            const { changed, value } = await translateT(updated[i])
+            if (changed) { updated[i] = value; arrChanged = true }
+          }
+          if (arrChanged) {
+            updatedProps[parentKey] = { ...parent, [arrayKey]: updated }
+            anyChanged = true
+          }
+        }
+
+        // Value Proposition
+        await translateNestedObj("valueProposition", ["headline", "subtext", "body"])
+        // Features
+        await translateArray("features", ["title", "description"])
+        // Training Program
+        await translateNestedObj("trainingProgram", ["headline", "body"])
+        await translateTArray("trainingProgram", "curriculum")
+        await translateTArray("trainingProgram", "audience")
+        // Testimonials
+        await translateArray("testimonials", ["location", "content"])
+        // Stats
+        await translateArray("stats", ["value", "label"])
+        // CTA
+        await translateNestedObj("cta", ["headline", "body", "primaryButton", "secondaryButton"])
+        // Blessing
+        await translateNestedObj("blessing", ["quote", "subtitle"])
+
+        if (anyChanged) {
+          await db.pageComponent.update({
+            where: { id: comp.id },
+            data: { props: updatedProps },
+          })
+          stats.content.translated++
+        }
+      } catch {
+        stats.content.failed++
+        stats.errors.push(`component:${comp.name || comp.type}`)
+      }
+    }
+
+    // ── 8. Reviews ──
     const reviews = await db.review.findMany({
       select: { id: true, name: true, content: true },
     })
