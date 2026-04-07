@@ -22,6 +22,9 @@ import { cn } from "@/lib/utils"
 import { COMPONENT_REGISTRY, getComponentTypes } from "@/lib/page-components"
 import { TeamGrid, type StaffMember } from "@/components/page-components/team-grid"
 import { SkipperAcademyEditor } from "@/components/admin/page-builder/skipper-academy-editor"
+import { ContactContentEditor } from "@/components/admin/page-builder/contact-content-editor"
+import { PageHeaderEditor } from "@/components/admin/page-builder/page-header-editor"
+import { ServicesContentEditor } from "@/components/admin/page-builder/services-content-editor"
 
 interface PageComponentItem {
   id: string
@@ -237,6 +240,27 @@ export function PageComponentsPanel({ pageId }: PageComponentsPanelProps) {
                       )}
                       {comp.type === "skipper-academy" && (
                         <SkipperAcademyEditor
+                          props={comp.props}
+                          onChange={(props) => updateComponent(comp.id, { props })}
+                        />
+                      )}
+                      {comp.type === "contact-content" && (
+                        <ContactContentEditor
+                          props={comp.props}
+                          onChange={(props) => updateComponent(comp.id, { props })}
+                        />
+                      )}
+                      {(comp.type === "fleet-content" ||
+                        comp.type === "locations-content" ||
+                        comp.type === "itineraries-content" ||
+                        comp.type === "news-content") && (
+                        <PageHeaderEditor
+                          props={comp.props}
+                          onChange={(props) => updateComponent(comp.id, { props })}
+                        />
+                      )}
+                      {comp.type === "services-content" && (
+                        <ServicesContentEditor
                           props={comp.props}
                           onChange={(props) => updateComponent(comp.id, { props })}
                         />

@@ -12,6 +12,155 @@ export interface ComponentDefinition {
 }
 
 export const COMPONENT_REGISTRY: Record<string, ComponentDefinition> = {
+  "contact-content": {
+    type: "contact-content",
+    label: "Contact Page Content",
+    description: "Manages all editable content for the Contact page — hero, stats, offices, family badge, CTA",
+    category: "content",
+    defaultProps: {
+      hero: {
+        badge: { en: "Get In Touch", el: "Επικοινωνία", de: "Kontakt" },
+        title: { en: "Let's Plan Your", el: "Ας Σχεδιάσουμε", de: "Planen Wir Ihre" },
+        titleAccent: { en: "Perfect Charter", el: "Τέλειο Charter", de: "Perfekte Charter" },
+        subtitle: {
+          en: "Whether you have a question, want to book a yacht, or just want to say hello — our family team is here for you since 1979.",
+          el: "",
+          de: "",
+        },
+      },
+      stats: [
+        { num: "45+", label: { en: "Years of Experience", el: "Χρόνια Εμπειρίας", de: "Jahre Erfahrung" } },
+        { num: "2", label: { en: "Offices Worldwide", el: "Γραφεία", de: "Büros weltweit" } },
+        { num: "24h", label: { en: "Response Time", el: "Χρόνος Απόκρισης", de: "Antwortzeit" } },
+      ],
+      offices: [
+        {
+          id: "germany",
+          label: "Munich Office",
+          flag: "🇩🇪",
+          person: "Thomas Ramisch",
+          address: "Mozartstr. 8, D-80336 München",
+          country: "Germany",
+          phone: "+49 160 99279870",
+          mobile: "",
+          email: "info@iyc.de",
+          hours: "Mon – Fri: 09:00 – 18:00 CET",
+          mapUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2662.5!2d11.5596!3d48.1351!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNDjCsDA4JzA2LjQiTiAxMcKwMzMnMzQuNiJF!5e0!3m2!1sen!2sde!4v1",
+        },
+        {
+          id: "greece",
+          label: "Lefkada Base",
+          flag: "🇬🇷",
+          person: "Maria Ramisch",
+          address: "PF Panagou 22, GR-31100 Lefkada",
+          country: "Greece",
+          phone: "+30 26450 26393",
+          mobile: "+30 6932 637171",
+          email: "maria@iyc.de",
+          hours: "Mon – Sat: 08:00 – 20:00 EEST (Season)",
+          mapUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d12500!2d20.7069!3d38.8337!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzjCsDUwJzAxLjMiTiAyMMKwNDInMjQuOCJF!5e0!3m2!1sen!2sgr!4v1",
+        },
+      ],
+      familyBadge: {
+        title: { en: "Family Business Since 1979", el: "Οικογενειακή Επιχείρηση από το 1979", de: "Familienunternehmen seit 1979" },
+        description: {
+          en: "German-Greek family operation with deep roots in the Ionian Sea. Personal service, not a call center.",
+          el: "",
+          de: "",
+        },
+      },
+      cta: {
+        title: { en: "Ready to Set Sail?", el: "Έτοιμοι για Αναχώρηση;", de: "Bereit zum Absegeln?" },
+        description: {
+          en: "Browse our fleet and find the perfect yacht for your Ionian adventure.",
+          el: "",
+          de: "",
+        },
+        primaryBtn: { en: "Explore Fleet", el: "Δείτε τον Στόλο", de: "Flotte erkunden" },
+        primaryLink: "/fleet",
+        secondaryBtn: { en: "View Destinations", el: "Προορισμοί", de: "Ziele ansehen" },
+        secondaryLink: "/locations",
+      },
+    },
+    defaultDataSource: {},
+  },
+
+  "fleet-content": {
+    type: "fleet-content",
+    label: "Fleet Page Header",
+    description: "Manages the hero header content for the Fleet listing page",
+    category: "content",
+    defaultProps: {
+      hero: {
+        badge: { en: "Browse Our Fleet", el: "Ο Στόλος Μας", de: "Unsere Flotte" },
+        title: { en: "Find Your Perfect Yacht", el: "Βρείτε το Ιδανικό Σας Σκάφος", de: "Finden Sie Ihre perfekte Yacht" },
+        subtitle: {
+          en: "Browse our full fleet of yachts and catamarans available for charter in the Ionian Sea.",
+          el: "",
+          de: "",
+        },
+      },
+    },
+    defaultDataSource: {},
+  },
+
+  "locations-content": {
+    type: "locations-content",
+    label: "Locations Page Header",
+    description: "Manages the hero header content for the Destinations listing page",
+    category: "content",
+    defaultProps: {
+      hero: {
+        badge: { en: "Charter Destinations", el: "Προορισμοί Charter", de: "Charter-Ziele" },
+        title: { en: "Discover the Ionian Sea", el: "Ανακαλύψτε το Ιόνιο Πέλαγος", de: "Entdecken Sie das Ionische Meer" },
+        subtitle: {
+          en: "Explore Lefkada and the Ionian islands — from secluded turquoise bays to vibrant seaside harbours.",
+          el: "",
+          de: "",
+        },
+      },
+    },
+    defaultDataSource: {},
+  },
+
+  "itineraries-content": {
+    type: "itineraries-content",
+    label: "Itineraries Page Header",
+    description: "Manages the hero header content for the Sailing Itineraries listing page",
+    category: "content",
+    defaultProps: {
+      hero: {
+        badge: { en: "Explore Routes", el: "Διαδρομές", de: "Routen erkunden" },
+        title: { en: "Sailing Itineraries", el: "Ιστιοπλοϊκές Διαδρομές", de: "Segelrouten" },
+        subtitle: {
+          en: "Discover hand-crafted sailing routes through the most beautiful destinations in Greece.",
+          el: "",
+          de: "",
+        },
+      },
+    },
+    defaultDataSource: {},
+  },
+
+  "news-content": {
+    type: "news-content",
+    label: "News Page Header",
+    description: "Manages the hero header content for the News & Articles listing page",
+    category: "content",
+    defaultProps: {
+      hero: {
+        badge: { en: "Our Blog", el: "Το Blog Μας", de: "Unser Blog" },
+        title: { en: "News & Articles", el: "Νέα & Άρθρα", de: "News & Artikel" },
+        subtitle: {
+          en: "Sailing tips, destination guides, and stories from the Ionian Sea.",
+          el: "",
+          de: "",
+        },
+      },
+    },
+    defaultDataSource: {},
+  },
+
   "team-grid": {
     type: "team-grid",
     label: "Team Grid",
@@ -29,6 +178,38 @@ export const COMPONENT_REGISTRY: Record<string, ComponentDefinition> = {
       orderBy: { sortOrder: "asc" },
     },
   },
+  "services-content": {
+    type: "services-content",
+    label: "Services Page Content",
+    description: "Manages all editable content for the Services listing page — hero, title accent, subtitle, and CTA band",
+    category: "content",
+    defaultProps: {
+      hero: {
+        badge: { en: "Our Services", el: "Υπηρεσίες Μας", de: "Unsere Leistungen" },
+        title: { en: "Premium Charter", el: "Premium Charter", de: "Premium Charter" },
+        titleAccent: { en: "Services", el: "Υπηρεσίες", de: "Leistungen" },
+        subtitle: {
+          en: "Everything you need for an unforgettable voyage — from bareboat to fully crewed luxury, tailored to your journey.",
+          el: "",
+          de: "",
+        },
+      },
+      cta: {
+        title: { en: "Plan Your Perfect Charter", el: "Σχεδιάστε το Ιδανικό σας Charter", de: "Planen Sie Ihre perfekte Charter" },
+        description: {
+          en: "Browse our fleet and connect with our team to craft your ideal sailing experience.",
+          el: "",
+          de: "",
+        },
+        primaryBtn: { en: "Browse Our Fleet", el: "Δείτε τον Στόλο", de: "Flotte erkunden" },
+        primaryLink: "/fleet",
+        secondaryBtn: { en: "Contact Us", el: "Επικοινωνήστε", de: "Kontakt" },
+        secondaryLink: "/contact",
+      },
+    },
+    defaultDataSource: {},
+  },
+
   "skipper-academy": {
     type: "skipper-academy",
     label: "Skipper Academy Content",
