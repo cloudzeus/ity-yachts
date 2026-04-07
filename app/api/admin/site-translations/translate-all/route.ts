@@ -240,7 +240,7 @@ export async function POST() {
         if (updates) {
           await db.page.update({
             where: { id: p.id },
-            data: { heroSection: { ...hero, ...updates } },
+            data: { heroSection: { ...hero, ...updates } as object },
           })
           stats.content.translated++
         }
