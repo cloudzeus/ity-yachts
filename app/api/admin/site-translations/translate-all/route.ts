@@ -229,7 +229,6 @@ export async function POST() {
 
     // ── 6. Page hero sections ──
     const pagesWithHero = await db.page.findMany({
-      where: { heroSection: { not: null } },
       select: { id: true, name: true, heroSection: true },
     })
     for (const p of pagesWithHero) {
