@@ -341,7 +341,7 @@ export async function POST() {
         if (anyChanged) {
           await db.pageComponent.update({
             where: { id: comp.id },
-            data: { props: updatedProps },
+            data: { props: updatedProps as object },
           })
           stats.content.translated++
         }
