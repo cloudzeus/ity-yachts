@@ -296,10 +296,11 @@ export interface RawContact2 {
 export async function fetchContacts2(creds: NausysCredentials): Promise<RawContact2[]> {
   if (!creds.companyId) throw new Error("Charter Company ID not configured")
 
-  // Try known path variations for the contacts2 endpoint
+  // Try known path variations for the contacts endpoint
   const paths = [
     `/catalogue/v6/contacts2/${creds.companyId}`,
     `/catalogue/v6/contacts/${creds.companyId}`,
+    `/catalogue/v6/clients/${creds.companyId}`,
   ]
 
   for (const path of paths) {
@@ -315,7 +316,7 @@ export async function fetchContacts2(creds: NausysCredentials): Promise<RawConta
 
     const data = JSON.parse(text)
     if (data.status === "AUTHENTICATION_ERROR") throw new Error("NAUSYS authentication failed")
-    if (data.status !== "OK") throw new Error(`NAUSYS API error: ${JSON.stringify(data).substring(0, 300)}`)
+    if (data.status !== "OK") continue  // endpoint exists but returned an error — try next path
     return data.contacts ?? data.clients ?? []
   }
 
