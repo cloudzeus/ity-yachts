@@ -77,27 +77,38 @@ export async function POST() {
   }
 }
 
+function detectType(c: RawContact2): string {
+  if (c._type) return c._type
+  if (c.crewRole) {
+    const role = c.crewRole.toLowerCase()
+    if (role.includes("captain") || role.includes("skipper")) return "SKIPPER"
+    return "CREW"
+  }
+  if (c.company) return "AGENT"
+  return "CLIENT"
+}
+
 function mapContact(c: RawContact2) {
   return {
-    contactType: c.contactType || "",
-    title: c.title || "",
-    firstName: c.firstName || "",
-    lastName: c.lastName || "",
-    company: c.company || "",
+    contactType: detectType(c),
+    title: "",
+    firstName: c.name || "",
+    lastName: c.surname || "",
+    company: "",
     email: c.email || "",
     phone: c.phone || "",
     mobile: c.mobile || "",
     fax: c.fax || "",
     address: c.address || "",
     city: c.city || "",
-    country: c.country || "",
-    postcode: c.postcode || "",
-    nationality: c.nationality || "",
-    passportNumber: c.passportNumber || "",
-    dateOfBirth: c.dateOfBirth ? parseNausysDateSafe(c.dateOfBirth) : null,
-    language: c.language || "",
-    taxNumber: c.taxNumber || "",
-    remarks: c.remarks || null,
+    country: "",
+    postcode: c.zipCode || "",
+    nationality: "",
+    passportNumber: "",
+    dateOfBirth: c.birthday ? parseNausysDateSafe(c.birthday) : null,
+    language: "",
+    taxNumber: c.vatNr || "",
+    remarks: c.note || null,
   }
 }
 

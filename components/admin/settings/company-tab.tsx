@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef } from "react"
+import Image from "next/image"
 import { Plus, X, Building2, Phone, Mail, FileText, Image as ImageIcon, Upload, FolderOpen, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -142,9 +143,8 @@ export function CompanyTab({ initialData }: { initialData?: Partial<CompanyData>
           <div className="size-24 rounded-lg flex items-center justify-center overflow-hidden shrink-0 relative group"
             style={{ background: "var(--surface-container-high)", border: "1px solid var(--outline-variant)" }}>
             {data.logoUrl
-              // eslint-disable-next-line @next/next/no-img-element
               ? <>
-                  <img src={data.logoUrl} alt="Logo" className="max-w-full max-h-full object-contain p-2" />
+                  <Image src={data.logoUrl} alt="Logo" width={240} height={120} unoptimized className="max-w-full max-h-full object-contain p-2" />
                   <button
                     onClick={() => setData((p) => ({ ...p, logoUrl: "", logoPath: "" }))}
                     className="absolute top-1 right-1 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"

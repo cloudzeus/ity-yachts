@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useCallback, useRef, useEffect } from "react"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import {
   ArrowLeft, Save, Globe, UserCircle, Loader2, Upload, FolderOpen, X, Sparkles, MapPin,
@@ -577,7 +578,7 @@ export function StaffEditorClient({ member, users, existingDepartments }: Props)
 
             {image ? (
               <div className="relative group">
-                <img src={image} alt={name} className="w-full aspect-square rounded-lg object-cover" />
+                <Image src={image} alt={name} width={512} height={512} className="w-full aspect-square rounded-lg object-cover" />
                 <button
                   onClick={() => setImage("")}
                   className="absolute top-1 right-1 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"

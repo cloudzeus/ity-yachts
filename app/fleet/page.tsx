@@ -12,7 +12,7 @@ export const metadata = {
 
 export default async function FleetPage() {
   // Fetch filter options based only on yachts we actually have, plus initial yachts
-  const [usedCategoryIds, usedBaseIds, usedBuilderIds, yachts, total] = await Promise.all([
+  const [usedCategoryIds, usedBaseIds, usedBuilderIds, yachts, total, fleetComponent] = await Promise.all([
     db.nausysYacht.findMany({ select: { categoryId: true }, distinct: ["categoryId"], where: { categoryId: { not: null } } }),
     db.nausysYacht.findMany({ select: { baseId: true }, distinct: ["baseId"], where: { baseId: { not: null } } }),
     db.nausysYacht.findMany({ select: { builderId: true }, distinct: ["builderId"], where: { builderId: { not: null } } }),
@@ -32,6 +32,10 @@ export default async function FleetPage() {
       },
     }),
     db.nausysYacht.count(),
+    db.pageComponent.findFirst({
+      where: { page: { slug: "fleet" }, type: "fleet-content", status: "active" },
+      select: { props: true },
+    }),
   ])
 
   const catIds = usedCategoryIds.map((r) => r.categoryId!).filter(Boolean)
@@ -64,6 +68,7 @@ export default async function FleetPage() {
     .map((b) => ({ id: b.id, name: b.name }))
 
   const yachtCards = yachts.map((y) => transformYacht(y))
+  const fleetHero = ((fleetComponent?.props as Record<string, unknown> | null)?.hero ?? null) as Record<string, Record<string, string>> | null
 
   return (
     <>
@@ -74,6 +79,7 @@ export default async function FleetPage() {
         categories={categoryOptions}
         bases={baseOptions}
         builders={builderOptions}
+        hero={fleetHero}
       />
       <SiteFooter />
     </>

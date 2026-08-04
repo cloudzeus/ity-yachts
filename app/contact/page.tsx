@@ -16,23 +16,29 @@ export const metadata: Metadata = {
 }
 
 export default async function ContactPage() {
-  const staff = await db.staff.findMany({
-    where: { status: "active" },
-    select: {
-      id: true,
-      name: true,
-      position: true,
-      department: true,
-      image: true,
-      bio: true,
-      email: true,
-      phone: true,
-      mobile: true,
-      city: true,
-      sortOrder: true,
-    },
-    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-  })
+  const [staff, contactComponent] = await Promise.all([
+    db.staff.findMany({
+      where: { status: "active" },
+      select: {
+        id: true,
+        name: true,
+        position: true,
+        department: true,
+        image: true,
+        bio: true,
+        email: true,
+        phone: true,
+        mobile: true,
+        city: true,
+        sortOrder: true,
+      },
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+    }),
+    db.pageComponent.findFirst({
+      where: { page: { slug: "contact" }, type: "contact-content", status: "active" },
+      select: { props: true },
+    }),
+  ])
 
   // Pass raw JSON fields — TeamGrid resolves language internally
   const staffData = staff.map((s) => ({
@@ -45,6 +51,8 @@ export default async function ContactPage() {
     sortOrder: s.sortOrder,
   }))
 
+  const content = (contactComponent?.props ?? null) as Record<string, unknown> | null
+
   return (
     <main>
       <div
@@ -52,7 +60,7 @@ export default async function ContactPage() {
         style={{ background: "#060c27", clipPath: "polygon(0% 0, 100% 0%, 100% 100%, 0 100%)" }}
       >
         <SiteHeader />
-        <ContactPageClient staff={staffData} />
+        <ContactPageClient staff={staffData} content={content} />
       </div>
       <SiteFooter />
     </main>

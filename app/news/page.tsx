@@ -18,10 +18,17 @@ export const metadata: Metadata = {
 }
 
 export default async function NewsListPage() {
-  const articles = await db.article.findMany({
-    where: { status: "published" },
-    orderBy: { date: "desc" },
-  })
+  const [articles, newsComponent] = await Promise.all([
+    db.article.findMany({ where: { status: "published" }, orderBy: { date: "desc" } }),
+    db.pageComponent.findFirst({
+      where: { page: { slug: "news" }, type: "news-content", status: "active" },
+      select: { props: true },
+    }),
+  ])
+
+  const newsHero = ((newsComponent?.props as Record<string, unknown> | null)?.hero ?? null) as {
+    badge?: Record<string, string>; title?: Record<string, string>; subtitle?: Record<string, string>
+  } | null
 
   return (
     <main>
@@ -35,16 +42,22 @@ export default async function NewsListPage() {
         <section className="pt-32 pb-16 px-6">
           <div className="max-w-6xl mx-auto text-center">
             <span className="mb-4 inline-block rounded-full border border-[#83776d]/30 bg-[#070c26]/20 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-[#83776d] backdrop-blur-sm">
-              <LocaleText tKey="news.badge" fallback="Our Blog" uppercase />
+              {newsHero?.badge
+                ? <LocaleText translations={newsHero.badge} fallback="Our Blog" uppercase />
+                : <LocaleText tKey="news.badge" fallback="Our Blog" uppercase />}
             </span>
             <h1
               className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4"
               style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em" }}
             >
-              <LocaleText tKey="news.title" fallback="News & Articles" />
+              {newsHero?.title
+                ? <LocaleText translations={newsHero.title} fallback="News & Articles" />
+                : <LocaleText tKey="news.title" fallback="News & Articles" />}
             </h1>
             <p className="text-lg text-white/60 max-w-xl mx-auto">
-              <LocaleText tKey="news.subtitle" fallback="Sailing tips, destination guides, and stories from the Ionian Sea." />
+              {newsHero?.subtitle
+                ? <LocaleText translations={newsHero.subtitle} fallback="Sailing tips, destination guides, and stories from the Ionian Sea." />
+                : <LocaleText tKey="news.subtitle" fallback="Sailing tips, destination guides, and stories from the Ionian Sea." />}
             </p>
           </div>
         </section>

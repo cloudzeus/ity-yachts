@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useCallback, useEffect, useRef, useMemo } from "react"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, Save, Globe, Sparkles, Image as ImageIcon, Upload, FolderOpen, Loader2, X, Languages, ChevronDown, Check, Link2 } from "lucide-react"
 import { icons } from "lucide-react"
@@ -312,6 +313,7 @@ export function ServiceEditorClient({ service }: Props) {
   const [saving, setSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [translatingAll, setTranslatingAll] = useState(false)
+  const [generatingContent, setGeneratingContent] = useState(false)
 
   // Media
   const [pickerOpen, setPickerOpen] = useState(false)
@@ -378,6 +380,25 @@ export function ServiceEditorClient({ service }: Props) {
       }
     } finally {
       setTranslatingAll(false)
+    }
+  }
+
+  // Generate all content via DeepSeek (EN + translations to EL & DE)
+  async function handleGenerateContent() {
+    setGeneratingContent(true)
+    try {
+      const res = await fetch(`/api/admin/services/${service.id}/generate-content`, {
+        method: "POST",
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Unknown error" }))
+        alert(err.error || "Content generation failed")
+        return
+      }
+      const data = await res.json()
+      if (data.description) setDescription(data.description)
+    } finally {
+      setGeneratingContent(false)
     }
   }
 
@@ -492,19 +513,38 @@ export function ServiceEditorClient({ service }: Props) {
               })}
             </div>
 
-            {activeLang === "en" && (
+            <div className="flex items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleTranslateAll}
-                disabled={translatingAll}
+                onClick={handleGenerateContent}
+                disabled={generatingContent || !title?.en}
                 className="h-7 text-[10px] gap-1.5"
-                style={{ borderColor: "var(--primary)", color: "var(--primary)" }}
+                style={{ borderColor: "var(--secondary)", color: "var(--secondary)" }}
+                title={!title?.en ? "Add an English title first" : "Generate full description in EN + EL + DE via DeepSeek"}
               >
-                <Globe className="size-3" />
-                {translatingAll ? "Translating…" : "Translate All → EL & DE"}
+                {generatingContent ? (
+                  <Loader2 className="size-3 animate-spin" />
+                ) : (
+                  <Sparkles className="size-3" />
+                )}
+                {generatingContent ? "Generating…" : "Generate Content"}
               </Button>
-            )}
+
+              {activeLang === "en" && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleTranslateAll}
+                  disabled={translatingAll}
+                  className="h-7 text-[10px] gap-1.5"
+                  style={{ borderColor: "var(--primary)", color: "var(--primary)" }}
+                >
+                  <Globe className="size-3" />
+                  {translatingAll ? "Translating…" : "Translate All → EL & DE"}
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* All translatable fields for active language */}
@@ -652,7 +692,7 @@ export function ServiceEditorClient({ service }: Props) {
                 {defaultMediaType === "video" ? (
                   <video src={defaultMedia} className="w-full h-40 object-cover" muted controls />
                 ) : (
-                  <img src={defaultMedia} alt={title?.en || ""} className="w-full h-40 object-cover" />
+                  <Image src={defaultMedia} alt={title?.en || ""} width={640} height={160} className="w-full h-40 object-cover" />
                 )}
                 <button
                   onClick={() => { setDefaultMedia(""); setDefaultMediaType("") }}

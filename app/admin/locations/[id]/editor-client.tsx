@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useCallback, useEffect, useRef } from "react"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, Save, Search, Globe, Image as ImageIcon, MapPin, Sparkles, Loader2, Upload, FolderOpen, X, Plus, GripVertical, Play } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -379,7 +380,7 @@ export function LocationEditorClient({ location }: Props) {
                     className="w-full h-44 object-contain bg-black"
                   />
                 ) : (
-                  <img src={defaultMedia} alt={name} className="w-full h-36 object-cover" />
+                  <Image src={defaultMedia} alt={name} width={640} height={144} className="w-full h-36 object-cover" />
                 )}
                 <button
                   onClick={() => { setDefaultMedia(""); setDefaultMediaType("image") }}
@@ -453,7 +454,7 @@ export function LocationEditorClient({ location }: Props) {
                           </div>
                         </>
                       ) : (
-                        <img src={url} alt={`Gallery ${i + 1}`} className="w-full h-full object-cover" />
+                        <Image src={url} alt={`Gallery ${i + 1}`} width={1200} height={800} className="w-full h-full object-cover" />
                       )}
                       <button
                         onClick={() => removeGalleryImage(url)}

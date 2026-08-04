@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import NextImage from "next/image"
 import { Search, Save, Check, Loader2, X, Sparkles, Languages, ExternalLink, Image } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -779,10 +780,12 @@ export function TablesClient({ counts }: Props) {
                                   className="h-10 w-24 rounded border flex items-center justify-center p-1"
                                   style={{ borderColor: "var(--outline-variant)", background: "white" }}
                                 >
-                                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                                  <img
+                                  <NextImage
                                     src={editData.logoUrl}
                                     alt="Logo preview"
+                                    width={96}
+                                    height={96}
+                                    unoptimized
                                     className="max-h-full max-w-full object-contain"
                                     onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
                                   />
@@ -827,10 +830,12 @@ export function TablesClient({ counts }: Props) {
                                 className="h-8 w-20 rounded border flex items-center justify-center p-0.5"
                                 style={{ borderColor: "var(--outline-variant)", background: "white" }}
                               >
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
+                                <NextImage
                                   src={item.logoUrl}
                                   alt="Logo"
+                                  width={96}
+                                  height={96}
+                                  unoptimized
                                   className="max-h-full max-w-full object-contain"
                                   onError={(e) => {
                                     (e.target as HTMLImageElement).replaceWith(

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import Image from "next/image"
 import { ChevronLeft, ChevronRight, X } from "lucide-react"
 
 interface LightboxImage {
@@ -172,21 +173,26 @@ export function ImageLightbox({ images, initialIndex, onClose }: ImageLightboxPr
           </span>
         )}
 
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={currentImage?.url}
-          alt={`Image ${currentIndex + 1} of ${images.length}`}
-          style={{
-            maxWidth: "85vw",
-            maxHeight: "85vh",
-            objectFit: "contain",
-            borderRadius: "var(--radius-md)",
-            opacity: isTransitioning ? 0 : 1,
-            transition: "opacity 150ms ease",
-            userSelect: "none",
-          }}
-          draggable={false}
-        />
+        {currentImage?.url && (
+          <Image
+            src={currentImage.url}
+            alt={`Image ${currentIndex + 1} of ${images.length}`}
+            width={1600}
+            height={1200}
+            style={{
+              maxWidth: "85vw",
+              maxHeight: "85vh",
+              width: "auto",
+              height: "auto",
+              objectFit: "contain",
+              borderRadius: "var(--radius-md)",
+              opacity: isTransitioning ? 0 : 1,
+              transition: "opacity 150ms ease",
+              userSelect: "none",
+            }}
+            draggable={false}
+          />
+        )}
       </div>
 
       {/* Next button */}

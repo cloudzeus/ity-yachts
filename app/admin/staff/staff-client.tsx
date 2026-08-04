@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useCallback } from "react"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { Plus, Pencil, Trash2, UserCircle, Loader2 } from "lucide-react"
 import { DataTable, type ColumnDef, type ActionItem } from "@/components/ui/data-table"
@@ -63,7 +64,7 @@ const COLUMNS: ColumnDef<StaffMember>[] = [
     cell: (row) => (
       <div className="flex items-center gap-2">
         {row.image ? (
-          <img src={row.image} alt="" className="size-6 rounded-full object-cover" />
+          <Image src={row.image} alt="" width={24} height={24} className="size-6 rounded-full object-cover" />
         ) : (
           <UserCircle className="size-5 flex-shrink-0" style={{ color: "var(--secondary)" }} />
         )}

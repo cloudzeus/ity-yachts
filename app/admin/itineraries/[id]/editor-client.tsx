@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useCallback, useEffect, useRef } from "react"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import {
   ArrowLeft, Save, Search, Globe, Image as ImageIcon, Route, Loader2, Upload,
@@ -376,7 +377,7 @@ function LegEditor({ leg, onChange, onDelete, legIndex }: {
             <div className="grid grid-cols-4 gap-1.5">
               {leg.images.map((url, i) => (
                 <div key={`${url}-${i}`} className="relative rounded overflow-hidden group aspect-square" style={{ border: "1px solid var(--outline-variant)" }}>
-                  <img src={url} alt={`Leg ${legIndex + 1} img ${i + 1}`} className="w-full h-full object-cover" />
+                  <Image src={url} alt={`Leg ${legIndex + 1} img ${i + 1}`} width={1200} height={800} className="w-full h-full object-cover" />
                   <button
                     onClick={() => onChange({ ...leg, images: leg.images.filter((_, idx) => idx !== i) })}
                     className="absolute top-1 right-1 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity z-10"
@@ -1233,7 +1234,7 @@ export function ItineraryEditorClient({ itinerary }: Props) {
                 {defaultMediaType === "video" ? (
                   <video src={defaultMedia} controls className="w-full h-36 object-contain bg-black" />
                 ) : (
-                  <img src={defaultMedia} alt={name?.en || ""} className="w-full h-36 object-cover" />
+                  <Image src={defaultMedia} alt={name?.en || ""} width={640} height={144} className="w-full h-36 object-cover" />
                 )}
                 <button
                   onClick={() => { setDefaultMedia(""); setDefaultMediaType("image") }}

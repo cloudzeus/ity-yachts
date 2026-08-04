@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Image from "next/image"
 import { Wand2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -150,7 +151,7 @@ export function MetaPanel({ pageId, slug, content, metas, onMetasChange }: MetaP
           {metas.metaOgImage ? "Change Image" : "Select Image"}
         </Button>
         {metas.metaOgImage && (
-          <img src={metas.metaOgImage} alt="og" className="w-full h-20 object-cover rounded" />
+          <Image src={metas.metaOgImage} alt="og" width={640} height={80} unoptimized className="w-full h-20 object-cover rounded" />
         )}
       </div>
 

@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import Image from "next/image"
 import {
   APIProvider,
   Map,
@@ -79,9 +80,12 @@ function LogoMarker({ lat, lng, name }: { lat: number; lng: number; name: string
             zIndex: 10,
           }}
         >
-          <img
+          <Image
             src={LOGO_URL}
             alt="IYC"
+            width={26}
+            height={26}
+            unoptimized
             className="w-[26px] h-[26px] object-contain"
             style={{ filter: "brightness(1.2)" }}
           />

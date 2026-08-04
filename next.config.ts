@@ -23,6 +23,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "ws.nausys.com",
       },
+      {
+        protocol: "https",
+        hostname: "cdn.weatherapi.com",
+      },
     ],
   },
 }

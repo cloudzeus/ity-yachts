@@ -83,8 +83,11 @@
   --color-border:              var(--outline-variant);
   --color-input:               var(--outline-variant);
   --color-ring:                var(--secondary);
-  --font-sans:                 var(--font-body);
-  --font-display:              var(--font-display);
+  /* Point at the next/font variables directly rather than bouncing through the
+     same-named :root vars, so the emitted utilities carry the real stack. */
+  --font-sans:                 var(--font-inter), system-ui, sans-serif;
+  --font-display:              var(--font-manrope), system-ui, sans-serif;
+  --font-body:                 var(--font-inter), system-ui, sans-serif;
   --radius-sm:                 var(--radius-xs);
   --radius-md:                 var(--radius-sm);
   --radius-lg:                 var(--radius-md);

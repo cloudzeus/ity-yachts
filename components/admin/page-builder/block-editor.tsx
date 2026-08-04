@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
+import Image from "next/image"
 import { useEditor, EditorContent } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
 import { GripHorizontal, Trash2, ChevronUp, ChevronDown } from "lucide-react"
@@ -150,9 +151,12 @@ export function BlockEditor({ block, onUpdate, onDelete, onMoveUp, onMoveDown }:
         {block.type === "image" && (
           <div className="flex flex-col gap-2">
             {(block as any).url && (
-              <img
+              <Image
                 src={(block as any).url}
-                alt={(block as any).alt}
+                alt={(block as any).alt ?? ""}
+                width={640}
+                height={128}
+                unoptimized
                 className="w-full h-32 object-cover rounded"
               />
             )}

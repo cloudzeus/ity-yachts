@@ -268,61 +268,54 @@ export async function fetchClients(creds: NausysCredentials): Promise<RawClient[
   return data.clients ?? []
 }
 
-// ── Contacts2 (new endpoint — replaces clients) ──
+// ── Contacts2 — /client2/v6/contact/all ──
 
 export interface RawContact2 {
   id: number
-  firstName?: string
-  lastName?: string
+  name?: string            // first name
+  surname?: string         // last name
   email?: string
   phone?: string
   mobile?: string
+  fax?: string
   address?: string
   city?: string
-  country?: string
-  postcode?: string
-  passportNumber?: string
-  dateOfBirth?: string
-  nationality?: string
-  remarks?: string
-  company?: string
-  contactType?: string          // CLIENT, AGENT, SKIPPER, CREW, OTHER
-  title?: string
-  language?: string
-  taxNumber?: string
-  fax?: string
+  zipCode?: string
+  countryId?: number
+  birthday?: string        // dd.MM.yyyy
+  company?: boolean        // true = company/agency
+  disabled?: boolean
+  vatNr?: string
+  note?: string
+  skype?: string
+  agencyCodeID?: string
+  contactRoleIds?: number[]
+  preferredLanguage?: string
+  externalId?: string
+  // crew-related
+  crewRole?: string
+  photoUrl?: string
+  languages?: string[]
+  livingPlace?: string
+  summary?: string
+  // type hint set manually when fetching crew separately
+  _type?: "CLIENT" | "AGENT" | "SKIPPER" | "CREW" | "OTHER"
 }
 
 export async function fetchContacts2(creds: NausysCredentials): Promise<RawContact2[]> {
-  if (!creds.companyId) throw new Error("Charter Company ID not configured")
-
-  // Try known path variations for the contacts endpoint
-  const paths = [
-    `/catalogue/v6/contacts2/${creds.companyId}`,
-    `/catalogue/v6/contacts/${creds.companyId}`,
-    `/catalogue/v6/clients/${creds.companyId}`,
-  ]
-
-  for (const path of paths) {
-    const res = await fetch(`${creds.endpoint}${path}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify({ username: creds.username, password: creds.password }),
-      signal: AbortSignal.timeout(90000),
-    })
-    const text = await res.text()
-    // HTML response means endpoint doesn't exist — try next path
-    if (text.startsWith("<!") || text.startsWith("<html")) continue
-
-    const data = JSON.parse(text)
-    if (data.status === "AUTHENTICATION_ERROR") throw new Error("NAUSYS authentication failed")
-    if (data.status !== "OK") continue  // endpoint exists but returned an error — try next path
-    return data.contacts ?? data.clients ?? []
+  const res = await fetch(`${creds.endpoint}/client2/v6/contact/all`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({ username: creds.username, password: creds.password }),
+    signal: AbortSignal.timeout(90000),
+  })
+  const text = await res.text()
+  let data: Record<string, unknown>
+  try { data = JSON.parse(text) } catch {
+    throw new Error(`NAUSYS contacts: unexpected response: ${text.substring(0, 200)}`)
   }
-
-  throw new Error(
-    `NAUSYS contacts endpoint not found. Tried paths: ${paths.join(", ")}. The API may not support contacts for your account.`
-  )
+  if (data.status === "AUTHENTICATION_ERROR") throw new Error("NAUSYS authentication failed")
+  return (data.clients ?? []) as RawContact2[]
 }
 
 // ── Yacht list (the big one) ──

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Image from "next/image"
 import { PageSection } from "@/types/page"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
@@ -80,7 +81,7 @@ export function SectionSettingsPanel({ section, onUpdate }: SectionSettingsPanel
             {section.background?.imageUrl ? "Change Image" : "Select Image"}
           </Button>
           {section.background?.imageUrl && (
-            <img src={section.background.imageUrl} alt="bg" className="w-full h-20 object-cover rounded text-xs" />
+            <Image src={section.background.imageUrl} alt="bg" width={640} height={80} unoptimized className="w-full h-20 object-cover rounded text-xs" />
           )}
         </div>
       )}

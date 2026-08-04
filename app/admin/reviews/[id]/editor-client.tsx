@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useCallback, useEffect, useRef } from "react"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, Save, Globe, Star, Image as ImageIcon, Upload, FolderOpen, Loader2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -234,7 +235,7 @@ export function ReviewEditorClient({ review }: Props) {
 
             {image ? (
               <div className="relative rounded overflow-hidden group" style={{ border: "1px solid var(--outline-variant)" }}>
-                <img src={image} alt={name} className="w-full h-32 object-cover" />
+                <Image src={image} alt={name} width={640} height={128} className="w-full h-32 object-cover" />
                 <button
                   onClick={() => setImage("")}
                   className="absolute top-1.5 right-1.5 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"

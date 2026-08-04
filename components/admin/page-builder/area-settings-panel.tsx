@@ -1,6 +1,7 @@
 "use client"
 
 import { PageArea } from "@/types/page"
+import Image from "next/image"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -80,7 +81,7 @@ export function AreaSettingsPanel({ area, onUpdate }: AreaSettingsPanelProps) {
             {area.background?.imageUrl ? "Change Image" : "Select Image"}
           </Button>
           {area.background?.imageUrl && (
-            <img src={area.background.imageUrl} alt="bg" className="w-full h-20 object-cover rounded text-xs" />
+            <Image src={area.background.imageUrl} alt="bg" width={640} height={80} unoptimized className="w-full h-20 object-cover rounded text-xs" />
           )}
         </div>
       )}

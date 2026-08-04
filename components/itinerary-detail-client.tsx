@@ -1,6 +1,8 @@
 "use client"
 
 import { useState, useRef, useEffect, useCallback } from "react"
+import Image from "next/image"
+import Link from "next/link"
 import { createPortal } from "react-dom"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
@@ -161,7 +163,7 @@ function Lightbox({ images, initialIndex, onClose }: { images: string[]; initial
         {isVideo(src) ? (
           <video src={src} controls autoPlay playsInline className="rounded-md" style={{ maxWidth: "90vw", maxHeight: "85vh" }} />
         ) : (
-          <img src={src} alt="" className="rounded-md" style={{ maxWidth: "90vw", maxHeight: "85vh", display: "block" }} />
+          <Image src={src} alt="" width={1600} height={1200} className="rounded-md" style={{ maxWidth: "90vw", maxHeight: "85vh", display: "block", width: "auto", height: "auto" }} />
         )}
         {images.length > 1 && (
           <>
@@ -510,7 +512,7 @@ export function ItineraryDetailClient({ itinerary }: { itinerary: ItineraryData 
                           className="relative w-11 h-11 rounded-full overflow-hidden border-2 border-white/80 shadow-lg transition-all duration-500 ease-out group-hover/gallery:scale-110 group-hover/gallery:border-white"
                           style={{ zIndex: 5 - i, transitionDelay: `${i * 40}ms` }}
                         >
-                          <img src={url} alt={`${legName} ${i + 1}`} className="w-full h-full object-cover" />
+                          <Image src={url} alt={`${legName} ${i + 1}`} width={1200} height={800} className="w-full h-full object-cover" />
                         </div>
                       ))}
                     </div>
@@ -685,7 +687,7 @@ export function ItineraryDetailClient({ itinerary }: { itinerary: ItineraryData 
                 {itinerary.defaultMedia ? (
                   <div className="relative rounded-2xl overflow-hidden cursor-pointer group" style={{ boxShadow: "0 24px 64px rgba(0,10,30,0.15)" }} onClick={() => setLightbox({ images: [itinerary.defaultMedia!], index: 0 })}>
                     <div className="aspect-[4/5]">
-                      <img src={itinerary.defaultMedia} alt={name[locale] || ""} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
+                      <Image src={itinerary.defaultMedia} alt={name[locale] || ""} width={1600} height={900} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
                     </div>
                     <div className="absolute inset-0 bg-gradient-to-t from-[#0D1B2A]/70 via-transparent to-transparent" />
                     <div className="absolute bottom-0 left-0 right-0 p-6">
@@ -739,7 +741,7 @@ export function ItineraryDetailClient({ itinerary }: { itinerary: ItineraryData 
                       style={{ minHeight: 360 }}
                       onClick={() => setLightbox({ images: allDayImages, index: 0 })}
                     >
-                      <img src={heroImg} alt={`${t("itinerary.day", "Day")} ${day.dayNumber}`} className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
+                      <Image src={heroImg} alt={`${t("itinerary.day", "Day")} ${day.dayNumber}`} fill sizes="(max-width: 768px) 100vw, 50vw" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
                       <div className="absolute inset-0" style={{ background: isDark ? "linear-gradient(to right, rgba(6,12,39,0.7), transparent 60%)" : "linear-gradient(to right, rgba(255,255,255,0.5), transparent 60%)" }} />
                       {/* Day number overlay */}
                       <div className="absolute top-6 left-6 flex items-center gap-3">
@@ -756,7 +758,7 @@ export function ItineraryDetailClient({ itinerary }: { itinerary: ItineraryData 
                                 className="relative w-9 h-9 rounded-full overflow-hidden border-2 border-white/80 shadow-lg transition-all duration-500 ease-out group-hover/dayg:scale-110 group-hover/dayg:border-white"
                                 style={{ zIndex: 4 - ii, transitionDelay: `${ii * 40}ms` }}
                               >
-                                <img src={url} alt="" className="w-full h-full object-cover" />
+                                <Image src={url} alt="" width={1200} height={800} className="w-full h-full object-cover" />
                               </div>
                             ))}
                           </div>
@@ -829,7 +831,7 @@ export function ItineraryDetailClient({ itinerary }: { itinerary: ItineraryData 
                                         border: isDark ? "2px solid rgba(255,255,255,0.8)" : "2px solid white",
                                       }}
                                     >
-                                      <img src={url} alt="" className="w-full h-full object-cover" />
+                                      <Image src={url} alt="" width={1200} height={800} className="w-full h-full object-cover" />
                                     </div>
                                   ))}
                                 </div>
@@ -936,7 +938,7 @@ export function ItineraryDetailClient({ itinerary }: { itinerary: ItineraryData 
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a
+            <Link
               href="/fleet"
               className="inline-flex items-center gap-2.5 px-8 py-4 rounded-lg text-sm font-semibold text-white transition-all duration-300 hover:shadow-lg hover:scale-[1.02] group"
               style={{ background: "linear-gradient(135deg, #0055a9, #0077B6)", boxShadow: "0 4px 24px rgba(0,85,169,0.35)" }}
@@ -944,7 +946,7 @@ export function ItineraryDetailClient({ itinerary }: { itinerary: ItineraryData 
               <Ship className="size-4" />
               {t("itinerary.cta.browseFleet", "Browse Our Fleet")}
               <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5" />
-            </a>
+            </Link>
             <button
               onClick={() => { setEnquirySuccess(false); setEnquiryOpen(true) }}
               className="inline-flex items-center gap-2.5 px-8 py-4 rounded-lg text-sm font-semibold transition-all duration-300 hover:scale-[1.02] cursor-pointer"
@@ -1054,7 +1056,7 @@ export function ItineraryDetailClient({ itinerary }: { itinerary: ItineraryData 
                   </button>
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-full bg-white/15 flex items-center justify-center shrink-0 border border-white/20 p-2">
-                      <img src="https://iycweb.b-cdn.net/IYC_LOGO_TRANS_white.svg" alt="IYC" className="w-full h-full object-contain" />
+                      <Image src="https://iycweb.b-cdn.net/IYC_LOGO_TRANS_white.svg" alt="IYC" width={240} height={80} unoptimized className="w-full h-full object-contain" />
                     </div>
                     <div>
                       <h2 className="text-base font-bold text-white">{t("itinerary.enquiry.formTitle", "Plan Your Itinerary Charter")}</h2>

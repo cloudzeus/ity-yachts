@@ -154,11 +154,13 @@ function Lightbox({
             style={{ maxWidth: "90vw", maxHeight: "85vh" }}
           />
         ) : (
-          <img
+          <Image
             src={src}
             alt=""
+            width={1600}
+            height={1200}
             className="rounded-md"
-            style={{ maxWidth: "90vw", maxHeight: "85vh", display: "block" }}
+            style={{ maxWidth: "90vw", maxHeight: "85vh", display: "block", width: "auto", height: "auto" }}
           />
         )}
         {images.length > 1 && (

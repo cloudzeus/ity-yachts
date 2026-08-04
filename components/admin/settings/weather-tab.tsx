@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Image from "next/image"
 import { Cloud, Droplets, Wind, Thermometer, Eye, Sun, Sunrise, Sunset, Loader2, RefreshCw, MapPin } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -148,8 +149,7 @@ export function WeatherTab() {
       {/* Current weather card */}
       <div className="rounded-lg border p-6" style={{ background: "var(--surface-container-lowest)", borderColor: "var(--outline-variant)" }}>
         <div className="flex items-center gap-6">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={`https:${current.condition.icon}`} alt={current.condition.text} className="size-24" />
+          <Image src={`https:${current.condition.icon}`} alt={current.condition.text} width={96} height={96} className="size-24" />
           <div className="flex-1">
             <p className="text-5xl font-bold leading-none" style={{ fontFamily: "var(--font-display)", color: "var(--primary)", letterSpacing: "-0.03em" }}>
               {Math.round(current.temp_c)}°C
@@ -187,8 +187,7 @@ export function WeatherTab() {
                   className="flex-1 flex items-center justify-center gap-2 py-3 px-4 transition-colors relative"
                   style={{ color: isActive ? "var(--primary)" : "var(--on-surface-variant)" }}
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={`https:${day.day.condition.icon}`} alt="" className="size-8" />
+                  <Image src={`https:${day.day.condition.icon}`} alt="" width={32} height={32} className="size-8" />
                   <div className="text-left">
                     <p className="text-xs font-medium">{isToday ? "Today" : DAY_NAMES[d.getDay()]}</p>
                     <p className="text-[10px]" style={{ color: "var(--on-surface-variant)" }}>
@@ -209,8 +208,7 @@ export function WeatherTab() {
                 <div className="flex flex-col gap-2">
                   <p className="text-[10px] uppercase tracking-wide font-medium" style={{ color: "var(--on-surface-variant)" }}>Conditions</p>
                   <div className="flex items-center gap-3">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={`https:${activeDay.day.condition.icon}`} alt="" className="size-12" />
+                    <Image src={`https:${activeDay.day.condition.icon}`} alt="" width={48} height={48} className="size-12" />
                     <div>
                       <p className="text-sm font-medium" style={{ color: "var(--on-surface)" }}>{activeDay.day.condition.text}</p>
                       <p className="text-xs" style={{ color: "var(--on-surface-variant)" }}>
@@ -274,8 +272,7 @@ export function WeatherTab() {
                     return (
                       <div key={h.time} className="flex flex-col items-center gap-1 py-2 px-3 rounded-md shrink-0 min-w-[60px]" style={{ background: "var(--surface-container-low)" }}>
                         <span className="text-[10px] font-medium" style={{ color: "var(--on-surface-variant)" }}>{time}</span>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={`https:${h.condition.icon}`} alt={h.condition.text} className="size-7" />
+                        <Image src={`https:${h.condition.icon}`} alt={h.condition.text} width={28} height={28} className="size-7" />
                         <span className="text-xs font-semibold" style={{ color: "var(--on-surface)" }}>{Math.round(h.temp_c)}°</span>
                         {h.chance_of_rain > 0 && (
                           <div className="flex items-center gap-0.5">

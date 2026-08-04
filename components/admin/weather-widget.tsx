@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Image from "next/image"
 import { Cloud, Droplets, Wind, Thermometer, Eye, Sun, Loader2 } from "lucide-react"
 
 interface CurrentWeather {
@@ -102,8 +103,7 @@ export function WeatherWidget() {
       <div className="px-6 py-5 flex flex-col gap-5">
         {/* Current conditions */}
         <div className="flex items-center gap-4">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={`https:${current.condition.icon}`} alt={current.condition.text} className="size-16" />
+          <Image src={`https:${current.condition.icon}`} alt={current.condition.text} width={64} height={64} className="size-16" />
           <div className="flex-1">
             <p className="text-3xl font-bold leading-none" style={{ fontFamily: "var(--font-display)", color: "var(--primary)", letterSpacing: "-0.02em" }}>
               {Math.round(current.temp_c)}°C
@@ -154,8 +154,7 @@ export function WeatherWidget() {
                     <span className="text-[10px] font-medium" style={{ color: "var(--on-surface-variant)" }}>
                       {isToday ? "Today" : dayNames[d.getDay()]}
                     </span>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={`https:${day.day.condition.icon}`} alt={day.day.condition.text} className="size-8" />
+                    <Image src={`https:${day.day.condition.icon}`} alt={day.day.condition.text} width={32} height={32} className="size-8" />
                     <div className="flex items-center gap-1">
                       <span className="text-xs font-semibold" style={{ color: "var(--on-surface)" }}>{Math.round(day.day.maxtemp_c)}°</span>
                       <span className="text-[10px]" style={{ color: "var(--on-surface-variant)" }}>{Math.round(day.day.mintemp_c)}°</span>

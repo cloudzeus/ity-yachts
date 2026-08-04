@@ -36,6 +36,7 @@ import {
   CalendarDays,
 } from "lucide-react"
 import { useTranslations } from "@/lib/use-translations"
+import { lockScroll, unlockScroll } from "@/lib/scroll-lock"
 
 type TranslatedField = Record<string, string> | null | undefined
 
@@ -216,10 +217,10 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
       if (e.key === "ArrowLeft") galleryPrev()
       if (e.key === "ArrowRight") galleryNext()
     }
-    document.body.style.overflow = "hidden"
+    lockScroll()
     window.addEventListener("keydown", handleKey)
     return () => {
-      document.body.style.overflow = ""
+      unlockScroll()
       window.removeEventListener("keydown", handleKey)
     }
   }, [galleryOpen, closeGallery, galleryPrev, galleryNext])
@@ -379,9 +380,9 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") { setEnquiryOpen(false); setBookingOpen(false) }
     }
-    document.body.style.overflow = "hidden"
+    lockScroll()
     window.addEventListener("keydown", handleKey)
-    return () => { document.body.style.overflow = ""; window.removeEventListener("keydown", handleKey) }
+    return () => { unlockScroll(); window.removeEventListener("keydown", handleKey) }
   }, [enquiryOpen, bookingOpen])
 
   // Submit enquiry

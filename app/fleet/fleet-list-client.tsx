@@ -44,12 +44,19 @@ interface FilterOption {
   nameTranslations?: Record<string, string> | null
 }
 
+interface HeroContent {
+  badge?: Record<string, string>
+  title?: Record<string, string>
+  subtitle?: Record<string, string>
+}
+
 interface FleetListProps {
   initialYachts: YachtCard[]
   initialTotal: number
   categories: FilterOption[]
   bases: FilterOption[]
   builders: FilterOption[]
+  hero?: HeroContent | null
 }
 
 export function FleetListClient({
@@ -58,8 +65,14 @@ export function FleetListClient({
   categories,
   bases,
   builders,
+  hero,
 }: FleetListProps) {
   const { locale, t, tUpper } = useTranslations()
+
+  function rHero(field: Record<string, string> | undefined, fallback: string) {
+    if (!field) return fallback
+    return field[locale] || field.en || fallback
+  }
   const [yachts, setYachts] = useState<YachtCard[]>(initialYachts)
   const [total, setTotal] = useState(initialTotal)
   const [page, setPage] = useState(1)
@@ -200,17 +213,17 @@ export function FleetListClient({
               className="text-xs font-semibold uppercase tracking-widest"
               style={{ color: "#0077B6" }}
             >
-              {removeGreekTonos(t("fleet.badge", "Our Fleet"))}
+              {removeGreekTonos(rHero(hero?.badge, t("fleet.badge", "Our Fleet"))).toUpperCase()}
             </span>
           </div>
           <h1
             className="text-4xl md:text-6xl font-bold text-white mb-4"
             style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em" }}
           >
-            {t("fleet.title", "Yachts & Catamarans")}
+            {rHero(hero?.title, t("fleet.title", "Yachts & Catamarans"))}
           </h1>
           <p className="text-white/60 text-sm md:text-base max-w-[600px] leading-relaxed">
-            {t("fleet.subtitle", "Browse our curated fleet of sailing yachts and catamarans available for charter in the Greek islands.")}
+            {rHero(hero?.subtitle, t("fleet.subtitle", "Browse our curated fleet of sailing yachts and catamarans available for charter in the Greek islands."))}
           </p>
 
           {/* Search Bar */}

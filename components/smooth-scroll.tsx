@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation"
 import Lenis from "lenis"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
+import { registerLenis, unregisterLenis } from "@/lib/scroll-lock"
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger)
@@ -17,25 +18,25 @@ export function SmoothScroll() {
   useEffect(() => {
     if (isAdmin) return
 
+    // autoRaf: true — Lenis drives its own requestAnimationFrame loop.
+    // This is more reliable than the gsap.ticker approach which can get
+    // stuck when the browser throttles the tab or has rendering lag.
     const lenis = new Lenis({
       duration: 1.2,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       smoothWheel: true,
-      autoResize: true,
+      autoRaf: true,
     })
 
-    // Connect Lenis scroll to GSAP ScrollTrigger
+    // Register globally so modals can stop/start it via lockScroll/unlockScroll
+    registerLenis(lenis)
+
+    // Keep GSAP ScrollTrigger in sync with Lenis scroll position
     lenis.on("scroll", ScrollTrigger.update)
 
-    const tickerCallback = (time: number) => {
-      lenis.raf(time * 1000)
-    }
-    gsap.ticker.add(tickerCallback)
-    gsap.ticker.lagSmoothing(0)
-
     return () => {
+      unregisterLenis()
       lenis.off("scroll", ScrollTrigger.update)
-      gsap.ticker.remove(tickerCallback)
       lenis.destroy()
     }
   }, [isAdmin])

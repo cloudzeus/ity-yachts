@@ -18,10 +18,17 @@ export const metadata: Metadata = {
 }
 
 export default async function LocationsListPage() {
-  const locations = await db.location.findMany({
-    where: { status: "published" },
-    orderBy: { updatedAt: "desc" },
-  })
+  const [locations, locComponent] = await Promise.all([
+    db.location.findMany({ where: { status: "published" }, orderBy: { updatedAt: "desc" } }),
+    db.pageComponent.findFirst({
+      where: { page: { slug: "locations" }, type: "locations-content", status: "active" },
+      select: { props: true },
+    }),
+  ])
+
+  const locHero = ((locComponent?.props as Record<string, unknown> | null)?.hero ?? null) as {
+    badge?: Record<string, string>; title?: Record<string, string>; subtitle?: Record<string, string>
+  } | null
 
   const mapped = locations.map((loc) => {
     const names = loc.nameTranslations as Record<string, string>
@@ -54,17 +61,23 @@ export default async function LocationsListPage() {
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
               <div>
                 <span className="mb-4 inline-block rounded-full border border-[#0077B6]/30 bg-[#0077B6]/5 px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-[#0077B6] backdrop-blur-sm">
-                  <LocaleText tKey="locations.badge" fallback="Charter Destinations" uppercase />
+                  {locHero?.badge
+                    ? <LocaleText translations={locHero.badge} fallback="Charter Destinations" uppercase />
+                    : <LocaleText tKey="locations.badge" fallback="Charter Destinations" uppercase />}
                 </span>
                 <h1
                   className="text-4xl md:text-5xl lg:text-6xl font-bold mt-4"
                   style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.03em", color: "#fff" }}
                 >
-                  <LocaleText tKey="locations.title" fallback="Discover the Ionian Sea" />
+                  {locHero?.title
+                    ? <LocaleText translations={locHero.title} fallback="Discover the Ionian Sea" />
+                    : <LocaleText tKey="locations.title" fallback="Discover the Ionian Sea" />}
                 </h1>
               </div>
               <p className="text-base text-white/50 max-w-md md:text-right leading-relaxed md:pb-1">
-                <LocaleText tKey="locations.subtitle" fallback="Explore Lefkada and the Ionian islands — from secluded turquoise bays to vibrant seaside harbours." />
+                {locHero?.subtitle
+                  ? <LocaleText translations={locHero.subtitle} fallback="Explore Lefkada and the Ionian islands — from secluded turquoise bays to vibrant seaside harbours." />
+                  : <LocaleText tKey="locations.subtitle" fallback="Explore Lefkada and the Ionian islands — from secluded turquoise bays to vibrant seaside harbours." />}
               </p>
             </div>
 

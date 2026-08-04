@@ -5,6 +5,7 @@ import gsap from "gsap"
 import { Search, X, ArrowRight } from "lucide-react"
 import { useTranslations } from "@/lib/use-translations"
 import { removeGreekTonos } from "@/components/locale-text"
+import { lockScroll, unlockScroll } from "@/lib/scroll-lock"
 
 interface SearchModalProps {
   open: boolean
@@ -37,7 +38,6 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
     if (!overlay || !content || !input || !links) return
 
     overlay.style.display = "flex"
-    document.body.style.overflow = "hidden"
 
     const tl = gsap.timeline()
     timeline.current = tl
@@ -83,7 +83,6 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
     const tl = gsap.timeline({
       onComplete: () => {
         overlay.style.display = "none"
-        document.body.style.overflow = ""
         setQuery("")
       },
     })
@@ -96,6 +95,14 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
       ease: "power2.in",
     }).to(overlay, { opacity: 0, duration: 0.2, ease: "power2.in" }, "-=0.15")
   }, [])
+
+  // Manage scroll lock — guaranteed cleanup even if animation is interrupted
+  useEffect(() => {
+    if (open) {
+      lockScroll()
+      return () => unlockScroll()
+    }
+  }, [open])
 
   useEffect(() => {
     if (open) {

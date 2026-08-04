@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useCallback } from "react"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { Plus, Pencil, Trash2, GripVertical, Globe, Search, Sparkles, Eye, EyeOff, MoreHorizontal, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -126,7 +127,7 @@ function SortableRow({ service, expanded, onToggle, onEdit, onDelete }: {
             service.defaultMediaType === "video" ? (
               <video src={service.defaultMedia} className="w-10 h-10 rounded object-cover" muted />
             ) : (
-              <img src={service.defaultMedia} alt="" className="w-10 h-10 rounded object-cover" />
+              <Image src={service.defaultMedia} alt="" width={40} height={40} className="w-10 h-10 rounded object-cover" />
             )
           ) : (
             <div className="w-10 h-10 rounded flex items-center justify-center" style={{ background: "var(--surface-container)", border: "1px solid var(--outline-variant)" }}>
@@ -234,7 +235,7 @@ function AccordionDetail({ service }: { service: Service }) {
           {service.defaultMediaType === "video" ? (
             <video src={service.defaultMedia} className="w-40 h-24 rounded object-cover" muted controls />
           ) : (
-            <img src={service.defaultMedia} alt="" className="w-40 h-24 rounded object-cover" />
+            <Image src={service.defaultMedia} alt="" width={160} height={96} className="w-40 h-24 rounded object-cover" />
           )}
         </div>
       )}

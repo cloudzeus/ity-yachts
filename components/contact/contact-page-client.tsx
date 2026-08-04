@@ -13,11 +13,29 @@ import { useTranslations } from "@/lib/use-translations"
 
 gsap.registerPlugin(ScrollTrigger)
 
+type T = Record<string, string>
+
 interface ContactPageClientProps {
   staff: StaffMember[]
+  content?: Record<string, unknown> | null
 }
 
-const offices = [
+interface OfficeData {
+  id: string
+  label: string
+  flag: string
+  person: string
+  address: string
+  country: string
+  phone: string
+  mobile?: string
+  email: string
+  hours: string
+  mapUrl: string
+  coords?: { lat: number; lng: number }
+}
+
+const DEFAULT_OFFICES: OfficeData[] = [
   {
     id: "germany",
     label: "Munich Office",
@@ -54,9 +72,22 @@ const subjectDefs = [
   { value: "other", labelKey: "contact.subject.other", labelFallback: "Something Else", icon: Globe },
 ]
 
-export function ContactPageClient({ staff }: ContactPageClientProps) {
-  const { t, tUpper } = useTranslations()
+export function ContactPageClient({ staff, content }: ContactPageClientProps) {
+  const { t, tUpper, locale } = useTranslations()
   const subjects = subjectDefs.map((s) => ({ ...s, label: t(s.labelKey, s.labelFallback) }))
+
+  // Resolve content from PageComponent props, falling back to hardcoded defaults
+  const hero = (content?.hero || {}) as { badge?: T; title?: T; titleAccent?: T; subtitle?: T }
+  const stats = (content?.stats as Array<{ num: string; label: T }> | undefined) || null
+  const offices: OfficeData[] = (content?.offices as OfficeData[] | undefined) || DEFAULT_OFFICES
+  const familyBadge = (content?.familyBadge || {}) as { title?: T; description?: T }
+  const cta = (content?.cta || {}) as { title?: T; description?: T; primaryBtn?: T; primaryLink?: string; secondaryBtn?: T; secondaryLink?: string }
+
+  function r(field: T | undefined, fallback: string) {
+    if (!field) return fallback
+    return field[locale] || field.en || fallback
+  }
+
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -166,7 +197,7 @@ export function ContactPageClient({ staff }: ContactPageClientProps) {
     }
   }
 
-  const selectedOffice = offices.find((o) => o.id === activeOffice)!
+  const selectedOffice = offices.find((o) => o.id === activeOffice) ?? offices[0]!
 
   return (
     <>
@@ -185,34 +216,34 @@ export function ContactPageClient({ staff }: ContactPageClientProps) {
 
         <div className="max-w-6xl mx-auto text-center relative z-10">
           <span data-hero-text className="mb-4 inline-block rounded-full border border-[#83776d]/30 bg-[#070c26]/20 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-[#83776d] backdrop-blur-sm">
-            {tUpper("contact.badge", "Get In Touch")}
+            {r(hero.badge, tUpper("contact.badge", "Get In Touch")).toUpperCase()}
           </span>
           <h1
             data-hero-text
             className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-5"
             style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em" }}
           >
-            {t("contact.title", "Let's Plan Your")}
+            {r(hero.title, t("contact.title", "Let's Plan Your"))}
             <span className="block mt-1" style={{ background: "linear-gradient(135deg, #0077B6, #A7EDFF)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-              {t("contact.titleAccent", "Perfect Charter")}
+              {r(hero.titleAccent, t("contact.titleAccent", "Perfect Charter"))}
             </span>
           </h1>
           <p data-hero-text className="text-lg text-white/50 max-w-xl mx-auto mb-12">
-            {t("contact.subtitle", "Whether you have a question, want to book a yacht, or just want to say hello — our family team is here for you since 1979.")}
+            {r(hero.subtitle, t("contact.subtitle", "Whether you have a question, want to book a yacht, or just want to say hello — our family team is here for you since 1979."))}
           </p>
 
           {/* Stats row */}
           <div className="flex flex-wrap justify-center gap-8 md:gap-16">
-            {[
-              { num: "45+", label: tUpper("contact.stat.experience", "Years of Experience") },
-              { num: "2", label: tUpper("contact.stat.offices", "Offices Worldwide") },
-              { num: "24h", label: tUpper("contact.stat.response", "Response Time") },
-            ].map((stat) => (
-              <div key={stat.label} data-stat className="text-center">
+            {(stats ?? [
+              { num: "45+", label: { en: tUpper("contact.stat.experience", "Years of Experience") } },
+              { num: "2", label: { en: tUpper("contact.stat.offices", "Offices Worldwide") } },
+              { num: "24h", label: { en: tUpper("contact.stat.response", "Response Time") } },
+            ]).map((stat) => (
+              <div key={stat.num} data-stat className="text-center">
                 <div className="text-2xl md:text-3xl font-bold text-white" style={{ fontFamily: "var(--font-display)" }}>
                   {stat.num}
                 </div>
-                <div className="text-xs uppercase tracking-wider text-white/30 mt-1">{stat.label}</div>
+                <div className="text-xs uppercase tracking-wider text-white/30 mt-1">{r(stat.label, "")}</div>
               </div>
             ))}
           </div>
@@ -456,10 +487,10 @@ export function ContactPageClient({ staff }: ContactPageClientProps) {
               <div data-form-reveal className="rounded-xl p-6 text-center" style={{ background: "linear-gradient(135deg, rgba(0,99,153,0.1), rgba(0,33,71,0.15))", border: "1px solid rgba(0,119,182,0.15)" }}>
                 <div className="text-3xl mb-2">⚓</div>
                 <h3 className="text-sm font-bold text-white mb-1" style={{ fontFamily: "var(--font-display)" }}>
-                  {t("contact.familyBusiness", "Family Business Since 1979")}
+                  {r(familyBadge.title, t("contact.familyBusiness", "Family Business Since 1979"))}
                 </h3>
                 <p className="text-xs text-white/40 leading-relaxed">
-                  {t("contact.familyDesc", "German-Greek family operation with deep roots in the Ionian Sea. Personal service, not a call center.")}
+                  {r(familyBadge.description, t("contact.familyDesc", "German-Greek family operation with deep roots in the Ionian Sea. Personal service, not a call center."))}
                 </p>
               </div>
             </div>
@@ -482,7 +513,7 @@ export function ContactPageClient({ staff }: ContactPageClientProps) {
           {/* Office toggle */}
           <div className="flex justify-center mb-8">
             <div className="inline-flex rounded-lg p-1" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
-              {offices.map((office) => (
+              {offices.filter(Boolean).map((office) => (
                 <button
                   key={office.id}
                   onClick={() => setActiveOffice(office.id)}
@@ -605,24 +636,24 @@ export function ContactPageClient({ staff }: ContactPageClientProps) {
 
             <div className="relative z-10">
               <h2 className="text-2xl md:text-3xl font-bold text-white mb-3" style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em" }}>
-                {t("contact.cta.title", "Ready to Set Sail?")}
+                {r(cta.title, t("contact.cta.title", "Ready to Set Sail?"))}
               </h2>
               <p className="text-white/60 mb-8 max-w-md mx-auto">
-                {t("contact.cta.desc", "Browse our fleet and find the perfect yacht for your Ionian adventure.")}
+                {r(cta.description, t("contact.cta.desc", "Browse our fleet and find the perfect yacht for your Ionian adventure."))}
               </p>
               <div className="flex flex-wrap justify-center gap-3">
                 <a
-                  href="/fleet"
+                  href={cta.primaryLink || "/fleet"}
                   className="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 text-sm font-semibold text-[#002147] transition-all hover:bg-white/90 hover:shadow-lg"
                 >
-                  {t("contact.cta.exploreFleet", "Explore Fleet")} <ArrowRight className="h-4 w-4" />
+                  {r(cta.primaryBtn, t("contact.cta.exploreFleet", "Explore Fleet"))} <ArrowRight className="h-4 w-4" />
                 </a>
                 <a
-                  href="/locations"
+                  href={cta.secondaryLink || "/locations"}
                   className="inline-flex items-center gap-2 rounded-lg px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-white/10"
                   style={{ border: "1px solid rgba(255,255,255,0.2)" }}
                 >
-                  {t("contact.cta.viewDestinations", "View Destinations")}
+                  {r(cta.secondaryBtn, t("contact.cta.viewDestinations", "View Destinations"))}
                 </a>
               </div>
             </div>

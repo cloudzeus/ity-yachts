@@ -14,11 +14,21 @@ export const metadata: Metadata = {
 }
 
 export default async function ItinerariesListPage() {
-  const itineraries = await db.itinerary.findMany({
-    // where: { status: "published" }, // TODO: re-enable after testing
-    orderBy: { updatedAt: "desc" },
-    include: { _count: { select: { days: true } } },
-  })
+  const [itineraries, itinComponent] = await Promise.all([
+    db.itinerary.findMany({
+      // where: { status: "published" }, // TODO: re-enable after testing
+      orderBy: { updatedAt: "desc" },
+      include: { _count: { select: { days: true } } },
+    }),
+    db.pageComponent.findFirst({
+      where: { page: { slug: "itineraries" }, type: "itineraries-content", status: "active" },
+      select: { props: true },
+    }),
+  ])
+
+  const itinHero = ((itinComponent?.props as Record<string, unknown> | null)?.hero ?? null) as {
+    badge?: Record<string, string>; title?: Record<string, string>; subtitle?: Record<string, string>
+  } | null
 
   return (
     <main>
@@ -32,16 +42,22 @@ export default async function ItinerariesListPage() {
         <section className="pt-32 pb-16 px-6">
           <div className="max-w-6xl mx-auto text-center">
             <span className="mb-4 inline-block rounded-full border border-[#83776d]/30 bg-[#070c26]/20 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-[#83776d] backdrop-blur-sm">
-              <LocaleText tKey="itineraries.badge" fallback="Explore Routes" uppercase />
+              {itinHero?.badge
+                ? <LocaleText translations={itinHero.badge} fallback="Explore Routes" uppercase />
+                : <LocaleText tKey="itineraries.badge" fallback="Explore Routes" uppercase />}
             </span>
             <h1
               className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4"
               style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em" }}
             >
-              <LocaleText tKey="itineraries.title" fallback="Sailing Itineraries" />
+              {itinHero?.title
+                ? <LocaleText translations={itinHero.title} fallback="Sailing Itineraries" />
+                : <LocaleText tKey="itineraries.title" fallback="Sailing Itineraries" />}
             </h1>
             <p className="text-lg text-white/60 max-w-xl mx-auto">
-              <LocaleText tKey="itineraries.subtitle" fallback="Discover hand-crafted sailing routes through the most beautiful destinations in Greece." />
+              {itinHero?.subtitle
+                ? <LocaleText translations={itinHero.subtitle} fallback="Discover hand-crafted sailing routes through the most beautiful destinations in Greece." />
+                : <LocaleText tKey="itineraries.subtitle" fallback="Discover hand-crafted sailing routes through the most beautiful destinations in Greece." />}
             </p>
           </div>
         </section>
