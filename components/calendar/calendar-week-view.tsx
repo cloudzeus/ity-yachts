@@ -1,5 +1,5 @@
 import {addDays, format, isSameDay, parseISO, startOfWeek} from "date-fns";
-import {motion} from "framer-motion";
+import {motion} from "@/components/calendar/gsap-motion";
 import {ScrollArea} from "@/components/ui/scroll-area";
 import {
     fadeIn,

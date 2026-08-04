@@ -1,5 +1,5 @@
 import { getYear, isSameDay, isSameMonth } from "date-fns";
-import { motion } from "framer-motion";
+import { motion } from "@/components/calendar/gsap-motion";
 import { cn } from "@/lib/utils";
 import { staggerContainer, transition } from "@/components/calendar/animations";
 import { useCalendar } from "@/components/calendar/calendar-context";

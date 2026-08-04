@@ -1,7 +1,7 @@
 "use client";
 
 import { isSameDay, parseISO } from "date-fns";
-import { motion } from "framer-motion";
+import { motion } from "@/components/calendar/gsap-motion";
 import { fadeIn, transition } from "@/components/calendar/animations";
 import { useCalendar } from "@/components/calendar/calendar-context";
 import { AgendaEvents } from "@/components/calendar/agenda-events";

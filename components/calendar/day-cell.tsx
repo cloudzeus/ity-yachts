@@ -2,7 +2,7 @@
 
 import { cva } from "class-variance-authority";
 import { isToday, startOfDay, isSunday, isSameMonth } from "date-fns";
-import { motion } from "framer-motion";
+import { motion } from "@/components/calendar/gsap-motion";
 import { useMemo, useCallback } from "react";
 
 import { cn } from "@/lib/utils";

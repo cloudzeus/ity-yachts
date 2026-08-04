@@ -1,5 +1,5 @@
 import { formatDate } from "date-fns";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion } from "@/components/calendar/gsap-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useMemo } from "react";
 import { Badge } from "@/components/ui/badge";

@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence } from "@/components/calendar/gsap-motion";
 
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -88,8 +88,8 @@ function Views() {
                         className="font-medium"
                         initial={{ opacity: 0, scaleX: 0.8 }}
                         animate={{ opacity: 1, scaleX: 1 }}
-                        transition={{ duration: 0.25, ease: "easeOut" }}
-                        style={{ originX: 0 }}
+                        transition={{ duration: 0.25, ease: "power2.out" }}
+                        style={{ transformOrigin: "left center" }}
                       >
                         {name}
                       </motion.span>

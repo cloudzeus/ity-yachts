@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion } from "@/components/calendar/gsap-motion";
 import { useMemo } from "react";
 import {
 	staggerContainer,

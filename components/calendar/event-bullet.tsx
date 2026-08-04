@@ -1,5 +1,5 @@
 import { cva } from "class-variance-authority";
-import { motion } from "framer-motion";
+import { motion } from "@/components/calendar/gsap-motion";
 import { cn } from "@/lib/utils";
 import { transition } from "@/components/calendar/animations";
 import type { TEventColor } from "@/components/calendar/types";

@@ -1,5 +1,5 @@
 import { formatDate } from "date-fns";
-import { motion } from "framer-motion";
+import { motion } from "@/components/calendar/gsap-motion";
 import { Button } from "@/components/ui/button";
 import { buttonHover, transition } from "@/components/calendar/animations";
 import { useCalendar } from "@/components/calendar/calendar-context";

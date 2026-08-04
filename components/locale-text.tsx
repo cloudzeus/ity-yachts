@@ -78,6 +78,5 @@ export function GreekUppercase({
   style?: React.CSSProperties
 }) {
   const upper = removeGreekTonos(children).toUpperCase()
-  // @ts-expect-error -- dynamic tag
   return <Tag className={className} style={style}>{upper}</Tag>
 }

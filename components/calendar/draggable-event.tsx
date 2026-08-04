@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion } from "@/components/calendar/gsap-motion";
 import type React from "react";
 import type { ReactNode } from "react";
 import { useDragDrop } from "@/components/calendar/dnd-context";
@@ -29,10 +29,7 @@ export function DraggableEvent({
       draggable
       onClick={(e: React.MouseEvent<HTMLDivElement>) => handleClick(e)}
       onDragStart={(e) => {
-        (e as DragEvent).dataTransfer!.setData(
-          "text/plain",
-          event.id.toString(),
-        );
+        e.dataTransfer.setData("text/plain", event.id.toString());
         startDrag(event);
       }}
       onDragEnd={() => {

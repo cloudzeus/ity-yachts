@@ -8,7 +8,7 @@ import {
   isBefore,
   parseISO,
 } from "date-fns";
-import { motion } from "framer-motion";
+import { motion } from "@/components/calendar/gsap-motion";
 import { Resizable, type ResizeCallback } from "re-resizable";
 import type React from "react";
 import { useCallback, useMemo, useState } from "react";
