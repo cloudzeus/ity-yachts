@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic"
 
 export default async function Home() {
   // Fetch all homepage data in parallel
-  const [homePage, locations, itineraries, yachts, reviews] = await Promise.all([
+  const [homePage, locations, itineraries, yachts, reviews, services] = await Promise.all([
     db.page.findFirst({
       where: { isHomePage: true },
       select: { heroSection: true },
@@ -35,6 +35,10 @@ export default async function Home() {
       where: { status: "published" },
       orderBy: { sortOrder: "asc" },
       take: 6,
+    }),
+    db.service.findMany({
+      where: { status: "published", showOnHomepage: true },
+      orderBy: { sortOrder: "asc" },
     }),
   ])
 
@@ -101,6 +105,18 @@ export default async function Home() {
     }
   })
 
+  const serviceData = services.map((s) => ({
+    id: s.id,
+    title: (s.title ?? {}) as Record<string, string>,
+    label: (s.label ?? {}) as Record<string, string>,
+    shortDesc: (s.shortDesc ?? {}) as Record<string, string>,
+    defaultMedia: s.defaultMedia,
+    defaultMediaType: s.defaultMediaType,
+    link: s.link,
+    icon: s.icon,
+    sortOrder: s.sortOrder,
+  }))
+
   const reviewData = reviews.map((r) => ({
     id: r.id,
     name: r.name,
@@ -129,6 +145,7 @@ export default async function Home() {
           yachts={yachtData}
           fleetYachts={yachtData}
           reviews={reviewData}
+          services={serviceData}
         />
       </div>
 

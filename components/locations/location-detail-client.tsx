@@ -208,7 +208,7 @@ function Lightbox({
    MAIN COMPONENT
    ═══════════════════════════════════════════════════════════════════════════ */
 
-export function LocationDetailClient({ location }: { location: LocationData }) {
+export function LocationDetailClient({ location, mapsKey }: { location: LocationData; mapsKey: string | null }) {
   const { locale, t, tUpper } = useTranslations()
   const locName = resolveField(location.nameTranslations, locale) || location.name
   const locShortDesc = resolveField(location.shortDesc, locale)
@@ -595,6 +595,7 @@ export function LocationDetailClient({ location }: { location: LocationData }) {
                   longitude={location.longitude!}
                   name={location.name}
                   className="w-full h-72 md:h-[28rem]"
+                  mapsKey={mapsKey}
                 />
                 <div
                   className="flex items-center justify-between px-5 py-3"

@@ -11,7 +11,7 @@ import { LocationsSection } from "./locations-section"
 import { ItinerariesSection } from "./itineraries-section"
 import { FeaturedYachtsSection } from "./featured-yachts-section"
 import { TestimonialsSection } from "./testimonials-section"
-import { ServicesSection } from "./services-section"
+import { ServicesSection, type ServiceItem } from "./services-section"
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger)
@@ -87,6 +87,7 @@ interface HomepageProps {
     image?: string | null
     date: string
   }>
+  services: ServiceItem[]
 }
 
 function r(field: string | T | undefined, locale: string): string {
@@ -95,7 +96,7 @@ function r(field: string | T | undefined, locale: string): string {
   return field[locale] || field.en || ""
 }
 
-export function HomepageClient({ hero, destinations, itineraries, yachts, fleetYachts, reviews }: HomepageProps) {
+export function HomepageClient({ hero, destinations, itineraries, yachts, fleetYachts, reviews, services }: HomepageProps) {
   const { locale } = useTranslations()
   const heroVideoRef = useRef<HTMLVideoElement>(null)
 
@@ -265,7 +266,7 @@ export function HomepageClient({ hero, destinations, itineraries, yachts, fleetY
       <LocationsSection destinations={destResolved} />
 
       {/* Services — Curated Experiences */}
-      <ServicesSection />
+      <ServicesSection services={services} />
 
       {/* Itineraries - Parallax Cards */}
       <ItinerariesSection itineraries={itinResolved} />

@@ -4,6 +4,7 @@ import { Metadata } from "next"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { ItineraryDetailClient } from "@/components/itinerary-detail-client"
+import { getGoogleMapsKey } from "@/lib/maps-key"
 
 export const dynamic = "force-dynamic"
 
@@ -25,6 +26,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function ItineraryPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
+  const mapsKey = await getGoogleMapsKey()
   const itinerary = await db.itinerary.findUnique({
     where: { slug },
     include: {
@@ -70,7 +72,7 @@ export default async function ItineraryPage({ params }: { params: Promise<{ slug
         style={{ background: "#060c27", clipPath: "polygon(0% 0, 100% 0%, 100% 100%, 0 100%)" }}
       >
         <SiteHeader />
-        <ItineraryDetailClient itinerary={data} />
+        <ItineraryDetailClient itinerary={data} mapsKey={mapsKey} />
       </div>
       <SiteFooter />
     </main>

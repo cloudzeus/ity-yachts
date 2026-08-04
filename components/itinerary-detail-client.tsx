@@ -193,7 +193,7 @@ function Lightbox({ images, initialIndex, onClose }: { images: string[]; initial
    MAIN COMPONENT
    ═════════════════════════════════════════════════════════════════════════ */
 
-export function ItineraryDetailClient({ itinerary }: { itinerary: ItineraryData }) {
+export function ItineraryDetailClient({ itinerary, mapsKey }: { itinerary: ItineraryData; mapsKey: string | null }) {
   const { locale, t, tUpper } = useTranslations()
   const name = itinerary.name as Record<string, string>
   const shortDesc = itinerary.shortDesc as Record<string, string>
@@ -359,6 +359,7 @@ export function ItineraryDetailClient({ itinerary }: { itinerary: ItineraryData 
             onPointClick={(i) => goTo(i)}
             onImageClick={(images, index) => setLightbox({ images, index })}
             className="absolute inset-0 w-full h-full"
+            mapsKey={mapsKey}
           />
 
           {/* Bottom gradient for title readability */}

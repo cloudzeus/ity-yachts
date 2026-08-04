@@ -4,6 +4,7 @@ import { Metadata } from "next"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { LocationDetailClient } from "@/components/locations/location-detail-client"
+import { getGoogleMapsKey } from "@/lib/maps-key"
 
 export const dynamic = "force-dynamic"
 
@@ -32,6 +33,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function LocationPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
+  const mapsKey = await getGoogleMapsKey()
   const location = await db.location.findUnique({ where: { slug } })
   if (!location || location.status !== "published") notFound()
 
@@ -61,7 +63,7 @@ export default async function LocationPage({ params }: { params: Promise<{ slug:
         style={{ background: "#060c27", clipPath: "polygon(0% 0, 100% 0%, 100% 100%, 0 100%)" }}
       >
         <SiteHeader />
-        <LocationDetailClient location={data} />
+        <LocationDetailClient location={data} mapsKey={mapsKey} />
       </div>
       <SiteFooter />
     </main>

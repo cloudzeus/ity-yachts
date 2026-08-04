@@ -21,7 +21,7 @@ interface WeatherData {
   wave_height_m: number | null
 }
 
-interface ServiceItem {
+export interface ServiceItem {
   id: string
   title: Record<string, string>
   label: Record<string, string>
@@ -37,21 +37,18 @@ function kphToKnots(kph: number) {
   return Math.round(kph * 0.539957)
 }
 
-export function ServicesSection() {
+export function ServicesSection({ services }: { services: ServiceItem[] }) {
   const { t, tUpper } = useTranslations()
   const sectionRef = useRef<HTMLDivElement>(null)
   const [weather, setWeather] = useState<WeatherData | null>(null)
-  const [services, setServices] = useState<ServiceItem[]>([])
 
+  // Services arrive from the server component; only the live weather strip,
+  // which hits a third-party API, is still fetched on the client so it cannot
+  // delay the homepage HTML.
   useEffect(() => {
     fetch("/api/weather")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => d && setWeather(d))
-      .catch(() => {})
-
-    fetch("/api/services?homepage=true")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => d?.services && setServices(d.services))
       .catch(() => {})
   }, [])
 

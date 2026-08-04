@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef } from "react"
 import Image from "next/image"
 import {
   APIProvider,
@@ -370,27 +370,12 @@ interface Props {
   onPointClick: (index: number) => void
   onImageClick?: (images: string[], index: number) => void
   className?: string
+  /** Resolved on the server; null when no key is configured. */
+  mapsKey: string | null
 }
 
-export function ItineraryStoryMap({ points, activeIndex, onPointClick, onImageClick, className }: Props) {
-  const [apiKey, setApiKey] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    fetch("/api/maps-key")
-      .then((r) => r.json())
-      .then((j) => setApiKey(j.key || null))
-      .catch(() => setApiKey(null))
-      .finally(() => setLoading(false))
-  }, [])
-
-  if (loading) {
-    return (
-      <div className={`flex items-center justify-center bg-[#060c27] ${className || ""}`}>
-        <div className="size-6 rounded-full border-2 border-white/10 border-t-[#58D6F1]/60 animate-spin" />
-      </div>
-    )
-  }
+export function ItineraryStoryMap({ points, activeIndex, onPointClick, onImageClick, className, mapsKey }: Props) {
+  const apiKey = mapsKey
 
   if (!apiKey || points.length === 0) {
     return (
