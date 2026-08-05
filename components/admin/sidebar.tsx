@@ -6,11 +6,9 @@ import { usePathname } from "next/navigation"
 import {
   LayoutDashboard,
   Users,
-  Ship,
   CalendarDays,
   FileText,
   Settings,
-  BarChart3,
   ImageIcon,
   MapPin,
   UserCircle,
@@ -46,7 +44,6 @@ const navGroups = [
     label: "Overview",
     items: [
       { label: "Dashboard", href: "/admin", icon: LayoutDashboard, exact: true },
-      { label: "Analytics", href: "/admin/analytics", icon: BarChart3 },
     ],
   },
   {
@@ -56,7 +53,6 @@ const navGroups = [
       { label: "Enquiries", href: "/admin/enquiries", icon: MessageSquare },
       { label: "Customers", href: "/admin/customers", icon: Contact },
       { label: "Contacts", href: "/admin/contacts", icon: BookUser },
-      { label: "Yachts", href: "/admin/yachts", icon: Ship },
     ],
   },
   {
