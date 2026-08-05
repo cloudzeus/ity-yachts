@@ -182,7 +182,7 @@ export function CalendarDayView({ singleDayEvents, multiDayEvents }: IProps) {
           mode="single"
           selected={selectedDate}
           onSelect={(date) => date && setSelectedDate(date)}
-          initialFocus
+          autoFocus
         />
 
         <div className="flex-1 space-y-3">
