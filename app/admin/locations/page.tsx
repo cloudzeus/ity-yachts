@@ -1,11 +1,13 @@
 import { db } from "@/lib/db"
 import { LocationsClient } from "./locations-client"
+import { getGoogleMapsKey } from "@/lib/maps-key"
 
 export const dynamic = "force-dynamic"
 
 export const metadata = { title: "Locations — IYC Admin" }
 
 export default async function LocationsPage() {
+  const mapsKey = await getGoogleMapsKey()
   const [locations, total] = await Promise.all([
     db.location.findMany({
       orderBy: { updatedAt: "desc" },
@@ -27,7 +29,7 @@ export default async function LocationsPage() {
         </div>
       </div>
 
-      <LocationsClient initialData={{
+      <LocationsClient mapsKey={mapsKey} initialData={{
         locations: locations.map((l) => ({
           ...l,
           nameTranslations: l.nameTranslations as Record<string, string>,

@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useEffect, useCallback, useRef } from "react"
 import { APIProvider, Map, AdvancedMarker, useMap } from "@vis.gl/react-google-maps"
-import { Loader2, MapPin } from "lucide-react"
+import { MapPin } from "lucide-react"
 
 export type RoutePoint = {
   lat: number
@@ -73,11 +73,13 @@ function FitBoundsAndPolyline({ points, initialFitDone }: { points: RoutePoint[]
 interface Props {
   points: RoutePoint[]
   onPointDrag?: (index: number, lat: number, lng: number) => void
+  /** Resolved on the server; null when no key is configured. */
+  mapsKey: string | null
+
 }
 
-export function RouteMap({ points, onPointDrag }: Props) {
-  const [apiKey, setApiKey] = useState<string | null>(null)
-  const [loadingKey, setLoadingKey] = useState(true)
+export function RouteMap({ points, onPointDrag, mapsKey }: Props) {
+  const apiKey = mapsKey
   const initialFitDone = useRef(false)
 
   // Reset fit when points count changes (new point added/removed)
@@ -89,28 +91,11 @@ export function RouteMap({ points, onPointDrag }: Props) {
     }
   }, [points.length])
 
-  useEffect(() => {
-    setLoadingKey(true)
-    fetch("/api/admin/geocode/maps-key")
-      .then((r) => r.json())
-      .then((j) => setApiKey(j.key || null))
-      .catch(() => setApiKey(null))
-      .finally(() => setLoadingKey(false))
-  }, [])
-
   if (points.length === 0) {
     return (
       <div className="w-full py-6 rounded flex flex-col items-center justify-center gap-2" style={{ border: "2px dashed var(--outline-variant)", background: "var(--surface-container)" }}>
         <MapPin className="size-5" style={{ color: "var(--on-surface-variant)", opacity: 0.4 }} />
         <span className="text-[11px]" style={{ color: "var(--on-surface-variant)" }}>Add coordinates to see the route map</span>
-      </div>
-    )
-  }
-
-  if (loadingKey) {
-    return (
-      <div className="flex items-center justify-center h-48 rounded" style={{ background: "var(--surface-container)" }}>
-        <Loader2 className="size-5 animate-spin" style={{ color: "var(--on-surface-variant)" }} />
       </div>
     )
   }

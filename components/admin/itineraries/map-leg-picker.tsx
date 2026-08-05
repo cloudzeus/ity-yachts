@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useEffect } from "react"
+import { useState, useCallback } from "react"
 import { APIProvider, Map, AdvancedMarker } from "@vis.gl/react-google-maps"
 import { MapPin, Loader2, X, Navigation } from "lucide-react"
 import {
@@ -23,29 +23,21 @@ interface Props {
   title?: string
   description?: string
   confirmLabel?: string
+  /** Resolved on the server; null when no key is configured. */
+  mapsKey: string | null
+
 }
 
 const DEFAULT_CENTER = { lat: 38.5, lng: 24.0 }
 const DEFAULT_ZOOM = 6
 
-export function MapLegPicker({ open, onOpenChange, onConfirm, title, description, confirmLabel }: Props) {
-  const [apiKey, setApiKey] = useState<string | null>(null)
-  const [loadingKey, setLoadingKey] = useState(true)
+export function MapLegPicker({ open, onOpenChange, onConfirm, title, description, confirmLabel, mapsKey }: Props) {
+  const apiKey = mapsKey
 
   const [pin, setPin] = useState<{ lat: number; lng: number } | null>(null)
   const [reversing, setReversing] = useState(false)
   const [suggestedName, setSuggestedName] = useState("")
   const [name, setName] = useState("")
-
-  useEffect(() => {
-    if (!open) return
-    setLoadingKey(true)
-    fetch("/api/admin/geocode/maps-key")
-      .then((r) => r.json())
-      .then((j) => setApiKey(j.key || null))
-      .catch(() => setApiKey(null))
-      .finally(() => setLoadingKey(false))
-  }, [open])
 
   const handleMapClick = useCallback(async (e: { detail: { latLng: { lat: number; lng: number } | null } }) => {
     const latLng = e.detail.latLng
@@ -104,11 +96,7 @@ export function MapLegPicker({ open, onOpenChange, onConfirm, title, description
         </div>
 
         <div className="relative w-full" style={{ height: 420 }}>
-          {loadingKey ? (
-            <div className="flex items-center justify-center h-full" style={{ background: "var(--surface-container)" }}>
-              <Loader2 className="size-6 animate-spin" style={{ color: "var(--on-surface-variant)" }} />
-            </div>
-          ) : !apiKey ? (
+          {!apiKey ? (
             <div className="flex flex-col items-center justify-center h-full gap-2 px-8 text-center" style={{ background: "var(--surface-container)" }}>
               <MapPin className="size-8" style={{ color: "var(--on-surface-variant)" }} />
               <p className="text-sm font-medium" style={{ color: "var(--on-surface)" }}>Google Maps API key not configured</p>

@@ -1,6 +1,7 @@
 import { db } from "@/lib/db"
 import { notFound } from "next/navigation"
 import { ItineraryEditorClient } from "./editor-client"
+import { getGoogleMapsKey } from "@/lib/maps-key"
 
 export const dynamic = "force-dynamic"
 
@@ -13,6 +14,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 export default async function ItineraryEditorPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
+  const mapsKey = await getGoogleMapsKey()
   const itinerary = await db.itinerary.findUnique({
     where: { id },
     include: {
@@ -29,6 +31,7 @@ export default async function ItineraryEditorPage({ params }: { params: Promise<
 
   return (
     <ItineraryEditorClient
+      mapsKey={mapsKey}
       itinerary={{
         ...itinerary,
         name: (itinerary.name as Record<string, string>) ?? { en: "", el: "", de: "" },

@@ -65,6 +65,8 @@ type ItineraryData = {
 
 interface Props {
   itinerary: ItineraryData
+  /** Resolved on the server; null when no key is configured. */
+  mapsKey: string | null
 }
 
 // ─── Translatable Field (Tabbed) ─────────────────────────────────────────────
@@ -400,10 +402,11 @@ function LegEditor({ leg, onChange, onDelete, legIndex }: {
 
 // ─── Day Editor ──────────────────────────────────────────────────────────────
 
-function DayEditor({ day, onChange, onDelete }: {
+function DayEditor({ day, onChange, onDelete, mapsKey }: {
   day: DayData
   onChange: (day: DayData) => void
   onDelete: () => void
+  mapsKey: string | null
 }) {
   const [expanded, setExpanded] = useState(true)
   const [mapPickerOpen, setMapPickerOpen] = useState(false)
@@ -513,6 +516,7 @@ function DayEditor({ day, onChange, onDelete }: {
             onConfirm={addLegFromMap}
             title={`Add Leg to Day ${day.dayNumber}`}
             description="Click on the map to place a pin for this leg. The name and coordinates will be filled automatically."
+            mapsKey={mapsKey}
           />
         </div>
       )}
@@ -715,7 +719,7 @@ function AddPlaceModal({ open, onOpenChange, onConfirm }: {
 
 // ─── Main Editor ─────────────────────────────────────────────────────────────
 
-export function ItineraryEditorClient({ itinerary }: Props) {
+export function ItineraryEditorClient({ itinerary, mapsKey }: Props) {
   const router = useRouter()
   const [name, setName] = useState(itinerary.name)
   const [slug, setSlug] = useState(itinerary.slug)
@@ -1126,6 +1130,7 @@ export function ItineraryEditorClient({ itinerary }: Props) {
                 day={day}
                 onChange={(updated) => updateDay(dayIndex, updated)}
                 onDelete={() => deleteDay(dayIndex)}
+                mapsKey={mapsKey}
               />
             ))}
 
@@ -1311,7 +1316,7 @@ export function ItineraryEditorClient({ itinerary }: Props) {
                 setPlaces(newPlaces)
               }
 
-              return <RouteMap points={routePoints} onPointDrag={handlePointDrag} />
+              return <RouteMap points={routePoints} onPointDrag={handlePointDrag} mapsKey={mapsKey} />
             })()}
             {/* Points list */}
             {(() => {
@@ -1338,6 +1343,7 @@ export function ItineraryEditorClient({ itinerary }: Props) {
           <RouteMapEditor
             open={mapEditorOpen}
             onOpenChange={setMapEditorOpen}
+            mapsKey={mapsKey}
             startLatitude={startLatitude}
             startLongitude={startLongitude}
             startFrom={startFrom}

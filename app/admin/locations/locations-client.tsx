@@ -90,9 +90,11 @@ const COLUMNS: ColumnDef<Location>[] = [
 
 interface Props {
   initialData: { locations: Location[]; total: number }
+  /** Resolved on the server; null when no key is configured. */
+  mapsKey: string | null
 }
 
-export function LocationsClient({ initialData }: Props) {
+export function LocationsClient({ initialData, mapsKey }: Props) {
   const router = useRouter()
   const [data, setData] = useState(initialData.locations)
   const [total, setTotal] = useState(initialData.total)
@@ -507,6 +509,7 @@ export function LocationsClient({ initialData }: Props) {
         open={mapPickerOpen}
         onOpenChange={setMapPickerOpen}
         onConfirm={handleMapPickerConfirm}
+        mapsKey={mapsKey}
       />
 
       {/* Delete Confirmation */}
