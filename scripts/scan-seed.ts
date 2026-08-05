@@ -1,8 +1,7 @@
-import { PrismaClient } from "@prisma/client"
+import "dotenv/config"
 import { readdir, readFile } from "fs/promises"
 import path from "path"
-
-const db = new PrismaClient()
+import { db } from "../lib/db"
 
 async function collectFiles(dir: string, ext: string): Promise<string[]> {
   const results: string[] = []

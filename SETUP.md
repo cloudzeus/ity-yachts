@@ -3,18 +3,22 @@
 ## Installed Technologies
 
 ### Core
-- **Next.js 16.2.1** - React framework with App Router
+- **Next.js 16.3.0** - React framework with App Router
 - **TypeScript** - Type safety
 - **Tailwind CSS 4.1** - Styling
 
 ### Database & ORM
-- **Prisma ORM** - Database management with MySQL
+- **Prisma ORM 7** - Database management with MySQL
+- Connects through the `@prisma/adapter-mariadb` driver adapter; the connection
+  is built from `DATABASE_URL` in `lib/db.ts`, and `prisma.config.ts` carries
+  the URL for the CLI and migrations
 - **MySQL** - Database configured (update DATABASE_URL in .env)
 
 ### Authentication
-- **Auth.js v5** (@auth/nextjs) - NextAuth for authentication
-- Pre-configured User, Account, Session, and VerificationToken models
-- Auth callback examples included
+- Jose-signed session cookie — `loginAction` in `app/actions/auth.ts` issues it,
+  `lib/auth-session.ts` reads it, `proxy.ts` guards routes with it
+- Passwords hashed with bcryptjs
+- User, Account, Session, and VerificationToken models
 
 ### UI Components
 - **shadcn/ui** - Component library (ready to use)

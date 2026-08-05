@@ -1,5 +1,5 @@
-import { PrismaClient } from "@prisma/client"
-const db = new PrismaClient()
+import "dotenv/config"
+import { db } from "../lib/db"
 async function main() {
   const untranslated = await db.siteTranslation.findMany({
     where: { OR: [{ el: "" }, { de: "" }] },

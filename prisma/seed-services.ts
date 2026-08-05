@@ -1,6 +1,5 @@
-import { PrismaClient } from "@prisma/client"
-
-const db = new PrismaClient()
+import "dotenv/config"
+import { db } from "../lib/db"
 
 const services = [
   {
