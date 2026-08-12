@@ -408,7 +408,7 @@ export function TablesClient({ counts }: Props) {
             style={{
               background: "rgba(56,142,60,0.08)",
               border: "1px solid rgba(56,142,60,0.2)",
-              color: "#388E3C",
+              color: "#4F7A46",
             }}
           >
             <Check className="size-3.5" />
@@ -888,7 +888,7 @@ export function TablesClient({ counts }: Props) {
                               className="inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-full"
                               style={{
                                 background: item.depositInsurance ? "rgba(45,106,79,0.12)" : "rgba(0,0,0,0.06)",
-                                color: item.depositInsurance ? "#2D6A4F" : "var(--on-surface-variant)",
+                                color: item.depositInsurance ? "#4F7A46" : "var(--on-surface-variant)",
                               }}
                             >
                               {item.depositInsurance ? "Yes" : "No"}
@@ -927,7 +927,7 @@ export function TablesClient({ counts }: Props) {
                             </Button>
                           </div>
                         ) : justSaved ? (
-                          <span className="inline-flex items-center gap-1 text-xs font-medium" style={{ color: "#2D6A4F" }}>
+                          <span className="inline-flex items-center gap-1 text-xs font-medium" style={{ color: "#4F7A46" }}>
                             <Check className="size-3" />
                             Saved
                           </span>

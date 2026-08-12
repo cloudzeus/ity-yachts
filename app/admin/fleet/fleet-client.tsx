@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
+import { yachtThumb } from "@/lib/yacht-images"
 import {
   Search, RefreshCw, Ship, Anchor, Fuel, Bed,
   ChevronRight, ChevronLeft, DollarSign, Filter, X, Star, Trash2,
@@ -38,6 +39,8 @@ type Yacht = {
   engines: number | null
   enginePower: number | null
   mainPictureUrl: string | null
+  websiteImages?: Array<{ url: string; caption?: string }> | null
+  picturesUrl?: string[] | null
   isPremium: boolean
   isOwnFleet: boolean
   deposit: number | null
@@ -221,7 +224,7 @@ export function FleetClient({ total: initialTotal, lastSync }: Props) {
         </div>
         <Button
           size="sm" variant="outline" className="h-9 gap-2 text-xs ml-auto"
-          style={{ borderColor: "var(--error, #D32F2F)", color: "var(--error, #D32F2F)" }}
+          style={{ borderColor: "var(--error, #A93B2F)", color: "var(--error, #A93B2F)" }}
           disabled={deleting || total === 0}
           onClick={() => setShowDeleteConfirm(true)}
         >
@@ -311,7 +314,7 @@ export function FleetClient({ total: initialTotal, lastSync }: Props) {
       {lastSync && (
         <p className="text-[11px]" style={{ color: "var(--on-surface-variant)" }}>
           Last sync: <span suppressHydrationWarning>{new Date(lastSync.startedAt).toLocaleString()}</span> —{" "}
-          <span style={{ color: lastSync.status === "completed" ? "#2D6A4F" : lastSync.status === "failed" ? "#D32F2F" : "var(--on-surface-variant)" }}>
+          <span style={{ color: lastSync.status === "completed" ? "#4F7A46" : lastSync.status === "failed" ? "#A93B2F" : "var(--on-surface-variant)" }}>
             {lastSync.status}
           </span>
         </p>
@@ -344,12 +347,12 @@ export function FleetClient({ total: initialTotal, lastSync }: Props) {
               {/* Image */}
               <div
                 className="relative aspect-square w-full bg-cover bg-center"
-                style={yacht.mainPictureUrl
-                  ? { backgroundImage: `url(${yacht.mainPictureUrl})` }
+                style={yachtThumb(yacht)
+                  ? { backgroundImage: `url(${yachtThumb(yacht)})` }
                   : { background: "var(--surface-container)" }
                 }
               >
-                {!yacht.mainPictureUrl && (
+                {!yachtThumb(yacht) && (
                   <div className="flex items-center justify-center h-full">
                     <Ship className="size-10" style={{ color: "var(--outline-variant)" }} />
                   </div>
@@ -361,7 +364,7 @@ export function FleetClient({ total: initialTotal, lastSync }: Props) {
                     </span>
                   )}
                   {yacht.isOwnFleet && (
-                    <span className="px-2 py-0.5 text-[10px] font-bold uppercase flex items-center gap-1" style={{ background: "#2D6A4F", color: "#fff", borderRadius: "var(--radius-xs)" }}>
+                    <span className="px-2 py-0.5 text-[10px] font-bold uppercase flex items-center gap-1" style={{ background: "#4F7A46", color: "#fff", borderRadius: "var(--radius-xs)" }}>
                       <Star className="size-2.5" /> Our Fleet
                     </span>
                   )}
@@ -419,7 +422,7 @@ export function FleetClient({ total: initialTotal, lastSync }: Props) {
                   </p>
                   <div className="flex items-center gap-1.5 shrink-0">
                     {yacht._count.prices > 0 && (
-                      <span className="flex items-center gap-0.5 text-[10px]" style={{ color: "#2D6A4F" }}>
+                      <span className="flex items-center gap-0.5 text-[10px]" style={{ color: "#4F7A46" }}>
                         <DollarSign className="size-2.5" />{yacht._count.prices}
                       </span>
                     )}
@@ -504,7 +507,7 @@ export function FleetClient({ total: initialTotal, lastSync }: Props) {
                 className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
                 style={{ background: "rgba(211,47,47,0.1)" }}
               >
-                <Trash2 className="size-5" style={{ color: "#D32F2F" }} />
+                <Trash2 className="size-5" style={{ color: "#A93B2F" }} />
               </div>
               <div>
                 <h3 className="text-sm font-semibold" style={{ color: "var(--on-surface)" }}>
@@ -528,7 +531,7 @@ export function FleetClient({ total: initialTotal, lastSync }: Props) {
               <Button
                 size="sm"
                 className="h-8 text-xs gap-1.5 text-white"
-                style={{ background: "#D32F2F" }}
+                style={{ background: "#A93B2F" }}
                 disabled={deleting}
                 onClick={async () => {
                   setDeleting(true)

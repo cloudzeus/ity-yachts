@@ -51,7 +51,7 @@ export default async function ServicesPage() {
   return (
     <main>
       {/* ── Hero ───────────────────────────────────────────────── */}
-      <div style={{ background: "#070c26" }}>
+      <div style={{ background: "#05111F" }}>
         <SiteHeader />
 
         <section className="relative overflow-hidden pt-36 pb-32 px-6">
@@ -77,7 +77,7 @@ export default async function ServicesPage() {
           <div className="relative max-w-6xl mx-auto">
             <div className="max-w-3xl">
               {/* Badge */}
-              <span className="mb-8 inline-flex items-center gap-2 rounded-full border border-[#83776d]/30 bg-white/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-[#83776d] backdrop-blur-sm">
+              <span className="mb-8 inline-flex items-center gap-2 rounded-full border border-[var(--border-default)]/30 bg-white/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-[var(--text-subtle)] backdrop-blur-sm">
                 {hero?.badge ? (
                   <LocaleText translations={hero.badge} fallback="Our Services" uppercase />
                 ) : (
@@ -98,7 +98,7 @@ export default async function ServicesPage() {
                 <br />
                 <span
                   style={{
-                    background: "linear-gradient(90deg, #0077B6 0%, #83776d 100%)",
+                    background: "linear-gradient(90deg, #0F79BE 0%, #84776E 100%)",
                     WebkitBackgroundClip: "text",
                     WebkitTextFillColor: "transparent",
                     backgroundClip: "text",
@@ -116,7 +116,7 @@ export default async function ServicesPage() {
               <div className="mt-8 flex items-start gap-5">
                 <div
                   className="mt-2 h-20 w-px shrink-0"
-                  style={{ background: "linear-gradient(to bottom, #0077B6, transparent)" }}
+                  style={{ background: "linear-gradient(to bottom, #0F79BE, transparent)" }}
                 />
                 <p className="text-lg text-white/50 leading-relaxed max-w-lg">
                   {hero?.subtitle ? (
@@ -138,11 +138,11 @@ export default async function ServicesPage() {
                 <div className="mt-10 flex items-center gap-3">
                   <span
                     className="flex h-9 items-center gap-2 rounded-full px-4 text-sm font-medium"
-                    style={{ background: "rgba(0,119,182,0.15)", color: "#0077B6", border: "1px solid rgba(0,119,182,0.25)" }}
+                    style={{ background: "rgba(0,119,182,0.15)", color: "#0F79BE", border: "1px solid rgba(0,119,182,0.25)" }}
                   >
                     <span
                       className="flex size-5 items-center justify-center rounded-full text-xs font-bold text-white"
-                      style={{ background: "#0077B6" }}
+                      style={{ background: "#0F79BE" }}
                     >
                       {services.length}
                     </span>
@@ -158,7 +158,7 @@ export default async function ServicesPage() {
         <div
           className="h-20 w-full"
           style={{
-            background: "#f5f0ea",
+            background: "#F5F1E9",
             clipPath: "polygon(0 100%, 100% 0%, 100% 100%)",
             marginTop: "-1px",
           }}
@@ -166,10 +166,10 @@ export default async function ServicesPage() {
       </div>
 
       {/* ── Services List ──────────────────────────────────────── */}
-      <section style={{ background: "#f5f0ea" }}>
+      <section style={{ background: "#F5F1E9" }}>
         <div className="max-w-6xl mx-auto px-6 pb-24">
           {services.length === 0 ? (
-            <p className="py-32 text-center text-lg" style={{ color: "#84776e" }}>
+            <p className="py-32 text-center text-lg" style={{ color: "var(--text-subtle)" }}>
               No services published yet. Check back soon.
             </p>
           ) : (
@@ -187,7 +187,7 @@ export default async function ServicesPage() {
                     {index > 0 && (
                       <div
                         className="mx-auto max-w-5xl"
-                        style={{ height: "1px", background: "rgba(7,12,38,0.1)" }}
+                        style={{ height: "1px", background: "rgba(46,44,40,0.1)" }}
                       />
                     )}
 
@@ -207,12 +207,12 @@ export default async function ServicesPage() {
                           {/* Decorative number watermark */}
                           <div className="relative mb-4 flex items-center gap-4">
                             <span
-                              className="text-8xl font-bold leading-none select-none transition-colors duration-300 group-hover:text-[#0077B6]"
+                              className="text-8xl font-bold leading-none select-none transition-colors duration-300 group-hover:text-[var(--iyc-ionian-500)]"
                               style={{
                                 fontFamily: "var(--font-display)",
-                                color: "rgba(7,12,38,0.07)",
-                                WebkitTextStroke: "1px rgba(7,12,38,0.12)",
-                                WebkitTextFillColor: "rgba(7,12,38,0.03)",
+                                color: "rgba(46,44,40,0.07)",
+                                WebkitTextStroke: "1px rgba(46,44,40,0.12)",
+                                WebkitTextFillColor: "rgba(46,44,40,0.03)",
                                 lineHeight: 1,
                               }}
                             >
@@ -224,7 +224,7 @@ export default async function ServicesPage() {
                               <div
                                 className="absolute left-14 flex size-12 shrink-0 items-center justify-center rounded-2xl transition-transform duration-300 group-hover:scale-110"
                                 style={{
-                                  background: "linear-gradient(135deg, #006399, #002147)",
+                                  background: "linear-gradient(135deg, #0B6099, #0B3A5C)",
                                   boxShadow: "0 4px 20px rgba(0,99,153,0.3)",
                                 }}
                               >
@@ -240,7 +240,7 @@ export default async function ServicesPage() {
                           {label?.en && (
                             <span
                               className="mb-3 block text-xs font-bold uppercase tracking-widest"
-                              style={{ color: "#0077B6" }}
+                              style={{ color: "#0F79BE" }}
                             >
                               <LocaleText translations={label} fallback="" />
                             </span>
@@ -248,8 +248,8 @@ export default async function ServicesPage() {
 
                           {/* Title */}
                           <h2
-                            className="mb-3 text-4xl font-bold leading-tight tracking-tight transition-colors duration-200 group-hover:text-[#006399] lg:text-[42px]"
-                            style={{ fontFamily: "var(--font-display)", color: "#070c26" }}
+                            className="mb-3 text-4xl font-bold leading-tight tracking-tight transition-colors duration-200 group-hover:text-[var(--text-link)] lg:text-[42px]"
+                            style={{ fontFamily: "var(--font-display)", color: "#05111F" }}
                           >
                             <LocaleText translations={title} fallback="Service" />
                           </h2>
@@ -258,7 +258,7 @@ export default async function ServicesPage() {
                           {header?.en && (
                             <p
                               className="mb-4 text-lg font-medium leading-snug"
-                              style={{ color: "#84776e" }}
+                              style={{ color: "var(--text-subtle)" }}
                             >
                               <LocaleText translations={header} />
                             </p>
@@ -268,7 +268,7 @@ export default async function ServicesPage() {
                           {shortDesc?.en && (
                             <p
                               className="text-base leading-relaxed line-clamp-3"
-                              style={{ color: "#43474E" }}
+                              style={{ color: "#6B5F57" }}
                             >
                               <LocaleText translations={shortDesc} />
                             </p>
@@ -277,7 +277,7 @@ export default async function ServicesPage() {
                           {/* CTA arrow */}
                           <div
                             className="mt-6 flex items-center gap-2 text-sm font-semibold transition-all duration-200 group-hover:gap-3"
-                            style={{ color: "#006399" }}
+                            style={{ color: "var(--iyc-ionian-300)" }}
                           >
                             <span>Explore service</span>
                             <svg
@@ -307,7 +307,7 @@ export default async function ServicesPage() {
                             style={{
                               height: 320,
                               transform: isEven ? "rotate(-1.5deg)" : "rotate(1.5deg)",
-                              boxShadow: "0 20px 60px rgba(7,12,38,0.15)",
+                              boxShadow: "0 20px 60px rgba(46,44,40,0.15)",
                               transition: "transform 0.4s ease",
                             }}
                           >
@@ -334,7 +334,7 @@ export default async function ServicesPage() {
                                 {/* Subtle navy overlay on hover */}
                                 <div
                                   className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-30"
-                                  style={{ background: "linear-gradient(135deg, #070c26, #006399)" }}
+                                  style={{ background: "linear-gradient(135deg, #05111F, #0B6099)" }}
                                 />
                               </>
                             ) : (
@@ -342,15 +342,15 @@ export default async function ServicesPage() {
                                 className="flex h-full w-full items-center justify-center"
                                 style={{
                                   background:
-                                    "linear-gradient(135deg, rgba(0,99,153,0.08) 0%, rgba(7,12,38,0.12) 100%)",
-                                  border: "1px solid rgba(7,12,38,0.08)",
+                                    "linear-gradient(135deg, rgba(0,99,153,0.08) 0%, rgba(46,44,40,0.12) 100%)",
+                                  border: "1px solid rgba(46,44,40,0.08)",
                                 }}
                               >
                                 {service.icon && (
                                   <ServiceIcon
                                     name={service.icon}
                                     className="size-24 opacity-10"
-                                    style={{ color: "#070c26" }}
+                                    style={{ color: "#05111F" }}
                                   />
                                 )}
                               </div>
@@ -387,7 +387,7 @@ export default async function ServicesPage() {
       {(cta?.title || true) && (
         <section
           className="relative overflow-hidden py-24 px-6"
-          style={{ background: "#070c26" }}
+          style={{ background: "#05111F" }}
         >
           {/* Background wave */}
           <div
@@ -399,8 +399,8 @@ export default async function ServicesPage() {
           />
           <div className="relative max-w-4xl mx-auto text-center">
             <span
-              className="mb-4 inline-block rounded-full border border-[#83776d]/25 px-3 py-1 text-xs font-semibold uppercase tracking-widest"
-              style={{ color: "#83776d" }}
+              className="mb-4 inline-block rounded-full border border-[var(--border-default)]/25 px-3 py-1 text-xs font-semibold uppercase tracking-widest"
+              style={{ color: "var(--text-subtle)" }}
             >
               Ready to sail?
             </span>
@@ -422,8 +422,8 @@ export default async function ServicesPage() {
             <div className="flex flex-wrap items-center justify-center gap-4">
               <Link
                 href={cta?.primaryLink ?? "/fleet"}
-                className="inline-flex items-center gap-2 rounded-lg px-7 py-3.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
-                style={{ background: "var(--gradient-ocean)" }}
+                className="inline-flex items-center gap-2 rounded-[var(--iyc-radius-sm)] px-7 py-3.5 text-sm font-semibold transition-all active:scale-[0.985]"
+                style={{ background: "var(--action-accent)", color: "var(--text-on-accent)" }}
               >
                 {cta?.primaryBtn ? (
                   <LocaleText translations={cta.primaryBtn} fallback="Browse Our Fleet" />

@@ -4,7 +4,7 @@ import { useRef } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Anchor, Users, DoorOpen, Ruler, ArrowRight } from "lucide-react"
-import { TextReveal, StaggerReveal } from "./scroll-animations"
+import { TextReveal, StaggerReveal } from "@/components/motion"
 import { removeGreekTonos } from "@/lib/greek-utils"
 
 interface FeaturedYacht {
@@ -26,20 +26,20 @@ export function FeaturedYachtsSection({ yachts }: { yachts: FeaturedYacht[] }) {
   return (
     <section
       className="relative py-24 md:py-32 px-6 md:px-12 overflow-hidden"
-      style={{ background: "#070c26" }}
+      style={{ background: "var(--surface-page)" }}
     >
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-16">
           <div>
             <TextReveal>
-              <span className="label-sm mb-3 block" style={{ color: "var(--secondary-light)" }}>
+              <span className="label-sm mb-3 block" style={{ color: "var(--text-subtle)" }}>
                 Fleet
               </span>
             </TextReveal>
             <TextReveal delay={0.1}>
               <h2
-                className="text-4xl md:text-6xl font-bold text-white"
+                className="text-4xl md:text-6xl font-bold text-[var(--text-heading)]"
                 style={{
                   fontFamily: "var(--font-display)",
                   letterSpacing: "-0.02em",
@@ -53,7 +53,7 @@ export function FeaturedYachtsSection({ yachts }: { yachts: FeaturedYacht[] }) {
             <Link
               href="/fleet"
               className="inline-flex items-center gap-2 text-sm font-semibold mt-4 md:mt-0 transition-colors hover:gap-3"
-              style={{ color: "var(--secondary-light)", fontFamily: "var(--font-display)" }}
+              style={{ color: "var(--text-link)", fontFamily: "var(--font-display)" }}
             >
               Browse full fleet
               <ArrowRight className="w-4 h-4" />
@@ -184,15 +184,15 @@ function YachtCardInner({ yacht }: { yacht: FeaturedYacht }) {
         className="absolute inset-0"
         style={{
           background:
-            "linear-gradient(to top, rgba(0,10,30,0.8) 0%, rgba(0,10,30,0.2) 50%, transparent 70%)",
+            "var(--scrim-card)",
         }}
       />
 
       {/* Category badge */}
       <div className="absolute top-4 left-4 z-10">
         <span
-          className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider rounded-sm text-white"
-          style={{ background: "rgba(0, 99, 153, 0.8)", backdropFilter: "blur(8px)" }}
+          className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider rounded-full"
+          style={{ background: "var(--action-accent)", color: "var(--text-on-accent)" }}
         >
           {removeGreekTonos(yacht.category)}
         </span>
@@ -201,13 +201,13 @@ function YachtCardInner({ yacht }: { yacht: FeaturedYacht }) {
       {/* Content */}
       <div className="absolute inset-x-0 bottom-0 p-6 z-10">
         <h3
-          className="text-xl md:text-2xl font-bold text-white mb-3"
+          className="text-xl md:text-2xl font-bold text-[var(--text-heading)] mb-3"
           style={{ fontFamily: "var(--font-display)" }}
         >
           {yacht.name}
         </h3>
 
-        <div className="flex flex-wrap items-center gap-4 text-white/70 text-xs">
+        <div className="flex flex-wrap items-center gap-4 text-[var(--text-muted)] text-xs">
           <div className="flex items-center gap-1.5">
             <Ruler className="w-3.5 h-3.5" />
             <span>{yacht.loa}m</span>
@@ -227,12 +227,12 @@ function YachtCardInner({ yacht }: { yacht: FeaturedYacht }) {
         </div>
 
         {yacht.priceFrom !== undefined && yacht.priceFrom > 0 && (
-          <div className="mt-3 text-sm text-white/90">
+          <div className="mt-3 text-sm text-[var(--text-body)]">
             From{" "}
-            <span className="font-bold text-white">
+            <span className="font-bold text-[var(--text-heading)]">
               €{yacht.priceFrom.toLocaleString()}
             </span>
-            <span className="text-white/50"> / week</span>
+            <span className="text-[var(--text-subtle)]"> / week</span>
           </div>
         )}
       </div>

@@ -13,8 +13,8 @@ export type RoutePoint = {
 }
 
 const MARKER_COLORS: Record<string, string> = {
-  start: "#DC2626",
-  place: "#006399",
+  start: "#A93B2F",
+  place: "#0B6099",
   leg: "#1a6b3c",
 }
 
@@ -51,7 +51,7 @@ function FitBoundsAndPolyline({ points, initialFitDone }: { points: RoutePoint[]
     polyRef.current = new google.maps.Polyline({
       path,
       geodesic: true,
-      strokeColor: "#006399",
+      strokeColor: "#0B6099",
       strokeOpacity: 0.8,
       strokeWeight: 2.5,
       map,

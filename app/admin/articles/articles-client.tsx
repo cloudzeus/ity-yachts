@@ -40,8 +40,8 @@ type Article = {
 
 const statusBadge = (status: string) => {
   const styles: Record<string, { bg: string; color: string }> = {
-    draft: { bg: "rgba(117,117,117,0.12)", color: "#626262" },
-    published: { bg: "rgba(45,106,79,0.12)", color: "#2D6A4F" },
+    draft: { bg: "rgba(117,117,117,0.12)", color: "#6B5F57" },
+    published: { bg: "rgba(45,106,79,0.12)", color: "#4F7A46" },
   }
   const s = styles[status] ?? styles.draft
   return (

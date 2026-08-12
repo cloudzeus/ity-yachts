@@ -22,6 +22,8 @@ import {
   fetchDiscountItems,
   fetchSeasons,
   fetchAllYachts,
+  fetchOccupancy,
+  occupancyStatus,
 } from "./nausys-api"
 
 type LogFn = (msg: string) => void
@@ -43,7 +45,19 @@ function esc(v: unknown): string {
   return `'${String(v).replace(/\\/g, "\\\\").replace(/'/g, "\\'")}'`
 }
 
-async function batchUpsert(table: string, columns: string[], rows: unknown[][], updateCols?: string[]) {
+/**
+ * @param mergeJsonCols columns whose JSON value should be merged rather than
+ *   replaced. NAUSYS is authoritative for the locales it sends; anything it
+ *   omits (it never sends Greek) keeps whatever the admin typed. Without this
+ *   every sync wiped the Greek names back to English.
+ */
+async function batchUpsert(
+  table: string,
+  columns: string[],
+  rows: unknown[][],
+  updateCols?: string[],
+  mergeJsonCols: string[] = [],
+) {
   if (rows.length === 0) return
   const now = new Date()
   const allCols = [...columns, "createdAt", "updatedAt"]
@@ -52,7 +66,13 @@ async function batchUpsert(table: string, columns: string[], rows: unknown[][], 
   for (let i = 0; i < rows.length; i += BATCH_SIZE) {
     const batch = rows.slice(i, i + BATCH_SIZE)
     const values = batch.map((row) => `(${[...row, now, now].map(esc).join(",")})`).join(",\n")
-    const onDup = [...uCols, "updatedAt"].map((c) => `\`${c}\` = VALUES(\`${c}\`)`).join(", ")
+    const onDup = [...uCols, "updatedAt"]
+      .map((c) =>
+        mergeJsonCols.includes(c)
+          ? `\`${c}\` = JSON_MERGE_PATCH(COALESCE(\`${c}\`, JSON_OBJECT()), VALUES(\`${c}\`))`
+          : `\`${c}\` = VALUES(\`${c}\`)`,
+      )
+      .join(", ")
     await db.$executeRawUnsafe(
       `INSERT INTO \`${table}\` (${allCols.map((c) => `\`${c}\``).join(",")}) VALUES ${values} ON DUPLICATE KEY UPDATE ${onDup}`
     )
@@ -63,7 +83,7 @@ async function batchUpsert(table: string, columns: string[], rows: unknown[][], 
 
 async function syncCategories(c: NausysCredentials, log: LogFn) {
   const items = await fetchCategories(c)
-  await batchUpsert("nausys_yacht_categories", ["id", "name"], items.map((r) => [r.id, i18nToJson(r.name)]))
+  await batchUpsert("nausys_yacht_categories", ["id", "name"], items.map((r) => [r.id, i18nToJson(r.name)]), undefined, ["name"])
   log(`Synced ${items.length} yacht categories`)
   return items.length
 }
@@ -84,14 +104,14 @@ async function syncEngineBuilders(c: NausysCredentials, log: LogFn) {
 
 async function syncSailTypes(c: NausysCredentials, log: LogFn) {
   const items = await fetchSailTypes(c)
-  await batchUpsert("nausys_sail_types", ["id", "name"], items.map((r) => [r.id, i18nToJson(r.name)]))
+  await batchUpsert("nausys_sail_types", ["id", "name"], items.map((r) => [r.id, i18nToJson(r.name)]), undefined, ["name"])
   log(`Synced ${items.length} sail types`)
   return items.length
 }
 
 async function syncSteeringTypes(c: NausysCredentials, log: LogFn) {
   const items = await fetchSteeringTypes(c)
-  await batchUpsert("nausys_steering_types", ["id", "name"], items.map((r) => [r.id, i18nToJson(r.name)]))
+  await batchUpsert("nausys_steering_types", ["id", "name"], items.map((r) => [r.id, i18nToJson(r.name)]), undefined, ["name"])
   log(`Synced ${items.length} steering types`)
   return items.length
 }
@@ -101,7 +121,9 @@ async function syncCountries(c: NausysCredentials, log: LogFn) {
   await batchUpsert(
     "nausys_countries",
     ["id", "code", "code2", "name"],
-    items.map((r) => [r.id, r.code ?? null, r.code2 ?? null, i18nToJson(r.name)])
+    items.map((r) => [r.id, r.code ?? null, r.code2 ?? null, i18nToJson(r.name)]),
+    undefined,
+    ["name"],
   )
   log(`Synced ${items.length} countries`)
   return items.length
@@ -109,14 +131,14 @@ async function syncCountries(c: NausysCredentials, log: LogFn) {
 
 async function syncRegions(c: NausysCredentials, log: LogFn) {
   const items = await fetchRegions(c)
-  await batchUpsert("nausys_regions", ["id", "name", "countryId"], items.map((r) => [r.id, i18nToJson(r.name), r.countryId]))
+  await batchUpsert("nausys_regions", ["id", "name", "countryId"], items.map((r) => [r.id, i18nToJson(r.name), r.countryId]), undefined, ["name"])
   log(`Synced ${items.length} regions`)
   return items.length
 }
 
 async function syncLocations(c: NausysCredentials, log: LogFn) {
   const items = await fetchLocations(c)
-  await batchUpsert("nausys_locations", ["id", "name", "regionId"], items.map((r) => [r.id, i18nToJson(r.name), r.regionId ?? null]))
+  await batchUpsert("nausys_locations", ["id", "name", "regionId"], items.map((r) => [r.id, i18nToJson(r.name), r.regionId ?? null]), undefined, ["name"])
   log(`Synced ${items.length} locations`)
   return items.length
 }
@@ -131,7 +153,7 @@ async function syncCharterBases(c: NausysCredentials, log: LogFn) {
       r.checkInTime ?? null, r.checkOutTime ?? null,
       r.lat ?? null, r.lon ?? null,
       r.secondaryBase ?? false, r.disabled ?? false,
-    ])
+    ]),
   )
   log(`Synced ${items.length} charter bases`)
   return items.length
@@ -139,7 +161,7 @@ async function syncCharterBases(c: NausysCredentials, log: LogFn) {
 
 async function syncEquipmentCategories(c: NausysCredentials, log: LogFn) {
   const items = await fetchEquipmentCategories(c)
-  await batchUpsert("nausys_equipment_categories", ["id", "name"], items.map((r) => [r.id, i18nToJson(r.name)]))
+  await batchUpsert("nausys_equipment_categories", ["id", "name"], items.map((r) => [r.id, i18nToJson(r.name)]), undefined, ["name"])
   log(`Synced ${items.length} equipment categories`)
   return items.length
 }
@@ -149,7 +171,9 @@ async function syncEquipment(c: NausysCredentials, log: LogFn) {
   await batchUpsert(
     "nausys_equipment",
     ["id", "name", "categoryId"],
-    items.map((r) => [r.id, i18nToJson(r.name), r.categoryId ?? null])
+    items.map((r) => [r.id, i18nToJson(r.name), r.categoryId ?? null]),
+    undefined,
+    ["name"],
   )
   log(`Synced ${items.length} equipment items`)
   return items.length
@@ -160,7 +184,9 @@ async function syncServices(c: NausysCredentials, log: LogFn) {
   await batchUpsert(
     "nausys_services",
     ["id", "name", "depositInsurance"],
-    items.map((r) => [r.id, i18nToJson(r.name), r.depositInsurance ?? false])
+    items.map((r) => [r.id, i18nToJson(r.name), r.depositInsurance ?? false]),
+    undefined,
+    ["name"],
   )
   log(`Synced ${items.length} services`)
   return items.length
@@ -168,14 +194,14 @@ async function syncServices(c: NausysCredentials, log: LogFn) {
 
 async function syncPriceMeasures(c: NausysCredentials, log: LogFn) {
   const items = await fetchPriceMeasures(c)
-  await batchUpsert("nausys_price_measures", ["id", "name"], items.map((r) => [r.id, i18nToJson(r.name)]))
+  await batchUpsert("nausys_price_measures", ["id", "name"], items.map((r) => [r.id, i18nToJson(r.name)]), undefined, ["name"])
   log(`Synced ${items.length} price measures`)
   return items.length
 }
 
 async function syncDiscountItems(c: NausysCredentials, log: LogFn) {
   const items = await fetchDiscountItems(c)
-  await batchUpsert("nausys_discount_items", ["id", "name"], items.map((r) => [r.id, i18nToJson(r.name)]))
+  await batchUpsert("nausys_discount_items", ["id", "name"], items.map((r) => [r.id, i18nToJson(r.name)]), undefined, ["name"])
   log(`Synced ${items.length} discount items`)
   return items.length
 }
@@ -213,8 +239,21 @@ async function syncYachtModels(c: NausysCredentials, log: LogFn) {
 
 // ── Yacht sync ──
 
-async function syncYachtRecord(y: RawYacht, modelCache: Map<number, { categoryId: number; builderId: number; loa: number | null }>) {
+async function syncYachtRecord(
+  y: RawYacht,
+  modelCache: Map<number, { categoryId: number; builderId: number; loa: number | null }>,
+  log: LogFn
+) {
   const model = y.yachtModelId ? modelCache.get(y.yachtModelId) : null
+
+  // The nested tables below are rebuilt with DELETE + INSERT. If the INSERT
+  // fails the DELETE has already run, so the yacht silently loses its
+  // equipment or services. Swallowing that error hides real data loss —
+  // record it instead so the sync log shows what went missing.
+  const warnOnFail = (what: string) => (err: unknown) => {
+    const msg = err instanceof Error ? err.message : String(err)
+    log(`⚠ Yacht ${y.id} (${y.name}): ${what} lost — ${msg}`)
+  }
 
   // Core yacht upsert via raw SQL — must include all non-nullable columns (Json @default fields have no MySQL default)
   await batchUpsert(
@@ -271,7 +310,10 @@ async function syncYachtRecord(y: RawYacht, modelCache: Map<number, { categoryId
       "highlights", "highlightsTranslations",
       "mainPictureUrl", "picturesUrl",
       "checkInTime", "checkOutTime", "flagsId", "lastSyncedAt",
-    ]
+    ],
+    // NAUSYS ships highlights in EN/DE only. Merging rather than replacing lets
+    // a hand-written Greek highlight survive the next sync.
+    ["highlightsTranslations"],
   )
 
   const now = new Date()
@@ -285,7 +327,7 @@ async function syncYachtRecord(y: RawYacht, modelCache: Map<number, { categoryId
     )
     await db.$executeRawUnsafe(
       `INSERT IGNORE INTO nausys_yacht_equipment (id, yachtId, equipmentId, quantity, highlight, comment, createdAt, updatedAt) VALUES ${eqRows.join(",")}`
-    ).catch(() => {})
+    ).catch(warnOnFail("standard equipment"))
   }
 
   await db.$executeRawUnsafe(`DELETE FROM nausys_yacht_checkin_periods WHERE yachtId = ${y.id}`)
@@ -362,14 +404,92 @@ async function syncYachtRecord(y: RawYacht, modelCache: Map<number, { categoryId
   if (extraEqRows.length > 0) {
     await db.$executeRawUnsafe(
       `INSERT IGNORE INTO nausys_yacht_extra_equipment (id, nausysId, yachtId, seasonId, equipmentId, quantity, price, currency, priceMeasureId, calculationType, amount, vatInPrice, comment, \`condition\`, createdAt, updatedAt) VALUES ${extraEqRows.join(",")}`
-    ).catch(() => {})
+    ).catch(warnOnFail("extra equipment"))
   }
 
   if (serviceRows.length > 0) {
     await db.$executeRawUnsafe(
       `INSERT IGNORE INTO nausys_yacht_services (id, nausysId, yachtId, seasonId, serviceId, price, currency, priceMeasureId, calculationType, obligatory, amount, vatInPrice, description, createdAt, updatedAt) VALUES ${serviceRows.join(",")}`
-    ).catch(() => {})
+    ).catch(warnOnFail("services"))
   }
+}
+
+/**
+ * Mirror the charter company's booked periods into `nausys_availability`.
+ *
+ * Rebuilt wholesale each run: these rows are a copy of NAUSYS state, nothing
+ * in the admin edits them, and NAUSYS gives no stable per-row key we could
+ * upsert against. Unlike the yacht child tables, the delete is scoped to the
+ * years we actually fetched, so a failure can't wipe unrelated data.
+ */
+async function syncOccupancy(c: NausysCredentials, log: LogFn) {
+  const thisYear = new Date().getFullYear()
+  const years = [thisYear - 1, thisYear, thisYear + 1, thisYear + 2]
+
+  const rows: unknown[][] = []
+  const seenIds = new Set<number>()
+  for (const year of years) {
+    let reservations
+    try {
+      reservations = await fetchOccupancy(c, year)
+    } catch (err: unknown) {
+      // One bad year must not cost us the others.
+      log(`⚠ Occupancy ${year} skipped — ${err instanceof Error ? err.message : String(err)}`)
+      continue
+    }
+    for (const r of reservations) {
+      const from = parseNausysDate(r.periodFrom)
+      const to = parseNausysDate(r.periodTo)
+      if (!from || !to) continue
+      // A charter running across New Year is returned by both years' feeds, and
+      // NAUSYS also emits negative ids for its own internal blocks, which repeat.
+      // Either one collides with the unique index and takes the whole batch of
+      // 200 down with it, so only positive ids are kept and only once.
+      const reservationId = typeof r.id === "number" && r.id > 0 ? r.id : null
+      if (reservationId !== null) {
+        if (seenIds.has(reservationId)) continue
+        seenIds.add(reservationId)
+      }
+      rows.push([
+        genId(), r.yachtId, from, to, occupancyStatus(r.reservationType), null,
+        reservationId,
+        r.locationFromId ?? null,
+        r.locationToId ?? null,
+        r.checkInTime ?? null,
+        r.checkOutTime ?? null,
+        // "DD.MM.YYYY HH:mm:ss" — parseNausysDate only handles the date half.
+        r.optionValidTill ? parseNausysDate(r.optionValidTill.split(" ")[0]) : null,
+      ])
+    }
+    log(`Fetched ${reservations.length} reservations for ${year}`)
+  }
+
+  if (rows.length === 0) {
+    log("No occupancy returned — leaving the existing calendar untouched")
+    return 0
+  }
+
+  // Only yachts we actually hold, or the insert trips the foreign key.
+  const known = new Set((await db.nausysYacht.findMany({ select: { id: true } })).map((y) => y.id))
+  const usable = rows.filter((r) => known.has(r[1] as number))
+  const skipped = rows.length - usable.length
+  if (skipped > 0) log(`Ignored ${skipped} reservations for yachts outside our fleet`)
+
+  await db.$executeRawUnsafe(`DELETE FROM nausys_availability`)
+  const now = new Date()
+  const BATCH = 200
+  for (let i = 0; i < usable.length; i += BATCH) {
+    const values = usable
+      .slice(i, i + BATCH)
+      .map((r) => `(${[...r, now, now].map(esc).join(",")})`)
+      .join(",")
+    await db.$executeRawUnsafe(
+      `INSERT INTO nausys_availability (id, yachtId, dateFrom, dateTo, status, baseId, nausysId, locationFromId, locationToId, checkInTime, checkOutTime, optionValidTill, createdAt, updatedAt) VALUES ${values}`
+    )
+  }
+
+  log(`Synced ${usable.length} occupancy periods across ${years.length} years`)
+  return usable.length
 }
 
 async function syncYachts(c: NausysCredentials, log: LogFn) {
@@ -385,7 +505,7 @@ async function syncYachts(c: NausysCredentials, log: LogFn) {
   let failed = 0
   for (const yacht of yachts) {
     try {
-      await syncYachtRecord(yacht, modelCache)
+      await syncYachtRecord(yacht, modelCache, log)
       synced++
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
@@ -429,8 +549,11 @@ export const SYNC_STEPS: SyncStep[] = [
   { key: "charterBases", label: "Charter Bases", wave: 4 },
   // Wave 5
   { key: "yachts", label: "Yachts", wave: 5 },
-  // Wave 6 — images to Bunny CDN (handled separately in stream route)
-  { key: "images", label: "Upload Images to CDN", wave: 6 },
+  // Wave 6 — depends on yachts existing (foreign key)
+  { key: "occupancy", label: "Availability Calendar", wave: 6 },
+
+  // Wave 7 — images to Bunny CDN (handled separately in stream route)
+  { key: "images", label: "Upload Images to CDN", wave: 7 },
 ]
 
 const SYNC_FNS: Record<string, (c: NausysCredentials, log: LogFn) => Promise<number>> = {
@@ -451,6 +574,7 @@ const SYNC_FNS: Record<string, (c: NausysCredentials, log: LogFn) => Promise<num
   locations: syncLocations,
   charterBases: syncCharterBases,
   yachts: syncYachts,
+  occupancy: syncOccupancy,
 }
 
 // ── Main sync orchestrator ──
@@ -490,6 +614,11 @@ export async function runFullSync(creds: NausysCredentials, onProgress?: SyncPro
       const results = await Promise.all(
         waveSteps.map(async (step) => {
           const fn = SYNC_FNS[step.key]
+          // "images" is listed as a step but is driven by the streaming route,
+          // which runs the CDN upload itself once this returns. It has no entry
+          // in SYNC_FNS, so calling it blindly failed every sync with a
+          // meaningless "fn is not a function". Skip anything unimplemented.
+          if (!fn) return 0
           onProgress?.(step.key, "syncing")
           try {
             const count = await fn(creds, log)

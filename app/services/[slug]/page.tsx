@@ -68,7 +68,7 @@ export default async function ServiceDetailPage({ params }: Props) {
   return (
     <main>
       {/* ── Full-screen Hero ────────────────────────────────────── */}
-      <div className="relative" style={{ minHeight: "92vh", background: "#070c26" }}>
+      <div className="relative" style={{ minHeight: "92vh", background: "#05111F" }}>
         <SiteHeader />
 
         {/* Background media */}
@@ -98,7 +98,7 @@ export default async function ServiceDetailPage({ params }: Props) {
               className="absolute inset-0"
               style={{
                 background:
-                  "linear-gradient(to bottom, rgba(7,12,38,0.75) 0%, rgba(7,12,38,0.2) 35%, rgba(7,12,38,0.6) 65%, rgba(7,12,38,0.95) 100%)",
+                  "linear-gradient(to bottom, rgba(4,13,25,0.75) 0%, rgba(4,13,25,0.2) 35%, rgba(4,13,25,0.6) 65%, rgba(4,13,25,0.95) 100%)",
               }}
             />
             {/* Side vignette */}
@@ -106,7 +106,7 @@ export default async function ServiceDetailPage({ params }: Props) {
               className="absolute inset-0"
               style={{
                 background:
-                  "linear-gradient(to right, rgba(7,12,38,0.4) 0%, transparent 40%, transparent 60%, rgba(7,12,38,0.4) 100%)",
+                  "linear-gradient(to right, rgba(4,13,25,0.4) 0%, transparent 40%, transparent 60%, rgba(4,13,25,0.4) 100%)",
               }}
             />
           </div>
@@ -158,7 +158,7 @@ export default async function ServiceDetailPage({ params }: Props) {
                 {label?.en && (
                   <span
                     className="mb-4 inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-widest"
-                    style={{ borderColor: "rgba(0,119,182,0.4)", color: "#0077B6", background: "rgba(0,119,182,0.1)" }}
+                    style={{ borderColor: "rgba(0,119,182,0.4)", color: "#0F79BE", background: "rgba(0,119,182,0.1)" }}
                   >
                     {service.icon && <ServiceIcon name={service.icon} className="size-3.5" />}
                     <LocaleText translations={label} fallback="" />
@@ -189,7 +189,7 @@ export default async function ServiceDetailPage({ params }: Props) {
                 <div
                   className="rounded-2xl p-5"
                   style={{
-                    background: "rgba(7,12,38,0.7)",
+                    background: "rgba(4,13,25,0.7)",
                     border: "1px solid rgba(255,255,255,0.1)",
                     backdropFilter: "blur(20px)",
                   }}
@@ -197,7 +197,7 @@ export default async function ServiceDetailPage({ params }: Props) {
                   {service.icon && (
                     <div
                       className="mb-4 flex size-14 items-center justify-center rounded-xl"
-                      style={{ background: "linear-gradient(135deg, #006399, #002147)" }}
+                      style={{ background: "linear-gradient(135deg, #0B6099, #0B3A5C)" }}
                     >
                       <ServiceIcon name={service.icon} className="size-7 text-white" />
                     </div>
@@ -212,8 +212,8 @@ export default async function ServiceDetailPage({ params }: Props) {
                   <div className="flex flex-col gap-3">
                     <Link
                       href="/contact"
-                      className="flex items-center justify-center gap-2 rounded-lg py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
-                      style={{ background: "var(--gradient-ocean)" }}
+                      className="flex items-center justify-center gap-2 rounded-[var(--iyc-radius-sm)] py-3 text-sm font-semibold transition-all active:scale-[0.985]"
+                      style={{ background: "var(--action-accent)", color: "var(--text-on-accent)" }}
                     >
                       Enquire About This Service
                     </Link>
@@ -252,9 +252,9 @@ export default async function ServiceDetailPage({ params }: Props) {
               <div className="mb-8 flex items-center gap-4">
                 <div
                   className="h-px w-12"
-                  style={{ background: "linear-gradient(to right, #0077B6, transparent)" }}
+                  style={{ background: "linear-gradient(to right, #0F79BE, transparent)" }}
                 />
-                <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "#0077B6" }}>
+                <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "#0F79BE" }}>
                   About This Service
                 </span>
               </div>
@@ -271,11 +271,11 @@ export default async function ServiceDetailPage({ params }: Props) {
                   <LocaleText translations={description} />
                 </div>
               ) : shortDesc?.en ? (
-                <p className="text-xl leading-relaxed" style={{ color: "#43474E", lineHeight: 1.8 }}>
+                <p className="text-xl leading-relaxed" style={{ color: "#6B5F57", lineHeight: 1.8 }}>
                   <LocaleText translations={shortDesc} />
                 </p>
               ) : (
-                <p className="text-lg" style={{ color: "#84776e" }}>
+                <p className="text-lg" style={{ color: "var(--text-subtle)" }}>
                   More details coming soon.
                 </p>
               )}
@@ -288,39 +288,39 @@ export default async function ServiceDetailPage({ params }: Props) {
                 <div
                   className="rounded-2xl p-6"
                   style={{
-                    background: "#f5f0ea",
-                    border: "1px solid rgba(7,12,38,0.08)",
+                    background: "#F5F1E9",
+                    border: "1px solid rgba(46,44,40,0.08)",
                   }}
                 >
                   <div className="mb-4 flex items-start gap-3">
                     {service.icon && (
                       <div
                         className="flex size-12 shrink-0 items-center justify-center rounded-xl"
-                        style={{ background: "linear-gradient(135deg, #006399, #002147)" }}
+                        style={{ background: "linear-gradient(135deg, #0B6099, #0B3A5C)" }}
                       >
                         <ServiceIcon name={service.icon} className="size-6 text-white" />
                       </div>
                     )}
                     <div>
-                      <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: "#84776e" }}>
+                      <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: "var(--text-subtle)" }}>
                         {label?.en ? <LocaleText translations={label} fallback="" /> : "Service"}
                       </p>
-                      <h3 className="text-lg font-bold leading-tight" style={{ fontFamily: "var(--font-display)", color: "#070c26" }}>
+                      <h3 className="text-lg font-bold leading-tight" style={{ fontFamily: "var(--font-display)", color: "#05111F" }}>
                         <LocaleText translations={title} fallback="Service" />
                       </h3>
                     </div>
                   </div>
 
-                  <div className="h-px my-4" style={{ background: "rgba(7,12,38,0.08)" }} />
+                  <div className="h-px my-4" style={{ background: "rgba(46,44,40,0.08)" }} />
 
-                  <p className="text-sm leading-relaxed mb-5" style={{ color: "#43474E" }}>
+                  <p className="text-sm leading-relaxed mb-5" style={{ color: "#6B5F57" }}>
                     Ready to experience this service on your next charter? Our team is happy to tailor it to your needs.
                   </p>
 
                   <Link
                     href="/contact"
                     className="flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
-                    style={{ background: "linear-gradient(135deg, #006399, #002147)" }}
+                    style={{ background: "linear-gradient(135deg, #0B6099, #0B3A5C)" }}
                   >
                     Request This Service
                   </Link>
@@ -330,18 +330,18 @@ export default async function ServiceDetailPage({ params }: Props) {
                 {(prevService || nextService) && (
                   <div
                     className="rounded-2xl p-4 flex flex-col gap-2"
-                    style={{ border: "1px solid rgba(7,12,38,0.08)", background: "#fff" }}
+                    style={{ border: "1px solid rgba(46,44,40,0.08)", background: "#fff" }}
                   >
-                    <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: "#84776e" }}>
+                    <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: "var(--text-subtle)" }}>
                       Other Services
                     </p>
                     {prevService && (
                       <Link
                         href={`/services/${prevService.slug}`}
-                        className="flex items-center gap-3 rounded-lg p-2.5 transition-colors hover:bg-[#f5f0ea] group"
+                        className="flex items-center gap-3 rounded-lg p-2.5 transition-colors hover:bg-[#F5F1E9] group"
                       >
-                        <ArrowLeft className="size-4 shrink-0" style={{ color: "#84776e" }} />
-                        <span className="text-sm font-medium truncate group-hover:text-[#006399]" style={{ color: "#070c26" }}>
+                        <ArrowLeft className="size-4 shrink-0" style={{ color: "var(--text-subtle)" }} />
+                        <span className="text-sm font-medium truncate group-hover:text-[var(--text-link)]" style={{ color: "#05111F" }}>
                           <LocaleText translations={prevService.title as Record<string, string>} fallback="Previous" />
                         </span>
                       </Link>
@@ -349,12 +349,12 @@ export default async function ServiceDetailPage({ params }: Props) {
                     {nextService && (
                       <Link
                         href={`/services/${nextService.slug}`}
-                        className="flex items-center gap-3 rounded-lg p-2.5 transition-colors hover:bg-[#f5f0ea] group"
+                        className="flex items-center gap-3 rounded-lg p-2.5 transition-colors hover:bg-[#F5F1E9] group"
                       >
-                        <span className="text-sm font-medium flex-1 truncate group-hover:text-[#006399] text-right" style={{ color: "#070c26" }}>
+                        <span className="text-sm font-medium flex-1 truncate group-hover:text-[var(--text-link)] text-right" style={{ color: "#05111F" }}>
                           <LocaleText translations={nextService.title as Record<string, string>} fallback="Next" />
                         </span>
-                        <ArrowRight className="size-4 shrink-0" style={{ color: "#84776e" }} />
+                        <ArrowRight className="size-4 shrink-0" style={{ color: "var(--text-subtle)" }} />
                       </Link>
                     )}
                   </div>
@@ -368,21 +368,21 @@ export default async function ServiceDetailPage({ params }: Props) {
 
       {/* ── Other Services ──────────────────────────────────────── */}
       {otherServices.length > 0 && (
-        <section style={{ background: "#f5f0ea" }}>
+        <section style={{ background: "#F5F1E9" }}>
           <div className="max-w-6xl mx-auto px-6 py-20">
             <div className="mb-12 flex items-center justify-between">
               <div>
-                <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: "#0077B6" }}>
+                <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: "#0F79BE" }}>
                   Explore More
                 </p>
-                <h2 className="text-3xl font-bold" style={{ fontFamily: "var(--font-display)", color: "#070c26" }}>
+                <h2 className="text-3xl font-bold" style={{ fontFamily: "var(--font-display)", color: "#05111F" }}>
                   Other Services
                 </h2>
               </div>
               <Link
                 href="/services"
-                className="flex items-center gap-2 text-sm font-semibold transition-colors hover:text-[#006399]"
-                style={{ color: "#0077B6" }}
+                className="flex items-center gap-2 text-sm font-semibold transition-colors hover:text-[var(--text-link)]"
+                style={{ color: "#0F79BE" }}
               >
                 View All
                 <ArrowRight className="size-4" />
@@ -400,8 +400,8 @@ export default async function ServiceDetailPage({ params }: Props) {
                     className="group relative overflow-hidden rounded-2xl cursor-pointer"
                     style={{
                       background: "#fff",
-                      border: "1px solid rgba(7,12,38,0.08)",
-                      boxShadow: "0 2px 16px rgba(7,12,38,0.06)",
+                      border: "1px solid rgba(46,44,40,0.08)",
+                      boxShadow: "0 2px 16px rgba(46,44,40,0.06)",
                       transition: "box-shadow 0.2s ease, transform 0.2s ease",
                     }}
                   >
@@ -428,16 +428,16 @@ export default async function ServiceDetailPage({ params }: Props) {
                         )}
                         <div
                           className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-20"
-                          style={{ background: "linear-gradient(135deg, #006399, #070c26)" }}
+                          style={{ background: "linear-gradient(135deg, #0B6099, #05111F)" }}
                         />
                       </div>
                     ) : (
                       <div
                         className="flex h-44 items-center justify-center"
-                        style={{ background: "linear-gradient(135deg, rgba(0,99,153,0.06), rgba(7,12,38,0.08))" }}
+                        style={{ background: "linear-gradient(135deg, rgba(0,99,153,0.06), rgba(46,44,40,0.08))" }}
                       >
                         {s.icon && (
-                          <ServiceIcon name={s.icon} className="size-12 opacity-20" style={{ color: "#070c26" }} />
+                          <ServiceIcon name={s.icon} className="size-12 opacity-20" style={{ color: "#05111F" }} />
                         )}
                       </div>
                     )}
@@ -450,26 +450,26 @@ export default async function ServiceDetailPage({ params }: Props) {
                             className="flex size-8 items-center justify-center rounded-lg"
                             style={{ background: "rgba(0,99,153,0.1)" }}
                           >
-                            <ServiceIcon name={s.icon} className="size-4" style={{ color: "#006399" }} />
+                            <ServiceIcon name={s.icon} className="size-4" style={{ color: "var(--iyc-ionian-300)" }} />
                           </div>
                         )}
                         {sLabel?.en && (
-                          <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#0077B6" }}>
+                          <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#0F79BE" }}>
                             <LocaleText translations={sLabel} fallback="" />
                           </span>
                         )}
                       </div>
 
                       <h3
-                        className="text-lg font-bold leading-snug group-hover:text-[#006399] transition-colors"
-                        style={{ fontFamily: "var(--font-display)", color: "#070c26" }}
+                        className="text-lg font-bold leading-snug group-hover:text-[var(--text-link)] transition-colors"
+                        style={{ fontFamily: "var(--font-display)", color: "#05111F" }}
                       >
                         <LocaleText translations={sTitle} fallback="Service" />
                       </h3>
 
                       <div
                         className="mt-4 flex items-center gap-1.5 text-xs font-semibold transition-all group-hover:gap-2.5"
-                        style={{ color: "#006399" }}
+                        style={{ color: "var(--iyc-ionian-300)" }}
                       >
                         Explore
                         <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />

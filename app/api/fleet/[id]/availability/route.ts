@@ -7,6 +7,52 @@ function toNausysDate(isoDate: string): string {
   return `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${d.getFullYear()}`
 }
 
+/**
+ * Is the yacht already taken for this period, according to the occupancy
+ * calendar mirrored from NAUSYS?
+ *
+ * Strict comparisons on purpose: charters run Saturday to Saturday and the
+ * turnaround day is shared, so a week starting on another charter's check-out
+ * date is not a clash.
+ */
+async function isBookedLocally(yachtId: number, checkIn: string, checkOut: string) {
+  // UTC, to match parseNausysDate — every stored period is UTC midnight. Local
+  // parsing shifts the boundary by the server's offset, which makes a week
+  // starting on a turnaround day overlap the charter that ends that morning.
+  const from = new Date(checkIn + "T00:00:00Z")
+  const to = new Date(checkOut + "T00:00:00Z")
+  const clash = await db.nausysAvailability.findFirst({
+    where: { yachtId, dateFrom: { lt: to }, dateTo: { gt: from } },
+    select: { id: true },
+  })
+  return !!clash
+}
+
+/**
+ * Availability from our own data.
+ *
+ * The occupancy calendar is the authority on whether the boat is free; the
+ * price table only supplies the number. Deciding availability from the price
+ * table alone — which is what this route used to do — reports every booked
+ * yacht as available, since a price period covers the whole season regardless
+ * of who has chartered it.
+ */
+async function localAvailability(yachtId: number, checkIn: string, checkOut: string, source: string) {
+  const checkInDate = new Date(checkIn + "T00:00:00Z")
+  const [booked, price] = await Promise.all([
+    isBookedLocally(yachtId, checkIn, checkOut),
+    db.nausysYachtPrice.findFirst({
+      where: { yachtId, priceType: "WEEKLY", dateFrom: { lte: checkInDate }, dateTo: { gte: checkInDate } },
+    }),
+  ])
+  return NextResponse.json({
+    available: !booked && !!price,
+    price: price ? Number(price.price) : undefined,
+    currency: price?.currency || "EUR",
+    source,
+  })
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -27,23 +73,7 @@ export async function GET(
   // Load NAUSYS credentials
   const setting = await db.setting.findUnique({ where: { key: "nausys" } })
   if (!setting?.value) {
-    // No NAUSYS credentials — fall back to local price data check
-    // Check if check-in date falls within any price period (user picks within a season)
-    const checkInDate = new Date(checkIn + "T00:00:00")
-    const price = await db.nausysYachtPrice.findFirst({
-      where: {
-        yachtId,
-        priceType: "WEEKLY",
-        dateFrom: { lte: checkInDate },
-        dateTo: { gte: checkInDate },
-      },
-    })
-    return NextResponse.json({
-      available: !!price,
-      price: price ? Number(price.price) : undefined,
-      currency: price?.currency || "EUR",
-      source: "local",
-    })
+    return localAvailability(yachtId, checkIn, checkOut, "local")
   }
 
   const creds = setting.value as { username: string; password: string; endpoint: string; companyId: string }
@@ -68,38 +98,11 @@ export async function GET(
       })
     }
 
-    // NAUSYS didn't return this yacht — fall back to local price data
-    const checkInDate = new Date(checkIn + "T00:00:00")
-    const localPrice = await db.nausysYachtPrice.findFirst({
-      where: {
-        yachtId,
-        priceType: "WEEKLY",
-        dateFrom: { lte: checkInDate },
-        dateTo: { gte: checkInDate },
-      },
-    })
-    return NextResponse.json({
-      available: !!localPrice,
-      price: localPrice ? Number(localPrice.price) : undefined,
-      currency: localPrice?.currency || "EUR",
-      source: "local_fallback",
-    })
+    // NAUSYS answered but left this yacht out, which normally means it is
+    // taken. Our occupancy mirror decides; it will not claim it is free.
+    return localAvailability(yachtId, checkIn, checkOut, "local_fallback")
   } catch {
-    // NAUSYS call failed — fall back to local data
-    const checkInDate = new Date(checkIn + "T00:00:00")
-    const price = await db.nausysYachtPrice.findFirst({
-      where: {
-        yachtId,
-        priceType: "WEEKLY",
-        dateFrom: { lte: checkInDate },
-        dateTo: { gte: checkInDate },
-      },
-    })
-    return NextResponse.json({
-      available: !!price,
-      price: price ? Number(price.price) : undefined,
-      currency: price?.currency || "EUR",
-      source: "local_fallback",
-    })
+    // NAUSYS unreachable — answer from the mirrored calendar.
+    return localAvailability(yachtId, checkIn, checkOut, "local_fallback")
   }
 }

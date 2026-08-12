@@ -195,7 +195,7 @@ export function ReviewEditorClient({ review }: Props) {
           {/* Reviewer info */}
           <div className="rounded-lg p-4 flex flex-col gap-3" style={{ background: "var(--surface-container-lowest)", border: "1px solid var(--outline-variant)" }}>
             <div className="flex items-center gap-2 pb-2" style={{ borderBottom: "1px solid var(--outline-variant)" }}>
-              <Star className="size-4" style={{ color: "#F59E0B" }} fill="#F59E0B" />
+              <Star className="size-4" style={{ color: "#E2963C" }} fill="#E2963C" />
               <span className="text-xs font-semibold" style={{ fontFamily: "var(--font-display)", color: "var(--primary)" }}>Reviewer Info</span>
             </div>
 
@@ -219,7 +219,7 @@ export function ReviewEditorClient({ review }: Props) {
               <div className="flex items-center gap-1">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <button key={i} type="button" onClick={() => setRating(i + 1)} className="p-0">
-                    <Star className="size-5" style={{ color: i < rating ? "#F59E0B" : "var(--outline-variant)" }} fill={i < rating ? "#F59E0B" : "none"} />
+                    <Star className="size-5" style={{ color: i < rating ? "#E2963C" : "var(--outline-variant)" }} fill={i < rating ? "#E2963C" : "none"} />
                   </button>
                 ))}
               </div>

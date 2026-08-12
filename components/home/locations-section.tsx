@@ -8,6 +8,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { ArrowRight, Globe, Activity, ChevronsUpDown, Anchor, Shield, Compass } from "lucide-react"
 import { useTranslations } from "@/lib/use-translations"
 import { removeGreekTonos } from "@/components/locale-text"
+import { ScrollTypewriter } from "@/components/scroll-typewriter"
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger)
@@ -60,18 +61,6 @@ export function LocationsSection({ destinations }: { destinations: Location[] })
         { opacity: 0, y: 20 },
         { opacity: 1, y: 0, duration: 0.7, ease: "power3.out", scrollTrigger: { trigger: el, start: "top 80%" } }
       )
-      // Title words
-      gsap.fromTo(
-        ".loc-title-word",
-        { opacity: 0, y: 50, rotateX: 15 },
-        { opacity: 1, y: 0, rotateX: 0, duration: 0.8, stagger: 0.1, ease: "power3.out", scrollTrigger: { trigger: el, start: "top 80%" } }
-      )
-      // Subtitle
-      gsap.fromTo(
-        ".loc-subtitle",
-        { opacity: 0, y: 30 },
-        { opacity: 1, y: 0, duration: 0.9, delay: 0.4, ease: "power3.out", scrollTrigger: { trigger: el, start: "top 80%" } }
-      )
       // Filter pills
       gsap.fromTo(
         ".loc-filters",
@@ -119,13 +108,25 @@ export function LocationsSection({ destinations }: { destinations: Location[] })
     <section
       ref={sectionRef}
       className="relative w-full py-24 md:py-32 overflow-hidden"
-      style={{ background: "#070c26" }}
+      style={{ background: "var(--surface-page)" }}
     >
-      {/* Greek pattern background */}
+      {/* Nautical chart contours — the design's topographic vector, replacing
+          the old repeating square grid. */}
       <div
+        aria-hidden="true"
+        data-parallax="0.30"
         className="absolute inset-0 pointer-events-none z-0"
         style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M54.627 0l.83.83v58.34h-58.34v-58.34h58.34l.83-.83H0v60h60V0h-5.373zM16.5 16.5h27v27h-27v-27zm24 24v-21h-21v21h21z' fill='%2384776e' fill-opacity='0.05' fill-rule='evenodd'/%3E%3C/svg%3E")`,
+          backgroundImage: "url(/brand/topographic.svg)",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+          opacity: 0.6,
+          // Fade the chart out at both seams so the textured band dissolves
+          // into the flat sections above and below instead of butting against
+          // them with a visible edge.
+          maskImage: "linear-gradient(to bottom, transparent 0%, black 16%, black 84%, transparent 100%)",
+          WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, black 16%, black 84%, transparent 100%)",
         }}
       />
 
@@ -133,22 +134,28 @@ export function LocationsSection({ destinations }: { destinations: Location[] })
       <div
         className="absolute top-0 right-0 w-[600px] h-[600px] pointer-events-none z-0"
         style={{
-          backgroundImage: "url(https://iycweb.b-cdn.net/1774930106193-bg.webp)",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
           opacity: 0.1,
           transform: "translate(33%, -33%)",
           maskImage: "radial-gradient(circle, black 30%, transparent 70%)",
           WebkitMaskImage: "radial-gradient(circle, black 30%, transparent 70%)",
         }}
-      />
+      >
+        <Image
+          src="https://iycweb.b-cdn.net/1774930106193-bg.webp"
+          alt=""
+          aria-hidden="true"
+          fill
+          sizes="600px"
+          className="object-cover"
+        />
+      </div>
       {/* Ambient glow - bottom left */}
       <div
         className="absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full pointer-events-none z-0"
         style={{
-          background: "#070c26",
+          background: "var(--iyc-sand-200)",
           filter: "blur(100px)",
-          opacity: 0.9,
+          opacity: 0.7,
           transform: "translate(-25%, 25%)",
         }}
       />
@@ -158,34 +165,38 @@ export function LocationsSection({ destinations }: { destinations: Location[] })
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-10 mb-16 relative">
           {/* Decorative compass */}
           <div className="absolute -top-12 -left-4 opacity-10 pointer-events-none">
-            <Compass className="w-[120px] h-[120px]" style={{ color: "#84776e" }} strokeWidth={0.5} />
+            <Compass className="w-[120px] h-[120px]" style={{ color: "var(--text-subtle)" }} strokeWidth={0.5} />
           </div>
 
           <div className="max-w-3xl">
             <div className="loc-badge flex items-center gap-3 mb-5" style={{ opacity: 0 }}>
               <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "rgba(132,119,110,0.15)" }}>
-                <Compass className="w-5 h-5" style={{ color: "#84776e" }} />
+                <Compass className="w-5 h-5" style={{ color: "var(--text-subtle)" }} />
               </div>
-              <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#84776e" }}>
+              <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--text-subtle)" }}>
                 {removeGreekTonos(t("home.locations.badge", "The Mythic Ionian"))}
               </span>
             </div>
 
             <h2
               className="text-4xl md:text-5xl lg:text-6xl mb-5 tracking-wide"
-              style={{ fontFamily: "var(--font-display)", color: "#ffffff", perspective: "600px" }}
+              style={{ fontFamily: "var(--font-display)", color: "var(--text-heading)", perspective: "600px" }}
             >
-              <span className="loc-title-word inline-block font-light" style={{ opacity: 0 }}>Navigate</span>{" "}
-              <span className="loc-title-word inline-block font-light" style={{ opacity: 0 }}>Your</span>{" "}
-              <span className="loc-title-word inline-block font-extrabold" style={{ opacity: 0, color: "#84776e" }}>Odyssey</span>
+              <ScrollTypewriter as="span">
+              <span className="inline-block font-light">Navigate</span>{" "}
+              <span className="inline-block font-light">Your</span>{" "}
+              <span className="inline-block font-extrabold" style={{ color: "var(--iyc-ionian-600)" }}>Odyssey</span>
+              </ScrollTypewriter>
             </h2>
 
-            <p
-              className="loc-subtitle text-[#8a9ab3] text-sm md:text-base leading-relaxed max-w-[620px]"
-              style={{ fontFamily: "var(--font-body)", opacity: 0 }}
+            <ScrollTypewriter
+              as="p"
+              delay={0.4}
+              className="loc-subtitle text-[var(--text-muted)] text-sm md:text-base leading-relaxed max-w-[620px]"
+              style={{ fontFamily: "var(--font-body)" }}
             >
               {t("home.locations.description", "Trace the wake of ancient heroes. Discover secluded sanctuaries, monumental cliffs, and sapphire waters aboard our premium fleet where legendary myth meets modern luxury.")}
-            </p>
+            </ScrollTypewriter>
           </div>
 
           {/* Filter pills */}
@@ -196,8 +207,8 @@ export function LocationsSection({ destinations }: { destinations: Location[] })
               background: "rgba(255,255,255,0.03)",
               backdropFilter: "blur(12px)",
               WebkitBackdropFilter: "blur(12px)",
-              border: "1px solid rgba(132,119,110,0.2)",
-              boxShadow: "0 4px 30px rgba(0,0,0,0.1)",
+              border: "1px solid var(--border-hairline)",
+              boxShadow: "var(--shadow-sm)",
             }}
           >
             {filters.map((filter) => (
@@ -207,13 +218,13 @@ export function LocationsSection({ destinations }: { destinations: Location[] })
                 className="flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium transition-all"
                 style={{
                   background:
-                    activeFilter === filter.key ? "#84776e" : "rgba(132,119,110,0.2)",
+                    activeFilter === filter.key ? "#84776e" : "var(--border-hairline)",
                   color:
                     activeFilter === filter.key ? "#ffffff" : "#84776e",
                   border:
                     activeFilter === filter.key
                       ? "none"
-                      : "1px solid rgba(132,119,110,0.3)",
+                      : "1px solid var(--border-default)",
                 }}
               >
                 {filter.icon}
@@ -269,8 +280,8 @@ export function LocationsSection({ destinations }: { destinations: Location[] })
             href="/locations"
             className="group inline-flex items-center gap-3 text-lg px-6 py-3 rounded-full transition-all duration-300 border hover:bg-[rgba(132,119,110,0.1)]"
             style={{
-              color: "#84776e",
-              borderColor: "rgba(132,119,110,0.5)",
+              color: "var(--text-link)",
+              borderColor: "var(--border-default)",
             }}
           >
             <span className="border-b border-transparent group-hover:border-[#84776e] pb-1 transition-all">
@@ -294,17 +305,17 @@ function PrimaryCard({ location }: { location: Location }) {
       href={`/locations/${location.slug}`}
       className="group relative h-[500px] rounded-3xl overflow-hidden block transition-all duration-[400ms]"
       style={{
-        border: "1px solid rgba(132,119,110,0.3)",
-        transition: "transform 0.4s cubic-bezier(0.16,1,0.3,1), box-shadow 0.4s cubic-bezier(0.16,1,0.3,1)",
+        border: "1px solid var(--border-default)",
+        transition: "transform var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out)",
       }}
       onMouseEnter={(e) => {
-        ;(e.currentTarget as HTMLElement).style.transform = "translateY(-8px)"
+        ;(e.currentTarget as HTMLElement).style.transform = "translateY(var(--lift-hover))"
         ;(e.currentTarget as HTMLElement).style.boxShadow =
-          "0 20px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(132,119,110,0.4)"
+          "var(--shadow-md)"
       }}
       onMouseLeave={(e) => {
         ;(e.currentTarget as HTMLElement).style.transform = "translateY(0)"
-        ;(e.currentTarget as HTMLElement).style.boxShadow = "none"
+        ;(e.currentTarget as HTMLElement).style.boxShadow = "var(--shadow-sm)"
       }}
     >
       <LocationMedia location={location} sizes="(max-width: 768px) 100vw, 42vw" />
@@ -314,7 +325,7 @@ function PrimaryCard({ location }: { location: Location }) {
         className="absolute inset-0"
         style={{
           background:
-            "linear-gradient(180deg, rgba(7,12,38,0) 0%, rgba(7,12,38,0.8) 50%, rgba(7,12,38,0.95) 100%)",
+            "var(--scrim-card)",
         }}
       />
 
@@ -324,17 +335,17 @@ function PrimaryCard({ location }: { location: Location }) {
         <div className="mb-4 flex items-center justify-between">
           <span
             className="px-3 py-1 rounded-full text-xs font-medium tracking-wider uppercase"
-            style={{ background: "#84776e", color: "#ffffff" }}
+            style={{ background: "var(--action-accent)", color: "var(--text-on-accent)" }}
           >
             {removeGreekTonos(location.prefecture || "Ionian Sea")}
           </span>
           <div
-            className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 group-hover:bg-[#84776e] group-hover:text-[#070c26]"
+            className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 group-hover:bg-[var(--iyc-taupe-500)] group-hover:text-[var(--text-heading)]"
             style={{
               background: "rgba(255,255,255,0.03)",
               backdropFilter: "blur(12px)",
-              border: "1px solid rgba(132,119,110,0.2)",
-              color: "#ffffff",
+              border: "1px solid var(--border-hairline)",
+              color: "var(--text-heading)",
             }}
           >
             <ArrowRight className="w-[18px] h-[18px]" />
@@ -343,13 +354,13 @@ function PrimaryCard({ location }: { location: Location }) {
 
         <h3
           className="text-3xl mb-3 tracking-wide"
-          style={{ fontFamily: "var(--font-display)", fontWeight: 300, color: "#ffffff" }}
+          style={{ fontFamily: "var(--font-display)", fontWeight: 300, color: "var(--text-heading)" }}
         >
           {location.name}
         </h3>
 
         {coords && (
-          <div className="flex items-center gap-2 mb-3 text-xs" style={{ color: "#84776e" }}>
+          <div className="flex items-center gap-2 mb-3 text-xs" style={{ color: "var(--text-subtle)" }}>
             <Compass className="w-3.5 h-3.5" />
             <span>{coords}</span>
           </div>
@@ -362,14 +373,14 @@ function PrimaryCard({ location }: { location: Location }) {
             background: "rgba(255,255,255,0.03)",
             backdropFilter: "blur(12px)",
             WebkitBackdropFilter: "blur(12px)",
-            border: "1px solid rgba(132,119,110,0.2)",
-            boxShadow: "0 4px 30px rgba(0,0,0,0.1)",
+            border: "1px solid var(--border-hairline)",
+            boxShadow: "var(--shadow-sm)",
           }}
         >
-          <p className="text-sm text-gray-300 font-light mb-4" style={{ fontFamily: "var(--font-body)" }}>
+          <p className="text-sm text-[var(--text-muted)] font-light mb-4" style={{ fontFamily: "var(--font-body)" }}>
             {location.shortDesc}
           </p>
-          <div className="flex items-center gap-4 text-xs" style={{ color: "#84776e" }}>
+          <div className="flex items-center gap-4 text-xs" style={{ color: "var(--text-subtle)" }}>
             {coords && (
               <span className="flex items-center gap-1">
                 <Globe className="w-3 h-3" />
@@ -393,17 +404,17 @@ function HorizontalCard({ location, icon }: { location: Location; icon: React.Re
       href={`/locations/${location.slug}`}
       className="group relative rounded-3xl overflow-hidden block h-full transition-all duration-[400ms]"
       style={{
-        border: "1px solid rgba(132,119,110,0.3)",
-        transition: "transform 0.4s cubic-bezier(0.16,1,0.3,1), box-shadow 0.4s cubic-bezier(0.16,1,0.3,1)",
+        border: "1px solid var(--border-default)",
+        transition: "transform var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out)",
       }}
       onMouseEnter={(e) => {
-        ;(e.currentTarget as HTMLElement).style.transform = "translateY(-8px)"
+        ;(e.currentTarget as HTMLElement).style.transform = "translateY(var(--lift-hover))"
         ;(e.currentTarget as HTMLElement).style.boxShadow =
-          "0 20px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(132,119,110,0.4)"
+          "var(--shadow-md)"
       }}
       onMouseLeave={(e) => {
         ;(e.currentTarget as HTMLElement).style.transform = "translateY(0)"
-        ;(e.currentTarget as HTMLElement).style.boxShadow = "none"
+        ;(e.currentTarget as HTMLElement).style.boxShadow = "var(--shadow-sm)"
       }}
     >
       <LocationMedia location={location} sizes="(max-width: 768px) 100vw, 58vw" />
@@ -413,7 +424,7 @@ function HorizontalCard({ location, icon }: { location: Location; icon: React.Re
         className="absolute inset-0"
         style={{
           background:
-            "linear-gradient(180deg, rgba(7,12,38,0) 0%, rgba(7,12,38,0.8) 50%, rgba(7,12,38,0.95) 100%)",
+            "var(--scrim-card)",
         }}
       />
 
@@ -422,24 +433,24 @@ function HorizontalCard({ location, icon }: { location: Location; icon: React.Re
         <div className="flex-1 md:pr-8">
           <span
             className="text-xs font-medium tracking-wider uppercase mb-2 block"
-            style={{ color: "#84776e" }}
+            style={{ color: "var(--text-subtle)" }}
           >
             {removeGreekTonos(location.prefecture || "Ionian Sea")}
           </span>
           <h3
             className="text-2xl mb-2 tracking-wide"
-            style={{ fontFamily: "var(--font-display)", fontWeight: 300, color: "#ffffff" }}
+            style={{ fontFamily: "var(--font-display)", fontWeight: 300, color: "var(--text-heading)" }}
           >
             {location.name}
           </h3>
           {coords && (
-            <div className="flex items-center gap-2 mb-2 text-xs" style={{ color: "#84776e" }}>
+            <div className="flex items-center gap-2 mb-2 text-xs" style={{ color: "var(--text-subtle)" }}>
               <Compass className="w-3.5 h-3.5" />
               <span>{coords}</span>
             </div>
           )}
           <p
-            className="text-sm text-gray-400 font-light max-w-md line-clamp-2 md:line-clamp-none"
+            className="text-sm text-[var(--text-subtle)] font-light max-w-md line-clamp-2 md:line-clamp-none"
             style={{ fontFamily: "var(--font-body)" }}
           >
             {location.shortDesc}
@@ -452,8 +463,8 @@ function HorizontalCard({ location, icon }: { location: Location; icon: React.Re
               background: "rgba(255,255,255,0.03)",
               backdropFilter: "blur(12px)",
               WebkitBackdropFilter: "blur(12px)",
-              border: "1px solid rgba(132,119,110,0.2)",
-              color: "#84776e",
+              border: "1px solid var(--border-hairline)",
+              color: "var(--text-subtle)",
             }}
           >
             {icon}
@@ -469,7 +480,7 @@ function LocationMedia({ location, sizes }: { location: Location; sizes: string 
   const isVideo = location.mediaType === "video" || location.image?.match(/\.(mp4|webm|mov)$/i)
 
   if (!location.image) {
-    return <div className="absolute inset-0 bg-gradient-to-br from-[#070c26] to-[#84776e]/20" />
+    return <div className="absolute inset-0 bg-gradient-to-br from-[#05111F] to-[#84776e]/20" />
   }
 
   if (isVideo) {

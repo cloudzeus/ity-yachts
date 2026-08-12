@@ -19,6 +19,7 @@ import {
   Loader2,
 } from "lucide-react"
 import { useTranslations } from "@/lib/use-translations"
+import { yachtThumb } from "@/lib/yacht-images"
 import { removeGreekTonos } from "@/lib/greek-utils"
 
 interface YachtCard {
@@ -54,7 +55,6 @@ interface FleetListProps {
   initialYachts: YachtCard[]
   initialTotal: number
   categories: FilterOption[]
-  bases: FilterOption[]
   builders: FilterOption[]
   hero?: HeroContent | null
 }
@@ -63,7 +63,6 @@ export function FleetListClient({
   initialYachts,
   initialTotal,
   categories,
-  bases,
   builders,
   hero,
 }: FleetListProps) {
@@ -84,7 +83,6 @@ export function FleetListClient({
   const [search, setSearch] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
   const [categoryId, setCategoryId] = useState("")
-  const [baseId, setBaseId] = useState("")
   const [builderId, setBuilderId] = useState("")
   const [cabinsMin, setCabinsMin] = useState("")
   const [guestsMin, setGuestsMin] = useState("")
@@ -105,7 +103,6 @@ export function FleetListClient({
       params.set("pageSize", "12")
       if (debouncedSearch) params.set("search", debouncedSearch)
       if (categoryId) params.set("categoryId", categoryId)
-      if (baseId) params.set("baseId", baseId)
       if (builderId) params.set("builderId", builderId)
       if (cabinsMin) params.set("cabinsMin", cabinsMin)
       if (guestsMin) params.set("guestsMin", guestsMin)
@@ -123,9 +120,7 @@ export function FleetListClient({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const cards: YachtCard[] = (data.yachts || []).map((y: any) => {
           const catName = y.category?.name as Record<string, string> | undefined
-          const websiteImgs = y.websiteImages as Array<{ url: string }> | null
-          const picturesArr = y.picturesUrl as string[] | null
-          const image = websiteImgs?.[0]?.url || y.mainPictureUrl || picturesArr?.[0] || ""
+          const image = yachtThumb(y)
           const locName = y.base?.location?.name as Record<string, string> | undefined
           return {
             id: y.id,
@@ -155,7 +150,7 @@ export function FleetListClient({
         setLoading(false)
       }
     },
-    [debouncedSearch, categoryId, baseId, builderId, cabinsMin, guestsMin, loaMin, loaMax, yearMin, charterType, sortBy, locale]
+    [debouncedSearch, categoryId, builderId, cabinsMin, guestsMin, loaMin, loaMax, yearMin, charterType, sortBy, locale]
   )
 
   // Refetch when filters change (skip initial render)
@@ -180,7 +175,6 @@ export function FleetListClient({
     setSearch("")
     setDebouncedSearch("")
     setCategoryId("")
-    setBaseId("")
     setBuilderId("")
     setCabinsMin("")
     setGuestsMin("")
@@ -192,26 +186,67 @@ export function FleetListClient({
   }
 
   const hasActiveFilters =
-    search || categoryId || baseId || builderId || cabinsMin || guestsMin || loaMin || loaMax || yearMin || charterType
+    search || categoryId || builderId || cabinsMin || guestsMin || loaMin || loaMax || yearMin || charterType
 
   return (
-    <div className="w-full flex flex-col" style={{ color: "#070c26" }}>
-      {/* Hero Header */}
+    <div
+      className="w-full flex flex-col"
+      style={{ color: "var(--iyc-ionian-900)", background: "var(--surface-page)" }}
+    >
+      {/* Hero Header — photographic, per the design system: the hero is a
+          photograph under --scrim-hero with the copy sitting directly on it.
+          It was a flat navy panel, which the kit rules out ("deep-sea
+          gradients, not capsules"). */}
       <section
-        className="relative w-full pt-40 pb-20 px-6 md:px-12"
-        style={{ backgroundColor: "#070c26" }}
+        className="relative w-full pt-40 pb-56 px-6 md:px-12"
+        style={{ background: "var(--surface-page)" }}
       >
+        {/* Mirrored. The white hull fills the left of the original frame —
+            exactly where the headline sits — and white copy on a white sail
+            cannot be rescued by any scrim. Flipping puts the hull on the right
+            and open water behind the text, which fixes the contrast by
+            composition instead of by darkening the picture.
+            The flip lives on the wrapper because the parallax driver writes
+            its own transform to the image and would overwrite it. */}
+        <div aria-hidden className="absolute inset-0" style={{ transform: "scaleX(-1)" }}>
+          <Image
+            src="https://iycweb.b-cdn.net/general/1786438819655-happy-friends-diving-from-sailing-boat-into-the-se-2026-03-19-21-49-52-utc.webp"
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-[center_34%]"
+            data-parallax="0.18"
+          />
+        </div>
+
+        {/* One vertical gradient, exactly the formula the design kit uses on
+            its own hero — it ends *in* the page colour, so the photograph
+            resolves into the ivory instead of stopping against it. The extra
+            layers this had before (a left-to-right wash and a second scrim)
+            were mine, not the kit's; stacked, they greyed the picture out and
+            left a muddy band at the hand-off. */}
+        <div
+          aria-hidden
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(to bottom, rgba(4,13,25,.55) 0%, rgba(4,13,25,.28) 45%, var(--surface-page) 100%)",
+          }}
+        />
+
         <div className="max-w-[1400px] mx-auto relative z-10">
           <div className="flex items-center gap-3 mb-5">
             <div
               className="w-10 h-10 rounded-full flex items-center justify-center"
-              style={{ background: "rgba(0, 119, 182, 0.15)" }}
+              style={{ background: "rgba(226,150,60,0.18)" }}
             >
-              <Sailboat className="w-5 h-5" style={{ color: "#0077B6" }} />
+              <Sailboat className="w-5 h-5" style={{ color: "var(--iyc-sun-300)" }} />
             </div>
+            {/* Eyebrow in sunset amber — the kit's rule for hero overlines. */}
             <span
               className="text-xs font-semibold uppercase tracking-widest"
-              style={{ color: "#0077B6" }}
+              style={{ color: "var(--iyc-sun-300)" }}
             >
               {removeGreekTonos(rHero(hero?.badge, t("fleet.badge", "Our Fleet"))).toUpperCase()}
             </span>
@@ -222,75 +257,99 @@ export function FleetListClient({
           >
             {rHero(hero?.title, t("fleet.title", "Yachts & Catamarans"))}
           </h1>
-          <p className="text-white/60 text-sm md:text-base max-w-[600px] leading-relaxed">
+          {/* Sand, not white-at-60%: the palette's warm off-white keeps the
+              lead legible on the photograph and ties it to the ivory below.
+              Only the h1 stays pure white. */}
+          <p
+            className="text-sm md:text-base max-w-[600px] leading-relaxed"
+            style={{ color: "var(--iyc-sand-200)" }}
+          >
             {rHero(hero?.subtitle, t("fleet.subtitle", "Browse our curated fleet of sailing yachts and catamarans available for charter in the Greek islands."))}
           </p>
 
           {/* Search Bar */}
-          <div className="mt-10 flex flex-col md:flex-row gap-3">
-            <div className="relative flex-1 max-w-xl">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => handleSearchChange(e.target.value)}
-                placeholder={t("fleet.searchPlaceholder", "Search by name, model, or builder...")}
-                className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-white/10 border border-white/15 text-white text-sm placeholder:text-white/40 focus:outline-none focus:border-white/30 focus:bg-white/15 transition"
-              />
-              {search && (
-                <button
-                  onClick={() => setSearch("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20"
-                >
-                  <X className="w-3 h-3 text-white/60" />
-                </button>
-              )}
-            </div>
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 px-5 py-3.5 rounded-xl text-sm font-medium transition border ${
-                showFilters
-                  ? "bg-white text-[#070c26] border-white"
-                  : "bg-white/10 text-white border-white/15 hover:bg-white/15"
-              }`}
+          {/* Search bar — the homepage charter form's language, so the two
+              pages read as one site: a near-solid white bar on the photograph,
+              cells divided by hairlines rather than floated as separate pills,
+              and the accent reserved for the single action. It also settles the
+              contrast for good — ink on white beats any glass over open water. */}
+          <div className="mt-10 w-full max-w-3xl">
+            <div
+              className="overflow-hidden"
+              style={{
+                borderRadius: "var(--iyc-radius-lg)",
+                background: "rgba(255, 255, 255, 0.92)",
+                backdropFilter: "blur(18px)",
+                WebkitBackdropFilter: "blur(18px)",
+                border: "1px solid rgba(255,255,255,0.6)",
+                boxShadow: "var(--shadow-photo)",
+              }}
             >
-              <SlidersHorizontal className="w-4 h-4" />
-              {t("fleet.filters", "Filters")}
-              {hasActiveFilters && (
-                <span className="w-2 h-2 rounded-full bg-[#0077B6]" />
-              )}
-            </button>
-            <div className="relative">
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="appearance-none px-5 py-3.5 pr-10 rounded-xl bg-white/10 border border-white/15 text-white text-sm focus:outline-none focus:border-white/30 transition cursor-pointer"
-              >
-                <option value="name">{t("fleet.sort.nameAZ", "Sort: Name A-Z")}</option>
-                <option value="newest">{t("fleet.sort.newest", "Sort: Newest")}</option>
-                <option value="loa_desc">{t("fleet.sort.lengthLong", "Sort: Length (longest)")}</option>
-                <option value="loa_asc">{t("fleet.sort.lengthShort", "Sort: Length (shortest)")}</option>
-                <option value="year_desc">{t("fleet.sort.yearNew", "Sort: Year (newest)")}</option>
-                <option value="year_asc">{t("fleet.sort.yearOld", "Sort: Year (oldest)")}</option>
-                <option value="cabins_desc">{t("fleet.sort.cabinsMost", "Sort: Cabins (most)")}</option>
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 pointer-events-none" />
+              <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] items-stretch">
+                <div className="relative flex items-center gap-3 px-5 py-3.5 border-b md:border-b-0 md:border-r border-[var(--border-hairline)]">
+                  <Search className="w-[18px] h-[18px] shrink-0" style={{ color: "var(--text-link)" }} />
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => handleSearchChange(e.target.value)}
+                    placeholder={t("fleet.searchPlaceholder", "Search by name, model, or builder...")}
+                    className="w-full bg-transparent text-sm focus:outline-none placeholder:text-[var(--text-subtle)]"
+                    style={{ color: "var(--text-body)" }}
+                  />
+                  {search && (
+                    <button
+                      onClick={() => setSearch("")}
+                      aria-label={t("fleet.filter.clearFilters", "Clear filters")}
+                      className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center transition hover:bg-black/[0.06]"
+                    >
+                      <X className="w-3 h-3" style={{ color: "var(--text-subtle)" }} />
+                    </button>
+                  )}
+                </div>
+
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  aria-expanded={showFilters}
+                  className="flex items-center justify-center gap-2.5 px-8 py-3.5 text-sm font-semibold transition-all cursor-pointer active:scale-[0.985]"
+                  style={
+                    showFilters
+                      ? { background: "var(--action-accent)", color: "var(--text-on-accent)", fontFamily: "var(--font-display)" }
+                      : { background: "transparent", color: "var(--text-body)", fontFamily: "var(--font-display)" }
+                  }
+                >
+                  <SlidersHorizontal className="w-4 h-4" />
+                  {t("fleet.filters", "Filters")}
+                  {hasActiveFilters && (
+                    <span className="w-2 h-2 rounded-full" style={{ background: "var(--action-accent)" }} />
+                  )}
+                </button>
+              </div>
             </div>
           </div>
 
           {/* Filter Panel */}
           {showFilters && (
-            <div className="mt-4 p-6 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm">
+            <div
+              className="mt-4 w-full max-w-3xl p-6"
+              style={{
+                borderRadius: "var(--iyc-radius-lg)",
+                background: "rgba(255, 255, 255, 0.92)",
+                backdropFilter: "blur(18px)",
+                WebkitBackdropFilter: "blur(18px)",
+                border: "1px solid rgba(255,255,255,0.6)",
+                boxShadow: "var(--shadow-photo)",
+              }}
+            >
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 {/* Category */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] uppercase tracking-wider text-white/50 font-semibold">
+                  <label className="text-[10px] uppercase tracking-wider font-semibold text-[var(--text-subtle)]">
                     {tUpper("fleet.filter.category", "Category")}
                   </label>
                   <select
                     value={categoryId}
                     onChange={(e) => setCategoryId(e.target.value)}
-                    className="px-3 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white text-xs focus:outline-none focus:border-white/30 transition"
+                    className="px-3 py-2.5 rounded-[var(--iyc-radius-sm)] text-xs transition focus:outline-none bg-transparent border border-[var(--border-input)] text-[var(--text-body)] focus:border-[var(--text-link)]"
                   >
                     <option value="">{t("fleet.filter.allCategories", "All Categories")}</option>
                     {categories.map((c) => (
@@ -301,34 +360,15 @@ export function FleetListClient({
                   </select>
                 </div>
 
-                {/* Base / Location */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] uppercase tracking-wider text-white/50 font-semibold">
-                    {tUpper("fleet.filter.location", "Location")}
-                  </label>
-                  <select
-                    value={baseId}
-                    onChange={(e) => setBaseId(e.target.value)}
-                    className="px-3 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white text-xs focus:outline-none focus:border-white/30 transition"
-                  >
-                    <option value="">{t("fleet.filter.allLocations", "All Locations")}</option>
-                    {bases.map((b) => (
-                      <option key={b.id} value={b.id}>
-                        {b.nameTranslations?.[locale] || b.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
                 {/* Builder */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] uppercase tracking-wider text-white/50 font-semibold">
+                  <label className="text-[10px] uppercase tracking-wider font-semibold text-[var(--text-subtle)]">
                     {tUpper("fleet.filter.builder", "Builder")}
                   </label>
                   <select
                     value={builderId}
                     onChange={(e) => setBuilderId(e.target.value)}
-                    className="px-3 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white text-xs focus:outline-none focus:border-white/30 transition"
+                    className="px-3 py-2.5 rounded-[var(--iyc-radius-sm)] text-xs transition focus:outline-none bg-transparent border border-[var(--border-input)] text-[var(--text-body)] focus:border-[var(--text-link)]"
                   >
                     <option value="">{t("fleet.filter.allBuilders", "All Builders")}</option>
                     {builders.map((b) => (
@@ -341,13 +381,13 @@ export function FleetListClient({
 
                 {/* Charter Type */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] uppercase tracking-wider text-white/50 font-semibold">
+                  <label className="text-[10px] uppercase tracking-wider font-semibold text-[var(--text-subtle)]">
                     {tUpper("fleet.filter.charterType", "Charter Type")}
                   </label>
                   <select
                     value={charterType}
                     onChange={(e) => setCharterType(e.target.value)}
-                    className="px-3 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white text-xs focus:outline-none focus:border-white/30 transition"
+                    className="px-3 py-2.5 rounded-[var(--iyc-radius-sm)] text-xs transition focus:outline-none bg-transparent border border-[var(--border-input)] text-[var(--text-body)] focus:border-[var(--text-link)]"
                   >
                     <option value="">{t("fleet.filter.allTypes", "All Types")}</option>
                     <option value="BAREBOAT">{t("fleet.filter.bareboat", "Bareboat")}</option>
@@ -357,13 +397,13 @@ export function FleetListClient({
 
                 {/* Cabins Min */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] uppercase tracking-wider text-white/50 font-semibold">
+                  <label className="text-[10px] uppercase tracking-wider font-semibold text-[var(--text-subtle)]">
                     {tUpper("fleet.filter.minCabins", "Min Cabins")}
                   </label>
                   <select
                     value={cabinsMin}
                     onChange={(e) => setCabinsMin(e.target.value)}
-                    className="px-3 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white text-xs focus:outline-none focus:border-white/30 transition"
+                    className="px-3 py-2.5 rounded-[var(--iyc-radius-sm)] text-xs transition focus:outline-none bg-transparent border border-[var(--border-input)] text-[var(--text-body)] focus:border-[var(--text-link)]"
                   >
                     <option value="">{t("fleet.filter.any", "Any")}</option>
                     {[1, 2, 3, 4, 5, 6, 8].map((n) => (
@@ -376,13 +416,13 @@ export function FleetListClient({
 
                 {/* Guests Min */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] uppercase tracking-wider text-white/50 font-semibold">
+                  <label className="text-[10px] uppercase tracking-wider font-semibold text-[var(--text-subtle)]">
                     {tUpper("fleet.filter.minGuests", "Min Guests")}
                   </label>
                   <select
                     value={guestsMin}
                     onChange={(e) => setGuestsMin(e.target.value)}
-                    className="px-3 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white text-xs focus:outline-none focus:border-white/30 transition"
+                    className="px-3 py-2.5 rounded-[var(--iyc-radius-sm)] text-xs transition focus:outline-none bg-transparent border border-[var(--border-input)] text-[var(--text-body)] focus:border-[var(--text-link)]"
                   >
                     <option value="">{t("fleet.filter.any", "Any")}</option>
                     {[2, 4, 6, 8, 10, 12].map((n) => (
@@ -395,7 +435,7 @@ export function FleetListClient({
 
                 {/* Length Min */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] uppercase tracking-wider text-white/50 font-semibold">
+                  <label className="text-[10px] uppercase tracking-wider font-semibold text-[var(--text-subtle)]">
                     {tUpper("fleet.filter.minLength", "Min Length (m)")}
                   </label>
                   <input
@@ -403,13 +443,13 @@ export function FleetListClient({
                     value={loaMin}
                     onChange={(e) => setLoaMin(e.target.value)}
                     placeholder="e.g. 10"
-                    className="px-3 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white text-xs placeholder:text-white/30 focus:outline-none focus:border-white/30 transition"
+                    className="px-3 py-2.5 rounded-[var(--iyc-radius-sm)] text-xs transition focus:outline-none bg-transparent border border-[var(--border-input)] text-[var(--text-body)] focus:border-[var(--text-link)] placeholder:text-[var(--text-subtle)]"
                   />
                 </div>
 
                 {/* Length Max */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] uppercase tracking-wider text-white/50 font-semibold">
+                  <label className="text-[10px] uppercase tracking-wider font-semibold text-[var(--text-subtle)]">
                     {tUpper("fleet.filter.maxLength", "Max Length (m)")}
                   </label>
                   <input
@@ -417,13 +457,13 @@ export function FleetListClient({
                     value={loaMax}
                     onChange={(e) => setLoaMax(e.target.value)}
                     placeholder="e.g. 20"
-                    className="px-3 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white text-xs placeholder:text-white/30 focus:outline-none focus:border-white/30 transition"
+                    className="px-3 py-2.5 rounded-[var(--iyc-radius-sm)] text-xs transition focus:outline-none bg-transparent border border-[var(--border-input)] text-[var(--text-body)] focus:border-[var(--text-link)] placeholder:text-[var(--text-subtle)]"
                   />
                 </div>
 
                 {/* Year Min */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] uppercase tracking-wider text-white/50 font-semibold">
+                  <label className="text-[10px] uppercase tracking-wider font-semibold text-[var(--text-subtle)]">
                     {tUpper("fleet.filter.builtAfter", "Built After")}
                   </label>
                   <input
@@ -431,7 +471,7 @@ export function FleetListClient({
                     value={yearMin}
                     onChange={(e) => setYearMin(e.target.value)}
                     placeholder="e.g. 2018"
-                    className="px-3 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white text-xs placeholder:text-white/30 focus:outline-none focus:border-white/30 transition"
+                    className="px-3 py-2.5 rounded-[var(--iyc-radius-sm)] text-xs transition focus:outline-none bg-transparent border border-[var(--border-input)] text-[var(--text-body)] focus:border-[var(--text-link)] placeholder:text-[var(--text-subtle)]"
                   />
                 </div>
 
@@ -448,14 +488,27 @@ export function FleetListClient({
             </div>
           )}
 
-          {/* Results count */}
+          {/* Results count. Sand, not ink — the grid now rides up over the
+              photograph, so this line sits on open water rather than on the
+              ivory it used to reach by this height. */}
           <div className="mt-6 flex items-center justify-between">
-            <p className="text-white/50 text-sm">
-              <span className="text-white font-semibold">{total}</span> {t("fleet.yachtsFound", "yachts found")}
+            <p
+              className="text-sm"
+              style={{
+                color: "var(--iyc-sand-200)",
+                // A shadow rather than a heavier scrim: this line sits wherever
+                // the water happens to be light or dark, and a shadow travels
+                // with the text instead of dimming the whole photograph.
+                textShadow: "0 1px 3px rgba(4,13,25,.62), 0 1px 14px rgba(4,13,25,.38)",
+              }}
+            >
+              <span className="font-semibold" style={{ color: "var(--iyc-sand-50)" }}>{total}</span>{" "}
+              {t("fleet.yachtsFound", "yachts found")}
               {hasActiveFilters && (
                 <button
                   onClick={clearFilters}
-                  className="ml-3 text-[#0077B6] text-xs font-medium hover:underline"
+                  className="ml-3 text-xs font-medium hover:underline"
+                  style={{ color: "var(--iyc-sun-300)" }}
                 >
                   {t("fleet.filter.clearFilters", "Clear filters")}
                 </button>
@@ -465,28 +518,30 @@ export function FleetListClient({
         </div>
       </section>
 
-      {/* Yacht Grid */}
-      <section className="w-full bg-white py-12 px-6 md:px-12">
+      {/* Yacht Grid — pulled up so the first row sits on the water rather than
+          below the photograph. Transparent background: an opaque one would
+          paint ivory straight over the sea it is meant to float on. */}
+      <section className="relative z-10 -mt-20 w-full pb-12 px-6 md:px-12">
         <div className="max-w-[1400px] mx-auto">
           {loading && (
             <div className="flex items-center justify-center py-20">
-              <Loader2 className="w-8 h-8 animate-spin text-[#0055a9]" />
+              <Loader2 className="w-8 h-8 animate-spin text-[var(--text-link)]" />
             </div>
           )}
 
           {!loading && yachts.length === 0 && (
             <div className="flex flex-col items-center justify-center py-20 text-center">
-              <Sailboat className="w-16 h-16 text-gray-300 mb-4" />
-              <h3 className="text-xl font-semibold text-gray-700 mb-2">
+              <Sailboat className="w-16 h-16 text-[var(--text-muted)] mb-4" />
+              <h3 className="text-xl font-semibold text-[var(--text-body)] mb-2">
                 {t("fleet.noResults", "No yachts found")}
               </h3>
-              <p className="text-gray-400 text-sm mb-6 max-w-md">
+              <p className="text-[var(--text-subtle)] text-sm mb-6 max-w-md">
                 {t("fleet.noResultsHint", "Try adjusting your filters or search terms to find available yachts.")}
               </p>
               <button
                 onClick={clearFilters}
                 className="px-6 py-2.5 rounded-lg text-sm font-medium text-white transition"
-                style={{ backgroundColor: "#0055a9" }}
+                style={{ backgroundColor: "var(--iyc-ionian-600)" }}
               >
                 {t("fleet.filter.clearAll", "Clear All Filters")}
               </button>
@@ -507,7 +562,7 @@ export function FleetListClient({
                   <button
                     onClick={() => fetchYachts(page - 1)}
                     disabled={page <= 1}
-                    className="w-10 h-10 rounded-lg border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="w-10 h-10 rounded-lg border border-[var(--border-hairline)] flex items-center justify-center hover:bg-[var(--surface-sunken)] transition disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </button>
@@ -530,11 +585,11 @@ export function FleetListClient({
                         className={`w-10 h-10 rounded-lg text-sm font-medium transition ${
                           pageNum === page
                             ? "text-white"
-                            : "border border-gray-200 hover:bg-gray-50"
+                            : "border border-[var(--border-hairline)] hover:bg-[var(--surface-sunken)]"
                         }`}
                         style={
                           pageNum === page
-                            ? { backgroundColor: "#070c26" }
+                            ? { backgroundColor: "var(--text-heading)" }
                             : undefined
                         }
                       >
@@ -546,7 +601,7 @@ export function FleetListClient({
                   <button
                     onClick={() => fetchYachts(page + 1)}
                     disabled={page >= totalPages}
-                    className="w-10 h-10 rounded-lg border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="w-10 h-10 rounded-lg border border-[var(--border-hairline)] flex items-center justify-center hover:bg-[var(--surface-sunken)] transition disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     <ChevronRight className="w-4 h-4" />
                   </button>
@@ -566,10 +621,9 @@ function YachtGridCard({ yacht }: { yacht: YachtCard }) {
   const [liked, setLiked] = useState(false)
   const { locale, t, tUpper } = useTranslations()
   const category = yacht.categoryTranslations?.[locale] || yacht.category
-  const baseName = yacht.baseNameTranslations?.[locale] || yacht.baseName
 
   return (
-    <div className="group relative rounded-2xl overflow-hidden bg-white border border-gray-100 shadow-sm hover:shadow-xl transition-shadow duration-300">
+    <div className="group relative rounded-2xl overflow-hidden bg-white border border-[var(--border-hairline)] shadow-sm hover:shadow-xl transition-shadow duration-300">
       {/* Image */}
       <Link
         href={`/fleet/${yacht.id}`}
@@ -586,7 +640,7 @@ function YachtGridCard({ yacht }: { yacht: YachtCard }) {
         ) : (
           <div
             className="w-full h-full"
-            style={{ background: "linear-gradient(135deg, #0077B6, #005a8c)" }}
+            style={{ background: "linear-gradient(135deg, var(--iyc-ionian-500), var(--iyc-ionian-700))" }}
           />
         )}
         {/* Subtle gradient for text readability */}
@@ -594,13 +648,13 @@ function YachtGridCard({ yacht }: { yacht: YachtCard }) {
           className="absolute inset-x-0 bottom-0 h-1/2"
           style={{
             background:
-              "linear-gradient(to top, rgba(0,0,0,0.45) 0%, transparent 100%)",
+              "var(--scrim-card)",
           }}
         />
 
         {/* Category badge */}
         <span
-          className="absolute top-3 left-3 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider rounded-full text-white bg-white/15 backdrop-blur-md border border-white/15 z-10"
+          className="absolute top-3 left-3 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider rounded-full text-[var(--text-on-accent)] bg-[var(--action-accent)] z-10"
         >
           {removeGreekTonos(category)}
         </span>
@@ -621,28 +675,28 @@ function YachtGridCard({ yacht }: { yacht: YachtCard }) {
         </button>
 
         {/* Bottom specs on image */}
-        <div className="absolute inset-x-0 bottom-0 p-4 z-10" style={{ textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
+        <div className="absolute inset-x-0 bottom-0 p-4 z-10">
           <h3
-            className="text-lg font-bold text-white mb-2 tracking-tight"
+            className="text-lg font-bold text-[var(--text-heading)] mb-2 tracking-tight truncate"
             style={{ fontFamily: "var(--font-display)" }}
           >
             {yacht.name}
           </h3>
-          <div className="flex flex-wrap items-center gap-3 text-white/70 text-[11px]">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[var(--text-muted)] text-[11px]">
             {yacht.loa > 0 && (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 whitespace-nowrap">
                 <Ruler className="w-3 h-3" />
                 <span>{yacht.loa}m</span>
               </div>
             )}
             {yacht.cabins > 0 && (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 whitespace-nowrap">
                 <DoorOpen className="w-3 h-3" />
                 <span>{yacht.cabins} {t("fleet.card.cabins", "cabins")}</span>
               </div>
             )}
             {yacht.berths > 0 && (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 whitespace-nowrap">
                 <Users className="w-3 h-3" />
                 <span>{yacht.berths} {t("fleet.card.guests", "guests")}</span>
               </div>
@@ -651,39 +705,44 @@ function YachtGridCard({ yacht }: { yacht: YachtCard }) {
         </div>
       </Link>
 
-      {/* Bottom info bar */}
-      <div className="bg-white px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-4 text-xs text-gray-500">
-          {baseName && (
-            <div className="flex items-center gap-1">
-              <Anchor className="w-3 h-3" style={{ color: "#0055a9" }} />
-              <span className="font-medium" style={{ color: "#0055a9" }}>
-                {baseName}
-              </span>
-            </div>
-          )}
+      {/* Bottom info bar. Two rows, not one: at a third of the viewport this
+          was cramming home port, year, builder, price and a button onto a
+          single line, so every one of them wrapped mid-word. Metadata gets its
+          own line and truncates; the price and the action get theirs. */}
+      <div className="bg-white px-4 py-3 flex flex-col gap-2.5">
+        <div className="flex items-center gap-3 text-xs min-w-0">
           {yacht.buildYear > 0 && (
-            <span className="text-gray-400">{yacht.buildYear}</span>
+            <span className="shrink-0 whitespace-nowrap" style={{ color: "var(--text-subtle)" }}>
+              {yacht.buildYear}
+            </span>
           )}
           {yacht.builder && (
-            <span className="text-gray-400 hidden md:inline">{yacht.builder}</span>
+            <span
+              className="truncate min-w-0"
+              style={{ color: "var(--text-subtle)" }}
+              title={yacht.builder}
+            >
+              {yacht.builder}
+            </span>
           )}
         </div>
 
-        <div className="flex items-center gap-2">
-          {yacht.priceFrom > 0 && (
-            <span className="text-xs">
-              <span className="text-gray-400">{t("fleet.card.from", "from")} </span>
-              <span className="font-bold" style={{ color: "#070c26" }}>
+        <div className="flex items-center justify-between gap-3">
+          {yacht.priceFrom > 0 ? (
+            <span className="text-xs whitespace-nowrap">
+              <span style={{ color: "var(--text-subtle)" }}>{t("fleet.card.from", "from")} </span>
+              <span className="font-bold" style={{ color: "var(--text-heading)" }}>
                 €{yacht.priceFrom.toLocaleString("en-US")}
               </span>
-              <span className="text-gray-400">/{t("fleet.card.week", "wk")}</span>
+              <span style={{ color: "var(--text-subtle)" }}>/{t("fleet.card.week", "wk")}</span>
             </span>
+          ) : (
+            <span />
           )}
           <Link
             href={`/fleet/${yacht.id}`}
-            className="px-3 py-1.5 rounded-lg text-[11px] font-semibold text-white transition hover:opacity-90"
-            style={{ backgroundColor: "#0055a9" }}
+            className="shrink-0 whitespace-nowrap px-3 py-1.5 rounded-lg text-[11px] font-semibold text-white transition hover:opacity-90"
+            style={{ backgroundColor: "var(--iyc-ionian-600)" }}
           >
             {t("fleet.card.details", "Details")}
           </Link>

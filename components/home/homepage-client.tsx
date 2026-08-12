@@ -149,25 +149,37 @@ export function HomepageClient({ hero, destinations, itineraries, yachts, fleetY
   }, [])
 
   useEffect(() => {
-    // Hero text animation
+    // Hero text animation. Both lines come from the CMS and may be absent —
+    // animate only what actually rendered, otherwise GSAP warns on every load
+    // and, worse, the element keeps the opacity:0 it starts with.
+    const heading = document.querySelector(".hero-heading")
+    const sub = document.querySelector(".hero-subheading")
     const tl = gsap.timeline({ defaults: { ease: "power3.out" } })
-    tl.fromTo(
-      ".hero-heading",
-      { opacity: 0, y: 40, clipPath: "inset(0 0 100% 0)" },
-      { opacity: 1, y: 0, clipPath: "inset(0 0 0% 0)", duration: 1.2 }
-    )
-    tl.fromTo(
-      ".hero-subheading",
-      { opacity: 0, y: 30 },
-      { opacity: 1, y: 0, duration: 0.9 },
-      "-=0.6"
-    )
+
+    if (heading) {
+      tl.fromTo(
+        heading,
+        { opacity: 0, y: 40, clipPath: "inset(0 0 100% 0)" },
+        { opacity: 1, y: 0, clipPath: "inset(0 0 0% 0)", duration: 1.2 }
+      )
+    }
+    if (sub) {
+      tl.fromTo(
+        sub,
+        { opacity: 0, y: 30 },
+        { opacity: 1, y: 0, duration: 0.9 },
+        heading ? "-=0.6" : 0
+      )
+    }
 
     // Refresh ScrollTrigger after layout settles
     const timeout = setTimeout(() => {
       ScrollTrigger.refresh()
     }, 500)
-    return () => clearTimeout(timeout)
+    return () => {
+      clearTimeout(timeout)
+      tl.kill()
+    }
   }, [])
 
   return (
@@ -175,18 +187,27 @@ export function HomepageClient({ hero, destinations, itineraries, yachts, fleetY
       {/* Hero with search form overlapping bottom edge */}
       <section className="relative z-20">
         {/* Video area */}
-        <div className="relative w-full flex flex-col px-6 md:px-12" style={{ aspectRatio: "16/9" }}>
-          {/* Video Background */}
+        <div className="relative w-full flex flex-col px-6 md:px-12" style={{ minHeight: "100svh", height: "100dvh" }}>
+          {/* Hero media — a still sits under the video (the kit's HeroMedia
+              pattern), so the frame is never empty while the clip buffers or
+              if the CDN is unreachable. */}
           <div className="absolute inset-0 overflow-hidden" suppressHydrationWarning>
+            <img
+              src="/brand/hero-aerial.webp"
+              alt=""
+              aria-hidden="true"
+              className="absolute inset-0 h-full w-full object-cover"
+            />
             <video
               ref={heroVideoRef}
               src="https://iycweb.b-cdn.net/1774760973356-lonely-sailboat-sailing-on-blue-water-aerial-view-2026-01-21-13-48-12-utc.mp4"
+              poster="/brand/hero-aerial.webp"
               autoPlay
               muted
               loop
               playsInline
               preload="auto"
-              className="h-full w-full object-cover"
+              className="absolute inset-0 h-full w-full object-cover"
               suppressHydrationWarning
             />
           </div>
@@ -196,17 +217,18 @@ export function HomepageClient({ hero, destinations, itineraries, yachts, fleetY
             className="absolute inset-0"
             style={{
               background:
-                "linear-gradient(180deg, rgba(0, 33, 71, 0.5) 0%, rgba(0, 33, 71, 0.15) 40%, transparent 60%)",
+                "linear-gradient(180deg, rgba(4,13,25,0.5) 0%, rgba(46,44,40,0.15) 40%, transparent 60%)",
             }}
           />
 
-          {/* Navy gradient rising from bottom — 100% at bottom, fading to 15% into hero */}
+          {/* Hero settles INTO the warm page, per the kit — the deep sea stays
+              at the top of the frame, the foot of the hero becomes limestone. */}
           <div
             className="absolute inset-x-0 bottom-0 pointer-events-none"
             style={{
-              height: "40%",
+              height: "55%",
               background:
-                "linear-gradient(to top, #070c26 0%, rgba(7,12,38,0.7) 40%, rgba(7,12,38,0.15) 100%)",
+                "linear-gradient(to bottom, rgba(4,13,25,0) 0%, rgba(4,13,25,0.18) 35%, var(--surface-page) 100%)",
             }}
           />
 
@@ -229,10 +251,12 @@ export function HomepageClient({ hero, destinations, itineraries, yachts, fleetY
                   className="hero-heading mb-5 text-4xl font-bold leading-tight md:text-6xl lg:text-7xl"
                   style={{
                     fontFamily: "var(--font-display)",
-                    letterSpacing: "-0.02em",
+                    letterSpacing: "var(--tracking-display)",
                     opacity: 0,
-                    color: "#0055a9",
-                    textShadow: "0 2px 30px rgba(255,255,255,0.15)",
+                    // The hero headline sits on the deep sea: ionian-600 was
+                    // 2.84:1 there. The kit sets it white.
+                    color: "#FFFFFF",
+                    textShadow: "0 2px 30px rgba(4,13,25,0.35)",
                   }}
                 >
                   {heroResolved.heading}
@@ -251,7 +275,7 @@ export function HomepageClient({ hero, destinations, itineraries, yachts, fleetY
           </div>
 
           {/* Search form pinned to bottom — z-40 so dropdowns appear above next section */}
-          <div className="relative z-40 w-full max-w-5xl mx-auto mt-auto mb-8 px-0">
+          <div className="relative z-40 w-full max-w-5xl mx-auto mt-auto mb-16 md:mb-28 px-0">
             <CharterSearchForm />
           </div>
         </div>

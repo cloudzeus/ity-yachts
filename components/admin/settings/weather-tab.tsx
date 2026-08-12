@@ -237,14 +237,14 @@ export function WeatherTab() {
                   <p className="text-[10px] uppercase tracking-wide font-medium" style={{ color: "var(--on-surface-variant)" }}>Sun & Moon</p>
                   <div className="grid grid-cols-2 gap-2">
                     <div className="flex items-center gap-2 py-2 px-3 rounded-md" style={{ background: "var(--surface-container-low)" }}>
-                      <Sunrise className="size-3.5" style={{ color: "#F59E0B" }} />
+                      <Sunrise className="size-3.5" style={{ color: "#E2963C" }} />
                       <div>
                         <p className="text-[10px]" style={{ color: "var(--on-surface-variant)" }}>Sunrise</p>
                         <p className="text-xs font-medium" style={{ color: "var(--on-surface)" }}>{activeDay.astro.sunrise}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 py-2 px-3 rounded-md" style={{ background: "var(--surface-container-low)" }}>
-                      <Sunset className="size-3.5" style={{ color: "#EF4444" }} />
+                      <Sunset className="size-3.5" style={{ color: "#A93B2F" }} />
                       <div>
                         <p className="text-[10px]" style={{ color: "var(--on-surface-variant)" }}>Sunset</p>
                         <p className="text-xs font-medium" style={{ color: "var(--on-surface)" }}>{activeDay.astro.sunset}</p>

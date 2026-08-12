@@ -127,7 +127,7 @@ function BlockRenderer({ block }: { block: PageBlock }) {
     case "richtext":
       return (
         <div
-          className="prose prose-invert max-w-none prose-headings:text-white prose-p:text-white/70 prose-a:text-[#83776d] prose-strong:text-white"
+          className="prose prose-invert max-w-none prose-headings:text-white prose-p:text-white/70 prose-a:text-[var(--text-subtle)] prose-strong:text-white"
           dangerouslySetInnerHTML={{ __html: block.content }}
         />
       )

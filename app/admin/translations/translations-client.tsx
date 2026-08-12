@@ -317,7 +317,7 @@ export function TranslationsClient({ initialData }: { initialData: SiteTranslati
               Site Translations
             </h1>
             <p className="mt-1 text-sm" style={{ color: "var(--on-surface-variant)" }}>
-              {items.length} keys · <span style={{ color: "var(--primary)" }}>{completeCount} translated</span> · <span style={{ color: untranslatedCount > 0 ? "var(--warning, #e8a800)" : "var(--on-surface-variant)" }}>{untranslatedCount} missing</span>
+              {items.length} keys · <span style={{ color: "var(--primary)" }}>{completeCount} translated</span> · <span style={{ color: untranslatedCount > 0 ? "var(--warning, #C1782A)" : "var(--on-surface-variant)" }}>{untranslatedCount} missing</span>
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -389,7 +389,7 @@ export function TranslationsClient({ initialData }: { initialData: SiteTranslati
                 onClick={() => setStatusFilter(value)}
                 className="px-2.5 py-1 text-xs font-medium rounded transition-colors"
                 style={{
-                  background: statusFilter === value ? (value === "untranslated" ? "#e8a800" : "var(--primary)") : "var(--surface-container)",
+                  background: statusFilter === value ? (value === "untranslated" ? "#C1782A" : "var(--primary)") : "var(--surface-container)",
                   color: statusFilter === value ? "#fff" : "var(--on-surface-variant)",
                 }}
               >
@@ -576,7 +576,7 @@ export function TranslationsClient({ initialData }: { initialData: SiteTranslati
                             title="Click to edit"
                           >
                             {value || (
-                              <span className="italic opacity-50" style={{ color: lang !== "en" ? "#e8a800" : undefined }}>
+                              <span className="italic opacity-50" style={{ color: lang !== "en" ? "#C1782A" : undefined }}>
                                 {lang === "en" ? "empty — click to add" : "⚠ missing — click to add"}
                               </span>
                             )}

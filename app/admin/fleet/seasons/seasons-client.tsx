@@ -37,7 +37,7 @@ function days(from: string, to: string) {
 }
 
 const COLORS = [
-  "#1B4965", "#5FA8D3", "#62B6CB", "#0E7C7B", "#17A398",
+  "#0B3A5C", "#5FA8D3", "#62B6CB", "#0E7C7B", "#17A398",
   "#D4A373", "#2A6F97", "#468FAF", "#61A5C2", "#89C2D9",
 ]
 
@@ -148,7 +148,7 @@ export function SeasonsClient({ data }: Props) {
                         {season.season}
                       </span>
                       {season.defaultSeason && (
-                        <Star className="size-3 shrink-0" style={{ color: "#D97706" }} fill="#D97706" />
+                        <Star className="size-3 shrink-0" style={{ color: "#C1782A" }} fill="#C1782A" />
                       )}
                     </div>
                   </td>
@@ -171,16 +171,16 @@ export function SeasonsClient({ data }: Props) {
                   </td>
                   <td className="px-4 py-2.5 text-center">
                     {s === "active" ? (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5" style={{ background: "rgba(16,185,129,0.12)", color: "#059669", borderRadius: "var(--radius-xs)" }}>
-                        <span className="size-1.5 rounded-full" style={{ background: "#059669" }} />
+                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5" style={{ background: "rgba(16,185,129,0.12)", color: "#4F7A46", borderRadius: "var(--radius-xs)" }}>
+                        <span className="size-1.5 rounded-full" style={{ background: "#4F7A46" }} />
                         Active
                       </span>
                     ) : s === "upcoming" ? (
-                      <span className="text-[10px] font-semibold px-2 py-0.5" style={{ background: "rgba(59,130,246,0.1)", color: "#2563EB", borderRadius: "var(--radius-xs)" }}>
+                      <span className="text-[10px] font-semibold px-2 py-0.5" style={{ background: "rgba(59,130,246,0.1)", color: "#0F79BE", borderRadius: "var(--radius-xs)" }}>
                         Upcoming
                       </span>
                     ) : s === "past" ? (
-                      <span className="text-[10px] font-medium px-2 py-0.5" style={{ background: "rgba(117,117,117,0.08)", color: "#9CA3AF", borderRadius: "var(--radius-xs)" }}>
+                      <span className="text-[10px] font-medium px-2 py-0.5" style={{ background: "rgba(117,117,117,0.08)", color: "#9C8E7C", borderRadius: "var(--radius-xs)" }}>
                         Past
                       </span>
                     ) : null}

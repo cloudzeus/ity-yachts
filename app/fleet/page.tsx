@@ -1,4 +1,5 @@
 import { db } from "@/lib/db"
+import { yachtThumb } from "@/lib/yacht-images"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { FleetListClient } from "./fleet-list-client"
@@ -12,9 +13,8 @@ export const metadata = {
 
 export default async function FleetPage() {
   // Fetch filter options based only on yachts we actually have, plus initial yachts
-  const [usedCategoryIds, usedBaseIds, usedBuilderIds, yachts, total, fleetComponent] = await Promise.all([
+  const [usedCategoryIds, usedBuilderIds, yachts, total, fleetComponent] = await Promise.all([
     db.nausysYacht.findMany({ select: { categoryId: true }, distinct: ["categoryId"], where: { categoryId: { not: null } } }),
-    db.nausysYacht.findMany({ select: { baseId: true }, distinct: ["baseId"], where: { baseId: { not: null } } }),
     db.nausysYacht.findMany({ select: { builderId: true }, distinct: ["builderId"], where: { builderId: { not: null } } }),
     db.nausysYacht.findMany({
       take: 12,
@@ -39,12 +39,12 @@ export default async function FleetPage() {
   ])
 
   const catIds = usedCategoryIds.map((r) => r.categoryId!).filter(Boolean)
-  const bIds = usedBaseIds.map((r) => r.baseId!).filter(Boolean)
   const bldrIds = usedBuilderIds.map((r) => r.builderId!).filter(Boolean)
 
-  const [categories, bases, builders] = await Promise.all([
+  // No charter-base query: the whole fleet lies on the one pontoon in Lefkas,
+  // so a location filter offered 33 options of which 32 returned nothing.
+  const [categories, builders] = await Promise.all([
     catIds.length ? db.nausysYachtCategory.findMany({ where: { id: { in: catIds } }, orderBy: { id: "asc" } }) : [],
-    bIds.length ? db.nausysCharterBase.findMany({ where: { id: { in: bIds } }, include: { location: true }, orderBy: { id: "asc" } }) : [],
     bldrIds.length ? db.nausysYachtBuilder.findMany({ where: { id: { in: bldrIds } }, orderBy: { name: "asc" } }) : [],
   ])
 
@@ -53,14 +53,6 @@ export default async function FleetPage() {
     id: c.id,
     name: ((c.name as Record<string, string>)?.en || `Category ${c.id}`),
     nameTranslations: c.name as Record<string, string> | null,
-  }))
-
-  const baseOptions = bases.map((b) => ({
-    id: b.id,
-    name: b.location
-      ? ((b.location.name as Record<string, string>)?.en || `Base ${b.id}`)
-      : `Base ${b.id}`,
-    nameTranslations: (b.location?.name as Record<string, string>) ?? null,
   }))
 
   const builderOptions = builders
@@ -77,7 +69,6 @@ export default async function FleetPage() {
         initialYachts={yachtCards}
         initialTotal={total}
         categories={categoryOptions}
-        bases={baseOptions}
         builders={builderOptions}
         hero={fleetHero}
       />
@@ -91,9 +82,7 @@ export function transformYacht(y: any) {
   const catNames = y.category?.name as Record<string, string> | undefined
   const categoryName = catNames?.en || "Yacht"
 
-  const websiteImgs = y.websiteImages as Array<{ url: string }> | null
-  const picturesArr = y.picturesUrl as string[] | null
-  const image = websiteImgs?.[0]?.url || y.mainPictureUrl || picturesArr?.[0] || ""
+  const image = yachtThumb(y)
 
   const locNames = y.base?.location?.name as Record<string, string> | undefined
   const locationName = locNames?.en || ""

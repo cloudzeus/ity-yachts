@@ -210,7 +210,7 @@ export function PageComponentsPanel({ pageId }: PageComponentsPanelProps) {
                       className="text-[10px] px-1.5 py-0.5 rounded"
                       style={{
                         background: comp.status === "active" ? "rgba(45,106,79,0.1)" : "rgba(117,117,117,0.1)",
-                        color: comp.status === "active" ? "#2D6A4F" : "#626262",
+                        color: comp.status === "active" ? "#4F7A46" : "#6B5F57",
                       }}
                     >
                       {comp.status}

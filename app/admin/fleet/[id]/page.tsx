@@ -42,6 +42,13 @@ export default async function YachtDetailPage({ params }: { params: Promise<{ id
             select: { id: true, dateFrom: true, dateTo: true, status: true, bookingNumber: true },
             orderBy: { dateFrom: "asc" },
           },
+          // Booked periods mirrored from NAUSYS. Charters sold through other
+          // agencies only ever appear here — the bookings table holds just our
+          // own, so the calendar needs both to show true availability.
+          availability: {
+            select: { id: true, dateFrom: true, dateTo: true, status: true },
+            orderBy: { dateFrom: "asc" },
+          },
         },
       }),
       db.nausysYachtModel.findMany({

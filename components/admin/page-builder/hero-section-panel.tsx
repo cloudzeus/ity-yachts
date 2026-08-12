@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { MediaPicker, PickedMedia } from "@/components/admin/media-picker"
 import { ImageIcon, Play, X, Upload } from "lucide-react"
+import { MottoPicker } from "@/components/admin/motto-picker"
 
 export interface HeroSectionData {
   mediaUrl: string
@@ -341,6 +342,26 @@ export function HeroSectionPanel({ data, onChange }: HeroSectionPanelProps) {
                 </span>
               </button>
             )}
+          </div>
+
+          {/* Saved mottos fill heading and subheading in all three languages
+              at once. The fields stay editable afterwards — a motto is a
+              starting point, not a binding, and nothing here records which one
+              was used, so deleting a motto later cannot empty a live hero. */}
+          <div className="mb-3 flex justify-end">
+            <MottoPicker
+              label="Fill from a motto"
+              onApply={(m) =>
+                onChange({
+                  ...hero,
+                  heading: { ...EMPTY_LANG, ...m.heading },
+                  subheading: { ...EMPTY_LANG, ...m.subheading },
+                  overSubheading: Object.values(m.subtext ?? {}).some(Boolean)
+                    ? { ...EMPTY_LANG, ...m.subtext }
+                    : hero.overSubheading,
+                })
+              }
+            />
           </div>
 
           {/* Over Subheading */}

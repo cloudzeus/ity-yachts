@@ -3,7 +3,10 @@ import { Metadata } from "next"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { LocationsGrid } from "@/components/locations/locations-grid"
+import Image from "next/image"
+import { MapPin } from "lucide-react"
 import { LocaleText } from "@/components/locale-text"
+import { ScrollTypewriter } from "@/components/scroll-typewriter"
 
 export const dynamic = "force-dynamic"
 
@@ -47,32 +50,67 @@ export default async function LocationsListPage() {
     }
   })
 
+  // The first destination doubles as the page's hero image.
+  const featured = mapped[0] ?? null
+  // …and is therefore dropped from the grid below, so it isn't shown twice.
+  const rest = featured ? mapped.slice(1) : mapped
+
   return (
     <main>
       <div
         className="relative z-10 min-h-screen"
-        style={{ background: "#060c27", clipPath: "polygon(0% 0, 100% 0%, 100% 100%, 0 100%)" }}
+        style={{ background: "var(--surface-page)", clipPath: "polygon(0% 0, 100% 0%, 100% 100%, 0 100%)" }}
       >
         <SiteHeader />
 
-        {/* Hero */}
-        <section className="pt-32 pb-12 px-6">
-          <div className="max-w-7xl mx-auto">
+        {/* Hero — the top destination carries the page header */}
+        <section
+          className="relative flex min-h-[68vh] items-end overflow-hidden px-6 pt-40 pb-12"
+          style={{ background: "var(--surface-inverse)" }}
+        >
+          {featured?.image &&
+            (featured.imageType === "video" || /\.(mp4|webm|mov)$/i.test(featured.image) ? (
+              <video
+                src={featured.image}
+                muted
+                autoPlay
+                loop
+                playsInline
+                aria-hidden="true"
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+            ) : (
+              <Image
+                src={featured.image}
+                alt=""
+                aria-hidden="true"
+                fill
+                priority
+                sizes="100vw"
+                className="object-cover"
+                data-parallax="0.32"
+              />
+            ))}
+          {/* Deep-sea scrim so the header type stays legible on any photograph */}
+          <div className="absolute inset-0" style={{ background: "var(--scrim-hero)" }} />
+
+          <div className="relative z-10 max-w-7xl mx-auto w-full">
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
               <div>
-                <span className="mb-4 inline-block rounded-full border border-[#0077B6]/30 bg-[#0077B6]/5 px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-[#0077B6] backdrop-blur-sm">
+                <span className="mb-4 inline-block rounded-full border border-white/35 bg-white/10 px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-white backdrop-blur-sm">
                   {locHero?.badge
                     ? <LocaleText translations={locHero.badge} fallback="Charter Destinations" uppercase />
                     : <LocaleText tKey="locations.badge" fallback="Charter Destinations" uppercase />}
                 </span>
-                <h1
+                <ScrollTypewriter
+                  as="h1"
                   className="text-4xl md:text-5xl lg:text-6xl font-bold mt-4"
                   style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.03em", color: "#fff" }}
                 >
                   {locHero?.title
                     ? <LocaleText translations={locHero.title} fallback="Discover the Ionian Sea" />
                     : <LocaleText tKey="locations.title" fallback="Discover the Ionian Sea" />}
-                </h1>
+                </ScrollTypewriter>
               </div>
               <p className="text-base text-white/50 max-w-md md:text-right leading-relaxed md:pb-1">
                 {locHero?.subtitle
@@ -81,13 +119,22 @@ export default async function LocationsListPage() {
               </p>
             </div>
 
+            {featured && (
+              <div className="mt-8 flex items-center gap-2 text-white/70">
+                <MapPin className="h-3.5 w-3.5" />
+                <span className="text-[11px] font-semibold uppercase tracking-[0.18em]">
+                  <LocaleText translations={featured.nameTranslations} fallback={featured.name} />
+                </span>
+              </div>
+            )}
+
             {/* Decorative divider */}
             <div className="mt-10 mb-2 flex items-center gap-4">
-              <div className="h-[1px] flex-1 bg-gradient-to-r from-[#0077B6]/30 to-transparent" />
-              <span className="text-[10px] font-mono text-white/20 tracking-widest uppercase">
+              <div className="h-[1px] flex-1 bg-gradient-to-r from-white/30 to-transparent" />
+              <span className="text-[10px] font-mono text-white/70 tracking-widest uppercase">
                 {mapped.length} destination{mapped.length !== 1 ? "s" : ""}
               </span>
-              <div className="h-[1px] flex-1 bg-gradient-to-l from-[#0077B6]/30 to-transparent" />
+              <div className="h-[1px] flex-1 bg-gradient-to-l from-white/30 to-transparent" />
             </div>
           </div>
         </section>
@@ -95,7 +142,7 @@ export default async function LocationsListPage() {
         {/* Locations */}
         <section className="pb-28 px-6">
           <div className="max-w-7xl mx-auto">
-            <LocationsGrid locations={mapped} />
+            <LocationsGrid locations={rest} />
           </div>
         </section>
       </div>

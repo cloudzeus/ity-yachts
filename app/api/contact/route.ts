@@ -46,25 +46,25 @@ export async function POST(req: NextRequest) {
       subject: "Thank you for contacting IYC Yachts",
       replyTo: "info@iyc.de",
       html: `
-        <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f7f7f5;">
-          <div style="background: #070c26; padding: 32px 24px; text-align: center;">
+        <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #F5F1E9;">
+          <div style="background: #05111F; padding: 32px 24px; text-align: center;">
             <img src="https://iycweb.b-cdn.net/IYC_LOGO_TRANS_white.svg" alt="IYC Yachts" height="48" />
           </div>
           <div style="padding: 32px 24px;">
-            <h2 style="color: #070c26; font-size: 20px; margin: 0 0 16px;">Thank you, ${firstName}!</h2>
-            <p style="color: #43474E; font-size: 14px; line-height: 1.6; margin: 0 0 16px;">
+            <h2 style="color: #05111F; font-size: 20px; margin: 0 0 16px;">Thank you, ${firstName}!</h2>
+            <p style="color: #6B5F57; font-size: 14px; line-height: 1.6; margin: 0 0 16px;">
               We've received your message and our team will get back to you shortly.
             </p>
-            <div style="background: #fff; border-radius: 8px; padding: 20px; border: 1px solid #e8eaeb;">
-              <p style="color: #43474E; font-size: 13px; margin: 0 0 8px;"><strong>Subject:</strong> ${subject || "General Enquiry"}</p>
-              <p style="color: #43474E; font-size: 13px; margin: 0; white-space: pre-wrap;"><strong>Message:</strong> ${message}</p>
+            <div style="background: #fff; border-radius: 8px; padding: 20px; border: 1px solid #EBE4D8;">
+              <p style="color: #6B5F57; font-size: 13px; margin: 0 0 8px;"><strong>Subject:</strong> ${subject || "General Enquiry"}</p>
+              <p style="color: #6B5F57; font-size: 13px; margin: 0; white-space: pre-wrap;"><strong>Message:</strong> ${message}</p>
             </div>
-            <p style="color: #43474E; font-size: 14px; line-height: 1.6; margin: 16px 0 0;">
-              In the meantime, feel free to explore our <a href="https://iyc.de/fleet" style="color: #0055a9;">yacht fleet</a> or
-              browse our <a href="https://iyc.de/locations" style="color: #0055a9;">destinations</a>.
+            <p style="color: #6B5F57; font-size: 14px; line-height: 1.6; margin: 16px 0 0;">
+              In the meantime, feel free to explore our <a href="https://iyc.de/fleet" style="color: #0B6099;">yacht fleet</a> or
+              browse our <a href="https://iyc.de/locations" style="color: #0B6099;">destinations</a>.
             </p>
           </div>
-          <div style="padding: 24px; text-align: center; border-top: 1px solid #e8eaeb;">
+          <div style="padding: 24px; text-align: center; border-top: 1px solid #EBE4D8;">
             <p style="color: #999; font-size: 12px; margin: 0;">IYC Ionische Yacht Charter · info@iyc.de · +49 160 99279870</p>
           </div>
         </div>
@@ -78,16 +78,16 @@ export async function POST(req: NextRequest) {
       replyTo: email,
       html: `
         <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: #070c26; padding: 24px; color: #fff;">
+          <div style="background: #05111F; padding: 24px; color: #fff;">
             <h2 style="margin: 0; font-size: 18px;">New Contact Form Submission</h2>
           </div>
           <div style="padding: 24px; background: #fff;">
             <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
-              <tr><td style="padding: 8px 0; color: #999; width: 100px;">Name</td><td style="padding: 8px 0; color: #191C1D;">${firstName} ${lastName || ""}</td></tr>
-              <tr><td style="padding: 8px 0; color: #999;">Email</td><td style="padding: 8px 0;"><a href="mailto:${email}" style="color: #0055a9;">${email}</a></td></tr>
-              ${phone ? `<tr><td style="padding: 8px 0; color: #999;">Phone</td><td style="padding: 8px 0; color: #191C1D;">${phone}</td></tr>` : ""}
-              <tr><td style="padding: 8px 0; color: #999;">Subject</td><td style="padding: 8px 0; color: #191C1D;">${subject || "General Enquiry"}</td></tr>
-              <tr><td style="padding: 8px 0; color: #999; vertical-align: top;">Message</td><td style="padding: 8px 0; color: #191C1D; white-space: pre-wrap;">${message}</td></tr>
+              <tr><td style="padding: 8px 0; color: #999; width: 100px;">Name</td><td style="padding: 8px 0; color: #2E2C28;">${firstName} ${lastName || ""}</td></tr>
+              <tr><td style="padding: 8px 0; color: #999;">Email</td><td style="padding: 8px 0;"><a href="mailto:${email}" style="color: #0B6099;">${email}</a></td></tr>
+              ${phone ? `<tr><td style="padding: 8px 0; color: #999;">Phone</td><td style="padding: 8px 0; color: #2E2C28;">${phone}</td></tr>` : ""}
+              <tr><td style="padding: 8px 0; color: #999;">Subject</td><td style="padding: 8px 0; color: #2E2C28;">${subject || "General Enquiry"}</td></tr>
+              <tr><td style="padding: 8px 0; color: #999; vertical-align: top;">Message</td><td style="padding: 8px 0; color: #2E2C28; white-space: pre-wrap;">${message}</td></tr>
             </table>
           </div>
         </div>

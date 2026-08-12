@@ -48,8 +48,8 @@ type Review = {
 
 const statusBadge = (status: string) => {
   const styles: Record<string, { bg: string; color: string }> = {
-    draft:     { bg: "rgba(117,117,117,0.12)", color: "#626262" },
-    published: { bg: "rgba(45,106,79,0.12)",   color: "#2D6A4F" },
+    draft:     { bg: "rgba(117,117,117,0.12)", color: "#6B5F57" },
+    published: { bg: "rgba(45,106,79,0.12)",   color: "#4F7A46" },
   }
   const s = styles[status] ?? styles.draft
   return (
@@ -66,8 +66,8 @@ function StarRating({ rating }: { rating: number }) {
         <Star
           key={i}
           className="size-3"
-          style={{ color: i < rating ? "#F59E0B" : "var(--outline-variant)" }}
-          fill={i < rating ? "#F59E0B" : "none"}
+          style={{ color: i < rating ? "#E2963C" : "var(--outline-variant)" }}
+          fill={i < rating ? "#E2963C" : "none"}
         />
       ))}
     </div>
@@ -131,7 +131,7 @@ function SortableRow({ review, onEdit, onDelete }: {
       {/* Name */}
       <td className="px-4 py-3">
         <div className="flex items-center gap-2">
-          <Star className="size-3.5 flex-shrink-0" style={{ color: "#F59E0B" }} fill="#F59E0B" />
+          <Star className="size-3.5 flex-shrink-0" style={{ color: "#E2963C" }} fill="#E2963C" />
           <span className="text-sm font-medium" style={{ color: "var(--on-surface)" }}>{review.name}</span>
         </div>
       </td>
@@ -441,7 +441,7 @@ export function ReviewsClient({ initialData }: Props) {
                 <div className="flex items-center gap-1 h-7">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <button key={i} type="button" onClick={() => setNewRating(i + 1)} className="p-0">
-                      <Star className="size-5" style={{ color: i < newRating ? "#F59E0B" : "var(--outline-variant)" }} fill={i < newRating ? "#F59E0B" : "none"} />
+                      <Star className="size-5" style={{ color: i < newRating ? "#E2963C" : "var(--outline-variant)" }} fill={i < newRating ? "#E2963C" : "none"} />
                     </button>
                   ))}
                 </div>

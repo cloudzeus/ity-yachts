@@ -58,7 +58,7 @@ interface Props {
 // ─── Colors ─────────────────────────────────────────────────────────────────
 
 const DAY_COLORS = [
-  "#006399", "#b45309", "#7c3aed", "#059669", "#dc2626",
+  "#0B6099", "#b45309", "#7c3aed", "#4F7A46", "#A93B2F",
   "#0891b2", "#c026d3", "#65a30d", "#ea580c", "#4f46e5",
 ]
 
@@ -161,7 +161,7 @@ export function RouteMapEditor({
     markers.push({
       lat: startLatitude, lng: startLongitude,
       label: startFrom || "Start",
-      type: "start", color: "#DC2626",
+      type: "start", color: "#A93B2F",
     })
   }
 
@@ -169,7 +169,7 @@ export function RouteMapEditor({
     if (p.latitude && p.longitude) {
       markers.push({
         lat: p.latitude, lng: p.longitude,
-        label: p.name, type: "place", color: "#006399",
+        label: p.name, type: "place", color: "#0B6099",
         placeIndex: pi,
       })
     }
@@ -230,11 +230,11 @@ export function RouteMapEditor({
           {/* Legend */}
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5">
-              <span className="size-2.5 rounded-full" style={{ background: "#DC2626" }} />
+              <span className="size-2.5 rounded-full" style={{ background: "#A93B2F" }} />
               <span className="text-[10px]" style={{ color: "var(--on-surface-variant)" }}>Start</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="size-2.5 rounded-full" style={{ background: "#006399" }} />
+              <span className="size-2.5 rounded-full" style={{ background: "#0B6099" }} />
               <span className="text-[10px]" style={{ color: "var(--on-surface-variant)" }}>Places</span>
             </div>
             {days.map((day, di) => (
@@ -260,7 +260,7 @@ export function RouteMapEditor({
                 style={{ background: "rgba(220,38,38,0.08)" }}
                 onClick={() => setSelectedMarker(markers.find((m) => m.type === "start") || null)}
               >
-                <span className="size-3 rounded-full flex-shrink-0 flex items-center justify-center text-white text-[7px] font-bold" style={{ background: "#DC2626" }}>S</span>
+                <span className="size-3 rounded-full flex-shrink-0 flex items-center justify-center text-white text-[7px] font-bold" style={{ background: "#A93B2F" }}>S</span>
                 <div className="flex-1 min-w-0">
                   <div className="text-[10px] font-medium truncate" style={{ color: "var(--on-surface)" }}>{startFrom || "Start Point"}</div>
                   <div className="text-[9px] font-mono" style={{ color: "var(--on-surface-variant)" }}>{startLatitude.toFixed(4)}, {startLongitude.toFixed(4)}</div>
@@ -282,7 +282,7 @@ export function RouteMapEditor({
                       style={{ background: "rgba(0,99,153,0.06)" }}
                       onClick={() => setSelectedMarker(markers.find((m) => m.type === "place" && m.placeIndex === pi) || null)}
                     >
-                      <span className="size-3 rounded-full flex-shrink-0" style={{ background: "#006399" }} />
+                      <span className="size-3 rounded-full flex-shrink-0" style={{ background: "#0B6099" }} />
                       <div className="flex-1 min-w-0">
                         <div className="text-[10px] font-medium truncate" style={{ color: "var(--on-surface)" }}>{p.name}</div>
                         <div className="text-[9px] font-mono" style={{ color: "var(--on-surface-variant)" }}>{p.latitude.toFixed(4)}, {p.longitude.toFixed(4)}</div>

@@ -1,5 +1,7 @@
 "use client"
 
+import Image from "next/image"
+
 import { useRef, useEffect } from "react"
 import Link from "next/link"
 import gsap from "gsap"
@@ -64,21 +66,23 @@ export function CTASection() {
       className="relative h-[80vh] min-h-[500px] flex items-center justify-center overflow-hidden"
     >
       {/* Parallax Background */}
-      <div
-        ref={bgRef}
-        className="absolute inset-0 h-[130%] -top-[15%] bg-cover bg-center will-change-transform"
-        style={{
-          backgroundImage:
-            "url('https://images.unsplash.com/photo-1569263979104-865ab7cd8d13?q=80&w=2940&auto=format&fit=crop')",
-        }}
-      />
+      <div ref={bgRef} className="absolute inset-0 h-[130%] -top-[15%] will-change-transform">
+        <Image
+          src="https://images.unsplash.com/photo-1569263979104-865ab7cd8d13?q=80&w=2940&auto=format&fit=crop"
+          alt=""
+          aria-hidden="true"
+          fill
+          sizes="100vw"
+          className="object-cover"
+        />
+      </div>
 
       {/* Dark overlay */}
       <div
         className="absolute inset-0"
         style={{
           background:
-            "linear-gradient(to bottom, rgba(0,10,30,0.6), rgba(0,10,30,0.75))",
+            "linear-gradient(to bottom, rgba(4,13,25,0.6), rgba(4,13,25,0.75))",
         }}
       />
 
@@ -100,9 +104,10 @@ export function CTASection() {
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link
             href="/enquiry"
-            className="inline-flex items-center justify-center gap-2 px-8 py-4 text-sm font-semibold text-white rounded-md transition-all hover:brightness-110"
+            className="inline-flex items-center justify-center gap-2 px-8 py-4 text-sm font-semibold rounded-[var(--iyc-radius-sm)] transition-all active:scale-[0.985]"
             style={{
-              background: "var(--gradient-ocean)",
+              background: "var(--action-accent)",
+              color: "var(--text-on-accent)",
               fontFamily: "var(--font-display)",
             }}
           >

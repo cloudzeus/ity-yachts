@@ -1,4 +1,5 @@
 import { db } from "@/lib/db"
+import { yachtThumb } from "@/lib/yacht-images"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { HomepageClient } from "@/components/home/homepage-client"
@@ -83,9 +84,7 @@ export default async function Home() {
 
   const yachtData = yachts.map((y) => {
     const catT = y.category?.name as Record<string, string> | undefined
-    const websiteImgs = y.websiteImages as Array<{ url: string }> | null
-    const picturesArr = y.picturesUrl as string[] | null
-    const image = websiteImgs?.[0]?.url || y.mainPictureUrl || picturesArr?.[0] || ""
+    const image = yachtThumb(y)
     const locT = y.base?.location?.name as Record<string, string> | undefined
     return {
       id: y.id,
@@ -133,7 +132,7 @@ export default async function Home() {
       <div
         className="relative z-10 min-h-screen"
         style={{
-          background: "#060c27",
+          background: "var(--surface-page)",
           clipPath: "polygon(0% 0, 100% 0%, 100% 100%, 0 100%)",
         }}
       >

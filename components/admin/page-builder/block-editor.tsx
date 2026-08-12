@@ -50,16 +50,16 @@ export function BlockEditor({ block, onUpdate, onDelete, onMoveUp, onMoveDown }:
   }, [block])
 
   const blockColor: Record<string, string> = {
-    h1: "#0063A9",
-    h2: "#0077B6",
-    h3: "#00B4D8",
-    h4: "#0096C7",
-    h5: "#48CAE4",
-    h6: "#90E0EF",
+    h1: "#0B6099",
+    h2: "#0F79BE",
+    h3: "#5FAEDF",
+    h4: "#2A90CE",
+    h5: "#5FAEDF",
+    h6: "#9CCBEC",
     paragraph: "#7C3AED",
     richtext: "#9333EA",
-    image: "#DC2626",
-    video: "#E53935",
+    image: "#A93B2F",
+    video: "#A93B2F",
   }
 
   const fontSize: Record<string, string> = {

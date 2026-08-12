@@ -149,9 +149,9 @@ export function SyncModal({ onClose, onComplete }: SyncModalProps) {
       case "syncing":
         return <Loader2 className="size-4 animate-spin" style={{ color: "var(--primary)" }} />
       case "done":
-        return <CheckCircle2 className="size-4" style={{ color: "#2D6A4F" }} />
+        return <CheckCircle2 className="size-4" style={{ color: "#4F7A46" }} />
       case "error":
-        return <XCircle className="size-4" style={{ color: "#D32F2F" }} />
+        return <XCircle className="size-4" style={{ color: "#A93B2F" }} />
     }
   }
 
@@ -179,7 +179,7 @@ export function SyncModal({ onClose, onComplete }: SyncModalProps) {
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid var(--outline-variant)" }}>
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center size-9 rounded-lg" style={{ background: "var(--primary-container, #e3f2fd)" }}>
+            <div className="flex items-center justify-center size-9 rounded-lg" style={{ background: "var(--primary-container, #EAF4FB)" }}>
               <Database className="size-5" style={{ color: "var(--primary)" }} />
             </div>
             <div>
@@ -208,12 +208,12 @@ export function SyncModal({ onClose, onComplete }: SyncModalProps) {
               {progressPct}%
             </span>
           </div>
-          <div className="h-2 rounded-full overflow-hidden" style={{ background: "var(--surface-container, #e0e0e0)" }}>
+          <div className="h-2 rounded-full overflow-hidden" style={{ background: "var(--surface-container, #DBD1C0)" }}>
             <div
               className="h-full rounded-full transition-all duration-500 ease-out"
               style={{
                 width: `${progressPct}%`,
-                background: phase === "error" && progressPct === 100 ? "#D32F2F" : phase === "done" ? "#2D6A4F" : "var(--primary)",
+                background: phase === "error" && progressPct === 100 ? "#A93B2F" : phase === "done" ? "#4F7A46" : "var(--primary)",
               }}
             />
           </div>
@@ -241,7 +241,7 @@ export function SyncModal({ onClose, onComplete }: SyncModalProps) {
                         key={step.key}
                         className="flex items-center justify-between py-1.5 px-2.5 rounded-md transition-colors"
                         style={{
-                          background: state.status === "syncing" ? "var(--primary-container, #e3f2fd)" : "transparent",
+                          background: state.status === "syncing" ? "var(--primary-container, #EAF4FB)" : "transparent",
                         }}
                       >
                         <div className="flex items-center gap-2.5">
@@ -249,7 +249,7 @@ export function SyncModal({ onClose, onComplete }: SyncModalProps) {
                           <span
                             className="text-xs"
                             style={{
-                              color: state.status === "syncing" ? "var(--primary)" : state.status === "done" ? "var(--on-surface)" : state.status === "error" ? "#D32F2F" : "var(--on-surface-variant)",
+                              color: state.status === "syncing" ? "var(--primary)" : state.status === "done" ? "var(--on-surface)" : state.status === "error" ? "#A93B2F" : "var(--on-surface-variant)",
                               fontWeight: state.status === "syncing" ? 600 : 400,
                             }}
                           >
@@ -258,12 +258,12 @@ export function SyncModal({ onClose, onComplete }: SyncModalProps) {
                         </div>
                         <div className="text-right">
                           {state.status === "done" && (
-                            <span className="text-[11px] font-medium" style={{ color: "#2D6A4F" }}>
+                            <span className="text-[11px] font-medium" style={{ color: "#4F7A46" }}>
                               {state.detail ?? `${state.count.toLocaleString()} items`}
                             </span>
                           )}
                           {state.status === "error" && (
-                            <span className="text-[11px]" style={{ color: "#D32F2F" }} title={state.error}>
+                            <span className="text-[11px]" style={{ color: "#A93B2F" }} title={state.error}>
                               failed
                             </span>
                           )}
@@ -280,7 +280,7 @@ export function SyncModal({ onClose, onComplete }: SyncModalProps) {
                         {/* Image upload sub-progress bar */}
                         {step.key === "images" && state.status === "syncing" && imageProgress && (
                           <div className="mt-1.5 w-full">
-                            <div className="h-1 rounded-full overflow-hidden" style={{ background: "var(--surface-container, #e0e0e0)" }}>
+                            <div className="h-1 rounded-full overflow-hidden" style={{ background: "var(--surface-container, #DBD1C0)" }}>
                               <div
                                 className="h-full rounded-full transition-all duration-300"
                                 style={{
@@ -303,7 +303,7 @@ export function SyncModal({ onClose, onComplete }: SyncModalProps) {
         <div className="px-5 py-3 flex items-center justify-between" style={{ borderTop: "1px solid var(--outline-variant)" }}>
           {phase === "done" ? (
             <>
-              <span className="text-xs" style={{ color: "#2D6A4F" }}>
+              <span className="text-xs" style={{ color: "#4F7A46" }}>
                 {totalItems.toLocaleString()} total items synced
               </span>
               <Button
@@ -317,7 +317,7 @@ export function SyncModal({ onClose, onComplete }: SyncModalProps) {
             </>
           ) : phase === "error" ? (
             <>
-              <span className="text-xs" style={{ color: "#D32F2F" }}>
+              <span className="text-xs" style={{ color: "#A93B2F" }}>
                 {overallStatus}
               </span>
               <div className="flex gap-2">

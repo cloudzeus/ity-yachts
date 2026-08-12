@@ -65,7 +65,7 @@ export const AgendaEvents: FC = () => {
                   "mb-2 p-4 border rounded-md data-[selected=true]:bg-bg transition-all data-[selected=true]:text-none hover:cursor-pointer",
                   {
                     [getColorClass(event.color)]: badgeVariant === "colored",
-                    "hover:bg-zinc-200 dark:hover:bg-gray-900":
+                    "hover:bg-[var(--iyc-sand-300)] dark:hover:bg-gray-900":
                       badgeVariant === "dot",
                     "hover:opacity-60": badgeVariant === "colored",
                   },

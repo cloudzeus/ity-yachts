@@ -12,20 +12,20 @@ interface BlockPickerProps {
 }
 
 const HEADING_LEVELS = [
-  { type: "h1" as const, label: "Heading 1", color: "#0063A9" },
-  { type: "h2" as const, label: "Heading 2", color: "#0077B6" },
-  { type: "h3" as const, label: "Heading 3", color: "#00B4D8" },
-  { type: "h4" as const, label: "Heading 4", color: "#0096C7" },
-  { type: "h5" as const, label: "Heading 5", color: "#48CAE4" },
-  { type: "h6" as const, label: "Heading 6", color: "#90E0EF" },
+  { type: "h1" as const, label: "Heading 1", color: "#0B6099" },
+  { type: "h2" as const, label: "Heading 2", color: "#0F79BE" },
+  { type: "h3" as const, label: "Heading 3", color: "#5FAEDF" },
+  { type: "h4" as const, label: "Heading 4", color: "#2A90CE" },
+  { type: "h5" as const, label: "Heading 5", color: "#5FAEDF" },
+  { type: "h6" as const, label: "Heading 6", color: "#9CCBEC" },
 ]
 
 const BLOCK_TYPES = [
-  { type: "heading" as const, label: "Heading", icon: Heading, color: "#0077B6" },
+  { type: "heading" as const, label: "Heading", icon: Heading, color: "#0F79BE" },
   { type: "paragraph" as const, label: "Paragraph", icon: Type, color: "#7C3AED" },
   { type: "richtext" as const, label: "Rich Text", icon: FileText, color: "#7C3AED" },
-  { type: "image" as const, label: "Image", icon: ImageIcon, color: "#E53935" },
-  { type: "video" as const, label: "Video", icon: Play, color: "#E53935" },
+  { type: "image" as const, label: "Image", icon: ImageIcon, color: "#A93B2F" },
+  { type: "video" as const, label: "Video", icon: Play, color: "#A93B2F" },
 ]
 
 export function BlockPicker({ onBlockSelect }: BlockPickerProps) {

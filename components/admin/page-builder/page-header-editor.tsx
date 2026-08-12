@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { ChevronDown, ChevronRight } from "lucide-react"
+import { MottoPicker } from "@/components/admin/motto-picker"
 
 const LANGS = ["en", "el", "de"] as const
 const LANG_LABELS: Record<string, string> = { en: "EN", el: "EL", de: "DE" }
@@ -111,6 +112,22 @@ export function PageHeaderEditor({ props, onChange }: PageHeaderEditorProps) {
   return (
     <div className="flex flex-col gap-2">
       <Section title="Hero / Page Header" expanded={expanded === "hero"} onToggle={() => toggle("hero")}>
+        {/* Same mottos as everywhere else. Heading fills the title,
+            subheading the subtitle; the fields stay editable after. */}
+        <div className="mb-2 flex justify-end">
+          <MottoPicker
+            label="Fill from a motto"
+            onApply={(m) =>
+              update("hero", {
+                ...hero,
+                title: m.heading,
+                subtitle: m.subheading,
+                ...(Object.values(m.subtext ?? {}).some(Boolean) ? { badge: m.subtext } : {}),
+              })
+            }
+          />
+        </div>
+
         <TField
           label="Badge text (small label above title)"
           value={hero.badge || empty}

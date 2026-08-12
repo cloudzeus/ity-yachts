@@ -85,7 +85,7 @@ export function EmailTab({ initialData }: { initialData?: Partial<EmailData> }) 
       {/* API Key & Domain */}
       <div className="rounded-lg p-5 flex flex-col gap-4" style={{ background: "var(--surface-container-lowest)", boxShadow: "var(--shadow-ambient)", border: "1px solid var(--outline-variant)" }}>
         <div className="flex items-center gap-3 pb-3" style={{ borderBottom: "1px solid var(--outline-variant)" }}>
-          <div className="size-8 rounded-md flex items-center justify-center" style={{ background: "#FF4545", borderRadius: "var(--radius-xs)" }}>
+          <div className="size-8 rounded-md flex items-center justify-center" style={{ background: "#A93B2F", borderRadius: "var(--radius-xs)" }}>
             <Mail className="size-4 text-white" />
           </div>
           <div>
@@ -202,7 +202,7 @@ export function EmailTab({ initialData }: { initialData?: Partial<EmailData> }) 
               placeholder="you@example.com"
             />
           </div>
-          <Button onClick={handleTest} disabled={testing || !testEmail} size="sm" className="h-9 text-xs text-white shrink-0" style={{ background: "#FF4545", borderRadius: "var(--radius-xs)" }}>
+          <Button onClick={handleTest} disabled={testing || !testEmail} size="sm" className="h-9 text-xs text-white shrink-0" style={{ background: "#A93B2F", borderRadius: "var(--radius-xs)" }}>
             {testing ? "Sending…" : "Send Test"}
           </Button>
         </div>

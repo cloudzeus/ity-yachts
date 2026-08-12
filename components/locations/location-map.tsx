@@ -10,7 +10,7 @@ import {
   ColorScheme,
 } from "@vis.gl/react-google-maps"
 
-const LOGO_URL = "https://iycweb.b-cdn.net/IYC_LOGO_TRANS_white.svg"
+const LOGO_URL = "/brand/iyc-logo-white.svg"
 
 /* ─── Hide place labels, keep water/natural ─────────────────────────────── */
 
@@ -59,7 +59,7 @@ function LogoMarker({ lat, lng, name }: { lat: number; lng: number; name: string
             top: "50%",
             marginLeft: -28,
             marginTop: -28,
-            background: "rgba(88, 214, 241, 0.12)",
+            background: "rgba(95, 174, 223, 0.12)",
             animation: "ping 2.5s cubic-bezier(0, 0, 0.2, 1) infinite",
           }}
         />
@@ -73,10 +73,10 @@ function LogoMarker({ lat, lng, name }: { lat: number; lng: number; name: string
             top: "50%",
             marginLeft: -22,
             marginTop: -22,
-            background: "linear-gradient(135deg, rgba(0,99,153,0.9), rgba(0,33,71,0.95))",
-            border: "2px solid rgba(88, 214, 241, 0.5)",
+            background: "linear-gradient(135deg, rgba(0,99,153,0.9), rgba(4,13,25,0.95))",
+            border: "2px solid rgba(95, 174, 223, 0.5)",
             boxShadow:
-              "0 0 30px rgba(88, 214, 241, 0.35), 0 0 12px rgba(88, 214, 241, 0.2), 0 4px 16px rgba(0,0,0,0.5)",
+              "0 0 30px rgba(95, 174, 223, 0.35), 0 0 12px rgba(95, 174, 223, 0.2), 0 4px 16px rgba(0,0,0,0.5)",
             zIndex: 10,
           }}
         >
@@ -97,10 +97,10 @@ function LogoMarker({ lat, lng, name }: { lat: number; lng: number; name: string
             left: "50%",
             transform: "translateX(-50%)",
             top: "calc(50% + 30px)",
-            background: "rgba(6, 12, 39, 0.88)",
-            border: "1px solid rgba(88, 214, 241, 0.15)",
+            background: "rgba(4,13,25,0.88)",
+            border: "1px solid rgba(95, 174, 223, 0.15)",
             backdropFilter: "blur(8px)",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+            boxShadow: "var(--shadow-md)",
             color: "#fff",
             zIndex: 10,
           }}
@@ -128,7 +128,7 @@ export function LocationMap({ latitude, longitude, name, className, mapsKey }: L
 
   if (!apiKey) {
     return (
-      <div className={`relative flex items-center justify-center bg-[#060c27] ${className || ""}`}>
+      <div className={`relative flex items-center justify-center bg-[var(--surface-inverse)] ${className || ""}`}>
         <p className="text-white/20 text-sm">Map unavailable</p>
       </div>
     )

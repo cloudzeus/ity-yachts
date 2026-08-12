@@ -1,4 +1,5 @@
 import { db } from "@/lib/db"
+import { yachtGallery } from "@/lib/yacht-images"
 import { notFound } from "next/navigation"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
@@ -40,6 +41,14 @@ export default async function YachtDetailPage({ params }: { params: Promise<{ id
       cabinDefinitions: true,
       crewMembers: true,
       prices: { orderBy: { dateFrom: "asc" } },
+      // Booked periods mirrored from NAUSYS. Without these the calendar can
+      // only ask "is there a price for this date", which is true all season
+      // whether or not the boat is taken.
+      availability: {
+        where: { status: { in: ["BOOKED", "OPTION", "MAINTENANCE"] } },
+        select: { dateFrom: true, dateTo: true, status: true },
+        orderBy: { dateFrom: "asc" },
+      },
       websiteAreas: { include: { region: { include: { country: true } } } },
     },
   })
@@ -59,20 +68,9 @@ export default async function YachtDetailPage({ params }: { params: Promise<{ id
   const catNames = yacht.category?.name as Record<string, string> | undefined
   const categoryName = catNames?.en || "Yacht"
 
-  const websiteImgs = yacht.websiteImages as Array<{ url: string; caption?: string }> | null
-  const picturesArr = yacht.picturesUrl as string[] | null
-  const allImages: string[] = []
-  if (websiteImgs?.length) {
-    allImages.push(...websiteImgs.map((img) => img.url))
-  }
-  if (yacht.mainPictureUrl) {
-    if (!allImages.includes(yacht.mainPictureUrl)) allImages.push(yacht.mainPictureUrl)
-  }
-  if (picturesArr?.length) {
-    for (const url of picturesArr) {
-      if (!allImages.includes(url)) allImages.push(url)
-    }
-  }
+  // CDN only when it exists — this used to append the NAUSYS originals on top,
+  // shipping every photograph twice.
+  const allImages = yachtGallery(yacht)
 
   const locNames = yacht.base?.location?.name as Record<string, string> | undefined
   const locationName = locNames?.en || ""
@@ -161,6 +159,11 @@ export default async function YachtDetailPage({ params }: { params: Promise<{ id
     equipmentByCategory,
     services,
     prices,
+    availability: yacht.availability.map((a) => ({
+      dateFrom: a.dateFrom.toISOString(),
+      dateTo: a.dateTo.toISOString(),
+      status: a.status,
+    })),
     mastLength: yacht.mastLength,
     propulsionType: yacht.propulsionType,
     staffRep: staffRep

@@ -28,7 +28,14 @@ interface NausysNameI18n {
 
 export function i18nToJson(n: NausysNameI18n | undefined | null): Record<string, string> {
   if (!n) return {}
-  return { en: n.textEN || "", el: n.textEL || "", de: n.textDE || "" }
+  // Only the locales NAUSYS actually supplies. It never sends Greek, and
+  // emitting `el: ""` made every sync overwrite hand-written Greek with an
+  // empty string. Omitted keys let the upsert merge keep what we have.
+  const out: Record<string, string> = {}
+  if (n.textEN) out.en = n.textEN
+  if (n.textEL) out.el = n.textEL
+  if (n.textDE) out.de = n.textDE
+  return out
 }
 
 export function parseNausysDate(dateStr: string): Date {
@@ -374,4 +381,56 @@ export async function fetchFreeYacht(
   const data = await res.json()
   if (data.status !== "OK") return []
   return data.freeYachts ?? []
+}
+
+// ── Yacht occupancy calendar ──
+
+export interface OccupancyReservation {
+  id: number
+  yachtId: number
+  periodFrom: string // "DD.MM.YYYY"
+  periodTo: string
+  reservationType: string // RESERVATION | OPTION | SERVICE
+  locationFromId?: number
+  locationToId?: number
+  checkInTime?: string
+  checkOutTime?: string
+  optionValidTill?: string // "DD.MM.YYYY HH:mm:ss", OPTION reservations only
+}
+
+/**
+ * The charter company's booked periods for a whole year, per yacht.
+ *
+ * Note the credential shape: this endpoint wants `username`/`password` at the
+ * root of the body, NOT wrapped in `credentials` like every other NAUSYS call.
+ * Wrapping them returns HTTP 200 with status AUTHENTICATION_ERROR (code 100),
+ * which reads like a permissions problem rather than a malformed request.
+ */
+export async function fetchOccupancy(
+  creds: NausysCredentials,
+  year: number
+): Promise<OccupancyReservation[]> {
+  const res = await fetch(
+    `${creds.endpoint}/yachtReservation/v6/occupancy/${creds.companyId}/${year}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ username: creds.username, password: creds.password }),
+      signal: AbortSignal.timeout(60000),
+    }
+  )
+  const data = await res.json()
+  if (data.status !== "OK") {
+    throw new Error(`NAUSYS occupancy ${year}: ${data.status}${data.errorCode ? ` (${data.errorCode})` : ""}`)
+  }
+  return data.reservations ?? []
+}
+
+/** NAUSYS reservation type → the status vocabulary of `nausys_availability`. */
+export function occupancyStatus(reservationType: string): string {
+  switch (reservationType) {
+    case "OPTION": return "OPTION"
+    case "SERVICE": return "MAINTENANCE"
+    default: return "BOOKED"
+  }
 }

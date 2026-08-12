@@ -275,7 +275,7 @@ function PageLinkPicker({ value, onChange }: { value: string; onChange: (v: stri
                       className="shrink-0 px-1.5 py-0.5 rounded text-[9px] font-medium"
                       style={{
                         background: page.status === "published" ? "rgba(45,106,79,0.12)" : "rgba(117,117,117,0.12)",
-                        color: page.status === "published" ? "#2D6A4F" : "#626262",
+                        color: page.status === "published" ? "#4F7A46" : "#6B5F57",
                       }}
                     >
                       {page.status}

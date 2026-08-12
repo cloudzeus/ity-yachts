@@ -3,9 +3,9 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
 const roleColors: Record<string, { text: string; bg: string }> = {
   ADMIN:    { text: "var(--secondary)",           bg: "rgba(0,99,153,0.08)" },
-  MANAGER:  { text: "#006399",                    bg: "rgba(0,119,182,0.08)" },
+  MANAGER:  { text: "#0B6099",                    bg: "rgba(0,119,182,0.08)" },
   EDITOR:   { text: "var(--tertiary-container)",  bg: "rgba(88,214,241,0.1)" },
-  EMPLOYEE: { text: "#2D6A4F",                    bg: "rgba(45,106,79,0.08)" },
+  EMPLOYEE: { text: "#4F7A46",                    bg: "rgba(45,106,79,0.08)" },
   CUSTOMER: { text: "var(--on-surface-variant)",  bg: "var(--surface-container-low)" },
 }
 

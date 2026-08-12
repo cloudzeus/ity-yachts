@@ -890,6 +890,16 @@ model NausysAvailability {
   dateTo    DateTime
   status    String                               // FREE, BOOKED, OPTION, MAINTENANCE, TRANSIT
   baseId    Int?
+
+  // Everything else the NAUSYS occupancy feed carries. It has no customer or
+  // price — for those, match nausysId against Booking.nausysReservationId.
+  nausysId        Int?      @unique              // NAUSYS reservation number
+  locationFromId  Int?                           // departure base
+  locationToId    Int?                           // return base
+  checkInTime     String?   @db.VarChar(8)
+  checkOutTime    String?   @db.VarChar(8)
+  optionValidTill DateTime?                      // OPTION only — when the hold lapses
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -1148,4 +1158,25 @@ model BookingDocument {
   updatedAt   DateTime @updatedAt
 
   @@map("booking_documents")
+}
+
+/// Reusable marketing copy — the lines that open a hero or headline a section.
+/// Held apart from Page and SiteTranslation because the same motto is meant to
+/// be dropped into several places, and each is a three-part unit (heading,
+/// subheading, subtext) rather than a single string.
+model Motto {
+  id         String   @id @default(cuid())
+  slug       String   @unique                 // stable handle, e.g. "hero-family-closer"
+  category   String   @default("hero")        // hero | family | heritage | action
+  heading    Json     @default("{}")          // { en, el, de }
+  subheading Json     @default("{}")          // { en, el, de }
+  subtext    Json     @default("{}")          // { en, el, de }
+  isActive   Boolean  @default(true)
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([category, sortOrder])
+  @@index([isActive])
+  @@map("mottos")
 }

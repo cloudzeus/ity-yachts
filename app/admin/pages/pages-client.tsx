@@ -59,8 +59,8 @@ type Page = {
 
 const statusBadge = (status: string) => {
   const styles: Record<string, { bg: string; color: string }> = {
-    draft:     { bg: "rgba(117,117,117,0.12)",   color: "#626262" },
-    published: { bg: "rgba(45,106,79,0.12)",     color: "#2D6A4F" },
+    draft:     { bg: "rgba(117,117,117,0.12)",   color: "#6B5F57" },
+    published: { bg: "rgba(45,106,79,0.12)",     color: "#4F7A46" },
   }
   const s = styles[status] ?? styles.draft
   return (
@@ -73,7 +73,7 @@ const statusBadge = (status: string) => {
 const menuBadge = (showInMenu: boolean, menuOrder: number) => {
   if (!showInMenu) return <span className="text-xs" style={{ color: "var(--on-surface-variant)" }}>—</span>
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium" style={{ background: "rgba(21,101,192,0.12)", color: "#1565C0", borderRadius: "var(--radius-xs)" }}>
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium" style={{ background: "rgba(21,101,192,0.12)", color: "#0B6099", borderRadius: "var(--radius-xs)" }}>
       <Menu className="size-3" />
       #{menuOrder}
     </span>
@@ -129,7 +129,7 @@ function RowContent({ row, expandedId, onToggleExpand, onEdit, onDelete }: {
       {/* Header */}
       <div className="flex items-center">
         {row.centralMenu ? (
-          <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium" style={{ background: "rgba(45,106,79,0.12)", color: "#2D6A4F", borderRadius: "var(--radius-xs)" }}>
+          <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium" style={{ background: "rgba(45,106,79,0.12)", color: "#4F7A46", borderRadius: "var(--radius-xs)" }}>
             Yes
           </span>
         ) : (
@@ -227,7 +227,7 @@ function SortablePageRow({ row, isLast, expandedId, onToggleExpand, onEdit, onDe
         <div
           className="px-6 py-4"
           style={{
-            background: "rgba(0,33,71,0.03)",
+            background: "rgba(46,44,40,0.03)",
             borderBottom: !isLast ? "1px solid var(--outline-variant)" : undefined,
           }}
         >
@@ -281,7 +281,7 @@ function StaticPageRow({ row, isLast, expandedId, onToggleExpand, onEdit, onDele
         <div
           className="px-6 py-4"
           style={{
-            background: "rgba(0,33,71,0.03)",
+            background: "rgba(46,44,40,0.03)",
             borderBottom: !isLast ? "1px solid var(--outline-variant)" : undefined,
           }}
         >

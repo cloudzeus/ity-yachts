@@ -6,6 +6,7 @@ import Link from "next/link"
 import { Heart, ChevronLeft, ChevronRight, ArrowUpRight, Ruler, BedDouble, Users, Sailboat, Anchor } from "lucide-react"
 import { useTranslations } from "@/lib/use-translations"
 import { removeGreekTonos } from "@/components/locale-text"
+import { ScrollTypewriter } from "@/components/scroll-typewriter"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 
@@ -133,18 +134,6 @@ export function FleetCarouselSection({ yachts: rawYachts }: { yachts: FleetYacht
         { opacity: 0, x: -30 },
         { opacity: 1, x: 0, duration: 0.7, ease: "power3.out", scrollTrigger: { trigger: el, start: "top 80%" } }
       )
-      // Title words
-      gsap.fromTo(
-        ".fleet-title-word",
-        { opacity: 0, y: 50, rotateX: 20 },
-        { opacity: 1, y: 0, rotateX: 0, duration: 0.8, stagger: 0.12, ease: "power3.out", scrollTrigger: { trigger: el, start: "top 80%" } }
-      )
-      // Description
-      gsap.fromTo(
-        ".fleet-desc",
-        { opacity: 0, y: 30 },
-        { opacity: 1, y: 0, duration: 0.9, delay: 0.4, ease: "power3.out", scrollTrigger: { trigger: el, start: "top 80%" } }
-      )
       // CTA link
       gsap.fromTo(
         ".fleet-cta",
@@ -157,39 +146,41 @@ export function FleetCarouselSection({ yachts: rawYachts }: { yachts: FleetYacht
   }, [])
 
   return (
-    <section className="relative w-full pt-32 pb-24" style={{ background: "#070c26" }}>
+    <section className="relative w-full pt-32 pb-24" style={{ background: "var(--surface-page)" }}>
       {/* Header */}
       <header ref={headerRef} className="w-full px-6 md:px-12 lg:px-16 pt-8 pb-12 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
         <div className="max-w-3xl">
           <div className="fleet-badge flex items-center gap-3 mb-5" style={{ opacity: 0 }}>
-            <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "rgba(0, 119, 182, 0.15)" }}>
-              <Sailboat className="w-5 h-5" style={{ color: "var(--secondary-light)" }} />
+            <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "rgba(15, 121, 190, 0.12)" }}>
+              <Sailboat className="w-5 h-5" style={{ color: "var(--iyc-ionian-500)" }} />
             </div>
-            <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--secondary-light)" }}>{removeGreekTonos(t("home.fleet.badge", "Our Fleet"))}</span>
+            <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--text-subtle)" }}>{removeGreekTonos(t("home.fleet.badge", "Our Fleet"))}</span>
           </div>
           <h2
             className="text-4xl md:text-5xl lg:text-6xl mb-5 tracking-wide"
-            style={{ fontFamily: "var(--font-display)", color: "#ffffff", perspective: "600px" }}
+            style={{ fontFamily: "var(--font-display)", color: "var(--text-heading)", perspective: "600px" }}
           >
-            <span className="fleet-title-word inline-block font-light" style={{ opacity: 0 }}>Yachts</span>{" "}
-            <span className="fleet-title-word inline-block font-light" style={{ opacity: 0 }}>&amp;</span>{" "}
-            <span className="fleet-title-word inline-block font-light" style={{ opacity: 0 }}>Catamarans</span>{" "}
-            <span className="fleet-title-word inline-block font-extrabold" style={{ opacity: 0 }}>for</span>{" "}
-            <span className="fleet-title-word inline-block font-extrabold" style={{ opacity: 0 }}>Charter</span>
+            <ScrollTypewriter as="span">
+            <span className="inline-block font-light">Yachts</span>{" "}
+            <span className="inline-block font-light">&amp;</span>{" "}
+            <span className="inline-block font-light">Catamarans</span>{" "}
+            <span className="inline-block font-extrabold">for</span>{" "}
+            <span className="inline-block font-extrabold">Charter</span>
+            </ScrollTypewriter>
           </h2>
-          <p className="fleet-desc text-[#8a9ab3] text-sm md:text-base leading-relaxed max-w-[620px]" style={{ opacity: 0 }}>
+          <ScrollTypewriter as="p" delay={0.4} className="fleet-desc text-[var(--text-muted)] text-sm md:text-base leading-relaxed max-w-[620px]">
             {t("home.fleet.description", "We do not simply list boats; we curate legendary journeys. Explore our privately owned fleet in the Ionian Sea—hand-picked for superior comfort and exceptional crews. From our base in Lefkada, follow the wake of Odysseus on a voyage tailored just for you.")}
-          </p>
+          </ScrollTypewriter>
         </div>
         <div className="fleet-cta" style={{ opacity: 0 }}>
           <Link
             href="/fleet"
-            className="flex items-center gap-2 text-white hover:text-gray-300 transition-colors group"
+            className="flex items-center gap-2 text-[var(--text-heading)] hover:text-[var(--text-link)] transition-colors group"
           >
-            <span className="text-[11px] font-medium border-b border-white/60 pb-[2px] group-hover:border-gray-300 transition-colors tracking-wider uppercase">
+            <span className="text-[11px] font-medium border-b border-[var(--border-strong)] pb-[2px] group-hover:border-[var(--text-link)] transition-colors tracking-wider uppercase">
               {removeGreekTonos(t("home.fleet.cta", "Discover Fleet"))}
             </span>
-            <div className="border border-white/30 p-1 rounded-sm group-hover:border-white/60 transition-colors">
+            <div className="border border-[var(--border-default)] p-1 rounded-sm group-hover:border-[var(--text-link)] transition-colors">
               <ArrowUpRight className="w-3 h-3" />
             </div>
           </Link>
@@ -200,22 +191,22 @@ export function FleetCarouselSection({ yachts: rawYachts }: { yachts: FleetYacht
       <div className="flex justify-center items-center gap-8 mt-16 mb-10">
         <button
           onClick={prev}
-          className="flex items-center justify-center rounded-full bg-white hover:bg-white/90 transition-all duration-300 hover:scale-105"
+          className="flex items-center justify-center rounded-full bg-[var(--action-primary)] hover:bg-[var(--action-primary-hover)] transition-all duration-300 hover:scale-105 cursor-pointer"
           style={{ width: "50px", height: "50px" }}
         >
-          <ChevronLeft className="w-5 h-5" style={{ color: "#070c26" }} />
+          <ChevronLeft className="w-5 h-5" style={{ color: "#FFFFFF" }} />
         </button>
         <div className="flex items-center gap-3">
-          <span className="text-4xl font-extralight" style={{ fontFamily: "var(--font-display)", color: "rgba(255,255,255,0.7)" }}>{displayIndex}</span>
-          <span className="text-2xl font-extralight" style={{ color: "rgba(255,255,255,0.3)" }}>/</span>
-          <span className="text-4xl font-extralight" style={{ fontFamily: "var(--font-display)", color: "rgba(255,255,255,0.35)" }}>{realCount}</span>
+          <span className="text-4xl font-extralight" style={{ fontFamily: "var(--font-display)", color: "var(--text-heading)" }}>{displayIndex}</span>
+          <span className="text-2xl font-extralight" style={{ color: "var(--border-strong)" }}>/</span>
+          <span className="text-4xl font-extralight" style={{ fontFamily: "var(--font-display)", color: "var(--text-subtle)" }}>{realCount}</span>
         </div>
         <button
           onClick={next}
-          className="flex items-center justify-center rounded-full bg-white hover:bg-white/90 transition-all duration-300 hover:scale-105"
+          className="flex items-center justify-center rounded-full bg-[var(--action-primary)] hover:bg-[var(--action-primary-hover)] transition-all duration-300 hover:scale-105 cursor-pointer"
           style={{ width: "50px", height: "50px" }}
         >
-          <ChevronRight className="w-5 h-5" style={{ color: "#070c26" }} />
+          <ChevronRight className="w-5 h-5" style={{ color: "#FFFFFF" }} />
         </button>
       </div>
 
@@ -244,8 +235,8 @@ export function FleetCarouselSection({ yachts: rawYachts }: { yachts: FleetYacht
                 className="flex-shrink-0 transition-all duration-500 w-[85vw] md:w-[min(550px,65vw)]"
                 style={{
                   transform: isActive ? "scale(1.12)" : "scale(0.88)",
-                  opacity: isActive ? 1 : 0.92,
-                  filter: isActive ? "none" : "brightness(0.8)",
+                  opacity: isActive ? 1 : 0.72,
+                  filter: isActive ? "none" : "saturate(0.85)",
                   zIndex: isActive ? 20 : 10 - dist,
                   transitionTimingFunction: "cubic-bezier(0.25, 1, 0.5, 1)",
                   margin: "0 -4px",
@@ -268,8 +259,8 @@ function YachtCarouselCard({ yacht, onClick, isActive }: { yacht: FleetYacht; on
   return (
     <div
       onClick={onClick}
-      className="relative w-full rounded-2xl overflow-hidden group cursor-pointer border border-white/5 aspect-square md:aspect-[16/10]"
-      style={{ boxShadow: isActive ? "0 40px 80px -20px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.1)" : "0 20px 40px -15px rgba(0,0,0,0.5)", background: "#070c26" }}
+      className="relative w-full rounded-2xl overflow-hidden group cursor-pointer border border-[var(--border-hairline)] aspect-square md:aspect-[16/10]"
+      style={{ boxShadow: isActive ? "var(--shadow-lg)" : "var(--shadow-md)", background: "var(--surface-card)" }}
     >
       {/* Background Image */}
       {yacht.image ? (
@@ -285,18 +276,18 @@ function YachtCarouselCard({ yacht, onClick, isActive }: { yacht: FleetYacht; on
       )}
 
       {/* Gradient overlays */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/30 to-transparent" style={{ height: "33%" }} />
+      <div className="absolute inset-x-0 top-0 pointer-events-none" style={{ height: "30%", background: "linear-gradient(to bottom, rgba(4,13,25,.16), transparent)" }} />
       <div
-        className="absolute inset-0 mt-auto"
+        className="absolute inset-x-0 bottom-0 pointer-events-none"
         style={{
-          height: "55%",
-          background: "linear-gradient(to top, #070c26 0%, rgba(7,12,38,0.75) 50%, transparent 100%)",
+          height: "58%",
+          background: "var(--scrim-card)",
         }}
       />
 
       {/* Top badges */}
       <div className="absolute top-4 inset-x-4 flex justify-between items-start z-20">
-        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider text-white bg-white/10 backdrop-blur-[12px] border border-white/15">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider text-[var(--text-on-accent)] bg-[var(--action-accent)]">
           {removeGreekTonos(yacht.category)}
         </span>
         <button
@@ -313,7 +304,7 @@ function YachtCarouselCard({ yacht, onClick, isActive }: { yacht: FleetYacht; on
       <div className="absolute inset-x-0 bottom-0 p-5 z-20">
         <h3
           className="text-3xl md:text-4xl font-extrabold mb-3 tracking-tight drop-shadow-lg"
-          style={{ fontFamily: "var(--font-display)", color: "#ffffff" }}
+          style={{ fontFamily: "var(--font-display)", color: "var(--text-heading)" }}
         >
           {yacht.name}
         </h3>
@@ -321,21 +312,21 @@ function YachtCarouselCard({ yacht, onClick, isActive }: { yacht: FleetYacht; on
         {/* Specs Pills */}
         <div className="flex flex-wrap gap-2 mb-4">
           {yacht.loa > 0 && (
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-[12px] border border-white/15">
-              <Ruler className="w-3 h-3 text-slate-400" />
-              <span className="text-[11px] text-gray-300 font-medium">{Math.round(yacht.loa * 3.28084)}ft / {yacht.loa}m</span>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--surface-card)] border border-[var(--border-hairline)]">
+              <Ruler className="w-3 h-3 text-[var(--iyc-ionian-600)]" />
+              <span className="text-[11px] text-[var(--text-body)] font-medium">{Math.round(yacht.loa * 3.28084)}ft / {yacht.loa}m</span>
             </div>
           )}
           {yacht.cabins > 0 && (
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-[12px] border border-white/15">
-              <BedDouble className="w-3 h-3 text-slate-400" />
-              <span className="text-[11px] text-gray-300 font-medium">{yacht.cabins} {t("home.fleet.cabins", "Cabins")}</span>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--surface-card)] border border-[var(--border-hairline)]">
+              <BedDouble className="w-3 h-3 text-[var(--iyc-ionian-600)]" />
+              <span className="text-[11px] text-[var(--text-body)] font-medium">{yacht.cabins} {t("home.fleet.cabins", "Cabins")}</span>
             </div>
           )}
           {yacht.berths > 0 && (
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-[12px] border border-white/15">
-              <Users className="w-3 h-3 text-slate-400" />
-              <span className="text-[11px] text-gray-300 font-medium">{yacht.berths} {t("home.fleet.guests", "Guests")}</span>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--surface-card)] border border-[var(--border-hairline)]">
+              <Users className="w-3 h-3 text-[var(--iyc-ionian-600)]" />
+              <span className="text-[11px] text-[var(--text-body)] font-medium">{yacht.berths} {t("home.fleet.guests", "Guests")}</span>
             </div>
           )}
         </div>
@@ -344,18 +335,18 @@ function YachtCarouselCard({ yacht, onClick, isActive }: { yacht: FleetYacht; on
         <div className="w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent mb-4" />
         <div className="flex justify-between items-center">
           <div className="inline-flex items-center gap-1.5">
-            <Anchor className="w-3 h-3" style={{ color: "#0055a9" }} />
-            <span className="text-[10px] font-medium uppercase tracking-widest" style={{ color: "#0055a9" }}>
+            <Anchor className="w-3 h-3" style={{ color: "var(--iyc-ionian-300)" }} />
+            <span className="text-[10px] font-medium uppercase tracking-widest" style={{ color: "var(--iyc-ionian-300)" }}>
               {removeGreekTonos(yacht.baseName || "Ionian Sea")}
             </span>
           </div>
           <Link
             href={`/fleet/${yacht.slug || yacht.id}`}
             onClick={(e) => e.stopPropagation()}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-[12px] border border-white/15 hover:bg-white/20 hover:border-white/30 transition-all duration-300"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-[12px] border border-[var(--border-hairline)] hover:bg-white/20 hover:border-white/30 transition-all duration-300"
           >
-            <span className="text-[11px] text-gray-300 font-medium">{t("home.fleet.details", "Details")}</span>
-            <ArrowUpRight className="w-3 h-3 text-gray-300" />
+            <span className="text-[11px] text-[var(--text-body)] font-medium">{t("home.fleet.details", "Details")}</span>
+            <ArrowUpRight className="w-3 h-3 text-[var(--text-muted)]" />
           </Link>
         </div>
       </div>

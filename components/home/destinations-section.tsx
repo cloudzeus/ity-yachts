@@ -6,7 +6,7 @@ import Link from "next/link"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { MapPin, ArrowRight } from "lucide-react"
-import { TextReveal } from "./scroll-animations"
+import { TextReveal } from "@/components/motion"
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger)
@@ -179,7 +179,7 @@ function DestinationCard({
         className="absolute inset-0 transition-opacity duration-500"
         style={{
           background:
-            "linear-gradient(to top, rgba(0,10,30,0.85) 0%, rgba(0,10,30,0.3) 40%, transparent 70%)",
+            "var(--scrim-card)",
         }}
       />
 
@@ -189,23 +189,23 @@ function DestinationCard({
       {/* Content */}
       <div className="absolute inset-x-0 bottom-0 p-6 md:p-8 z-10">
         <div className="flex items-center gap-2 mb-3">
-          <MapPin className="w-4 h-4 text-[#0077B6]" />
+          <MapPin className="w-4 h-4 text-[var(--iyc-ionian-500)]" />
           {destination.yachtCount !== undefined && (
-            <span className="text-xs text-white/50">
+            <span className="text-xs text-[var(--text-subtle)]">
               {destination.yachtCount} yachts
             </span>
           )}
         </div>
         <h3
-          className="text-2xl md:text-3xl font-bold text-white mb-2"
+          className="text-2xl md:text-3xl font-bold text-[var(--text-heading)] mb-2"
           style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.01em" }}
         >
           {destination.name}
         </h3>
-        <p className="text-sm text-white/60 line-clamp-2 mb-4">
+        <p className="text-sm text-[var(--text-muted)] line-clamp-2 mb-4">
           {destination.shortDesc}
         </p>
-        <div className="flex items-center gap-2 text-[#0077B6] text-sm font-semibold opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+        <div className="flex items-center gap-2 text-[var(--iyc-ionian-500)] text-sm font-semibold opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300">
           Explore
           <ArrowRight className="w-4 h-4" />
         </div>

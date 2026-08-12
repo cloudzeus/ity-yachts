@@ -69,7 +69,7 @@ export default async function DynamicPage({ params }: PageProps) {
       <div
         className="relative z-10 min-h-screen"
         style={{
-          background: "#060c27",
+          background: "var(--surface-page)",
           clipPath: "polygon(0% 0, 100% 0%, 100% 100%, 0 100%)",
         }}
       >
@@ -100,7 +100,7 @@ export default async function DynamicPage({ params }: PageProps) {
               <div
                 className="absolute inset-0"
                 style={{
-                  background: "linear-gradient(135deg, rgba(7,12,38,0.95) 0%, rgba(7,12,38,0.6) 50%, rgba(7,12,38,0) 100%)",
+                  background: "linear-gradient(135deg, rgba(4,13,25,0.95) 0%, rgba(4,13,25,0.6) 50%, rgba(46,44,40,0) 100%)",
                   mixBlendMode: "multiply",
                 }}
               />
@@ -108,7 +108,7 @@ export default async function DynamicPage({ params }: PageProps) {
             <div className="relative z-10 mx-auto w-full max-w-7xl px-6">
               <div className="max-w-3xl">
                 {heroSection.overSubheading?.en && (
-                  <span className="mb-6 inline-block rounded-full border border-[#83776d]/30 bg-[#070c26]/20 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-[#83776d] backdrop-blur-sm">
+                  <span className="mb-6 inline-block rounded-full border border-[var(--border-default)]/30 bg-[var(--surface-inverse)]/20 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-[var(--text-subtle)] backdrop-blur-sm">
                     <LocaleText translations={heroSection.overSubheading} uppercase />
                   </span>
                 )}
@@ -121,7 +121,7 @@ export default async function DynamicPage({ params }: PageProps) {
                   </h1>
                 )}
                 {heroSection.subheading?.en && (
-                  <p className="max-w-2xl border-l-2 border-[#83776d] pl-6 text-lg font-light leading-relaxed text-gray-300 md:text-xl">
+                  <p className="max-w-2xl border-l-2 border-[var(--border-default)] pl-6 text-lg font-light leading-relaxed text-[var(--text-muted)] md:text-xl">
                     <LocaleText translations={heroSection.subheading} />
                   </p>
                 )}

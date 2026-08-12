@@ -1005,7 +1005,7 @@ export function ItineraryEditorClient({ itinerary, mapsKey }: Props) {
             onClick={handleGenerateStory}
             disabled={generatingStory || days.length === 0}
             className="h-7 gap-1.5 text-xs text-white"
-            style={{ background: "linear-gradient(135deg, #991B1B, #DC2626)", borderRadius: "var(--radius-xs)" }}
+            style={{ background: "linear-gradient(135deg, #A93B2F, #A93B2F)", borderRadius: "var(--radius-xs)" }}
           >
             {generatingStory ? <Loader2 className="size-3 animate-spin" /> : <Sparkles className="size-3" />}
             {generatingStory ? "Generating…" : "Generate Story"}
@@ -1067,7 +1067,7 @@ export function ItineraryEditorClient({ itinerary, mapsKey }: Props) {
                   <div
                     key={i}
                     className="group inline-flex items-center gap-1.5 pl-2.5 pr-1 py-1.5 rounded-[4px]"
-                    style={{ backgroundImage: "linear-gradient(135deg, #7F1D1D, #991B1B, #7F1D1D)" }}
+                    style={{ backgroundImage: "linear-gradient(135deg, #8F3227, #A93B2F, #8F3227)" }}
                   >
                     <MapPin className="size-3 text-white flex-shrink-0" />
                     <span className="text-xs font-medium text-white">{place.name}</span>

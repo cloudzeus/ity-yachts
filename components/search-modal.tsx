@@ -129,7 +129,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
     <div
       ref={overlayRef}
       className="fixed inset-0 z-[100] hidden flex-col items-center justify-start"
-      style={{ backgroundColor: "rgba(6, 12, 39, 0.97)" }}
+      style={{ backgroundColor: "rgba(4,13,25,0.97)" }}
       onClick={(e) => {
         if (e.target === overlayRef.current) onClose()
       }}

@@ -42,10 +42,10 @@ type Customer = {
 
 const experienceBadge = (exp: string) => {
   const styles: Record<string, { bg: string; color: string }> = {
-    NONE:         { bg: "rgba(117,117,117,0.12)", color: "#626262" },
-    BEGINNER:     { bg: "rgba(33,150,243,0.12)",  color: "#1976D2" },
-    INTERMEDIATE: { bg: "rgba(76,175,80,0.12)",   color: "#388E3C" },
-    ADVANCED:     { bg: "rgba(255,152,0,0.12)",   color: "#F57C00" },
+    NONE:         { bg: "rgba(117,117,117,0.12)", color: "#6B5F57" },
+    BEGINNER:     { bg: "rgba(33,150,243,0.12)",  color: "#0F79BE" },
+    INTERMEDIATE: { bg: "rgba(76,175,80,0.12)",   color: "#4F7A46" },
+    ADVANCED:     { bg: "rgba(255,152,0,0.12)",   color: "#C1782A" },
     PROFESSIONAL: { bg: "rgba(156,39,176,0.12)",  color: "#7B1FA2" },
   }
   const s = styles[exp] ?? styles.NONE

@@ -40,7 +40,7 @@ function StatusBadge({ disabled, secondary }: { disabled: boolean; secondary: bo
     return (
       <span
         className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium"
-        style={{ background: "rgba(211,47,47,0.12)", color: "#D32F2F", borderRadius: "var(--radius-xs)" }}
+        style={{ background: "rgba(211,47,47,0.12)", color: "#A93B2F", borderRadius: "var(--radius-xs)" }}
       >
         <AlertCircle className="size-3" /> Disabled
       </span>
@@ -50,7 +50,7 @@ function StatusBadge({ disabled, secondary }: { disabled: boolean; secondary: bo
     return (
       <span
         className="inline-flex items-center px-2 py-0.5 text-[10px] font-medium"
-        style={{ background: "rgba(117,117,117,0.12)", color: "#626262", borderRadius: "var(--radius-xs)" }}
+        style={{ background: "rgba(117,117,117,0.12)", color: "#6B5F57", borderRadius: "var(--radius-xs)" }}
       >
         Secondary
       </span>
@@ -59,7 +59,7 @@ function StatusBadge({ disabled, secondary }: { disabled: boolean; secondary: bo
   return (
     <span
       className="inline-flex items-center px-2 py-0.5 text-[10px] font-medium"
-      style={{ background: "rgba(45,106,79,0.12)", color: "#2D6A4F", borderRadius: "var(--radius-xs)" }}
+      style={{ background: "rgba(45,106,79,0.12)", color: "#4F7A46", borderRadius: "var(--radius-xs)" }}
     >
       Active
     </span>

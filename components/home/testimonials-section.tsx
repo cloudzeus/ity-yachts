@@ -6,7 +6,7 @@ import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { Star, ChevronLeft, ChevronRight, Quote } from "lucide-react"
 import { useTranslations } from "@/lib/use-translations"
-import { TextReveal } from "./scroll-animations"
+import { TextReveal } from "@/components/motion"
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger)
@@ -40,20 +40,20 @@ export function TestimonialsSection({ reviews }: { reviews: ReviewItem[] }) {
   return (
     <section
       className="relative py-24 md:py-32 px-6 md:px-12 overflow-hidden"
-      style={{ background: "var(--primary)" }}
+      style={{ background: "var(--surface-sunken)" }}
     >
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-16">
           <div>
             <TextReveal>
-              <span className="label-sm mb-3 block" style={{ color: "var(--secondary-light)" }}>
+              <span className="label-sm mb-3 block" style={{ color: "var(--text-subtle)" }}>
                 {t("home.testimonials.badge", "Testimonials")}
               </span>
             </TextReveal>
             <TextReveal delay={0.1}>
               <h2
-                className="text-4xl md:text-6xl font-bold text-white"
+                className="text-4xl md:text-6xl font-bold text-[var(--text-heading)]"
                 style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em" }}
               >
                 {t("home.testimonials.title", "What Our Guests Say")}
@@ -66,14 +66,14 @@ export function TestimonialsSection({ reviews }: { reviews: ReviewItem[] }) {
               <button
                 onClick={() => setCurrent((p) => Math.max(0, p - 1))}
                 disabled={current === 0}
-                className="w-11 h-11 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:bg-white/10 transition-colors disabled:opacity-30"
+                className="w-11 h-11 rounded-full border border-[var(--border-default)] flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--surface-accent)] hover:text-[var(--text-heading)] transition-colors disabled:opacity-30"
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
               <button
                 onClick={() => setCurrent((p) => Math.min(reviews.length - 1, p + 1))}
                 disabled={current === reviews.length - 1}
-                className="w-11 h-11 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:bg-white/10 transition-colors disabled:opacity-30"
+                className="w-11 h-11 rounded-full border border-[var(--border-default)] flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--surface-accent)] hover:text-[var(--text-heading)] transition-colors disabled:opacity-30"
               >
                 <ChevronRight className="w-5 h-5" />
               </button>
@@ -97,7 +97,7 @@ export function TestimonialsSection({ reviews }: { reviews: ReviewItem[] }) {
                     border: "1px solid rgba(255, 255, 255, 0.08)",
                   }}
                 >
-                  <Quote className="w-10 h-10 text-[#0077B6]/40 mb-6" />
+                  <Quote className="w-10 h-10 text-[var(--iyc-ionian-500)]/40 mb-6" />
 
                   {/* Stars */}
                   <div className="flex gap-1 mb-6">
@@ -106,15 +106,15 @@ export function TestimonialsSection({ reviews }: { reviews: ReviewItem[] }) {
                         key={i}
                         className={`w-5 h-5 ${
                           i < review.rating
-                            ? "fill-[#FFB703] text-[#FFB703]"
-                            : "text-white/20"
+                            ? "fill-[#E2963C] text-[var(--action-accent)]"
+                            : "text-[var(--border-strong)]"
                         }`}
                       />
                     ))}
                   </div>
 
                   <p
-                    className="text-lg md:text-xl text-white/80 leading-relaxed mb-8"
+                    className="text-lg md:text-xl text-[var(--text-body)] leading-relaxed mb-8"
                     style={{ fontFamily: "var(--font-body)" }}
                   >
                     &ldquo;{review.content}&rdquo;
@@ -134,12 +134,12 @@ export function TestimonialsSection({ reviews }: { reviews: ReviewItem[] }) {
                     )}
                     <div>
                       <div
-                        className="font-semibold text-white"
+                        className="font-semibold text-[var(--text-heading)]"
                         style={{ fontFamily: "var(--font-display)" }}
                       >
                         {review.name}
                       </div>
-                      <div className="text-xs text-white/40">
+                      <div className="text-xs text-[var(--text-subtle)]">
                         {new Date(review.date).toLocaleDateString("en-US", {
                           month: "long",
                           year: "numeric",
@@ -162,7 +162,7 @@ export function TestimonialsSection({ reviews }: { reviews: ReviewItem[] }) {
                 onClick={() => setCurrent(i)}
                 className={`w-2 h-2 rounded-full transition-all ${
                   i === current
-                    ? "bg-[#0077B6] w-6"
+                    ? "bg-[var(--iyc-ionian-500)] w-6"
                     : "bg-white/20 hover:bg-white/40"
                 }`}
               />

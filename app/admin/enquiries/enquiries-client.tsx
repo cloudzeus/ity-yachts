@@ -41,11 +41,11 @@ const STATUSES = ["ALL", "NEW", "CONTACTED", "QUOTED", "CONVERTED", "LOST"] as c
 
 const statusBadge = (status: string) => {
   const styles: Record<string, { bg: string; color: string }> = {
-    NEW:       { bg: "rgba(33,150,243,0.12)",  color: "#1976D2" },
-    CONTACTED: { bg: "rgba(255,152,0,0.12)",   color: "#F57C00" },
+    NEW:       { bg: "rgba(33,150,243,0.12)",  color: "#0F79BE" },
+    CONTACTED: { bg: "rgba(255,152,0,0.12)",   color: "#C1782A" },
     QUOTED:    { bg: "rgba(156,39,176,0.12)",   color: "#7B1FA2" },
-    CONVERTED: { bg: "rgba(45,106,79,0.12)",   color: "#2D6A4F" },
-    LOST:      { bg: "rgba(117,117,117,0.12)",  color: "#626262" },
+    CONVERTED: { bg: "rgba(45,106,79,0.12)",   color: "#4F7A46" },
+    LOST:      { bg: "rgba(117,117,117,0.12)",  color: "#6B5F57" },
   }
   const s = styles[status] ?? styles.NEW
   return <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium" style={{ background: s.bg, color: s.color, borderRadius: "var(--radius-xs)" }}>{status}</span>

@@ -30,6 +30,8 @@ import {
 } from "lucide-react"
 import { ItineraryStoryMap, type StoryPoint } from "./itinerary-story-map"
 import { useTranslations } from "@/lib/use-translations"
+import { removeGreekTonos } from "@/lib/greek-utils"
+import { ItineraryDayChart } from "@/components/itinerary-day-chart"
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger)
@@ -245,8 +247,12 @@ export function ItineraryDetailClient({ itinerary, mapsKey }: { itinerary: Itine
         setCardsFixed(entry.isIntersecting)
       },
       {
-        // rootMargin: extend bottom by 250px so cards linger a bit after map exits
-        rootMargin: "0px 0px 250px 0px",
+        // Shrink the root's bottom edge to 45% of the viewport. The cards are
+        // centred at 50vh, so they fade out just as the map's lower edge rises
+        // past them — before they can sit over the section below. Extending the
+        // root instead (the previous +250px) kept them alive well into the
+        // stats ribbon, where they overlapped unrelated content.
+        rootMargin: "0px 0px -55% 0px",
         threshold: 0,
       }
     )
@@ -341,6 +347,11 @@ export function ItineraryDetailClient({ itinerary, mapsKey }: { itinerary: Itine
   const legImgs = stop.leg.images as string[]
 
   // Card positioning: fixed when map is in view, smoothly hidden when not
+  /* Itineraries may carry an .mp4 as their default media; next/image cannot
+     decode video and renders an empty box. */
+  const isVideoMedia = (u: string | null, t: string | null) =>
+    !!u && (t === "video" || /\.(mp4|webm|mov)(\?|$)/i.test(u))
+
   const cardStyle: React.CSSProperties = cardsFixed
     ? { position: "fixed", opacity: 1, pointerEvents: "auto", transition: "opacity 0.3s ease" }
     : { position: "fixed", opacity: 0, pointerEvents: "none", transition: "opacity 0.3s ease" }
@@ -350,7 +361,10 @@ export function ItineraryDetailClient({ itinerary, mapsKey }: { itinerary: Itine
       {/* ═══════════════════════════════════════════════════════════════
           HERO — Dark interactive map at 16:11
           ═══════════════════════════════════════════════════════════════ */}
-      <section ref={mapSectionRef} className="relative w-full" style={{ background: "#060c27", height: "calc(100vh - 4px)", paddingTop: 56 }}>
+      {/* Full-bleed: the 56px top padding left a navy strip above the map that
+          read as a border, and the -4px height was compensating for it. The
+          header floats over the map on its own scrim, as on every other hero. */}
+      <section ref={mapSectionRef} className="relative w-full" style={{ background: "var(--iyc-ionian-900)", height: "100dvh" }}>
         {/* Map fills viewport below header */}
         <div className="relative w-full h-full">
           <ItineraryStoryMap
@@ -363,14 +377,14 @@ export function ItineraryDetailClient({ itinerary, mapsKey }: { itinerary: Itine
           />
 
           {/* Bottom gradient for title readability */}
-          <div className="absolute inset-x-0 bottom-0 h-56 pointer-events-none z-[2]" style={{ background: "linear-gradient(to top, rgba(6,12,39,0.95) 0%, rgba(6,12,39,0.6) 50%, transparent 100%)" }} />
+          <div className="absolute inset-x-0 bottom-0 h-56 pointer-events-none z-[2]" style={{ background: "var(--scrim-photo)" }} />
 
           {/* ─── Title overlay at bottom of map ──────────────────────── */}
           <div ref={headerRef} className="absolute bottom-0 left-0 right-0 z-[3] pointer-events-none">
             <div className="max-w-[1400px] mx-auto px-6 lg:px-12 pb-6 md:pb-8 pointer-events-auto">
               <div className="flex items-center gap-2 mb-2">
-                <Compass className="size-3.5 text-[#58D6F1]" />
-                <span className="text-[10px] font-semibold tracking-[0.1em] uppercase text-[#58D6F1]/70">{tUpper("itinerary.heroLabel", "Sailing Itinerary")}</span>
+                <Compass className="size-3.5 text-[var(--iyc-ionian-300)]" />
+                <span className="text-[10px] font-semibold tracking-[0.1em] uppercase text-[var(--iyc-ionian-300)]/70">{tUpper("itinerary.heroLabel", "Sailing Itinerary")}</span>
               </div>
               <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-2" style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em", color: "#FFFFFF" }}>
                 {name[locale] || t("itinerary.untitled", "Untitled")}
@@ -383,7 +397,7 @@ export function ItineraryDetailClient({ itinerary, mapsKey }: { itinerary: Itine
               {places.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mt-3">
                   {places.map((p, i) => (
-                    <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-medium" style={{ background: "rgba(88,214,241,0.05)", color: "rgba(88,214,241,0.5)", border: "1px solid rgba(88,214,241,0.08)" }}>
+                    <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-medium" style={{ background: "rgba(95,174,223,0.05)", color: "rgba(95,174,223,0.5)", border: "1px solid rgba(95,174,223,0.08)" }}>
                       <MapPin className="size-2.5" /> {p.name}
                     </span>
                   ))}
@@ -400,8 +414,8 @@ export function ItineraryDetailClient({ itinerary, mapsKey }: { itinerary: Itine
                   const sName = (s.leg.name as Record<string, string>)?.[locale] || (s.leg.name as Record<string, string>)?.en || `${i + 1}`
                   const isCur = i === active
                   return (
-                    <button key={s.leg.id} onClick={() => goTo(i)} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full shrink-0 transition-all duration-300" style={{ background: isCur ? "rgba(88,214,241,0.12)" : "rgba(6,12,39,0.75)", border: isCur ? "1px solid rgba(88,214,241,0.2)" : "1px solid rgba(255,255,255,0.06)", backdropFilter: "blur(12px)" }}>
-                      <div className="flex items-center justify-center size-4 rounded-full text-[7px] font-bold" style={{ background: isCur ? "linear-gradient(135deg, #58D6F1, #006399)" : "rgba(255,255,255,0.06)", color: isCur ? "white" : "rgba(255,255,255,0.25)" }}>{i + 1}</div>
+                    <button key={s.leg.id} onClick={() => goTo(i)} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full shrink-0 transition-all duration-300" style={{ background: isCur ? "rgba(95,174,223,0.12)" : "rgba(4,13,25,0.75)", border: isCur ? "1px solid rgba(95,174,223,0.2)" : "1px solid rgba(255,255,255,0.06)", backdropFilter: "blur(12px)" }}>
+                      <div className="flex items-center justify-center size-4 rounded-full text-[7px] font-bold" style={{ background: isCur ? "linear-gradient(135deg, var(--iyc-ionian-300), var(--iyc-ionian-600))" : "rgba(255,255,255,0.06)", color: isCur ? "white" : "rgba(255,255,255,0.25)" }}>{i + 1}</div>
                       <span className="text-[10px] font-medium whitespace-nowrap" style={{ color: isCur ? "white" : "rgba(255,255,255,0.3)" }}>{sName}</span>
                     </button>
                   )
@@ -441,8 +455,8 @@ export function ItineraryDetailClient({ itinerary, mapsKey }: { itinerary: Itine
               {Array.from(dayGroups.entries()).map(([dayNum, dayStops]) => (
                 <div key={dayNum} className="mb-0.5">
                   <div className="flex items-center gap-2 mb-0.5 py-1.5">
-                    <div className="flex items-center justify-center size-6 rounded-full text-[9px] font-bold text-white shrink-0" style={{ background: "linear-gradient(135deg, #0055a9, #002147)" }}>{dayNum}</div>
-                    <span className="text-[9px] font-bold tracking-[0.1em] uppercase" style={{ color: "#0055a9" }}>{tUpper("itinerary.day", "Day")} {dayNum}</span>
+                    <div className="flex items-center justify-center size-6 rounded-full text-[9px] font-bold text-white shrink-0" style={{ background: "linear-gradient(135deg, var(--iyc-ionian-600), var(--iyc-ionian-800))" }}>{dayNum}</div>
+                    <span className="text-[9px] font-bold tracking-[0.1em] uppercase" style={{ color: "var(--iyc-ionian-300)" }}>{tUpper("itinerary.day", "Day")} {dayNum}</span>
                     <div className="h-px flex-1 bg-black/[0.06]" />
                   </div>
                   <div className="relative ml-[10px] border-l border-black/[0.08] pl-3.5">
@@ -457,14 +471,14 @@ export function ItineraryDetailClient({ itinerary, mapsKey }: { itinerary: Itine
                           onClick={() => goTo(s.flatIndex)}
                           className="relative flex items-start gap-2 w-full text-left py-1.5 group transition-all duration-300"
                         >
-                          <div className="absolute -left-[18px] top-[9px] rounded-full transition-all duration-500" style={{ width: isActive ? 7 : 4, height: isActive ? 7 : 4, marginTop: isActive ? -1.5 : 0, background: isActive ? "#0055a9" : "rgba(0,0,0,0.12)", boxShadow: isActive ? "0 0 6px rgba(0,85,169,0.4)" : "none" }} />
+                          <div className="absolute -left-[18px] top-[9px] rounded-full transition-all duration-500" style={{ width: isActive ? 7 : 4, height: isActive ? 7 : 4, marginTop: isActive ? -1.5 : 0, background: isActive ? "var(--iyc-ionian-600)" : "rgba(0,0,0,0.12)", boxShadow: isActive ? "0 0 6px rgba(0,85,169,0.4)" : "none" }} />
                           <div className="min-w-0 flex-1">
-                            <p className="text-[12px] font-semibold leading-snug truncate transition-colors duration-300" style={{ color: isActive ? "#0a0a0a" : "rgba(0,0,0,0.35)", fontFamily: "var(--font-display)" }}>{sName}</p>
+                            <p className="text-[12px] font-semibold leading-snug truncate transition-colors duration-300" style={{ color: isActive ? "var(--text-heading)" : "rgba(0,0,0,0.35)", fontFamily: "var(--font-display)" }}>{sName}</p>
                             {isActive && hasImages && (
-                              <span className="text-[8px] font-medium mt-0.5 block" style={{ color: "#0055a9" }}>{(s.leg.images as string[]).length} {(s.leg.images as string[]).length > 1 ? t("itinerary.photos", "photos") : t("itinerary.photo", "photo")}</span>
+                              <span className="text-[8px] font-medium mt-0.5 block" style={{ color: "var(--iyc-ionian-300)" }}>{(s.leg.images as string[]).length} {(s.leg.images as string[]).length > 1 ? t("itinerary.photos", "photos") : t("itinerary.photo", "photo")}</span>
                             )}
                           </div>
-                          {isActive && <div className="absolute -left-[19px] top-0 bottom-0 w-[2px] rounded-full" style={{ background: "linear-gradient(to bottom, #0055a9, #002147)" }} />}
+                          {isActive && <div className="absolute -left-[19px] top-0 bottom-0 w-[2px] rounded-full" style={{ background: "linear-gradient(to bottom, var(--iyc-ionian-600), var(--iyc-ionian-800))" }} />}
                         </button>
                       )
                     })}
@@ -482,7 +496,7 @@ export function ItineraryDetailClient({ itinerary, mapsKey }: { itinerary: Itine
               ...cardStyle,
               top: "50vh",
               transform: "translateY(-50%)",
-              background: "linear-gradient(135deg, #002147, #0055a9)",
+              background: "linear-gradient(135deg, var(--iyc-ionian-800), var(--iyc-ionian-600))",
               backdropFilter: "blur(24px)",
               borderRadius: 20,
               boxShadow: "0 12px 48px rgba(0,0,0,0.3), 0 2px 8px rgba(0,0,0,0.15)",
@@ -490,7 +504,7 @@ export function ItineraryDetailClient({ itinerary, mapsKey }: { itinerary: Itine
           >
             <div className="p-4 lg:p-5">
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-[9px] font-bold tracking-[0.1em] uppercase" style={{ color: "rgba(88,214,241,0.7)" }}>{tUpper("itinerary.day", "Day")} {stop.dayNumber}</span>
+                <span className="text-[9px] font-bold tracking-[0.1em] uppercase" style={{ color: "rgba(95,174,223,0.7)" }}>{tUpper("itinerary.day", "Day")} {stop.dayNumber}</span>
                 <div className="size-1 rounded-full bg-white/15" />
                 <span className="text-[9px] text-white/30 tabular-nums">{active + 1} {t("itinerary.of", "of")} {stops.length}</span>
               </div>
@@ -500,7 +514,7 @@ export function ItineraryDetailClient({ itinerary, mapsKey }: { itinerary: Itine
               {legImgs.length > 0 && (
                 <div className="group/gallery cursor-pointer" onClick={() => setLightbox({ images: legImgs, index: 0 })}>
                   <div className="flex items-center gap-2 mb-2.5">
-                    <span className="px-2 py-0.5 rounded-full text-[9px] font-bold" style={{ background: "linear-gradient(135deg, rgba(0,85,169,0.3), rgba(88,214,241,0.15))", color: "#58D6F1" }}>
+                    <span className="px-2 py-0.5 rounded-full text-[9px] font-bold" style={{ background: "linear-gradient(135deg, rgba(0,85,169,0.3), rgba(95,174,223,0.15))", color: "var(--iyc-ionian-300)" }}>
                       {legImgs.length} {legImgs.length > 1 ? t("itinerary.photos", "Photos") : t("itinerary.photo", "Photo")}
                     </span>
                   </div>
@@ -533,13 +547,13 @@ export function ItineraryDetailClient({ itinerary, mapsKey }: { itinerary: Itine
                 <button onClick={() => goTo(active - 1)} disabled={active === 0} className="flex items-center gap-1 px-2 py-1.5 rounded-md text-[10px] font-medium transition-all duration-200 disabled:opacity-20 hover:bg-white/[0.06]" style={{ border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.5)" }}>
                   <ChevronLeft className="size-3" /> {t("itinerary.prev", "Prev")}
                 </button>
-                <button onClick={() => goTo(active + 1)} disabled={active === stops.length - 1} className="flex items-center gap-1 px-2 py-1.5 rounded-md text-[10px] font-medium transition-all duration-200 disabled:opacity-20 hover:bg-white/[0.08]" style={{ border: "1px solid rgba(88,214,241,0.2)", color: "rgba(88,214,241,0.7)" }}>
+                <button onClick={() => goTo(active + 1)} disabled={active === stops.length - 1} className="flex items-center gap-1 px-2 py-1.5 rounded-md text-[10px] font-medium transition-all duration-200 disabled:opacity-20 hover:bg-white/[0.08]" style={{ border: "1px solid rgba(95,174,223,0.2)", color: "rgba(95,174,223,0.7)" }}>
                   {t("itinerary.next", "Next")} <ChevronRight className="size-3" />
                 </button>
                 <div className="flex-1" />
                 <div className="flex gap-0.5 items-center">
                   {stops.map((_, i) => (
-                    <button key={i} onClick={() => goTo(i)} className="rounded-full transition-all duration-400" style={{ width: i === active ? 14 : 4, height: 4, background: i === active ? "linear-gradient(90deg, #58D6F1, #006399)" : "rgba(255,255,255,0.1)" }} />
+                    <button key={i} onClick={() => goTo(i)} className="rounded-full transition-all duration-400" style={{ width: i === active ? 14 : 4, height: 4, background: i === active ? "linear-gradient(90deg, var(--iyc-ionian-300), var(--iyc-ionian-600))" : "rgba(255,255,255,0.1)" }} />
                   ))}
                 </div>
               </div>
@@ -554,116 +568,113 @@ export function ItineraryDetailClient({ itinerary, mapsKey }: { itinerary: Itine
           ═══════════════════════════════════════════════════════════════ */}
 
       {/* ── SECTION 1: Stats ribbon with coordinate HUD ───────────── */}
-      <section className="relative overflow-hidden" style={{ background: "#000A1E" }}>
+      <section className="relative overflow-hidden" style={{ background: "var(--surface-page)" }}>
         {/* Dot grid bg */}
-        <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(rgba(88,214,241,0.06) 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
+        <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(rgba(11,96,153,0.07) 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
         {/* Top accent */}
-        <div className="h-[2px]" style={{ background: "linear-gradient(90deg, transparent, #0055a9, #58D6F1, #0055a9, transparent)" }} />
+        <div className="h-[2px]" style={{ background: "linear-gradient(90deg, transparent, var(--iyc-ionian-600), var(--iyc-ionian-300), var(--iyc-ionian-600), transparent)" }} />
 
         <div className="relative max-w-[1400px] mx-auto px-6 lg:px-12">
           {/* Coordinate header bar */}
           <div className="flex items-center justify-between py-4">
             <div className="flex items-center gap-2">
-              <div className="size-1.5 rounded-full bg-[#58D6F1] pulse-ring" />
-              <span className="text-[9px] font-mono tracking-wider" style={{ color: "rgba(88,214,241,0.4)" }}>
+              <div className="size-1.5 rounded-full bg-[var(--iyc-ionian-300)] pulse-ring" />
+              <span className="text-[9px] font-mono tracking-wider" style={{ color: "var(--text-subtle)" }}>
                 {t("itinerary.origin", "ORIGIN")} {itinerary.startLatitude && itinerary.startLongitude ? `${Math.abs(itinerary.startLatitude).toFixed(4)}°${itinerary.startLatitude >= 0 ? "N" : "S"} ${Math.abs(itinerary.startLongitude).toFixed(4)}°${itinerary.startLongitude >= 0 ? "E" : "W"}` : itinerary.startFrom || "—"}
               </span>
             </div>
             <svg className="hidden md:block flex-1 mx-4 h-[2px]" preserveAspectRatio="none">
-              <line x1="0" y1="1" x2="100%" y2="1" stroke="rgba(88,214,241,0.12)" strokeWidth="2" strokeDasharray="6 4" className="dash-move" />
+              <line x1="0" y1="1" x2="100%" y2="1" stroke="rgba(95,174,223,0.12)" strokeWidth="2" strokeDasharray="6 4" className="dash-move" />
             </svg>
             <div className="flex items-center gap-2">
-              <span className="text-[9px] font-mono tracking-wider" style={{ color: "rgba(88,214,241,0.4)" }}>
+              <span className="text-[9px] font-mono tracking-wider" style={{ color: "var(--text-subtle)" }}>
                 {stops.length > 0 && stops[stops.length - 1].leg.latitude ? `${Math.abs(stops[stops.length - 1].leg.latitude!).toFixed(4)}°N ${Math.abs(stops[stops.length - 1].leg.longitude!).toFixed(4)}°E` : t("itinerary.dest", "DEST")}
               </span>
-              <div className="size-1.5 rounded-full bg-[#58D6F1] pulse-ring" style={{ animationDelay: "1.5s" }} />
+              <div className="size-1.5 rounded-full bg-[var(--iyc-ionian-300)] pulse-ring" style={{ animationDelay: "1.5s" }} />
             </div>
           </div>
 
           {/* Stats grid */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 pb-8">
             {[
-              { icon: Calendar, label: tUpper("itinerary.stat.duration", "Duration"), value: `${itinerary.totalDays}`, unit: t("itinerary.days", "Days"), color: "#58D6F1" },
-              { icon: Route, label: tUpper("itinerary.stat.distance", "Distance"), value: `${itinerary.totalMiles}`, unit: "NM", color: "#0077B6" },
-              { icon: Anchor, label: tUpper("itinerary.stat.departure", "Departure"), value: itinerary.startFrom || "—", unit: "", color: "#0055a9" },
-              { icon: MapPin, label: tUpper("itinerary.stat.stops", "Stops"), value: `${stops.length}`, unit: t("itinerary.stat.locations", "Locations"), color: "#58D6F1" },
+              { icon: Calendar, label: tUpper("itinerary.stat.duration", "Duration"), value: `${itinerary.totalDays}`, unit: t("itinerary.days", "Days"), color: "var(--iyc-ionian-300)" },
+              { icon: Route, label: tUpper("itinerary.stat.distance", "Distance"), value: `${itinerary.totalMiles}`, unit: "NM", color: "var(--iyc-ionian-500)" },
+              { icon: Anchor, label: tUpper("itinerary.stat.departure", "Departure"), value: itinerary.startFrom || "—", unit: "", color: "var(--iyc-ionian-600)" },
+              { icon: MapPin, label: tUpper("itinerary.stat.stops", "Stops"), value: `${stops.length}`, unit: t("itinerary.stat.locations", "Locations"), color: "var(--iyc-ionian-300)" },
             ].map((stat, i) => (
               <div
                 key={i}
                 className="group relative p-5 rounded-xl transition-all duration-500 hover:-translate-y-0.5"
-                style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(88,214,241,0.05)" }}
+                style={{ background: "transparent", border: "1px solid rgba(95,174,223,0.05)" }}
               >
                 <div className="absolute top-2.5 right-2.5 size-1 rounded-full blink-dot" style={{ background: stat.color, animationDelay: `${i * 0.6}s` }} />
                 <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" style={{ background: `radial-gradient(circle at center, ${stat.color}08, transparent 70%)` }} />
                 <stat.icon className="size-5 mb-3" style={{ color: stat.color }} />
                 <div className="flex items-baseline gap-1.5 mb-0.5">
-                  <span className="text-2xl md:text-3xl font-bold text-white" style={{ fontFamily: "var(--font-display)" }}>{stat.value}</span>
-                  {stat.unit && <span className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.4)" }}>{stat.unit}</span>}
+                  <span className="text-2xl md:text-3xl font-bold text-[var(--text-heading)]" style={{ fontFamily: "var(--font-display)" }}>{stat.value}</span>
+                  {stat.unit && <span className="text-xs font-medium" style={{ color: "var(--text-subtle)" }}>{stat.unit}</span>}
                 </div>
-                <span className="text-[10px] font-semibold tracking-[0.08em] uppercase" style={{ color: "rgba(88,214,241,0.5)" }}>{stat.label}</span>
+                <span className="text-[10px] font-semibold tracking-[0.08em] uppercase" style={{ color: "var(--iyc-ionian-600)" }}>{stat.label}</span>
               </div>
             ))}
           </div>
         </div>
-        <div className="h-[1px]" style={{ background: "linear-gradient(90deg, transparent, rgba(88,214,241,0.08), transparent)" }} />
+        <div className="h-[1px]" style={{ background: "linear-gradient(90deg, transparent, rgba(95,174,223,0.08), transparent)" }} />
       </section>
 
       {/* ── SECTION 2: About — warm cream with floating decorations ─ */}
       {shortDesc[locale] && (
-        <section className="relative py-24 md:py-32 overflow-hidden" style={{ background: "#FAF8F5" }}>
+        <section className="relative py-24 md:py-32 overflow-hidden" style={{ background: "var(--iyc-sand-50)" }}>
           {/* Large watermark number */}
-          <div className="absolute -right-10 top-1/2 -translate-y-1/2 pointer-events-none select-none" style={{ fontSize: "28rem", fontFamily: "var(--font-display)", fontWeight: 800, color: "rgba(0,33,71,0.02)", lineHeight: 1 }}>
+          <div className="absolute -right-10 top-1/2 -translate-y-1/2 pointer-events-none select-none" style={{ fontSize: "28rem", fontFamily: "var(--font-display)", fontWeight: 800, color: "rgba(46,44,40,0.02)", lineHeight: 1 }}>
             {itinerary.totalDays}
           </div>
           {/* Floating decorative elements */}
           <div className="absolute top-16 right-[12%] pointer-events-none float-slow" style={{ opacity: 0.05 }}>
-            <Compass className="size-28" style={{ color: "#002147" }} />
+            <Compass className="size-28" style={{ color: "var(--iyc-ionian-800)" }} />
           </div>
           <div className="absolute bottom-20 left-[6%] pointer-events-none float-slower" style={{ opacity: 0.04 }}>
-            <Anchor className="size-20" style={{ color: "#0055a9" }} />
+            <Anchor className="size-20" style={{ color: "var(--iyc-ionian-300)" }} />
           </div>
-          {/* Dashed circle outlines */}
-          <div className="absolute top-[20%] right-[4%] size-60 rounded-full pointer-events-none" style={{ border: "1px dashed rgba(0,33,71,0.04)" }} />
-          <div className="absolute bottom-[15%] left-[2%] size-44 rounded-full pointer-events-none" style={{ border: "1px dashed rgba(0,85,169,0.04)" }} />
           {/* Top accent line */}
-          <div className="absolute top-0 left-0 w-[280px] h-[1px]" style={{ background: "linear-gradient(90deg, #0055a9, transparent)" }} />
+          <div className="absolute top-0 left-0 w-[280px] h-[1px]" style={{ background: "linear-gradient(90deg, var(--iyc-ionian-600), transparent)" }} />
 
           <div className="relative max-w-[1400px] mx-auto px-6 lg:px-12">
             <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
               {/* Left: editorial text */}
               <div>
                 <div className="flex items-center gap-3 mb-8">
-                  <div className="size-8 rounded-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, #0055a9, #002147)" }}>
+                  <div className="size-8 rounded-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, var(--iyc-ionian-600), var(--iyc-ionian-800))" }}>
                     <Wind className="size-3.5 text-white" />
                   </div>
-                  <span className="text-[11px] font-bold tracking-[0.12em] uppercase" style={{ color: "#0055a9" }}>{tUpper("itinerary.theVoyage", "The Voyage")}</span>
+                  <span className="text-[11px] font-bold tracking-[0.12em] uppercase" style={{ color: "var(--iyc-ionian-300)" }}>{tUpper("itinerary.theVoyage", "The Voyage")}</span>
                   <svg className="w-16 h-[2px]" preserveAspectRatio="none">
-                    <line x1="0" y1="1" x2="100%" y2="1" stroke="#0055a9" strokeWidth="2" strokeDasharray="4 3" strokeOpacity="0.25" className="dash-move" />
+                    <line x1="0" y1="1" x2="100%" y2="1" stroke="var(--iyc-ionian-600)" strokeWidth="2" strokeDasharray="4 3" strokeOpacity="0.25" className="dash-move" />
                   </svg>
                 </div>
-                <h2 className="text-3xl md:text-4xl lg:text-[2.75rem] font-bold leading-[1.15] mb-8" style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em", color: "#0D1B2A" }}>
+                <h2 className="text-3xl md:text-4xl lg:text-[2.75rem] font-bold leading-[1.15] mb-8" style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em", color: "var(--text-heading)" }}>
                   {name[locale] || t("itinerary.untitledRoute", "Untitled Route")}
                 </h2>
-                <p className="text-base md:text-[17px] leading-[1.9] mb-8" style={{ color: "#3D4551", maxWidth: "32em" }}>{shortDesc[locale]}</p>
+                <p className="text-base md:text-[17px] leading-[1.9] mb-8" style={{ color: "var(--iyc-ink-700)", maxWidth: "32em" }}>{shortDesc[locale]}</p>
 
                 {/* Coordinate badges */}
                 <div className="flex flex-wrap items-center gap-2.5 mb-8">
                   {itinerary.startFrom && (
-                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full" style={{ background: "rgba(0,33,71,0.04)", border: "1px solid rgba(0,33,71,0.06)" }}>
-                      <Anchor className="size-3 shrink-0" style={{ color: "#0055a9" }} />
-                      <span className="text-xs font-medium" style={{ color: "#0D1B2A" }}>{t("itinerary.from", "From")} {itinerary.startFrom}</span>
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full" style={{ background: "rgba(46,44,40,0.04)", border: "1px solid rgba(46,44,40,0.06)" }}>
+                      <Anchor className="size-3 shrink-0" style={{ color: "var(--iyc-ionian-300)" }} />
+                      <span className="text-xs font-medium" style={{ color: "var(--text-heading)" }}>{t("itinerary.from", "From")} {itinerary.startFrom}</span>
                     </div>
                   )}
                   {itinerary.totalMiles > 0 && (
-                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full" style={{ background: "rgba(0,33,71,0.04)", border: "1px solid rgba(0,33,71,0.06)" }}>
-                      <Waves className="size-3 shrink-0" style={{ color: "#0055a9" }} />
-                      <span className="text-xs font-medium" style={{ color: "#0D1B2A" }}>{itinerary.totalMiles} NM</span>
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full" style={{ background: "rgba(46,44,40,0.04)", border: "1px solid rgba(46,44,40,0.06)" }}>
+                      <Waves className="size-3 shrink-0" style={{ color: "var(--iyc-ionian-300)" }} />
+                      <span className="text-xs font-medium" style={{ color: "var(--text-heading)" }}>{itinerary.totalMiles} NM</span>
                     </div>
                   )}
                   {itinerary.startLatitude && (
-                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full" style={{ background: "rgba(0,33,71,0.04)", border: "1px solid rgba(0,33,71,0.06)" }}>
-                      <Navigation className="size-3 shrink-0" style={{ color: "#0055a9" }} />
-                      <span className="text-[10px] font-mono" style={{ color: "#43474E" }}>{Math.abs(itinerary.startLatitude).toFixed(4)}°N</span>
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full" style={{ background: "rgba(46,44,40,0.04)", border: "1px solid rgba(46,44,40,0.06)" }}>
+                      <Navigation className="size-3 shrink-0" style={{ color: "var(--iyc-ionian-300)" }} />
+                      <span className="text-[10px] font-mono" style={{ color: "var(--text-muted)" }}>{Math.abs(itinerary.startLatitude).toFixed(4)}°N</span>
                     </div>
                   )}
                 </div>
@@ -672,7 +683,7 @@ export function ItineraryDetailClient({ itinerary, mapsKey }: { itinerary: Itine
                 <div className="flex items-center gap-1.5">
                   {stops.slice(0, 10).map((_, i) => (
                     <div key={i} className="flex items-center gap-1.5">
-                      <div className="size-2 rounded-full" style={{ background: i === 0 ? "#0055a9" : i === Math.min(stops.length - 1, 9) ? "#58D6F1" : "rgba(0,85,169,0.15)" }} />
+                      <div className="size-2 rounded-full" style={{ background: i === 0 ? "var(--iyc-ionian-600)" : i === Math.min(stops.length - 1, 9) ? "var(--iyc-ionian-300)" : "rgba(0,85,169,0.15)" }} />
                       {i < Math.min(stops.length - 1, 9) && (
                         <svg className="w-3 h-[2px]" preserveAspectRatio="none">
                           <line x1="0" y1="1" x2="100%" y2="1" stroke="rgba(0,85,169,0.12)" strokeWidth="2" strokeDasharray="2 2" />
@@ -686,11 +697,17 @@ export function ItineraryDetailClient({ itinerary, mapsKey }: { itinerary: Itine
               {/* Right: featured image or place mosaic */}
               <div className="relative">
                 {itinerary.defaultMedia ? (
-                  <div className="relative rounded-2xl overflow-hidden cursor-pointer group" style={{ boxShadow: "0 24px 64px rgba(0,10,30,0.15)" }} onClick={() => setLightbox({ images: [itinerary.defaultMedia!], index: 0 })}>
+                  <div className="relative rounded-2xl overflow-hidden cursor-pointer group" style={{ boxShadow: "0 24px 64px rgba(46,44,40,0.15)" }} onClick={() => setLightbox({ images: [itinerary.defaultMedia!], index: 0 })}>
                     <div className="aspect-[4/5]">
-                      <Image src={itinerary.defaultMedia} alt={name[locale] || ""} width={1600} height={900} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
+                      {isVideoMedia(itinerary.defaultMedia, itinerary.defaultMediaType) ? (
+                        <video src={itinerary.defaultMedia} muted autoPlay loop playsInline preload="metadata"
+                          aria-label={name[locale] || ""}
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
+                      ) : (
+                        <Image src={itinerary.defaultMedia} alt={name[locale] || ""} width={1600} height={900} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
+                      )}
                     </div>
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0D1B2A]/70 via-transparent to-transparent" />
+                    <div className="absolute inset-0" style={{ background: "var(--scrim-photo)" }} />
                     <div className="absolute bottom-0 left-0 right-0 p-6">
                       <span className="text-[10px] font-bold tracking-[0.1em] uppercase" style={{ color: "rgba(255,255,255,0.75)" }}>{itinerary.totalDays}-{tUpper("itinerary.dayVoyage", "Day Voyage")}</span>
                       <p className="text-lg font-bold text-white mt-1" style={{ fontFamily: "var(--font-display)" }}>{itinerary.startFrom || t("itinerary.mediterranean", "Mediterranean")}</p>
@@ -701,12 +718,12 @@ export function ItineraryDetailClient({ itinerary, mapsKey }: { itinerary: Itine
                   </div>
                 ) : (
                   /* Fallback: decorative compass visual */
-                  <div className="aspect-[4/5] rounded-2xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #002147, #0055a9)", boxShadow: "0 24px 64px rgba(0,10,30,0.15)" }}>
+                  <div className="aspect-[4/5] rounded-2xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, var(--iyc-ionian-800), var(--iyc-ionian-600))", boxShadow: "0 24px 64px rgba(46,44,40,0.15)" }}>
                     <Compass className="size-24 text-white/15" />
                   </div>
                 )}
                 {/* Floating badge */}
-                <div className="absolute -bottom-4 -left-4 md:-left-6 px-5 py-3 rounded-xl" style={{ background: "linear-gradient(135deg, #0055a9, #002147)", boxShadow: "0 8px 32px rgba(0,10,30,0.25)" }}>
+                <div className="absolute -bottom-4 -left-4 md:-left-6 px-5 py-3 rounded-xl" style={{ background: "linear-gradient(135deg, var(--iyc-ionian-600), var(--iyc-ionian-800))", boxShadow: "0 8px 32px rgba(4,13,25,0.25)" }}>
                   <span className="text-2xl font-bold text-white" style={{ fontFamily: "var(--font-display)" }}>{stops.length}</span>
                   <span className="text-[10px] font-semibold tracking-[0.06em] uppercase block" style={{ color: "rgba(255,255,255,0.7)" }}>{tUpper("itinerary.stat.stops", "Stops")}</span>
                 </div>
@@ -721,15 +738,25 @@ export function ItineraryDetailClient({ itinerary, mapsKey }: { itinerary: Itine
         {itinerary.days.map((day, dayIdx) => {
           const dayDesc = (day.description as Record<string, string>)?.[locale] || (day.description as Record<string, string>)?.en || ""
           const allLegs = day.legs
-          const isDark = dayIdx % 2 === 0
+          // The first stop number of this day, so the list numbers agree with
+          // the numbered pins on the map above.
+          const legOffset = itinerary.days
+            .slice(0, dayIdx)
+            .reduce((n, d) => n + d.legs.length, 0)
+          /* Days alternated navy and white, which turned the timeline into a
+             zebra of dark blocks. The kit keeps sections light and lets the
+             photography carry the contrast, so the rhythm is now two limestone
+             tones and every day reads in ink. */
+          const isDark = false
+          const bandTone = dayIdx % 2 === 0 ? "var(--surface-page)" : "var(--surface-card)"
           const allDayImages = allLegs.flatMap((l) => (l.images as string[]) || [])
           const heroImg = allDayImages[0] || null
 
           return (
-            <div key={day.id} className="relative" style={{ background: isDark ? "#060c27" : "#FFFFFF" }}>
+            <div key={day.id} className="relative" style={{ background: bandTone }}>
               {/* Accent line between days */}
               {dayIdx > 0 && (
-                <div className="h-px" style={{ background: isDark ? "rgba(88,214,241,0.08)" : "rgba(0,33,71,0.06)" }} />
+                <div className="h-px" style={{ background: isDark ? "rgba(95,174,223,0.08)" : "rgba(46,44,40,0.06)" }} />
               )}
 
               {/* Day hero strip — full-bleed image on one side */}
@@ -743,10 +770,10 @@ export function ItineraryDetailClient({ itinerary, mapsKey }: { itinerary: Itine
                       onClick={() => setLightbox({ images: allDayImages, index: 0 })}
                     >
                       <Image src={heroImg} alt={`${t("itinerary.day", "Day")} ${day.dayNumber}`} fill sizes="(max-width: 768px) 100vw, 50vw" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
-                      <div className="absolute inset-0" style={{ background: isDark ? "linear-gradient(to right, rgba(6,12,39,0.7), transparent 60%)" : "linear-gradient(to right, rgba(255,255,255,0.5), transparent 60%)" }} />
+                      <div className="absolute inset-0" style={{ background: isDark ? "linear-gradient(to right, rgba(4,13,25,0.7), transparent 60%)" : "linear-gradient(to right, rgba(255,255,255,0.5), transparent 60%)" }} />
                       {/* Day number overlay */}
                       <div className="absolute top-6 left-6 flex items-center gap-3">
-                        <div className="size-14 rounded-full flex items-center justify-center text-lg font-bold text-white" style={{ background: "linear-gradient(135deg, #0055a9, #002147)", boxShadow: "0 4px 24px rgba(0,85,169,0.4)" }}>
+                        <div className="size-14 rounded-full flex items-center justify-center text-lg font-bold text-white" style={{ background: "linear-gradient(135deg, var(--iyc-ionian-600), var(--iyc-ionian-800))", boxShadow: "0 4px 24px rgba(0,85,169,0.4)" }}>
                           {day.dayNumber}
                         </div>
                       </div>
@@ -775,12 +802,46 @@ export function ItineraryDetailClient({ itinerary, mapsKey }: { itinerary: Itine
                       )}
                     </div>
                   ) : (
-                    <div className={`relative flex items-center justify-center ${dayIdx % 2 === 1 ? "lg:order-2" : ""}`} style={{ minHeight: 360, background: isDark ? "rgba(255,255,255,0.02)" : "rgba(0,33,71,0.02)" }}>
-                      <div className="text-center">
-                        <div className="size-20 rounded-full flex items-center justify-center mx-auto mb-3" style={{ background: isDark ? "linear-gradient(135deg, #0055a9, #002147)" : "linear-gradient(135deg, rgba(0,85,169,0.08), rgba(88,214,241,0.06))" }}>
-                          <span className="text-3xl font-bold" style={{ fontFamily: "var(--font-display)", color: isDark ? "white" : "#002147" }}>{day.dayNumber}</span>
+                    /* No photograph for this day — draw its track instead. The
+                       old fallback was a circled day number, identical on every
+                       dayless day; the fixes we already hold make each one a
+                       different shape. */
+                    <div
+                      className={`relative flex items-center justify-center ${dayIdx % 2 === 1 ? "lg:order-2" : ""}`}
+                      style={{ minHeight: 360, background: "var(--surface-page)" }}
+                    >
+                      <ItineraryDayChart
+                        dayNumber={day.dayNumber}
+                        className="h-full w-full max-h-[380px]"
+                        points={allLegs
+                          .filter((l) => l.latitude != null && l.longitude != null)
+                          .map((l) => ({
+                            lat: l.latitude as number,
+                            lon: l.longitude as number,
+                            label:
+                              (l.name as Record<string, string>)?.[locale] ||
+                              (l.name as Record<string, string>)?.en ||
+                              "",
+                          }))}
+                      />
+
+                      <div className="absolute top-6 left-6 flex items-center gap-3">
+                        <div
+                          className="flex size-14 items-center justify-center rounded-full text-lg font-bold text-white"
+                          style={{
+                            background: "linear-gradient(135deg, var(--iyc-ionian-600), var(--iyc-ionian-800))",
+                            boxShadow: "0 4px 24px rgba(11,96,153,0.32)",
+                            fontFamily: "var(--font-display)",
+                          }}
+                        >
+                          {day.dayNumber}
                         </div>
-                        <span className="text-[11px] font-bold tracking-[0.1em] uppercase" style={{ color: isDark ? "#58D6F1" : "#0055a9" }}>{tUpper("itinerary.day", "Day")} {day.dayNumber}</span>
+                        <span
+                          className="text-[11px] font-bold uppercase tracking-[0.1em]"
+                          style={{ color: "var(--iyc-ionian-600)" }}
+                        >
+                          {removeGreekTonos(tUpper("itinerary.day", "Day"))} {day.dayNumber}
+                        </span>
                       </div>
                     </div>
                   )}
@@ -788,11 +849,11 @@ export function ItineraryDetailClient({ itinerary, mapsKey }: { itinerary: Itine
                   {/* Content column */}
                   <div className={`flex flex-col justify-center px-8 md:px-12 lg:px-16 py-12 lg:py-16 ${dayIdx % 2 === 1 ? "lg:order-1" : ""}`}>
                     <div className="flex items-center gap-3 mb-6">
-                      <span className="text-[11px] font-bold tracking-[0.12em] uppercase" style={{ color: isDark ? "#58D6F1" : "#0055a9" }}>{tUpper("itinerary.day", "Day")} {day.dayNumber}</span>
-                      <div className="w-8 h-[1.5px]" style={{ background: isDark ? "linear-gradient(90deg, #58D6F1, transparent)" : "linear-gradient(90deg, #0055a9, transparent)" }} />
+                      <span className="text-[11px] font-bold tracking-[0.12em] uppercase" style={{ color: isDark ? "var(--iyc-ionian-300)" : "var(--iyc-ionian-600)" }}>{tUpper("itinerary.day", "Day")} {day.dayNumber}</span>
+                      <div className="w-8 h-[1.5px]" style={{ background: isDark ? "linear-gradient(90deg, var(--iyc-ionian-300), transparent)" : "linear-gradient(90deg, var(--iyc-ionian-600), transparent)" }} />
                     </div>
                     {dayDesc && (
-                      <p className="text-sm leading-[1.8] mb-8 max-w-lg" style={{ color: isDark ? "rgba(255,255,255,0.6)" : "#43474E" }}>{dayDesc}</p>
+                      <p className="text-sm leading-[1.8] mb-8 max-w-lg" style={{ color: isDark ? "rgba(255,255,255,0.6)" : "var(--text-muted)" }}>{dayDesc}</p>
                     )}
 
                     {/* Legs as editorial cards */}
@@ -803,19 +864,53 @@ export function ItineraryDetailClient({ itinerary, mapsKey }: { itinerary: Itine
                         const lImgs = leg.images as string[]
 
                         return (
-                          <div
-                            key={leg.id}
-                            className="relative pl-6"
-                            style={{ borderLeft: `2px solid ${isDark ? "rgba(88,214,241,0.15)" : "rgba(0,85,169,0.12)"}` }}
-                          >
-                            {/* Leg dot */}
-                            <div className="absolute -left-[5px] top-[6px] size-2 rounded-full" style={{ background: isDark ? "#58D6F1" : "#0055a9" }} />
+                          <div key={leg.id} className="relative flex gap-4">
+                            {/* Numbered marker and the run of line beneath it.
+                                A 2px hairline with a 8px dot gave every stop the
+                                same weight and no tie to the map; the number is
+                                the same one the pin carries. */}
+                            <div className="relative flex w-8 shrink-0 flex-col items-center">
+                              <div
+                                className="iyc-mono flex size-8 shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
+                                style={{
+                                  background: "var(--iyc-ionian-600)",
+                                  color: "#fff",
+                                  boxShadow: "0 2px 10px rgba(11,96,153,0.28)",
+                                }}
+                              >
+                                {legOffset + legIdx + 1}
+                              </div>
+                              {legIdx < allLegs.length - 1 && (
+                                <div
+                                  className="mt-1 w-[2px] flex-1 rounded-full"
+                                  style={{
+                                    background:
+                                      "linear-gradient(to bottom, var(--iyc-ionian-300), transparent)",
+                                  }}
+                                />
+                              )}
+                            </div>
 
+                            <div className="min-w-0 flex-1 pb-2">
+                            {/* Position as an eyebrow. Every leg carries a
+                                fix; printing it gives the entry texture even
+                                when no photograph exists — which is most of
+                                them — and it is what a crew actually plots. */}
+                            {leg.latitude != null && leg.longitude != null && (
+                              <span
+                                className="iyc-mono mb-1 block text-[10px] tracking-wider"
+                                style={{ color: "var(--text-subtle)" }}
+                              >
+                                {Math.abs(leg.latitude).toFixed(4)}°{leg.latitude >= 0 ? "N" : "S"}
+                                {"  "}
+                                {Math.abs(leg.longitude).toFixed(4)}°{leg.longitude >= 0 ? "E" : "W"}
+                              </span>
+                            )}
                             {lName && (
-                              <h4 className="text-base md:text-lg font-bold mb-1.5" style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.01em", color: isDark ? "#FFFFFF" : "#002147" }}>{lName}</h4>
+                              <h4 className="mb-1.5 text-base font-bold md:text-lg" style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.01em", color: "var(--iyc-ionian-800)" }}>{lName}</h4>
                             )}
                             {lDesc && (
-                              <p className="text-[13px] leading-[1.75] mb-3 max-w-md" style={{ color: isDark ? "rgba(255,255,255,0.55)" : "#5a5f68" }}>{lDesc}</p>
+                              <p className="mb-3 max-w-md text-[13px] leading-[1.75]" style={{ color: "var(--text-muted)" }}>{lDesc}</p>
                             )}
 
                             {/* Animated avatar thumbnails */}
@@ -842,20 +937,21 @@ export function ItineraryDetailClient({ itinerary, mapsKey }: { itinerary: Itine
                                     style={{
                                       zIndex: 0,
                                       transitionDelay: "200ms",
-                                      background: isDark ? "rgba(255,255,255,0.15)" : "rgba(0,33,71,0.08)",
-                                      border: isDark ? "2px solid rgba(255,255,255,0.4)" : "2px solid rgba(0,33,71,0.12)",
-                                      color: isDark ? "white" : "#002147",
+                                      background: isDark ? "rgba(255,255,255,0.15)" : "rgba(46,44,40,0.08)",
+                                      border: isDark ? "2px solid rgba(255,255,255,0.4)" : "2px solid rgba(46,44,40,0.12)",
+                                      color: isDark ? "white" : "var(--iyc-ionian-800)",
                                       backdropFilter: "blur(8px)",
                                     }}
                                   >
                                     +{lImgs.length - 5}
                                   </div>
                                 )}
-                                <span className="text-[10px] font-medium ml-1" style={{ color: isDark ? "rgba(255,255,255,0.4)" : "rgba(0,33,71,0.4)" }}>
+                                <span className="text-[10px] font-medium ml-1" style={{ color: isDark ? "rgba(255,255,255,0.4)" : "rgba(4,13,25,0.4)" }}>
                                   {lImgs.length} {lImgs.length > 1 ? t("itinerary.photos", "photos") : t("itinerary.photo", "photo")}
                                 </span>
                               </div>
                             )}
+                            </div>
                           </div>
                         )
                       })}
@@ -870,18 +966,32 @@ export function ItineraryDetailClient({ itinerary, mapsKey }: { itinerary: Itine
 
       {/* ── SECTION 4: Destinations — premium dark navy ────────────── */}
       {places.length > 0 && (
-        <section className="relative py-24 md:py-32 overflow-hidden" style={{ background: "#001229" }}>
-          {/* Decorative background circles */}
-          <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(0,85,169,0.06) 0%, transparent 70%)", transform: "translate(30%, -40%)" }} />
-          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(88,214,241,0.04) 0%, transparent 70%)", transform: "translate(-30%, 40%)" }} />
+        <section className="relative py-24 md:py-32 overflow-hidden" style={{ background: "var(--surface-page)" }}>
+          {/* Chart engraving, the treatment the homepage uses on its light
+              sections: masked at both ends so it never meets an edge, and
+              washed back so the cards stay the subject. */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0"
+            style={{
+              backgroundImage: "url(/brand/topographic.svg)",
+              backgroundSize: "1400px auto",
+              backgroundPosition: "center",
+              opacity: 0.3,
+              maskImage: "linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%)",
+              WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%)",
+            }}
+          />
 
           <div className="relative max-w-[1400px] mx-auto px-6 lg:px-12">
             <div className="text-center mb-14">
-              <span className="text-[11px] font-bold tracking-[0.12em] uppercase" style={{ color: "#58D6F1" }}>{tUpper("itinerary.portsOfCall", "Ports of Call")}</span>
-              <h2 className="text-3xl md:text-4xl font-bold mt-3 mb-4" style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em", color: "#FFFFFF" }}>
+              {/* Amber, not pale blue: this eyebrow was --iyc-ionian-300, which
+                  is a colour for dark grounds and washes out on limestone. */}
+              <span className="text-[11px] font-bold tracking-[0.12em] uppercase" style={{ color: "var(--action-accent)" }}>{tUpper("itinerary.portsOfCall", "Ports of Call")}</span>
+              <h2 className="text-3xl md:text-4xl font-bold mt-3 mb-4" style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em", color: "var(--text-heading)" }}>
                 {t("itinerary.destinationsHeading", "Destinations Along the Way")}
               </h2>
-              <div className="w-16 h-[2px] mx-auto rounded-full" style={{ background: "linear-gradient(90deg, #0055a9, #58D6F1)" }} />
+              <div className="w-16 h-[2px] mx-auto rounded-full" style={{ background: "linear-gradient(90deg, var(--iyc-ionian-600), var(--iyc-ionian-300))" }} />
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -889,17 +999,17 @@ export function ItineraryDetailClient({ itinerary, mapsKey }: { itinerary: Itine
                 <div
                   key={i}
                   className="group relative p-6 rounded-xl cursor-pointer transition-all duration-400 hover:-translate-y-1"
-                  style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", backdropFilter: "blur(8px)" }}
+                  style={{ background: "transparent", border: "1px solid var(--border-hairline)", backdropFilter: "blur(8px)" }}
                 >
                   {/* Hover glow */}
-                  <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" style={{ background: "linear-gradient(135deg, rgba(0,85,169,0.08), rgba(88,214,241,0.04))" }} />
+                  <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" style={{ background: "linear-gradient(135deg, rgba(0,85,169,0.08), rgba(95,174,223,0.04))" }} />
                   <div className="relative flex items-center gap-3">
-                    <div className="size-9 rounded-full flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, rgba(0,85,169,0.2), rgba(88,214,241,0.1))", border: "1px solid rgba(88,214,241,0.08)" }}>
-                      <MapPin className="size-4" style={{ color: "#58D6F1" }} />
+                    <div className="size-9 rounded-full flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, rgba(0,85,169,0.2), rgba(95,174,223,0.1))", border: "1px solid rgba(95,174,223,0.08)" }}>
+                      <MapPin className="size-4" style={{ color: "var(--iyc-ionian-300)" }} />
                     </div>
                     <div>
-                      <span className="text-sm font-semibold text-white block" style={{ fontFamily: "var(--font-display)" }}>{place.name}</span>
-                      <span className="text-[10px] font-medium" style={{ color: "rgba(255,255,255,0.3)" }}>
+                      <span className="text-sm font-semibold text-[var(--text-heading)] block" style={{ fontFamily: "var(--font-display)" }}>{place.name}</span>
+                      <span className="text-[10px] font-medium" style={{ color: "var(--text-subtle)" }}>
                         {place.latitude.toFixed(2)}°N, {place.longitude.toFixed(2)}°E
                       </span>
                     </div>
@@ -911,51 +1021,136 @@ export function ItineraryDetailClient({ itinerary, mapsKey }: { itinerary: Itine
         </section>
       )}
 
-      {/* ── SECTION 5: CTA — dramatic full-bleed with image ────────── */}
-      <section className="relative py-28 md:py-36 overflow-hidden" style={{ background: "#002147" }}>
-        {/* Background pattern */}
-        <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(rgba(88,214,241,0.03) 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
-        {/* Glow orbs */}
-        <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[500px] h-[500px] rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(0,85,169,0.12) 0%, transparent 70%)" }} />
-        <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(88,214,241,0.06) 0%, transparent 70%)" }} />
+      {/* ── SECTION 5: closing ask ──────────────────────────────────────
+          Rebuilt. The old block centred generic copy in white space with a
+          compass-and-dots cluster built for a dark ground, and made "Browse
+          our fleet" the primary action — on an itinerary page the money action
+          is enquiring about this route. It also set near-black type on a blue
+          gradient. Now: one accent action, the alternative subordinate as a
+          link, and the right half recaps the voyage the reader just finished
+          so the ask stands on something rather than floating. */}
+      <section className="relative overflow-hidden px-6 py-20 md:py-28 lg:px-12" style={{ background: "var(--surface-page)" }}>
+        <div className="mx-auto max-w-[1180px]">
+          <div
+            className="grid overflow-hidden md:grid-cols-[1.15fr_1fr]"
+            style={{
+              background: "var(--surface-card)",
+              border: "1px solid var(--border-hairline)",
+              borderRadius: "var(--iyc-radius-lg)",
+              boxShadow: "var(--shadow-md)",
+            }}
+          >
+            {/* The ask */}
+            <div className="flex flex-col justify-center p-9 md:p-12">
+              <span
+                className="mb-3 text-[11px] font-bold uppercase tracking-[0.12em]"
+                style={{ color: "var(--action-accent)" }}
+              >
+                {removeGreekTonos(tUpper("itinerary.cta.eyebrow", "Ready when you are"))}
+              </span>
+              <h2
+                className="mb-4 text-3xl font-bold md:text-4xl"
+                style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em", color: "var(--text-heading)" }}
+              >
+                {t("itinerary.cta.heading", "Sail this route — or one we shape around you.")}
+              </h2>
+              <p className="mb-8 max-w-md text-[15px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                {t("itinerary.cta.body", "Tell us your dates and who is coming. We answer personally, usually the same day.")}
+              </p>
 
-        <div className="relative max-w-[1400px] mx-auto px-6 lg:px-12 text-center">
-          {/* Icon cluster */}
-          <div className="flex items-center justify-center gap-3 mb-8">
-            <div className="size-2 rounded-full" style={{ background: "#58D6F1", opacity: 0.3 }} />
-            <div className="size-3 rounded-full" style={{ background: "#58D6F1", opacity: 0.5 }} />
-            <div className="size-14 rounded-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, rgba(0,85,169,0.2), rgba(88,214,241,0.1))", border: "1px solid rgba(88,214,241,0.15)", boxShadow: "0 0 40px rgba(88,214,241,0.1)" }}>
-              <Compass className="size-6" style={{ color: "#58D6F1" }} />
+              {/* One accent action; the alternative is a link, not a rival. */}
+              <div className="flex flex-wrap items-center gap-x-7 gap-y-3">
+                <button
+                  onClick={() => { setEnquirySuccess(false); setEnquiryOpen(true) }}
+                  className="group inline-flex cursor-pointer items-center gap-2.5 px-7 py-3.5 text-sm font-semibold transition-all hover:opacity-90 active:scale-[0.985]"
+                  style={{
+                    background: "var(--action-accent)",
+                    color: "var(--text-on-accent)",
+                    borderRadius: "var(--iyc-radius-sm)",
+                    fontFamily: "var(--font-display)",
+                  }}
+                >
+                  {t("itinerary.cta.enquireNow", "Enquire about this itinerary")}
+                  <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+                </button>
+                <Link
+                  href="/fleet"
+                  className="group inline-flex items-center gap-1.5 text-sm font-semibold transition-colors hover:underline"
+                  style={{ color: "var(--text-link)" }}
+                >
+                  <Ship className="size-4" />
+                  {t("itinerary.cta.browseFleet", "Browse our fleet")}
+                  <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+                </Link>
+              </div>
             </div>
-            <div className="size-3 rounded-full" style={{ background: "#58D6F1", opacity: 0.5 }} />
-            <div className="size-2 rounded-full" style={{ background: "#58D6F1", opacity: 0.3 }} />
-          </div>
 
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-5" style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em", color: "#FFFFFF" }}>
-            {t("itinerary.cta.heading", "Ready to Set Sail?")}
-          </h2>
-          <p className="text-base md:text-lg mb-12 max-w-2xl mx-auto leading-relaxed" style={{ color: "rgba(255,255,255,0.55)" }}>
-            {t("itinerary.cta.body", "Every voyage is unique. Let our team tailor this itinerary to your preferences, or explore our curated fleet of charter yachts.")}
-          </p>
+            {/* The voyage, recapped. Numbers over the itinerary's own picture
+                where it has one; a limestone panel where it does not. */}
+            <div className="relative min-h-[260px] p-9 md:p-10">
+              {itinerary.defaultMedia ? (
+                <>
+                  {isVideoMedia(itinerary.defaultMedia, itinerary.defaultMediaType) ? (
+                    <video src={itinerary.defaultMedia} muted autoPlay loop playsInline preload="metadata"
+                      aria-hidden className="absolute inset-0 h-full w-full object-cover" />
+                  ) : (
+                    <Image src={itinerary.defaultMedia} alt="" fill sizes="(max-width: 768px) 100vw, 520px" className="object-cover" />
+                  )}
+                  {/* Dark at both ends, not just the foot. --scrim-photo is
+                      built for a caption sitting at the bottom of a picture;
+                      here the figures sit at the top, exactly where it fades
+                      out, and they were washing into the water. */}
+                  <div
+                    className="absolute inset-0"
+                    style={{
+                      background:
+                        "linear-gradient(to bottom, rgba(4,13,25,.78) 0%, rgba(4,13,25,.42) 42%, rgba(4,13,25,.86) 100%)",
+                    }}
+                  />
+                </>
+              ) : (
+                <div className="absolute inset-0" style={{ background: "var(--iyc-ionian-900)" }} />
+              )}
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
-              href="/fleet"
-              className="inline-flex items-center gap-2.5 px-8 py-4 rounded-lg text-sm font-semibold text-white transition-all duration-300 hover:shadow-lg hover:scale-[1.02] group"
-              style={{ background: "linear-gradient(135deg, #0055a9, #0077B6)", boxShadow: "0 4px 24px rgba(0,85,169,0.35)" }}
-            >
-              <Ship className="size-4" />
-              {t("itinerary.cta.browseFleet", "Browse Our Fleet")}
-              <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5" />
-            </Link>
-            <button
-              onClick={() => { setEnquirySuccess(false); setEnquiryOpen(true) }}
-              className="inline-flex items-center gap-2.5 px-8 py-4 rounded-lg text-sm font-semibold transition-all duration-300 hover:scale-[1.02] cursor-pointer"
-              style={{ color: "rgba(255,255,255,0.7)", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.03)" }}
-            >
-              {t("itinerary.cta.enquireNow", "Enquire Now")}
-              <ArrowRight className="size-4" />
-            </button>
+              <div className="relative flex h-full flex-col justify-between gap-6">
+                <div className="grid grid-cols-3 gap-4">
+                  {[
+                    [String(itinerary.totalDays), tUpper("itinerary.days", "Days")],
+                    [String(itinerary.totalMiles), tUpper("itinerary.nauticalMiles", "NM")],
+                    [String(stops.length), tUpper("itinerary.stops", "Stops")],
+                  ].map(([v, l]) => (
+                    <div key={l}>
+                      <div
+                        className="text-2xl font-bold leading-none text-white md:text-[28px]"
+                        style={{ fontFamily: "var(--font-display)" }}
+                      >
+                        {v}
+                      </div>
+                      <div
+                        className="iyc-mono mt-1.5 text-[10px] tracking-wider"
+                        style={{ color: "var(--iyc-sand-200)" }}
+                      >
+                        {removeGreekTonos(l)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {places.length > 0 && (
+                  <div>
+                    <div
+                      className="mb-2 text-[10px] font-bold uppercase tracking-[0.12em]"
+                      style={{ color: "var(--iyc-sun-300)" }}
+                    >
+                      {removeGreekTonos(tUpper("itinerary.portsOfCall", "Ports of call"))}
+                    </div>
+                    <p className="text-sm leading-relaxed" style={{ color: "var(--iyc-sand-100)" }}>
+                      {[...new Set(places.map((p) => p.name))].join(" · ")}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -970,31 +1165,31 @@ export function ItineraryDetailClient({ itinerary, mapsKey }: { itinerary: Itine
             {enquirySuccess ? (
               /* ── Success state ─────────────────────────────────────── */
               <div className="relative overflow-hidden">
-                <div className="relative px-8 pt-10 pb-8 text-center" style={{ background: "linear-gradient(135deg, #070c26 0%, #0055a9 60%, #0077cc 100%)" }}>
+                <div className="relative px-8 pt-10 pb-8 text-center" style={{ background: "linear-gradient(135deg, var(--iyc-ionian-900) 0%, var(--iyc-ionian-600) 60%, var(--iyc-ionian-500) 100%)" }}>
                   <div className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")" }} />
                   <button onClick={() => setEnquiryOpen(false)} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition cursor-pointer">
-                    <X className="w-4 h-4 text-white/70" />
+                    <X className="w-4 h-4 text-[var(--text-heading)]/70" />
                   </button>
                   <div className="relative">
                     <div className="w-16 h-16 rounded-full bg-white/15 flex items-center justify-center mx-auto mb-5 backdrop-blur-sm border border-white/20">
-                      <CheckCircle2 className="w-8 h-8 text-white" />
+                      <CheckCircle2 className="w-8 h-8 text-[var(--text-heading)]" />
                     </div>
-                    <h3 className="text-xl font-bold text-white mb-2 tracking-tight">
+                    <h3 className="text-xl font-bold text-[var(--text-heading)] mb-2 tracking-tight" style={{ fontFamily: "var(--font-display)" }}>
                       {enquiryForm.firstName ? `${t("itinerary.enquiry.thankYouName", "Thank You,")} ${enquiryForm.firstName}!` : t("itinerary.enquiry.thankYou", "Thank You!")}
                     </h3>
-                    <p className="text-white/70 text-sm leading-relaxed max-w-sm mx-auto">
-                      {t("itinerary.enquiry.received", "Your enquiry for the")} <span className="text-white font-semibold">{name[locale] || t("itinerary.enquiry.charterItinerary", "charter itinerary")}</span> {t("itinerary.enquiry.hasBeenReceived", "has been received.")}
+                    <p className="text-[var(--text-heading)]/70 text-sm leading-relaxed max-w-sm mx-auto">
+                      {t("itinerary.enquiry.received", "Your enquiry for the")} <span className="text-[var(--text-heading)] font-semibold">{name[locale] || t("itinerary.enquiry.charterItinerary", "charter itinerary")}</span> {t("itinerary.enquiry.hasBeenReceived", "has been received.")}
                     </p>
                   </div>
                 </div>
 
                 <div className="px-8 -mt-4 relative z-10">
-                  <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-5">
-                    <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-100">
-                      <div className="w-11 h-11 rounded-full bg-[#070c26] flex items-center justify-center text-white text-xs font-bold shrink-0">IYC</div>
+                  <div className="bg-white rounded-xl shadow-lg border border-[var(--border-hairline)] p-5">
+                    <div className="flex items-center gap-3 mb-4 pb-4 border-b border-[var(--border-hairline)]">
+                      <div className="w-11 h-11 rounded-full bg-[var(--surface-inverse)] flex items-center justify-center text-white text-xs font-bold shrink-0">IYC</div>
                       <div className="flex-1">
-                        <p className="text-xs font-semibold text-gray-800">{t("itinerary.enquiry.teamName", "IYC Charter Team")}</p>
-                        <p className="text-[10px] text-gray-400">{t("itinerary.enquiry.teamRole", "Charter Advisor")}</p>
+                        <p className="text-xs font-semibold text-[var(--text-body)]">{t("itinerary.enquiry.teamName", "IYC Charter Team")}</p>
+                        <p className="text-[10px] text-[var(--text-subtle)]">{t("itinerary.enquiry.teamRole", "Charter Advisor")}</p>
                       </div>
                       <span className="text-[9px] text-green-600 font-medium flex items-center gap-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
@@ -1004,21 +1199,21 @@ export function ItineraryDetailClient({ itinerary, mapsKey }: { itinerary: Itine
 
                     <div className="space-y-3">
                       <div className="flex items-start gap-3">
-                        <div className="w-6 h-6 rounded-full bg-[#0055a9]/10 flex items-center justify-center shrink-0 mt-0.5">
-                          <Mail className="w-3 h-3 text-[#0055a9]" />
+                        <div className="w-6 h-6 rounded-full bg-[var(--iyc-ionian-600)]/10 flex items-center justify-center shrink-0 mt-0.5">
+                          <Mail className="w-3 h-3 text-[var(--text-link)]" />
                         </div>
                         <div>
-                          <p className="text-xs font-semibold text-gray-800">{t("itinerary.enquiry.confirmationSent", "Confirmation sent")}</p>
-                          <p className="text-[10px] text-gray-400">{t("itinerary.enquiry.checkInbox", "Check your inbox at")} {enquiryForm.email || t("itinerary.enquiry.yourEmail", "your email")}</p>
+                          <p className="text-xs font-semibold text-[var(--text-body)]">{t("itinerary.enquiry.confirmationSent", "Confirmation sent")}</p>
+                          <p className="text-[10px] text-[var(--text-subtle)]">{t("itinerary.enquiry.checkInbox", "Check your inbox at")} {enquiryForm.email || t("itinerary.enquiry.yourEmail", "your email")}</p>
                         </div>
                       </div>
                       <div className="flex items-start gap-3">
-                        <div className="w-6 h-6 rounded-full bg-[#0055a9]/10 flex items-center justify-center shrink-0 mt-0.5">
-                          <CalendarDays className="w-3 h-3 text-[#0055a9]" />
+                        <div className="w-6 h-6 rounded-full bg-[var(--iyc-ionian-600)]/10 flex items-center justify-center shrink-0 mt-0.5">
+                          <CalendarDays className="w-3 h-3 text-[var(--text-link)]" />
                         </div>
                         <div>
-                          <p className="text-xs font-semibold text-gray-800">{t("itinerary.enquiry.proposal24h", "Tailored proposal within 24h")}</p>
-                          <p className="text-[10px] text-gray-400">
+                          <p className="text-xs font-semibold text-[var(--text-body)]">{t("itinerary.enquiry.proposal24h", "Tailored proposal within 24h")}</p>
+                          <p className="text-[10px] text-[var(--text-subtle)]">
                             {selectedMonths.length > 0
                               ? `${t("itinerary.enquiry.availabilityFor", "Availability & pricing for")} ${selectedMonths.map((m) => { const [y, mo] = m.split("-"); return `${MONTH_NAMES[parseInt(mo) - 1]} ${y}` }).join(", ")}`
                               : t("itinerary.enquiry.bestAvailableDates", "Best available dates and pricing options")
@@ -1027,12 +1222,12 @@ export function ItineraryDetailClient({ itinerary, mapsKey }: { itinerary: Itine
                         </div>
                       </div>
                       <div className="flex items-start gap-3">
-                        <div className="w-6 h-6 rounded-full bg-[#0055a9]/10 flex items-center justify-center shrink-0 mt-0.5">
-                          <Anchor className="w-3 h-3 text-[#0055a9]" />
+                        <div className="w-6 h-6 rounded-full bg-[var(--iyc-ionian-600)]/10 flex items-center justify-center shrink-0 mt-0.5">
+                          <Anchor className="w-3 h-3 text-[var(--text-link)]" />
                         </div>
                         <div>
-                          <p className="text-xs font-semibold text-gray-800">{t("itinerary.enquiry.itinerarySuggestions", "Itinerary suggestions included")}</p>
-                          <p className="text-[10px] text-gray-400">{t("itinerary.enquiry.routesCuratedFor", "Routes curated for")} {enquiryGuestCount} {enquiryGuestCount !== 1 ? t("itinerary.enquiry.guests", "guests") : t("itinerary.enquiry.guest", "guest")}</p>
+                          <p className="text-xs font-semibold text-[var(--text-body)]">{t("itinerary.enquiry.itinerarySuggestions", "Itinerary suggestions included")}</p>
+                          <p className="text-[10px] text-[var(--text-subtle)]">{t("itinerary.enquiry.routesCuratedFor", "Routes curated for")} {enquiryGuestCount} {enquiryGuestCount !== 1 ? t("itinerary.enquiry.guests", "guests") : t("itinerary.enquiry.guest", "guest")}</p>
                         </div>
                       </div>
                     </div>
@@ -1040,27 +1235,27 @@ export function ItineraryDetailClient({ itinerary, mapsKey }: { itinerary: Itine
                 </div>
 
                 <div className="px-8 pt-5 pb-8 text-center">
-                  <button onClick={() => setEnquiryOpen(false)} className="px-8 py-3 rounded-xl text-xs font-bold text-white transition-all duration-300 hover:shadow-lg hover:shadow-[#0055a9]/20 active:scale-[0.98] cursor-pointer" style={{ background: "linear-gradient(135deg, #0055a9 0%, #003d7a 100%)" }}>
+                  <button onClick={() => setEnquiryOpen(false)} className="px-8 py-3 rounded-xl text-xs font-bold text-white transition-all duration-300 hover:shadow-lg hover:shadow-[var(--iyc-ionian-600)]/20 active:scale-[0.98] cursor-pointer" style={{ background: "linear-gradient(135deg, var(--iyc-ionian-600) 0%, var(--iyc-ionian-700) 100%)" }}>
                     {t("itinerary.enquiry.continueBrowsing", "Continue Browsing")}
                   </button>
-                  <p className="text-[10px] text-gray-400 mt-3">
-                    {t("itinerary.enquiry.haveQuestions", "Have questions? Call us at")} <span className="font-semibold text-gray-500">+30 210 XXX XXXX</span>
+                  <p className="text-[10px] text-[var(--text-subtle)] mt-3">
+                    {t("itinerary.enquiry.haveQuestions", "Have questions? Call us at")} <span className="font-semibold text-[var(--text-muted)]">+30 210 XXX XXXX</span>
                   </p>
                 </div>
               </div>
             ) : (
               /* ── Enquiry form ──────────────────────────────────────── */
               <>
-                <div className="relative px-6 pt-6 pb-4" style={{ background: "linear-gradient(135deg, #070c26 0%, #0055a9 100%)" }}>
+                <div className="relative px-6 pt-6 pb-4" style={{ background: "linear-gradient(135deg, var(--iyc-ionian-900) 0%, var(--iyc-ionian-600) 100%)" }}>
                   <button onClick={() => setEnquiryOpen(false)} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition cursor-pointer">
                     <X className="w-4 h-4 text-white/70" />
                   </button>
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-full bg-white/15 flex items-center justify-center shrink-0 border border-white/20 p-2">
-                      <Image src="https://iycweb.b-cdn.net/IYC_LOGO_TRANS_white.svg" alt="IYC" width={240} height={80} unoptimized className="w-full h-full object-contain" />
+                      <Image src="/brand/iyc-logo-white.svg" alt="IYC" width={240} height={80} unoptimized className="w-full h-full object-contain" />
                     </div>
                     <div>
-                      <h2 className="text-base font-bold text-white">{t("itinerary.enquiry.formTitle", "Plan Your Itinerary Charter")}</h2>
+                      <h2 className="text-base font-bold text-white" style={{ fontFamily: "var(--font-display)" }}>{t("itinerary.enquiry.formTitle", "Plan Your Itinerary Charter")}</h2>
                       <p className="text-[11px] text-white/60 mt-0.5">{name[locale] || "Custom sailing itinerary"}</p>
                     </div>
                   </div>
@@ -1070,10 +1265,10 @@ export function ItineraryDetailClient({ itinerary, mapsKey }: { itinerary: Itine
                   {/* Preferred period */}
                   <div className="mb-5">
                     <div className="flex items-center gap-2 mb-3">
-                      <CalendarDays className="w-4 h-4 text-[#0055a9]" />
-                      <span className="text-[11px] font-bold text-gray-800 uppercase tracking-wide">{tUpper("itinerary.enquiry.preferredPeriod", "Preferred Period")}</span>
+                      <CalendarDays className="w-4 h-4 text-[var(--text-link)]" />
+                      <span className="text-[11px] font-bold text-[var(--text-body)] uppercase tracking-wide">{tUpper("itinerary.enquiry.preferredPeriod", "Preferred Period")}</span>
                     </div>
-                    <div className="bg-gray-50 rounded-xl p-3.5 border border-gray-100">
+                    <div className="bg-[var(--surface-sunken)] rounded-xl p-3.5 border border-[var(--border-hairline)]">
                       {(() => {
                         const byYear: Record<number, string[]> = {}
                         for (const m of availableMonths) {
@@ -1083,7 +1278,7 @@ export function ItineraryDetailClient({ itinerary, mapsKey }: { itinerary: Itine
                         }
                         return Object.entries(byYear).map(([year, months]) => (
                           <div key={year} className="mb-2 last:mb-0">
-                            <span className="text-[9px] uppercase font-bold text-gray-400 tracking-wider mb-1.5 block">{year}</span>
+                            <span className="text-[9px] uppercase font-bold text-[var(--text-subtle)] tracking-wider mb-1.5 block">{year}</span>
                             <div className="flex flex-wrap gap-1.5">
                               {months.map((m) => {
                                 const selected = selectedMonths.includes(m)
@@ -1096,9 +1291,9 @@ export function ItineraryDetailClient({ itinerary, mapsKey }: { itinerary: Itine
                                     className={`px-2.5 py-1.5 rounded-lg text-[10px] font-semibold transition-all duration-200 cursor-pointer border ${
                                       selected
                                         ? "text-white border-transparent shadow-sm"
-                                        : "border-gray-200 text-gray-500 hover:border-[#0055a9]/40 hover:text-[#0055a9] hover:bg-[#0055a9]/5"
+                                        : "border-[var(--border-hairline)] text-[var(--text-muted)] hover:border-[var(--iyc-ionian-600)]/40 hover:text-[var(--text-link)] hover:bg-[var(--iyc-ionian-600)]/5"
                                     }`}
-                                    style={selected ? { backgroundColor: "#0055a9" } : undefined}
+                                    style={selected ? { backgroundColor: "var(--iyc-ionian-600)" } : undefined}
                                   >
                                     {MONTH_NAMES[monthIdx]}
                                   </button>
@@ -1110,15 +1305,15 @@ export function ItineraryDetailClient({ itinerary, mapsKey }: { itinerary: Itine
                       })()}
 
                       {/* Guests inline */}
-                      <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-200">
+                      <div className="flex items-center justify-between mt-3 pt-3 border-t border-[var(--border-hairline)]">
                         <div className="flex items-center gap-1.5">
-                          <User className="w-3.5 h-3.5 text-gray-400" />
-                          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">{tUpper("itinerary.enquiry.guests", "Guests")}</span>
+                          <User className="w-3.5 h-3.5 text-[var(--text-subtle)]" />
+                          <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wide">{tUpper("itinerary.enquiry.guests", "Guests")}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <button type="button" onClick={() => setEnquiryGuestCount(Math.max(1, enquiryGuestCount - 1))} className="w-6 h-6 rounded-lg border border-gray-200 flex items-center justify-center text-xs text-gray-500 hover:bg-white hover:border-gray-300 transition cursor-pointer">-</button>
-                          <span className="text-xs font-bold w-4 text-center" style={{ color: "#070c26" }}>{enquiryGuestCount}</span>
-                          <button type="button" onClick={() => setEnquiryGuestCount(Math.min(20, enquiryGuestCount + 1))} className="w-6 h-6 rounded-lg border border-gray-200 flex items-center justify-center text-xs text-gray-500 hover:bg-white hover:border-gray-300 transition cursor-pointer">+</button>
+                          <button type="button" onClick={() => setEnquiryGuestCount(Math.max(1, enquiryGuestCount - 1))} className="w-6 h-6 rounded-lg border border-[var(--border-hairline)] flex items-center justify-center text-xs text-[var(--text-muted)] hover:bg-white hover:border-[var(--border-input)] transition cursor-pointer">-</button>
+                          <span className="text-xs font-bold w-4 text-center" style={{ color: "var(--text-heading)" }}>{enquiryGuestCount}</span>
+                          <button type="button" onClick={() => setEnquiryGuestCount(Math.min(20, enquiryGuestCount + 1))} className="w-6 h-6 rounded-lg border border-[var(--border-hairline)] flex items-center justify-center text-xs text-[var(--text-muted)] hover:bg-white hover:border-[var(--border-input)] transition cursor-pointer">+</button>
                         </div>
                       </div>
                     </div>
@@ -1126,39 +1321,39 @@ export function ItineraryDetailClient({ itinerary, mapsKey }: { itinerary: Itine
 
                   {/* Contact fields */}
                   <div className="flex items-center gap-2 mb-3">
-                    <Mail className="w-4 h-4 text-[#0055a9]" />
-                    <span className="text-[11px] font-bold text-gray-800 uppercase tracking-wide">{tUpper("itinerary.enquiry.yourDetails", "Your Details")}</span>
+                    <Mail className="w-4 h-4 text-[var(--text-link)]" />
+                    <span className="text-[11px] font-bold text-[var(--text-body)] uppercase tracking-wide">{tUpper("itinerary.enquiry.yourDetails", "Your Details")}</span>
                   </div>
                   <div className="space-y-3">
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">{tUpper("itinerary.enquiry.firstName", "First Name")} *</label>
-                        <input type="text" value={enquiryForm.firstName} onChange={(e) => setEnquiryForm({ ...enquiryForm, firstName: e.target.value })} placeholder="John" className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[#0055a9] focus:ring-1 focus:ring-[#0055a9]/20 transition bg-gray-50/50" style={{ color: "#070c26" }} />
+                        <label className="block text-[9px] uppercase font-bold text-[var(--text-subtle)] mb-1 tracking-wide">{tUpper("itinerary.enquiry.firstName", "First Name")} *</label>
+                        <input type="text" value={enquiryForm.firstName} onChange={(e) => setEnquiryForm({ ...enquiryForm, firstName: e.target.value })} placeholder="John" className="w-full border border-[var(--border-hairline)] rounded-lg px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[var(--iyc-ionian-600)] focus:ring-1 focus:ring-[var(--iyc-ionian-600)]/20 transition bg-[var(--surface-sunken)]/50" style={{ color: "var(--text-heading)" }} />
                       </div>
                       <div>
-                        <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">{tUpper("itinerary.enquiry.lastName", "Last Name")}</label>
-                        <input type="text" value={enquiryForm.lastName} onChange={(e) => setEnquiryForm({ ...enquiryForm, lastName: e.target.value })} placeholder="Doe" className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[#0055a9] focus:ring-1 focus:ring-[#0055a9]/20 transition bg-gray-50/50" style={{ color: "#070c26" }} />
+                        <label className="block text-[9px] uppercase font-bold text-[var(--text-subtle)] mb-1 tracking-wide">{tUpper("itinerary.enquiry.lastName", "Last Name")}</label>
+                        <input type="text" value={enquiryForm.lastName} onChange={(e) => setEnquiryForm({ ...enquiryForm, lastName: e.target.value })} placeholder="Doe" className="w-full border border-[var(--border-hairline)] rounded-lg px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[var(--iyc-ionian-600)] focus:ring-1 focus:ring-[var(--iyc-ionian-600)]/20 transition bg-[var(--surface-sunken)]/50" style={{ color: "var(--text-heading)" }} />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">{tUpper("itinerary.enquiry.email", "Email")} *</label>
-                      <input type="email" value={enquiryForm.email} onChange={(e) => setEnquiryForm({ ...enquiryForm, email: e.target.value })} placeholder="john@example.com" className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[#0055a9] focus:ring-1 focus:ring-[#0055a9]/20 transition bg-gray-50/50" style={{ color: "#070c26" }} />
+                      <label className="block text-[9px] uppercase font-bold text-[var(--text-subtle)] mb-1 tracking-wide">{tUpper("itinerary.enquiry.email", "Email")} *</label>
+                      <input type="email" value={enquiryForm.email} onChange={(e) => setEnquiryForm({ ...enquiryForm, email: e.target.value })} placeholder="john@example.com" className="w-full border border-[var(--border-hairline)] rounded-lg px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[var(--iyc-ionian-600)] focus:ring-1 focus:ring-[var(--iyc-ionian-600)]/20 transition bg-[var(--surface-sunken)]/50" style={{ color: "var(--text-heading)" }} />
                     </div>
                     <div>
-                      <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">{tUpper("itinerary.enquiry.phone", "Phone")}</label>
-                      <input type="tel" value={enquiryForm.phone} onChange={(e) => setEnquiryForm({ ...enquiryForm, phone: e.target.value })} placeholder="+30 123 456 7890" className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[#0055a9] focus:ring-1 focus:ring-[#0055a9]/20 transition bg-gray-50/50" style={{ color: "#070c26" }} />
+                      <label className="block text-[9px] uppercase font-bold text-[var(--text-subtle)] mb-1 tracking-wide">{tUpper("itinerary.enquiry.phone", "Phone")}</label>
+                      <input type="tel" value={enquiryForm.phone} onChange={(e) => setEnquiryForm({ ...enquiryForm, phone: e.target.value })} placeholder="+30 123 456 7890" className="w-full border border-[var(--border-hairline)] rounded-lg px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[var(--iyc-ionian-600)] focus:ring-1 focus:ring-[var(--iyc-ionian-600)]/20 transition bg-[var(--surface-sunken)]/50" style={{ color: "var(--text-heading)" }} />
                     </div>
                     <div>
-                      <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">{tUpper("itinerary.enquiry.specialRequests", "Special Requests")}</label>
-                      <textarea value={enquiryForm.notes} onChange={(e) => setEnquiryForm({ ...enquiryForm, notes: e.target.value })} placeholder={t("itinerary.enquiry.specialRequestsPlaceholder", "Celebrations, dietary needs, preferred destinations...")} rows={3} className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[#0055a9] focus:ring-1 focus:ring-[#0055a9]/20 transition resize-none bg-gray-50/50" style={{ color: "#070c26" }} />
+                      <label className="block text-[9px] uppercase font-bold text-[var(--text-subtle)] mb-1 tracking-wide">{tUpper("itinerary.enquiry.specialRequests", "Special Requests")}</label>
+                      <textarea value={enquiryForm.notes} onChange={(e) => setEnquiryForm({ ...enquiryForm, notes: e.target.value })} placeholder={t("itinerary.enquiry.specialRequestsPlaceholder", "Celebrations, dietary needs, preferred destinations...")} rows={3} className="w-full border border-[var(--border-hairline)] rounded-lg px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[var(--iyc-ionian-600)] focus:ring-1 focus:ring-[var(--iyc-ionian-600)]/20 transition resize-none bg-[var(--surface-sunken)]/50" style={{ color: "var(--text-heading)" }} />
                     </div>
                   </div>
 
                   <button
                     onClick={handleSubmitEnquiry}
                     disabled={!enquiryForm.firstName || !enquiryForm.email || enquirySubmitting}
-                    className="w-full text-white py-3.5 rounded-xl text-xs font-bold transition-all duration-300 mt-5 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer hover:shadow-lg hover:shadow-[#0055a9]/20 active:scale-[0.98]"
-                    style={{ background: "linear-gradient(135deg, #0055a9 0%, #003d7a 100%)" }}
+                    className="w-full text-white py-3.5 rounded-xl text-xs font-bold transition-all duration-300 mt-5 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer hover:shadow-lg hover:shadow-[var(--iyc-ionian-600)]/20 active:scale-[0.98]"
+                    style={{ background: "linear-gradient(135deg, var(--iyc-ionian-600) 0%, var(--iyc-ionian-700) 100%)" }}
                   >
                     {enquirySubmitting ? (
                       <>
@@ -1172,7 +1367,7 @@ export function ItineraryDetailClient({ itinerary, mapsKey }: { itinerary: Itine
                       </>
                     )}
                   </button>
-                  <p className="text-center text-[10px] text-gray-400 mt-2.5">{t("itinerary.enquiry.noCommitment", "No commitment required")} &middot; {t("itinerary.enquiry.responseTime", "Response within 24h")}</p>
+                  <p className="text-center text-[10px] text-[var(--text-subtle)] mt-2.5">{t("itinerary.enquiry.noCommitment", "No commitment required")} &middot; {t("itinerary.enquiry.responseTime", "Response within 24h")}</p>
                 </div>
               </>
             )}

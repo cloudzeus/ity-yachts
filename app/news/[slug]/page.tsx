@@ -49,7 +49,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
     <main>
       <div
         className="relative z-10 min-h-screen"
-        style={{ background: "#060c27", clipPath: "polygon(0% 0, 100% 0%, 100% 100%, 0 100%)" }}
+        style={{ background: "var(--surface-page)", clipPath: "polygon(0% 0, 100% 0%, 100% 100%, 0 100%)" }}
       >
         <SiteHeader />
 
@@ -72,10 +72,10 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
                 sizes="100vw"
               />
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#060c27] via-[#060c27]/40 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#05111F] via-[#05111F]/40 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-8 md:p-16 max-w-4xl mx-auto">
               {categoryObj?.en && (
-                <span className="inline-block px-3 py-1 text-[10px] font-semibold uppercase tracking-wider rounded-full bg-[#83776d]/90 text-white mb-4">
+                <span className="inline-block px-3 py-1 text-[10px] font-semibold uppercase tracking-wider rounded-full bg-[var(--iyc-taupe-500)]/90 text-white mb-4">
                   <LocaleText translations={categoryObj} uppercase />
                 </span>
               )}
@@ -100,7 +100,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
           <section className="pt-32 pb-8 px-6">
             <div className="max-w-4xl mx-auto">
               {categoryObj?.en && (
-                <span className="inline-block px-3 py-1 text-[10px] font-semibold uppercase tracking-wider rounded-full bg-[#83776d]/90 text-white mb-4">
+                <span className="inline-block px-3 py-1 text-[10px] font-semibold uppercase tracking-wider rounded-full bg-[var(--iyc-taupe-500)]/90 text-white mb-4">
                   <LocaleText translations={categoryObj} uppercase />
                 </span>
               )}
@@ -125,14 +125,14 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
           <div className="max-w-4xl mx-auto">
             <Link
               href="/news"
-              className="inline-flex items-center gap-2 text-sm text-[#83776d] hover:text-[#83776d]/80 transition-colors mb-8"
+              className="inline-flex items-center gap-2 text-sm text-[var(--text-subtle)] hover:text-[var(--text-subtle)]/80 transition-colors mb-8"
             >
               <ArrowLeft className="size-4" />
               <LocaleText tKey="news.backToNews" fallback="Back to News" />
             </Link>
 
             {shortDescObj?.en && (
-              <p className="text-xl leading-relaxed text-white/70 mb-10 border-l-2 border-[#83776d] pl-6">
+              <p className="text-xl leading-relaxed text-white/70 mb-10 border-l-2 border-[var(--border-default)] pl-6">
                 <LocaleText translations={shortDescObj} />
               </p>
             )}

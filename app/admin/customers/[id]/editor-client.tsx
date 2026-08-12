@@ -528,8 +528,8 @@ export function CustomerEditorClient({ customer }: Props) {
                           className="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-full border transition-colors"
                           style={{
                             background: active ? "rgba(33,150,243,0.12)" : "transparent",
-                            borderColor: active ? "#1976D2" : "var(--outline-variant)",
-                            color: active ? "#1976D2" : "var(--on-surface-variant)",
+                            borderColor: active ? "#0F79BE" : "var(--outline-variant)",
+                            color: active ? "#0F79BE" : "var(--on-surface-variant)",
                           }}
                         >
                           {cert}

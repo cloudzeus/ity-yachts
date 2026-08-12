@@ -164,10 +164,10 @@ function RangeCalendar({
           onClick={() => handleDayClick(date)}
           className={`
             h-8 w-8 text-[13px] rounded-full transition-all
-            ${isPast ? "text-gray-300 cursor-not-allowed" : "hover:bg-[#006399]/10 cursor-pointer"}
-            ${isStart || isEnd ? "bg-[#006399] text-white font-semibold" : ""}
-            ${inRange ? "bg-[#006399]/10 text-[#006399]" : ""}
-            ${!isStart && !isEnd && !inRange && !isPast ? "text-gray-700" : ""}
+            ${isPast ? "text-[var(--border-strong)] cursor-not-allowed" : "hover:bg-[var(--iyc-ionian-600)]/10 cursor-pointer"}
+            ${isStart || isEnd ? "bg-[var(--iyc-ionian-600)] text-white font-semibold" : ""}
+            ${inRange ? "bg-[var(--iyc-ionian-600)]/10 text-[var(--text-link)]" : ""}
+            ${!isStart && !isEnd && !inRange && !isPast ? "text-[var(--text-body)]" : ""}
           `}
         >
           {d}
@@ -177,12 +177,12 @@ function RangeCalendar({
 
     return (
       <div>
-        <div className="text-center font-semibold text-[13px] text-gray-800 mb-2" style={{ fontFamily: "var(--font-display)" }}>
+        <div className="text-center font-semibold text-[13px] text-[var(--text-body)] mb-2" style={{ fontFamily: "var(--font-display)" }}>
           {MONTHS[month]} {year}
         </div>
         <div className="grid grid-cols-7 gap-0 mb-0.5">
           {DAYS.map((day) => (
-            <div key={day} className="h-7 flex items-center justify-center text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+            <div key={day} className="h-7 flex items-center justify-center text-[10px] font-semibold uppercase tracking-wider text-[var(--text-subtle)]">
               {day}
             </div>
           ))}
@@ -197,10 +197,10 @@ function RangeCalendar({
   return (
     <div className="p-4">
       <div className="flex items-center justify-between mb-3">
-        <button onClick={prevMonth} className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-gray-100 text-gray-500">
+        <button onClick={prevMonth} className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-[var(--surface-sunken)] text-[var(--text-muted)]">
           <ChevronLeft className="w-4 h-4" />
         </button>
-        <button onClick={nextMonth} className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-gray-100 text-gray-500">
+        <button onClick={nextMonth} className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-[var(--surface-sunken)] text-[var(--text-muted)]">
           <ChevronRight className="w-4 h-4" />
         </button>
       </div>
@@ -208,11 +208,11 @@ function RangeCalendar({
         {renderMonth(viewYear, viewMonth)}
         {renderMonth(nextViewYear, nextViewMonth)}
       </div>
-      <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
-        <span className="text-xs text-gray-500">{t("search.flexibleDates", "Flexible dates (+/- 3 days)")}</span>
+      <div className="mt-3 pt-3 border-t border-[var(--border-hairline)] flex items-center justify-between">
+        <span className="text-xs text-[var(--text-muted)]">{t("search.flexibleDates", "Flexible dates (+/- 3 days)")}</span>
         <button
           onClick={onFlexibleToggle}
-          className={`w-9 h-5 rounded-full transition-colors relative ${flexibleDates ? "bg-[#006399]" : "bg-gray-200"}`}
+          className={`w-9 h-5 rounded-full transition-colors relative ${flexibleDates ? "bg-[var(--iyc-ionian-500)]" : "bg-[var(--iyc-sand-300)]"}`}
         >
           <div className={`absolute top-[3px] w-3.5 h-3.5 rounded-full bg-white shadow transition-transform ${flexibleDates ? "translate-x-[18px]" : "translate-x-[3px]"}`} />
         </button>
@@ -282,11 +282,25 @@ export function CharterSearchForm() {
     : t("search.selectDates", "Select dates")
 
   const bottomFields: SearchField[] = [
-    { icon: Wallet, label: "Budget", key: "budget", options: BUDGET_RANGES },
-    { icon: Users, label: "Guests", key: "guests", options: GUESTS },
+    { icon: Users, label: "Berths", key: "guests", options: GUESTS },
     { icon: DoorOpen, label: "Cabins", key: "cabins", options: CABINS },
     { icon: Ruler, label: "Length", key: "length", options: LENGTH_RANGES },
   ]
+
+  // The bar sits low in the hero, so a panel opening downward can fall off the
+  // bottom of the screen. Measure the room under the trigger and flip upward
+  // when the panel wouldn't fit.
+  const [dropUp, setDropUp] = useState(false)
+  const toggleDropdown = (key: string, e: React.MouseEvent) => {
+    if (activeDropdown === key) {
+      setActiveDropdown(null)
+      return
+    }
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+    const needed = key === "dates" ? 430 : 240
+    setDropUp(window.innerHeight - rect.bottom < needed)
+    setActiveDropdown(key)
+  }
 
   const yachtTypeOption = YACHT_TYPES.find((o) => o.value === values.yachtType)
   const yachtTypeOpen = activeDropdown === "yachtType"
@@ -294,37 +308,38 @@ export function CharterSearchForm() {
   return (
     <div ref={formRef} className="w-full max-w-5xl mx-auto" style={{ opacity: 0 }}>
       <div
-        className="rounded-lg overflow-visible"
+        className="rounded-[var(--iyc-radius-lg)] overflow-visible"
         style={{
-          background: "rgba(255, 255, 255, 0.85)",
-          backdropFilter: "blur(20px)",
-          border: "1px solid #d1d5db",
-          boxShadow: "0 12px 48px rgba(0, 10, 30, 0.25), 0 4px 16px rgba(0, 10, 30, 0.12)",
+          background: "rgba(255, 255, 255, 0.92)",
+          backdropFilter: "blur(18px)",
+          border: "1px solid rgba(255,255,255,0.6)",
+          boxShadow: "var(--shadow-photo)",
         }}
       >
-        {/* Row 1: Dates + Yacht Type + Search */}
-        <div className="flex flex-col md:flex-row items-stretch">
+        {/* One row, as in the design: charter week · yacht type · berths ·
+            cabins · length · search. Stacks on small screens. */}
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-[1.6fr_1.15fr_.9fr_.9fr_.95fr_auto] items-stretch">
           {/* Date Range */}
-          <div className="relative flex-1">
+          <div className="relative md:col-span-2 lg:col-span-1">
             <button
-              onClick={() => setActiveDropdown(activeDropdown === "dates" ? null : "dates")}
-              className="w-full h-full flex items-center gap-3 px-5 py-3.5 text-left transition-colors hover:bg-black/[0.03] border-b md:border-b-0 md:border-r border-gray-300"
+              onClick={(e) => toggleDropdown("dates", e)}
+              className="w-full h-full flex items-center gap-3 px-5 py-3.5 text-left transition-colors hover:bg-black/[0.03] border-b md:border-b-0 md:border-r border-[var(--border-hairline)]"
             >
-              <CalendarDays className="w-[18px] h-[18px] text-[#006399] shrink-0" />
+              <CalendarDays className="w-[18px] h-[18px] text-[var(--text-link)] shrink-0" />
               <div className="flex-1">
-                <div className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-0.5">
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-subtle)] mb-0.5">
                   {removeGreekTonos(t("search.charterDates", "Charter Dates"))}
                 </div>
-                <div className="text-[13px] text-gray-800 font-medium whitespace-nowrap">
+                <div className="text-[13px] text-[var(--text-body)] font-medium whitespace-nowrap">
                   {dateLabel}
                 </div>
               </div>
-              <ChevronDown className={`w-3.5 h-3.5 text-[#0055a9] transition-transform ${activeDropdown === "dates" ? "rotate-180" : ""}`} />
+              <ChevronDown className={`w-3.5 h-3.5 text-[var(--text-link)] transition-transform ${activeDropdown === "dates" ? "rotate-180" : ""}`} />
             </button>
 
             {activeDropdown === "dates" && (
               <div
-                className="absolute top-full left-0 z-50 mt-1 rounded-lg shadow-2xl border border-gray-100"
+                className={`absolute left-0 z-50 ${dropUp ? "bottom-full mb-1" : "top-full mt-1"} rounded-[var(--iyc-radius-lg)] shadow-[var(--shadow-lg)] border border-[var(--border-hairline)]`}
                 style={{ background: "white", minWidth: "min(520px, 92vw)" }}
               >
                 <RangeCalendar
@@ -339,36 +354,36 @@ export function CharterSearchForm() {
           </div>
 
           {/* Yacht Type — wider with nowrap */}
-          <div className="relative" style={{ minWidth: "180px" }}>
+          <div className="relative min-w-0 lg:min-w-[180px]">
             <button
-              onClick={() => setActiveDropdown(yachtTypeOpen ? null : "yachtType")}
-              className="w-full h-full flex items-center gap-2.5 px-5 py-3.5 text-left transition-colors hover:bg-black/[0.03] border-b md:border-b-0 md:border-r border-gray-300"
+              onClick={(e) => toggleDropdown("yachtType", e)}
+              className="w-full h-full flex items-center gap-2.5 px-5 py-3.5 text-left transition-colors hover:bg-black/[0.03] border-b md:border-b-0 md:border-r border-[var(--border-hairline)]"
             >
-              <Ship className="w-[18px] h-[18px] text-[#006399] shrink-0" />
+              <Ship className="w-[18px] h-[18px] text-[var(--text-link)] shrink-0" />
               <div className="flex-1">
-                <div className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-0.5">
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-subtle)] mb-0.5">
                   {removeGreekTonos(t("search.yachtType", "Yacht Type"))}
                 </div>
-                <div className="text-[13px] text-gray-700 font-medium whitespace-nowrap">
+                <div className="text-[13px] text-[var(--text-body)] font-medium whitespace-nowrap">
                   {yachtTypeOption?.label || "All Types"}
                 </div>
               </div>
-              <ChevronDown className={`w-3.5 h-3.5 text-[#0055a9] transition-transform ${yachtTypeOpen ? "rotate-180" : ""}`} />
+              <ChevronDown className={`w-3.5 h-3.5 text-[var(--text-link)] transition-transform ${yachtTypeOpen ? "rotate-180" : ""}`} />
             </button>
 
             {yachtTypeOpen && (
               <div
-                className="absolute top-full left-0 z-50 min-w-[200px] py-1 mt-1 rounded-lg shadow-2xl border border-gray-100"
+                className={`absolute left-0 z-50 min-w-[200px] py-1 ${dropUp ? "bottom-full mb-1" : "top-full mt-1"} rounded-[var(--iyc-radius-lg)] shadow-[var(--shadow-lg)] border border-[var(--border-hairline)]`}
                 style={{ background: "white" }}
               >
                 {YACHT_TYPES.map((option) => (
                   <button
                     key={option.value}
                     onClick={() => handleSelect("yachtType", option.value)}
-                    className={`w-full text-left px-4 py-2.5 text-[13px] transition-colors hover:bg-gray-50 ${
+                    className={`w-full text-left px-4 py-2.5 text-[13px] transition-colors hover:bg-[var(--surface-sunken)] ${
                       values.yachtType === option.value
-                        ? "text-[#006399] font-medium bg-[#006399]/5"
-                        : "text-gray-600"
+                        ? "text-[var(--text-link)] font-medium bg-[var(--iyc-ionian-600)]/5"
+                        : "text-[var(--text-muted)]"
                     }`}
                   >
                     {option.label}
@@ -378,60 +393,44 @@ export function CharterSearchForm() {
             )}
           </div>
 
-          {/* Search Button */}
-          <button
-            onClick={handleSearch}
-            className="flex items-center justify-center gap-2.5 px-8 py-3.5 text-white font-semibold text-sm transition-all hover:brightness-110 md:rounded-tr-lg shrink-0"
-            style={{
-              background: "var(--gradient-ocean)",
-              fontFamily: "var(--font-display)",
-            }}
-          >
-            <Search className="w-4 h-4" />
-            {t("search.searchYachts", "Search Yachts")}
-          </button>
-        </div>
-
-        {/* Row 2: Budget + Guests + Cabins + Length */}
-        <div className="grid grid-cols-2 md:grid-cols-4 border-t border-gray-300">
           {bottomFields.map((field) => {
             const Icon = field.icon
             const selectedOption = field.options.find((o) => o.value === values[field.key])
             const isOpen = activeDropdown === field.key
 
             return (
-              <div key={field.key} className="relative">
+              <div key={field.key} className="relative min-w-0">
                 <button
-                  onClick={() => setActiveDropdown(isOpen ? null : field.key)}
-                  className="w-full flex items-center gap-2 px-4 py-3 text-left transition-colors hover:bg-black/[0.03] border-r border-b md:border-b-0 border-gray-300 last:border-r-0"
+                  onClick={(e) => toggleDropdown(field.key, e)}
+                  className="w-full flex items-center gap-2 px-4 py-3 text-left transition-colors hover:bg-black/[0.03] border-r border-b md:border-b-0 border-[var(--border-input)] last:border-r-0"
                 >
-                  <Icon className="w-4 h-4 text-[#006399] shrink-0" />
+                  <Icon className="w-4 h-4 text-[var(--text-link)] shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <div className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+                    <div className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-subtle)]">
                       {field.label}
                     </div>
-                    <div className="text-[13px] text-gray-700 font-medium truncate mt-0.5">
+                    <div className="text-[13px] text-[var(--text-body)] font-medium truncate mt-0.5">
                       {selectedOption?.label || field.options[0]?.label}
                     </div>
                   </div>
                   <ChevronDown
-                    className={`w-3 h-3 text-[#0055a9] transition-transform ${isOpen ? "rotate-180" : ""}`}
+                    className={`w-3 h-3 text-[var(--text-link)] transition-transform ${isOpen ? "rotate-180" : ""}`}
                   />
                 </button>
 
                 {isOpen && (
                   <div
-                    className="absolute top-full left-0 z-50 min-w-[180px] py-1 mt-1 rounded-lg shadow-2xl border border-gray-100"
+                    className={`absolute left-0 z-50 min-w-[180px] py-1 ${dropUp ? "bottom-full mb-1" : "top-full mt-1"} rounded-[var(--iyc-radius-lg)] shadow-[var(--shadow-lg)] border border-[var(--border-hairline)]`}
                     style={{ background: "white" }}
                   >
                     {field.options.map((option) => (
                       <button
                         key={option.value}
                         onClick={() => handleSelect(field.key, option.value)}
-                        className={`w-full text-left px-4 py-2 text-[13px] transition-colors hover:bg-gray-50 ${
+                        className={`w-full text-left px-4 py-2 text-[13px] transition-colors hover:bg-[var(--surface-sunken)] ${
                           values[field.key] === option.value
-                            ? "text-[#006399] font-medium bg-[#006399]/5"
-                            : "text-gray-600"
+                            ? "text-[var(--text-link)] font-medium bg-[var(--iyc-ionian-600)]/5"
+                            : "text-[var(--text-muted)]"
                         }`}
                       >
                         {option.label}
@@ -442,6 +441,20 @@ export function CharterSearchForm() {
               </div>
             )
           })}
+
+          {/* Search — the one accent action, last cell of the row */}
+          <button
+            onClick={handleSearch}
+            className="flex items-center justify-center gap-2.5 px-8 py-3.5 font-semibold text-sm transition-all cursor-pointer shrink-0 active:scale-[0.985] md:col-span-3 lg:col-span-1 lg:rounded-r-[var(--iyc-radius-lg)]"
+            style={{
+              background: "var(--action-accent)",
+              color: "var(--text-on-accent)",
+              fontFamily: "var(--font-display)",
+            }}
+          >
+            <Search className="w-4 h-4" />
+            {t("search.searchYachts", "Search")}
+          </button>
         </div>
       </div>
     </div>

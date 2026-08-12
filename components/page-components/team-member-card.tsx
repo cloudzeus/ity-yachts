@@ -21,7 +21,7 @@ export function TeamMemberCard({ name, position, image, variant = "minimal" }: T
     >
       {/* Avatar */}
       <div className="relative mb-4">
-        <div className="rounded-full ring-0 group-hover:ring-[6px] ring-[#1e3a5f]/10 transition-all duration-300 ease-out">
+        <div className="rounded-full ring-0 group-hover:ring-[6px] ring-[#0B3A5C]/10 transition-all duration-300 ease-out">
           <div className="relative w-20 h-20 lg:w-24 lg:h-24 rounded-full overflow-hidden bg-[#f0f2f5] shadow-sm">
             {image ? (
               <Image
@@ -37,7 +37,7 @@ export function TeamMemberCard({ name, position, image, variant = "minimal" }: T
                 )}
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-[#1e3a5f]/30">
+              <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-[var(--action-primary)]/30">
                 {name.charAt(0)}
               </div>
             )}
@@ -46,12 +46,12 @@ export function TeamMemberCard({ name, position, image, variant = "minimal" }: T
       </div>
 
       {/* Name */}
-      <h3 className="text-[14px] font-semibold text-[#1e3a5f] leading-tight transition-colors duration-300">
+      <h3 className="text-[14px] font-semibold text-[var(--action-primary)] leading-tight transition-colors duration-300">
         {name}
       </h3>
 
       {/* Position */}
-      <div className="flex items-center justify-center gap-1.5 mt-1 text-[#1e3a5f]/60 transition-colors duration-300 group-hover:text-[#1e3a5f]/80">
+      <div className="flex items-center justify-center gap-1.5 mt-1 text-[var(--action-primary)]/60 transition-colors duration-300 group-hover:text-[var(--action-primary)]/80">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           className="w-3 h-3"

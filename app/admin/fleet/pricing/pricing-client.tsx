@@ -29,12 +29,12 @@ type Props = {
 /* ── Period colors — each price period gets a distinct band ── */
 
 const PERIOD_BANDS = [
-  { bg: "#E8F4F8", text: "#1B4965", head: "#1B4965" },
+  { bg: "#E8F4F8", text: "#0B3A5C", head: "#0B3A5C" },
   { bg: "#FFF3E0", text: "#8B5E34", head: "#D4A373" },
-  { bg: "#E8F5E9", text: "#1B5E20", head: "#2E7D32" },
+  { bg: "#E8F5E9", text: "#436A3B", head: "#2E7D32" },
   { bg: "#F3E5F5", text: "#6A1B9A", head: "#8E24AA" },
-  { bg: "#FFF8E1", text: "#E65100", head: "#FF8F00" },
-  { bg: "#E3F2FD", text: "#0D47A1", head: "#1565C0" },
+  { bg: "#FBF0E0", text: "#E65100", head: "#FF8F00" },
+  { bg: "#EAF4FB", text: "#0D47A1", head: "#0B6099" },
   { bg: "#FCE4EC", text: "#880E4F", head: "#C2185B" },
   { bg: "#E0F2F1", text: "#004D40", head: "#00796B" },
   { bg: "#FBE9E7", text: "#BF360C", head: "#E64A19" },

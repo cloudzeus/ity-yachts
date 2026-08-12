@@ -37,7 +37,7 @@ export function SiteHeader() {
       if (isScrolled !== scrolled) {
         setScrolled(isScrolled)
         gsap.to(header, {
-          backgroundColor: isScrolled ? "rgba(6, 12, 39, 0.95)" : "transparent",
+          backgroundColor: isScrolled ? "rgba(4,13,25,0.95)" : "transparent",
           backdropFilter: isScrolled ? "blur(12px)" : "none",
           duration: 0.4,
           ease: "power2.out",
@@ -94,14 +94,18 @@ export function SiteHeader() {
   return (
     <>
       <style jsx global>{`
+        /* The header CTA is the accent button in the system: sunset amber
+           with DARK text (white on #E2963C is 2.42:1 and fails AA). */
         .btn-plan {
-          background: #fff;
-          color: #060c27;
-          transition: background 0.25s ease, color 0.25s ease;
+          background: var(--action-accent);
+          color: var(--text-on-accent);
+          transition: background var(--dur-fast) var(--ease-out);
         }
         .btn-plan:hover {
-          background: #84776e !important;
-          color: #fff !important;
+          background: var(--action-accent-hover) !important;
+        }
+        .btn-plan:active {
+          transform: scale(var(--press-scale));
         }
       `}</style>
       <header
@@ -114,7 +118,7 @@ export function SiteHeader() {
           <Link href="/" className="relative z-10 shrink-0">
             <Image
               ref={logoRef}
-              src="https://iycweb.b-cdn.net/IYC_LOGO_TRANS_white.svg"
+              src="/brand/iyc-logo-white.svg"
               alt="IYC Yachts"
               width={140}
               height={56}
@@ -202,7 +206,7 @@ export function SiteHeader() {
         {/* Mobile menu */}
         <div
           ref={mobileMenuRef}
-          className="hidden flex-col bg-[#060c27] px-6 pb-8 pt-4 lg:hidden"
+          className="hidden flex-col bg-[var(--surface-inverse)] px-6 pb-8 pt-4 lg:hidden"
           style={{ display: "none" }}
         >
           <div ref={menuItemsRef} className="flex flex-col gap-1">

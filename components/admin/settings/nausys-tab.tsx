@@ -111,7 +111,7 @@ export function NausysTab({ initialData }: { initialData?: Partial<NausysData> }
       <div className="rounded-lg p-5 flex flex-col gap-4" style={{ background: "var(--surface-container-lowest)", boxShadow: "var(--shadow-ambient)", border: "1px solid var(--outline-variant)" }}>
         <div className="flex items-center gap-3 pb-3" style={{ borderBottom: "1px solid var(--outline-variant)" }}>
           <div className="size-8 rounded-md flex items-center justify-center" style={{ background: testResult?.ok ? "rgba(45,106,79,0.15)" : "var(--secondary)", borderRadius: "var(--radius-xs)" }}>
-            {testResult?.ok ? <Wifi className="size-4" style={{ color: "#2D6A4F" }} /> : <WifiOff className="size-4 text-white" />}
+            {testResult?.ok ? <Wifi className="size-4" style={{ color: "#4F7A46" }} /> : <WifiOff className="size-4 text-white" />}
           </div>
           <div>
             <p className="text-sm font-semibold" style={{ color: "var(--primary)", fontFamily: "var(--font-display)" }}>Connection Status</p>
@@ -125,7 +125,7 @@ export function NausysTab({ initialData }: { initialData?: Partial<NausysData> }
             style={{
               background: testResult.ok ? "rgba(45,106,79,0.08)" : "rgba(186,26,26,0.08)",
               border: `1px solid ${testResult.ok ? "rgba(45,106,79,0.25)" : "rgba(186,26,26,0.25)"}`,
-              color: testResult.ok ? "#2D6A4F" : "var(--error)",
+              color: testResult.ok ? "#4F7A46" : "var(--error)",
             }}
           >
             {testResult.ok ? <Wifi className="size-3.5 mt-0.5 shrink-0" /> : <WifiOff className="size-3.5 mt-0.5 shrink-0" />}

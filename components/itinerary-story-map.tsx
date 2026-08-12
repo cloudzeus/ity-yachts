@@ -20,7 +20,7 @@ export type StoryPoint = {
   images: string[]
 }
 
-const LOGO_URL = "https://iycweb.b-cdn.net/IYC_LOGO_TRANS_white.svg"
+const LOGO_URL = "/brand/iyc-logo-white.svg"
 
 /* ─── Route polyline + strict bounds enforcement ────────────────────────── */
 function RouteAndPan({
@@ -88,18 +88,22 @@ function RouteAndPan({
     glowRef.current = new google.maps.Polyline({
       path,
       geodesic: true,
-      strokeColor: "#58D6F1",
-      strokeOpacity: 0.12,
-      strokeWeight: 10,
+      // --iyc-ionian-200. Literal on purpose: google.maps does not resolve
+      // CSS variables, and a var() here renders as black.
+      strokeColor: "#9CCBEC",
+      strokeOpacity: 0.22,
+      strokeWeight: 12,
       map,
     })
 
     polyRef.current = new google.maps.Polyline({
       path,
       geodesic: true,
-      strokeColor: "#006399",
-      strokeOpacity: 0.6,
-      strokeWeight: 2.5,
+      // --iyc-ionian-300, the lightest step that still holds a line against
+      // the dark map. ionian-600 disappeared into the water.
+      strokeColor: "#5FAEDF",
+      strokeOpacity: 0.95,
+      strokeWeight: 3,
       map,
     })
 
@@ -268,7 +272,7 @@ function LogoMarker({
             top: "50%",
             marginLeft: -28,
             marginTop: -28,
-            background: "rgba(88, 214, 241, 0.12)",
+            background: "rgba(95, 174, 223, 0.12)",
             animation: "ping 2.5s cubic-bezier(0, 0, 0.2, 1) infinite",
           }}
         />
@@ -282,9 +286,9 @@ function LogoMarker({
             top: "50%",
             marginLeft: -22,
             marginTop: -22,
-            background: "linear-gradient(135deg, rgba(0,99,153,0.9), rgba(0,33,71,0.95))",
-            border: "2px solid rgba(88, 214, 241, 0.5)",
-            boxShadow: "0 0 30px rgba(88, 214, 241, 0.35), 0 0 12px rgba(88, 214, 241, 0.2), 0 4px 16px rgba(0,0,0,0.5)",
+            background: "linear-gradient(135deg, rgba(0,99,153,0.9), rgba(4,13,25,0.95))",
+            border: "2px solid rgba(95, 174, 223, 0.5)",
+            boxShadow: "0 0 30px rgba(95, 174, 223, 0.35), 0 0 12px rgba(95, 174, 223, 0.2), 0 4px 16px rgba(0,0,0,0.5)",
             zIndex: 10,
           }}
         >
@@ -305,10 +309,10 @@ function LogoMarker({
             left: "50%",
             transform: "translateX(-50%)",
             top: "calc(50% + 30px)",
-            background: "rgba(6, 12, 39, 0.88)",
-            border: "1px solid rgba(88, 214, 241, 0.15)",
+            background: "rgba(4,13,25,0.88)",
+            border: "1px solid rgba(95, 174, 223, 0.15)",
             backdropFilter: "blur(8px)",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+            boxShadow: "var(--shadow-md)",
             zIndex: 10,
           }}
         >
@@ -352,7 +356,7 @@ function InactiveMarker({
         <div
           className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1 whitespace-nowrap px-2 py-0.5 rounded-sm text-[9px] font-medium text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
           style={{
-            background: "rgba(6, 12, 39, 0.85)",
+            background: "rgba(4,13,25,0.85)",
             border: "1px solid rgba(255,255,255,0.08)",
           }}
         >
@@ -379,7 +383,7 @@ export function ItineraryStoryMap({ points, activeIndex, onPointClick, onImageCl
 
   if (!apiKey || points.length === 0) {
     return (
-      <div className={`relative flex items-center justify-center bg-[#060c27] ${className || ""}`}>
+      <div className={`relative flex items-center justify-center bg-[var(--surface-inverse)] ${className || ""}`}>
         <p className="text-white/20 text-sm">Map unavailable</p>
       </div>
     )

@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { ChevronDown, ChevronRight, Plus, Trash2 } from "lucide-react"
+import { MottoPicker } from "@/components/admin/motto-picker"
 
 const LANGS = ["en", "el", "de"] as const
 const LANG_LABELS: Record<string, string> = { en: "EN", el: "EL", de: "DE" }
@@ -181,6 +182,22 @@ export function ContactContentEditor({ props, onChange }: ContactContentEditorPr
 
       {/* ── Hero ─────────────────────────────────────────────── */}
       <Section title="Hero Section" expanded={expanded === "hero"} onToggle={() => toggle("hero")}>
+        {/* Same mottos as everywhere else. Heading fills the title,
+            subheading the subtitle; the fields stay editable after. */}
+        <div className="mb-2 flex justify-end">
+          <MottoPicker
+            label="Fill from a motto"
+            onApply={(m) =>
+              update("hero", {
+                ...hero,
+                title: m.heading,
+                subtitle: m.subheading,
+                ...(Object.values(m.subtext ?? {}).some(Boolean) ? { badge: m.subtext } : {}),
+              })
+            }
+          />
+        </div>
+
         <TField label="Badge" value={hero.badge || empty} onChange={(v) => update("hero", { ...hero, badge: v })} />
         <TField label="Title" value={hero.title || empty} onChange={(v) => update("hero", { ...hero, title: v })} />
         <TField label="Title Accent (gradient line)" value={hero.titleAccent || empty} onChange={(v) => update("hero", { ...hero, titleAccent: v })} />

@@ -36,6 +36,7 @@ import {
   CalendarDays,
 } from "lucide-react"
 import { useTranslations } from "@/lib/use-translations"
+import { removeGreekTonos } from "@/lib/greek-utils"
 import { lockScroll, unlockScroll } from "@/lib/scroll-lock"
 
 type TranslatedField = Record<string, string> | null | undefined
@@ -82,6 +83,7 @@ interface YachtData {
   noteTranslations?: TranslatedField
   equipmentByCategory: Record<string, { categoryName: string; categoryNameTranslations?: TranslatedField; items: Array<{ name: string; nameTranslations?: TranslatedField; quantity: number }> }>
   services: Array<{ name: string; nameTranslations?: TranslatedField; price: number; currency: string; obligatory: boolean }>
+  availability?: Array<{ dateFrom: string; dateTo: string; status: string }>
   prices: Array<{ dateFrom: string; dateTo: string; price: number; currency: string; priceType: string }>
   mastLength: number | null
   propulsionType: string | null
@@ -105,40 +107,40 @@ function formatPrice(price: number, currency: string) {
 // Equipment category tab color themes
 const TAB_THEMES: Record<string, { bg: string; border: string; text: string }> = {}
 const THEME_LIST = [
-  { bg: "bg-blue-50", border: "border-blue-100", text: "text-[#0055a9]" },
-  { bg: "bg-[#070c26]/5", border: "border-[#070c26]/10", text: "text-[#84776e]" },
-  { bg: "bg-[#84776e]/10", border: "border-[#84776e]/20", text: "text-[#84776e]" },
+  { bg: "bg-blue-50", border: "border-blue-100", text: "text-[var(--text-link)]" },
+  { bg: "bg-[var(--surface-inverse)]/5", border: "border-[var(--text-heading)]/10", text: "text-[var(--text-subtle)]" },
+  { bg: "bg-[var(--iyc-taupe-500)]/10", border: "border-[var(--text-subtle)]/20", text: "text-[var(--text-subtle)]" },
   { bg: "bg-purple-50", border: "border-purple-100", text: "text-purple-600" },
   { bg: "bg-green-50", border: "border-green-100", text: "text-green-600" },
   { bg: "bg-orange-50", border: "border-orange-100", text: "text-orange-600" },
   { bg: "bg-yellow-50", border: "border-yellow-100", text: "text-yellow-600" },
-  { bg: "bg-[#070c26]/5", border: "border-[#070c26]/10", text: "text-[#84776e]" },
+  { bg: "bg-[var(--surface-inverse)]/5", border: "border-[var(--text-heading)]/10", text: "text-[var(--text-subtle)]" },
 ]
 
 // Amenity icons list for the top "Equipment & Amenities" quick display
 const AMENITY_ICONS: Record<string, React.ReactNode> = {
-  "air conditioning": <Sun className="w-4 h-4 text-[#84776e]" />,
-  generator: <Cpu className="w-4 h-4 text-[#84776e]" />,
-  "wi-fi": <Wifi className="w-4 h-4 text-[#84776e]" />,
-  wifi: <Wifi className="w-4 h-4 text-[#84776e]" />,
-  "bbq grill": <Flame className="w-4 h-4 text-[#84776e]" />,
-  bbq: <Flame className="w-4 h-4 text-[#84776e]" />,
-  "snorkeling gear": <Anchor className="w-4 h-4 text-[#84776e]" />,
-  "smart tv": <Tv className="w-4 h-4 text-[#84776e]" />,
-  tv: <Tv className="w-4 h-4 text-[#84776e]" />,
-  "water maker": <Zap className="w-4 h-4 text-[#84776e]" />,
-  watermaker: <Zap className="w-4 h-4 text-[#84776e]" />,
-  "solar panels": <Home className="w-4 h-4 text-[#84776e]" />,
-  "hot water": <Droplets className="w-4 h-4 text-[#84776e]" />,
-  "life jackets": <HelpCircle className="w-4 h-4 text-[#84776e]" />,
-  "dinghy with motor": <Box className="w-4 h-4 text-[#84776e]" />,
-  dinghy: <Box className="w-4 h-4 text-[#84776e]" />,
-  "cockpit cushions": <BarChart3 className="w-4 h-4 text-[#84776e]" />,
-  "bimini top": <Circle className="w-4 h-4 text-[#84776e]" />,
+  "air conditioning": <Sun className="w-4 h-4 text-[var(--text-subtle)]" />,
+  generator: <Cpu className="w-4 h-4 text-[var(--text-subtle)]" />,
+  "wi-fi": <Wifi className="w-4 h-4 text-[var(--text-subtle)]" />,
+  wifi: <Wifi className="w-4 h-4 text-[var(--text-subtle)]" />,
+  "bbq grill": <Flame className="w-4 h-4 text-[var(--text-subtle)]" />,
+  bbq: <Flame className="w-4 h-4 text-[var(--text-subtle)]" />,
+  "snorkeling gear": <Anchor className="w-4 h-4 text-[var(--text-subtle)]" />,
+  "smart tv": <Tv className="w-4 h-4 text-[var(--text-subtle)]" />,
+  tv: <Tv className="w-4 h-4 text-[var(--text-subtle)]" />,
+  "water maker": <Zap className="w-4 h-4 text-[var(--text-subtle)]" />,
+  watermaker: <Zap className="w-4 h-4 text-[var(--text-subtle)]" />,
+  "solar panels": <Home className="w-4 h-4 text-[var(--text-subtle)]" />,
+  "hot water": <Droplets className="w-4 h-4 text-[var(--text-subtle)]" />,
+  "life jackets": <HelpCircle className="w-4 h-4 text-[var(--text-subtle)]" />,
+  "dinghy with motor": <Box className="w-4 h-4 text-[var(--text-subtle)]" />,
+  dinghy: <Box className="w-4 h-4 text-[var(--text-subtle)]" />,
+  "cockpit cushions": <BarChart3 className="w-4 h-4 text-[var(--text-subtle)]" />,
+  "bimini top": <Circle className="w-4 h-4 text-[var(--text-subtle)]" />,
 }
 
 function getAmenityIcon(_name: string) {
-  return <Anchor className="w-4 h-4 text-[#84776e]" />
+  return <Anchor className="w-4 h-4 text-[var(--text-subtle)]" />
 }
 
 export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
@@ -149,7 +151,6 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
   const yachtNote = resolveT(yacht.noteTranslations, locale, yacht.note)
   const staffPosition = yacht.staffRep ? resolveT(yacht.staffRep.positionTranslations, locale, yacht.staffRep.position) : ""
   const [currentImage, setCurrentImage] = useState(0)
-  const [activeTab, setActiveTab] = useState<string | null>(null)
 
   // Booking sidebar state (specific dates)
   const [dateRange, setDateRange] = useState<DateRange | undefined>()
@@ -238,40 +239,44 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
     }))
   }, [yacht.equipmentByCategory, locale])
 
-  // Set initial active tab
-  const initialTab = categoryTabs.length > 0 ? categoryTabs[0].id : null
-  if (activeTab === null && initialTab) {
-    setActiveTab(initialTab)
-  }
-
-  const currentTab = categoryTabs.find((tab) => tab.id === activeTab)
+  const equipmentCount = categoryTabs.reduce((n, tab) => n + tab.items.length, 0)
 
   // Build specs list
-  const specs: Array<{ label: string; value: string }> = []
-  if (yachtCategory) specs.push({ label: t("yacht.spec.yachtType", "Yacht Type"), value: yachtCategory })
-  if (yacht.loa) specs.push({ label: t("yacht.spec.length", "Length"), value: `${yacht.loa.toFixed(2)} Meters` })
-  if (yacht.beam) specs.push({ label: t("yacht.spec.beam", "Beam"), value: `${yacht.beam.toFixed(2)} Meters` })
-  if (yacht.draft) specs.push({ label: t("yacht.spec.draft", "Draft"), value: `${yacht.draft.toFixed(2)} Meters` })
+  const specs: Array<{ k: string; label: string; value: string }> = []
+  if (yachtCategory) specs.push({ k: "type", label: t("yacht.spec.yachtType", "Yacht Type"), value: yachtCategory })
+  if (yacht.loa) specs.push({ k: "loa", label: t("yacht.spec.length", "Length"), value: `${yacht.loa.toFixed(2)} Meters` })
+  if (yacht.beam) specs.push({ k: "beam", label: t("yacht.spec.beam", "Beam"), value: `${yacht.beam.toFixed(2)} Meters` })
+  if (yacht.draft) specs.push({ k: "draft", label: t("yacht.spec.draft", "Draft"), value: `${yacht.draft.toFixed(2)} Meters` })
   if (yacht.engineBuilder || yacht.enginePower) {
     const engineStr = [yacht.engineBuilder, yacht.enginePower ? `${yacht.enginePower}HP` : ""].filter(Boolean).join(" ")
-    specs.push({ label: t("yacht.spec.engine", "Engine"), value: engineStr })
+    specs.push({ k: "engine", label: t("yacht.spec.engine", "Engine"), value: engineStr })
   }
   if (yacht.fuelType || yacht.fuelTank) {
     const fuelStr = [yacht.fuelType, yacht.fuelTank ? `${yacht.fuelTank}L` : ""].filter(Boolean).join(", ")
-    specs.push({ label: t("yacht.spec.fuel", "Fuel"), value: fuelStr })
+    specs.push({ k: "fuel", label: t("yacht.spec.fuel", "Fuel"), value: fuelStr })
   }
-  if (yacht.waterTank) specs.push({ label: t("yacht.spec.waterTank", "Water Tank"), value: `${yacht.waterTank} Liters` })
-  if (yacht.fuelConsumption) specs.push({ label: t("yacht.spec.fuelConsumption", "Fuel Consumption"), value: `${yacht.fuelConsumption}L/hour` })
-  if (yacht.buildYear) specs.push({ label: t("yacht.spec.yearBuilt", "Year Built"), value: String(yacht.buildYear) })
-  if (yacht.renewed) specs.push({ label: t("yacht.spec.renewed", "Renewed"), value: String(yacht.renewed) })
-  if (yacht.cruisingSpeed) specs.push({ label: t("yacht.spec.cruisingSpeed", "Cruising Speed"), value: `${yacht.cruisingSpeed} knots` })
-  if (yacht.maxSpeed) specs.push({ label: t("yacht.spec.maxSpeed", "Max Speed"), value: `${yacht.maxSpeed} knots` })
-  if (yacht.berthsTotal) specs.push({ label: t("yacht.spec.berths", "Berths"), value: `${yacht.berthsTotal}${yacht.cabins ? ` (${yacht.cabins} Cabins)` : ""}` })
-  if (yacht.wc) specs.push({ label: t("yacht.spec.toilets", "Toilets"), value: String(yacht.wc) })
-  if (yacht.showers) specs.push({ label: t("yacht.spec.showers", "Showers"), value: String(yacht.showers) })
-  if (yacht.mastLength) specs.push({ label: t("yacht.spec.mastLength", "Mast Length"), value: `${yacht.mastLength}m` })
-  if (yacht.propulsionType) specs.push({ label: t("yacht.spec.propulsion", "Propulsion"), value: yacht.propulsionType })
-  if (yacht.builder) specs.push({ label: t("yacht.spec.builder", "Builder"), value: yacht.builder })
+  if (yacht.waterTank) specs.push({ k: "water", label: t("yacht.spec.waterTank", "Water Tank"), value: `${yacht.waterTank} Liters` })
+  if (yacht.fuelConsumption) specs.push({ k: "consumption", label: t("yacht.spec.fuelConsumption", "Fuel Consumption"), value: `${yacht.fuelConsumption}L/hour` })
+  if (yacht.buildYear) specs.push({ k: "year", label: t("yacht.spec.yearBuilt", "Year Built"), value: String(yacht.buildYear) })
+  if (yacht.renewed) specs.push({ k: "renewed", label: t("yacht.spec.renewed", "Renewed"), value: String(yacht.renewed) })
+  if (yacht.cruisingSpeed) specs.push({ k: "cruise", label: t("yacht.spec.cruisingSpeed", "Cruising Speed"), value: `${yacht.cruisingSpeed} knots` })
+  if (yacht.maxSpeed) specs.push({ k: "maxspeed", label: t("yacht.spec.maxSpeed", "Max Speed"), value: `${yacht.maxSpeed} knots` })
+  if (yacht.berthsTotal) specs.push({ k: "berths", label: t("yacht.spec.berths", "Berths"), value: `${yacht.berthsTotal}${yacht.cabins ? ` (${yacht.cabins} ${t("yacht.spec.cabinsShort", "cabins")})` : ""}` })
+  if (yacht.wc) specs.push({ k: "wc", label: t("yacht.spec.toilets", "Toilets"), value: String(yacht.wc) })
+  if (yacht.showers) specs.push({ k: "showers", label: t("yacht.spec.showers", "Showers"), value: String(yacht.showers) })
+  if (yacht.mastLength) specs.push({ k: "mast", label: t("yacht.spec.mastLength", "Mast Length"), value: `${yacht.mastLength}m` })
+  if (yacht.propulsionType) specs.push({ k: "propulsion", label: t("yacht.spec.propulsion", "Propulsion"), value: yacht.propulsionType })
+  if (yacht.builder) specs.push({ k: "builder", label: t("yacht.spec.builder", "Builder"), value: yacht.builder })
+
+  /* Which specs decide a charter, and which are reference. Sleeping,
+     washing, water capacity, draft and beam are what crews ask about; mast
+     length and fuel consumption are for the record. */
+  const SPEC_ORDER = ["berths", "wc", "showers", "water", "draft", "beam", "loa", "engine",
+                      "cruise", "maxspeed", "fuel", "consumption", "mast", "propulsion",
+                      "type", "year", "renewed", "builder"]
+  const keySpecs = [...specs].sort(
+    (a, b) => SPEC_ORDER.indexOf(a.k) - SPEC_ORDER.indexOf(b.k)
+  )
 
   // Quick amenities from all equipment (first 13)
   const allEquipmentItems = categoryTabs.flatMap((tab) => tab.items)
@@ -310,9 +315,26 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
       allAvailable.push(...eachDayOfInterval({ start, end: to }))
     }
     const availableSet = new Set(allAvailable.map((d) => d.getTime()))
+
+    /* Taken days, from the occupancy mirror. A price period covers the whole
+       season regardless of who has chartered the boat, so pricing alone let a
+       fully booked week look selectable. The check-out day of one charter is
+       the check-in day of the next, so the last day of a period stays open. */
+    const takenSet = new Set<number>()
+    for (const a of yacht.availability ?? []) {
+      const from = startOfDay(new Date(a.dateFrom))
+      const to = startOfDay(new Date(a.dateTo))
+      if (isBefore(to, today)) continue
+      for (const d of eachDayOfInterval({ start: from, end: to })) {
+        if (d.getTime() === to.getTime()) continue
+        takenSet.add(startOfDay(d).getTime())
+      }
+    }
+
     const matcher = (day: Date) => {
       const d = startOfDay(day)
       if (isBefore(d, today)) return true
+      if (takenSet.has(d.getTime())) return true
       return !availableSet.has(d.getTime())
     }
     const sortedPrices = yacht.prices
@@ -322,7 +344,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
       ? (() => { const d = startOfDay(new Date(sortedPrices[0].dateFrom)); return isBefore(d, today) ? today : d })()
       : today
     return { unavailableMatcher: matcher, firstAvailableMonth: firstDate }
-  }, [yacht.prices])
+  }, [yacht.prices, yacht.availability])
 
   // Compute price for selected dates
   const selectedDatePrice = useMemo(() => {
@@ -439,25 +461,73 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
   const prevImage = () => setCurrentImage((prev) => (prev === 0 ? images.length - 1 : prev - 1))
   const nextImage = () => setCurrentImage((prev) => (prev === images.length - 1 ? 0 : prev + 1))
 
+  /* Which slides are in the DOM. Grows to cover the current frame and its two
+     neighbours so an arrow press has its target already decoded, and never
+     shrinks, so nothing is ever remounted mid-transition. */
+  const [mountedSlides, setMountedSlides] = useState<Set<number>>(new Set([0]))
+  useEffect(() => {
+    if (images.length < 2) return
+    const want = [
+      currentImage,
+      (currentImage + 1) % images.length,
+      (currentImage - 1 + images.length) % images.length,
+    ]
+    setMountedSlides((prev) => {
+      if (want.every((i) => prev.has(i))) return prev
+      const next = new Set(prev)
+      want.forEach((i) => next.add(i))
+      return next
+    })
+  }, [currentImage, images.length])
+
   return (
-    <div className="w-full flex flex-col antialiased bg-white relative" style={{ color: "#070c26" }}>
+    <div className="w-full flex flex-col antialiased bg-[var(--surface-page)] relative" style={{ color: "var(--text-heading)" }}>
       {/* Hero Gallery */}
       <section className="relative w-full h-[720px] flex-shrink-0 group">
+        {/* The slides are stacked and crossfaded rather than one <Image> whose
+            src is swapped. Swapping the src gave no transition and, worse, only
+            started fetching the next photograph on click — so every press of an
+            arrow showed the old frame until the network came back. Here the
+            neighbours are already decoded, so the change is instant. */}
         {hasImages ? (
-          <Image
-            src={images[currentImage]}
-            alt={yacht.name}
-            fill
-            className="object-cover"
-            sizes="100vw"
-            priority
-          />
+          images.map((src, i) => {
+            const isCurrent = i === currentImage
+            // Only ever mount more, never unmount. Dropping a slide and
+            // remounting it on the next press restarted its transition from
+            // the default opacity, so the frame flashed in before fading out —
+            // which read as a stutter, and as two changes for one click.
+            if (!mountedSlides.has(i)) return null
+            return (
+              <Image
+                key={src}
+                src={src}
+                alt={isCurrent ? yacht.name : ""}
+                aria-hidden={!isCurrent}
+                fill
+                priority={i === 0}
+                sizes="100vw"
+                className="object-cover transition-opacity duration-500 ease-out"
+                style={{ opacity: isCurrent ? 1 : 0, zIndex: isCurrent ? 1 : 0 }}
+              />
+            )
+          })
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-[#070c26] to-[#0055a9]" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[var(--iyc-ionian-900)] to-[var(--iyc-ionian-600)]" />
         )}
 
-        <div className="absolute inset-0 bg-black/20" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#070c26] via-[#070c26]/60 to-transparent" />
+        {/* Bottom scrim for the title, plus a short top wash so the fixed
+            header stays legible against a bright sky — --scrim-photo fades to
+            nothing at 78% and leaves the top of the frame unprotected. */}
+        <div
+          aria-hidden
+          className="absolute inset-0 z-[2]"
+          style={{ background: "var(--scrim-photo)" }}
+        />
+        <div
+          aria-hidden
+          className="absolute inset-x-0 top-0 z-[2] h-32"
+          style={{ background: "linear-gradient(to bottom, rgba(4,13,25,.55) 0%, rgba(4,13,25,0) 100%)" }}
+        />
 
         {/* Navigation arrows */}
         {images.length > 1 && (
@@ -479,7 +549,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
 
         {/* Bottom gallery bar */}
         <div className="absolute bottom-8 left-12 right-12 z-20 flex items-end justify-between max-w-[1400px] mx-auto">
-          <h1 className="text-2xl text-white font-semibold">{yacht.name}</h1>
+          <h1 className="text-2xl text-white font-semibold" style={{ fontFamily: "var(--font-display)" }}>{yacht.name}</h1>
 
           {/* Avatar-style circular thumbnails */}
           <button
@@ -488,7 +558,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
           >
             <div className="flex items-center gap-2">
               <span className="text-white text-sm font-bold tracking-wide">{t("yacht.gallery", "Gallery")}</span>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-gradient-to-r from-[#0055a9] to-[#00a4e4] text-white shadow-lg shadow-blue-500/25">
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-gradient-to-r from-[var(--iyc-ionian-600)] to-[var(--iyc-ionian-400)] text-white shadow-lg shadow-blue-500/25">
                 {images.length} Photos
               </span>
             </div>
@@ -633,78 +703,23 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
       )}
 
       {/* Main Content */}
-      <section className="w-full bg-white py-12 px-6 md:px-10 relative" style={{ color: "#070c26" }}>
+      <section className="w-full bg-[var(--surface-page)] py-12 px-6 md:px-10 relative" style={{ color: "var(--text-heading)" }}>
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
           {/* Left Column */}
           <div className="lg:col-span-8 flex flex-col">
-            <h1 className="text-3xl font-bold mb-2">{yacht.modelName || yacht.name}</h1>
+            <h1 className="text-3xl font-bold mb-2" style={{ fontFamily: "var(--font-display)" }}>{yacht.modelName || yacht.name}</h1>
             {yachtLocation && (
-              <div className="flex items-center gap-2 text-gray-500 mb-8">
-                <MapPin className="w-5 h-5 text-[#84776e]" />
+              <div className="flex items-center gap-2 text-[var(--text-muted)] mb-8">
+                <MapPin className="w-5 h-5 text-[var(--text-subtle)]" />
                 <span className="text-[15px] font-medium">{yachtLocation}</span>
               </div>
             )}
 
-            {/* Quick specs bar */}
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-3 pb-6 border-b border-gray-200 mb-6">
-              {yacht.loa && (
-                <>
-                  <div className="flex flex-col">
-                    <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wider mb-0.5">{tUpper("yacht.stat.length", "Length")}</span>
-                    <span className="text-sm font-semibold">{yacht.loa}m</span>
-                  </div>
-                  <div className="w-px h-6 bg-gray-200" />
-                </>
-              )}
-              {yacht.cabins && (
-                <>
-                  <div className="flex flex-col">
-                    <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wider mb-0.5">{tUpper("yacht.stat.cabins", "Cabins")}</span>
-                    <span className="text-sm font-semibold">{yacht.cabins}</span>
-                  </div>
-                  <div className="w-px h-6 bg-gray-200" />
-                </>
-              )}
-              {yacht.maxPersons && (
-                <>
-                  <div className="flex flex-col">
-                    <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wider mb-0.5">{tUpper("yacht.stat.guests", "Guests")}</span>
-                    <span className="text-sm font-semibold">{yacht.maxPersons}</span>
-                  </div>
-                  <div className="w-px h-6 bg-gray-200" />
-                </>
-              )}
-              {yacht.buildYear && (
-                <>
-                  <div className="flex flex-col">
-                    <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wider mb-0.5">{tUpper("yacht.stat.year", "Year")}</span>
-                    <span className="text-sm font-semibold">{yacht.buildYear}</span>
-                  </div>
-                  <div className="w-px h-6 bg-gray-200" />
-                </>
-              )}
-              {yacht.builder && (
-                <>
-                  <div className="flex flex-col">
-                    <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wider mb-0.5">{tUpper("yacht.stat.builder", "Builder")}</span>
-                    <span className="text-sm font-semibold">{yacht.builder}</span>
-                  </div>
-                  <div className="w-px h-6 bg-gray-200" />
-                </>
-              )}
-              {yachtCategory && (
-                <div className="flex flex-col">
-                  <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wider mb-0.5">{tUpper("yacht.stat.hullType", "Hull Type")}</span>
-                  <span className="text-sm font-semibold">{yachtCategory}</span>
-                </div>
-              )}
-            </div>
-
             {/* About */}
             {(yachtDescription || yachtNote) && (
               <>
-                <h2 className="text-sm font-bold mb-2">{t("yacht.aboutHeading", "About this Yacht")}</h2>
-                <div className="prose max-w-none text-gray-600 leading-relaxed mb-6 text-xs">
+                <h2 className="text-sm font-bold mb-2" style={{ fontFamily: "var(--font-display)" }}>{t("yacht.aboutHeading", "About this Yacht")}</h2>
+                <div className="prose max-w-none text-[var(--text-muted)] leading-relaxed mb-6 text-xs">
                   {yachtDescription && (
                     <p className="mb-3 whitespace-pre-line">{yachtDescription}</p>
                   )}
@@ -715,42 +730,52 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
               </>
             )}
 
-            {/* Full Specifications */}
-            {specs.length > 0 && (
-              <>
-                <h2 className="text-sm font-bold mb-3">{t("yacht.fullSpecsHeading", "Full Specifications")}</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-1 mb-8">
-                  {specs.map((s, i) => (
-                    <div key={i} className="flex justify-between items-center py-2 border-b border-gray-100">
-                      <span className="text-gray-500 text-xs">{s.label}</span>
-                      <span className="font-medium text-right text-xs">{s.value}</span>
+            {/* Specifications, by what a crew actually decides on. The eight
+                that answer "can we all sleep, wash and anchor comfortably"
+                are shown as a real grid; the reference figures — mast length,
+                fuel consumption, top speed — expand on request rather than
+                burying the eight that matter under twenty that do not. */}
+            {keySpecs.length > 0 && (
+              <div className="mb-8">
+                <h2
+                  className="mb-6 text-sm font-bold"
+                  style={{ fontFamily: "var(--font-display)", color: "var(--text-heading)" }}
+                >
+                  {t("yacht.keySpecsHeading", "Key specifications")}
+                </h2>
+
+                <div className="grid grid-cols-2 gap-x-10 gap-y-9 md:grid-cols-3">
+                  {keySpecs.map((sp) => (
+                    <div
+                      key={sp.k}
+                      className="flex flex-col gap-1.5 border-b border-[var(--border-hairline)] pb-5"
+                    >
+                      <span
+                        className="text-[10px] font-semibold uppercase tracking-wider"
+                        style={{ color: "var(--text-subtle)" }}
+                      >
+                        {removeGreekTonos(sp.label)}
+                      </span>
+                      <span
+                        className="iyc-mono text-base font-semibold"
+                        style={{ color: "var(--text-heading)" }}
+                      >
+                        {sp.value}
+                      </span>
                     </div>
                   ))}
                 </div>
-              </>
+
+              </div>
             )}
 
-            {/* Quick Equipment & Amenities */}
-            {quickAmenities.length > 0 && (
-              <>
-                <h2 className="text-sm font-bold mb-3">{t("yacht.equipmentHeading", "Equipment & Amenities")}</h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-y-4 gap-x-4">
-                  {quickAmenities.map((item, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                      {getAmenityIcon(item)}
-                      <span className="text-xs font-medium text-gray-700">{item}</span>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
           </div>
 
           {/* Right Column - Booking Planner */}
           <div className="lg:col-span-4 lg:sticky lg:top-8 z-40" id="booking">
-            <div className="bg-white rounded-2xl shadow-[0_8px_40px_rgb(0,0,0,0.08)] border border-gray-100/80">
+            <div className="bg-white rounded-2xl shadow-[0_8px_40px_rgb(0,0,0,0.08)] border border-[var(--border-hairline)]/80">
               {/* Premium header */}
-              <div className="relative px-5 pt-5 pb-4 rounded-t-2xl" style={{ background: "linear-gradient(135deg, #070c26 0%, #0055a9 100%)" }}>
+              <div className="relative px-5 pt-5 pb-4 rounded-t-2xl" style={{ background: "linear-gradient(135deg, var(--iyc-ionian-900) 0%, var(--iyc-ionian-600) 100%)" }}>
                 <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")" }} />
                 <div className="relative">
                   <span className="text-white/60 text-[10px] uppercase tracking-widest font-semibold">{tUpper("yacht.startingFrom", "Starting from")}</span>
@@ -769,8 +794,8 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                 {/* Step 1: Select Dates */}
                 <div className="relative">
                   <div className="flex items-center gap-2 mb-3">
-                    <div className="w-5 h-5 rounded-full bg-[#0055a9] flex items-center justify-center text-white text-[9px] font-bold shrink-0">1</div>
-                    <span className="text-[11px] font-bold text-gray-800 uppercase tracking-wide">{tUpper("yacht.selectDates", "Select Dates")}</span>
+                    <div className="w-5 h-5 rounded-full bg-[var(--iyc-ionian-600)] flex items-center justify-center text-white text-[9px] font-bold shrink-0">1</div>
+                    <span className="text-[11px] font-bold text-[var(--text-body)] uppercase tracking-wide">{tUpper("yacht.selectDates", "Select Dates")}</span>
                   </div>
                   <button
                     onClick={() => {
@@ -782,33 +807,33 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                       }
                       setShowCalendar(!showCalendar)
                     }}
-                    className="w-full border border-gray-200 rounded-xl p-3 hover:border-gray-300 transition cursor-pointer flex items-center justify-between bg-gray-50/50"
+                    className="w-full border border-[var(--border-hairline)] rounded-xl p-3 hover:border-[var(--border-input)] transition cursor-pointer flex items-center justify-between bg-[var(--surface-sunken)]/50"
                   >
                     <div className="flex items-center gap-3 flex-1">
-                      <CalendarDays className="w-4 h-4 text-[#0055a9] shrink-0" />
+                      <CalendarDays className="w-4 h-4 text-[var(--text-link)] shrink-0" />
                       <div className="grid grid-cols-2 gap-3 flex-1">
                         <div className="text-left">
-                          <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5 tracking-wide">{tUpper("yacht.checkIn", "Check-in")}</span>
-                          <span className="text-xs font-semibold" style={{ color: dateRange?.from ? "#070c26" : "#aaa" }}>
+                          <span className="block text-[9px] uppercase font-bold text-[var(--text-subtle)] mb-0.5 tracking-wide">{tUpper("yacht.checkIn", "Check-in")}</span>
+                          <span className="text-xs font-semibold" style={{ color: dateRange?.from ? "var(--text-heading)" : "#aaa" }}>
                             {dateRange?.from ? format(dateRange.from, "dd MMM yyyy") : t("yacht.selectDate", "Select date")}
                           </span>
                         </div>
-                        <div className="text-left border-l border-gray-200 pl-3">
-                          <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5 tracking-wide">{tUpper("yacht.checkOut", "Check-out")}</span>
-                          <span className="text-xs font-semibold" style={{ color: dateRange?.to ? "#070c26" : "#aaa" }}>
+                        <div className="text-left border-l border-[var(--border-hairline)] pl-3">
+                          <span className="block text-[9px] uppercase font-bold text-[var(--text-subtle)] mb-0.5 tracking-wide">{tUpper("yacht.checkOut", "Check-out")}</span>
+                          <span className="text-xs font-semibold" style={{ color: dateRange?.to ? "var(--text-heading)" : "#aaa" }}>
                             {dateRange?.to ? format(dateRange.to, "dd MMM yyyy") : t("yacht.selectDate", "Select date")}
                           </span>
                         </div>
                       </div>
                     </div>
-                    <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${showCalendar ? "rotate-180" : ""}`} />
+                    <ChevronDown className={`w-4 h-4 text-[var(--text-subtle)] transition-transform duration-200 ${showCalendar ? "rotate-180" : ""}`} />
                   </button>
 
                   {/* Calendar dropdown */}
                   {showCalendar && (
                     <div
                       ref={calendarRef}
-                      className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-[200] bg-white rounded-2xl shadow-2xl border border-gray-200 p-5"
+                      className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-[200] bg-white rounded-2xl shadow-2xl border border-[var(--border-hairline)] p-5"
                       style={{ width: "620px" }}
                     >
                       <DayPicker
@@ -828,14 +853,14 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                         numberOfMonths={2}
                         showOutsideDays={false}
                       />
-                      <div className="flex items-center justify-center gap-5 pt-3 mt-3 border-t border-gray-100">
+                      <div className="flex items-center justify-center gap-5 pt-3 mt-3 border-t border-[var(--border-hairline)]">
                         <div className="flex items-center gap-1.5">
-                          <div className="w-2.5 h-2.5 rounded-full bg-[#0055a9]" />
-                          <span className="text-[10px] text-gray-500 font-medium">{t("yacht.selected", "Selected")}</span>
+                          <div className="w-2.5 h-2.5 rounded-full bg-[var(--iyc-ionian-600)]" />
+                          <span className="text-[10px] text-[var(--text-muted)] font-medium">{t("yacht.selected", "Selected")}</span>
                         </div>
                         <div className="flex items-center gap-1.5">
                           <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
-                          <span className="text-[10px] text-gray-500 font-medium">{t("yacht.unavailable", "Unavailable")}</span>
+                          <span className="text-[10px] text-[var(--text-muted)] font-medium">{t("yacht.unavailable", "Unavailable")}</span>
                         </div>
                       </div>
                     </div>
@@ -845,23 +870,23 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                 {/* Step 2: Guests */}
                 <div>
                   <div className="flex items-center gap-2 mb-3">
-                    <div className="w-5 h-5 rounded-full bg-[#0055a9] flex items-center justify-center text-white text-[9px] font-bold shrink-0">2</div>
-                    <span className="text-[11px] font-bold text-gray-800 uppercase tracking-wide">{tUpper("yacht.partySize", "Party Size")}</span>
+                    <div className="w-5 h-5 rounded-full bg-[var(--iyc-ionian-600)] flex items-center justify-center text-white text-[9px] font-bold shrink-0">2</div>
+                    <span className="text-[11px] font-bold text-[var(--text-body)] uppercase tracking-wide">{tUpper("yacht.partySize", "Party Size")}</span>
                   </div>
-                  <div className="flex items-center justify-between bg-gray-50/50 rounded-xl p-3 border border-gray-200">
+                  <div className="flex items-center justify-between bg-[var(--surface-sunken)]/50 rounded-xl p-3 border border-[var(--border-hairline)]">
                     <div className="flex items-center gap-2">
-                      <User className="w-4 h-4 text-[#84776e]" />
-                      <span className="text-xs font-medium text-gray-700">{guestCount} guest{guestCount !== 1 ? "s" : ""}</span>
+                      <User className="w-4 h-4 text-[var(--text-subtle)]" />
+                      <span className="text-xs font-medium text-[var(--text-body)]">{guestCount} guest{guestCount !== 1 ? "s" : ""}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => setGuestCount(Math.max(1, guestCount - 1))}
-                        className="w-7 h-7 rounded-lg border border-gray-200 flex items-center justify-center text-sm text-gray-500 hover:bg-white hover:border-gray-300 transition cursor-pointer"
+                        className="w-7 h-7 rounded-lg border border-[var(--border-hairline)] flex items-center justify-center text-sm text-[var(--text-muted)] hover:bg-white hover:border-[var(--border-input)] transition cursor-pointer"
                       >-</button>
-                      <span className="text-sm font-bold w-5 text-center" style={{ color: "#070c26" }}>{guestCount}</span>
+                      <span className="text-sm font-bold w-5 text-center" style={{ color: "var(--text-heading)" }}>{guestCount}</span>
                       <button
                         onClick={() => setGuestCount(Math.min(yacht.maxPersons || 20, guestCount + 1))}
-                        className="w-7 h-7 rounded-lg border border-gray-200 flex items-center justify-center text-sm text-gray-500 hover:bg-white hover:border-gray-300 transition cursor-pointer"
+                        className="w-7 h-7 rounded-lg border border-[var(--border-hairline)] flex items-center justify-center text-sm text-[var(--text-muted)] hover:bg-white hover:border-[var(--border-input)] transition cursor-pointer"
                       >+</button>
                     </div>
                   </div>
@@ -869,16 +894,16 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
 
                 {/* Price estimate */}
                 {selectedDatePrice && (
-                  <div className="rounded-xl p-4 border border-[#0055a9]/15" style={{ background: "linear-gradient(135deg, rgba(0,85,169,0.04) 0%, rgba(7,12,38,0.03) 100%)" }}>
+                  <div className="rounded-xl p-4 border border-[var(--iyc-ionian-600)]/15" style={{ background: "linear-gradient(135deg, rgba(0,85,169,0.04) 0%, rgba(46,44,40,0.03) 100%)" }}>
                     <div className="flex justify-between items-center mb-2">
-                      <span className="text-xs text-gray-500">{formatPrice(selectedDatePrice.perWeek, selectedDatePrice.currency)} x {selectedDatePrice.days} days</span>
-                      <span className="text-xs font-semibold" style={{ color: "#070c26" }}>{formatPrice(selectedDatePrice.total, selectedDatePrice.currency)}</span>
+                      <span className="text-xs text-[var(--text-muted)]">{formatPrice(selectedDatePrice.perWeek, selectedDatePrice.currency)} x {selectedDatePrice.days} days</span>
+                      <span className="text-xs font-semibold" style={{ color: "var(--text-heading)" }}>{formatPrice(selectedDatePrice.total, selectedDatePrice.currency)}</span>
                     </div>
-                    <div className="flex justify-between items-center pt-2 border-t border-[#0055a9]/10">
-                      <span className="text-xs font-bold" style={{ color: "#070c26" }}>{t("yacht.estimatedTotal", "Estimated Total")}</span>
-                      <span className="text-base font-bold" style={{ color: "#0055a9" }}>{formatPrice(selectedDatePrice.total, selectedDatePrice.currency)}</span>
+                    <div className="flex justify-between items-center pt-2 border-t border-[var(--iyc-ionian-600)]/10">
+                      <span className="text-xs font-bold" style={{ color: "var(--text-heading)" }}>{t("yacht.estimatedTotal", "Estimated Total")}</span>
+                      <span className="text-base font-bold" style={{ color: "var(--iyc-ionian-300)" }}>{formatPrice(selectedDatePrice.total, selectedDatePrice.currency)}</span>
                     </div>
-                    <p className="text-[9px] text-gray-400 mt-1.5">{t("yacht.priceDisclaimer", "Excl. VAT & APA. Final price confirmed in proposal.")}</p>
+                    <p className="text-[9px] text-[var(--text-subtle)] mt-1.5">{t("yacht.priceDisclaimer", "Excl. VAT & APA. Final price confirmed in proposal.")}</p>
                   </div>
                 )}
 
@@ -886,26 +911,26 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                 <button
                   onClick={() => { setBookingSuccess(false); setBookingOpen(true) }}
                   disabled={!checkIn || !checkOut || checkIn === checkOut}
-                  className="w-full text-white py-3.5 rounded-xl text-xs font-bold transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer hover:shadow-lg hover:shadow-[#0055a9]/20 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
-                  style={{ background: "linear-gradient(135deg, #0055a9 0%, #003d7a 100%)" }}
+                  className="w-full text-white py-3.5 rounded-xl text-xs font-bold transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer hover:shadow-lg hover:shadow-[var(--iyc-ionian-600)]/20 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{ background: "linear-gradient(135deg, var(--iyc-ionian-600) 0%, var(--iyc-ionian-700) 100%)" }}
                 >
                   <Send className="w-3.5 h-3.5" />
                   {checkIn && checkOut && checkIn !== checkOut ? t("yacht.requestBooking", "Request This Booking") : t("yacht.selectDatesToContinue", "Select dates to continue")}
                 </button>
 
-                <p className="text-center text-[10px] text-gray-400">You won&apos;t be charged &middot; Free cancellation</p>
+                <p className="text-center text-[10px] text-[var(--text-subtle)]">You won&apos;t be charged &middot; Free cancellation</p>
 
                 {/* Staff advisor */}
                 {yacht.staffRep && (
-                  <div className="flex items-center gap-2.5 pt-4 mt-2 border-t border-gray-100">
+                  <div className="flex items-center gap-2.5 pt-4 mt-2 border-t border-[var(--border-hairline)]">
                     {yacht.staffRep.image ? (
-                      <Image src={yacht.staffRep.image} alt={yacht.staffRep.name} width={36} height={36} className="w-9 h-9 rounded-full object-cover shrink-0 border-2 border-gray-100" />
+                      <Image src={yacht.staffRep.image} alt={yacht.staffRep.name} width={36} height={36} className="w-9 h-9 rounded-full object-cover shrink-0 border-2 border-[var(--border-hairline)]" />
                     ) : (
-                      <div className="w-9 h-9 rounded-full bg-[#070c26] flex items-center justify-center text-white text-[9px] font-bold shrink-0">IYC</div>
+                      <div className="w-9 h-9 rounded-full bg-[var(--surface-inverse)] flex items-center justify-center text-white text-[9px] font-bold shrink-0">IYC</div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="text-[11px] font-semibold text-gray-800 truncate">{yacht.staffRep.name}</p>
-                      <p className="text-[9px] text-gray-400">{staffPosition || t("yacht.charterAdvisor", "Charter Advisor")}</p>
+                      <p className="text-[11px] font-semibold text-[var(--text-body)] truncate">{yacht.staffRep.name}</p>
+                      <p className="text-[9px] text-[var(--text-subtle)]">{staffPosition || t("yacht.charterAdvisor", "Charter Advisor")}</p>
                     </div>
                     <span className="flex items-center gap-1 text-[9px] text-green-600 font-medium">
                       <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
@@ -919,108 +944,25 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
         </div>
       </section>
 
-      {/* Equipment & Features Tabs */}
-      {categoryTabs.length > 0 && (
-        <section className="w-full bg-white py-12 px-6 md:px-10 relative z-[1] border-t border-gray-200" style={{ color: "#070c26" }}>
-          <div className="max-w-[1400px] mx-auto">
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-lg font-bold">{t("yacht.equipmentFeaturesHeading", "Equipment & Features")}</h2>
-              <div className="flex items-center gap-2 text-xs text-gray-500">
-                <span className="text-white px-2 py-1 rounded" style={{ backgroundColor: "#070c26" }}>{categoryTabs.length}</span>
-                <span>categories</span>
-              </div>
-            </div>
-
-            {/* Category Tabs */}
-            <div className="flex flex-wrap gap-2 mb-6 border-b border-gray-200 pb-4">
-              {categoryTabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all ${
-                    activeTab === tab.id
-                      ? "text-white"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  }`}
-                  style={activeTab === tab.id ? { backgroundColor: "#070c26" } : undefined}
-                >
-                  {tab.name}
-                </button>
-              ))}
-            </div>
-
-            {/* Active Tab Content */}
-            {currentTab && (
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                {currentTab.items.map((item, i) => (
-                  <div
-                    key={i}
-                    className={`flex items-center gap-2 p-2 rounded-lg border ${currentTab.theme.bg} ${currentTab.theme.border}`}
-                  >
-                    <Check className={`w-4 h-4 ${currentTab.theme.text}`} />
-                    <span className="text-xs font-medium">{item}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Services */}
-            {yacht.services.length > 0 && (
-              <div className="mt-10 border-t border-gray-200 pt-8 pb-[100px]">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-lg font-bold">{t("yacht.availableServices", "Available Services")}</h2>
-                  <span className="text-xs text-gray-500">{t("yacht.optionalAddons", "Optional add-ons for your charter")}</span>
-                </div>
-                <div className="flex flex-wrap gap-x-2 gap-y-4">
-                  {[...yacht.services].sort((a, b) => {
-                    // Free / included first, then paid
-                    const aFree = a.price === 0 || a.obligatory ? 0 : 1
-                    const bFree = b.price === 0 || b.obligatory ? 0 : 1
-                    return aFree - bFree
-                  }).map((service, i) => {
-                    const isObligatory = service.obligatory
-                    return (
-                      <div
-                        key={i}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium relative ${
-                          isObligatory
-                            ? "text-white"
-                            : "border-2 border-gray-200 text-gray-600 hover:border-[#84776e] hover:text-[#84776e] transition cursor-pointer"
-                        }`}
-                        style={isObligatory ? { backgroundColor: i < 3 ? "#070c26" : "#84776e" } : undefined}
-                      >
-                        {!isObligatory && service.price > 0 && (
-                          <span
-                            className="absolute -top-2 -right-2 text-white text-[9px] px-1.5 py-0.5 rounded-full font-semibold"
-                            style={{ backgroundColor: "#070c26" }}
-                          >
-                            {formatPrice(service.price, service.currency)}
-                          </span>
-                        )}
-                        {isObligatory ? (
-                          <Check className="w-3.5 h-3.5" />
-                        ) : (
-                          <Plus className="w-3.5 h-3.5" />
-                        )}
-                        {resolveT(service.nameTranslations, locale, service.name)}
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-        </section>
-      )}
-
       {/* Seasonal Pricing — Card Grid */}
       {weeklyPrices.length > 0 && (
-        <section className="relative w-full px-6 md:px-10 overflow-hidden" style={{ backgroundColor: "#070c26", paddingTop: 150, paddingBottom: 150 }}>
-          {/* Background SVG */}
+        <section
+          className="relative w-full overflow-hidden px-6 py-20 md:px-10"
+          style={{ background: "var(--surface-page)" }}
+        >
+          {/* Chart engraving, masked at both ends so it never meets an edge —
+              the treatment the rest of the site uses on light sections. */}
           <div
-            className="absolute inset-0 pointer-events-none select-none overflow-hidden"
+            className="pointer-events-none absolute inset-0 select-none overflow-hidden"
             aria-hidden
-            style={{ backgroundImage: "url(https://iycweb.b-cdn.net/1774937080534-bg.svg)", backgroundSize: "cover", backgroundPosition: "center", opacity: 0.2 }}
+            style={{
+              backgroundImage: "url(https://iycweb.b-cdn.net/1774937080534-bg.svg)",
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              opacity: 0.3,
+              maskImage: "linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%)",
+              WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%)",
+            }}
           />
 
           <div className="max-w-[1400px] mx-auto relative z-10">
@@ -1035,9 +977,9 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                       onClick={() => setActiveYear(y)}
                       className="px-3.5 py-1.5 text-[11px] font-semibold rounded-md transition"
                       style={{
-                        background: activeYear === y ? "#8C7D70" : "rgba(255,255,255,0.1)",
-                        color: activeYear === y ? "#fff" : "rgba(255,255,255,0.5)",
-                        border: activeYear === y ? "none" : "1px solid rgba(255,255,255,0.12)",
+                        background: activeYear === y ? "var(--iyc-ionian-600)" : "transparent",
+                        color: activeYear === y ? "#fff" : "var(--text-muted)",
+                        border: `1px solid ${activeYear === y ? "var(--iyc-ionian-600)" : "var(--border-input)"}`,
                       }}
                     >
                       Season {y}
@@ -1045,16 +987,16 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                   ))}
                 </div>
                 <div>
-                  <p className="text-lg font-bold tracking-tight mb-1" style={{ color: "#fff" }}>{yacht.name}</p>
-                  <h2 className="text-sm font-semibold whitespace-nowrap" style={{ color: "#8C7D70" }}>
+                  <p className="mb-1 text-lg font-bold tracking-tight" style={{ fontFamily: "var(--font-display)", color: "var(--text-heading)" }}>{yacht.name}</p>
+                  <h2 className="text-sm font-semibold whitespace-nowrap" style={{ fontFamily: "var(--font-display)", color: "var(--text-muted)" }}>
                     Weekly Rates
                   </h2>
-                  <div className="w-10 h-[3px] rounded-full mt-3" style={{ background: "#8C7D70" }} />
+                  <div className="mt-3 h-[3px] w-10 rounded-full" style={{ background: "var(--action-accent)" }} />
                 </div>
                 <Link
                   href="#booking"
                   className="inline-flex items-center gap-2 hover:opacity-90 transition duration-300 px-4 py-2 rounded-lg text-xs font-semibold self-start"
-                  style={{ background: "rgba(255,255,255,0.1)", color: "#fff", border: "1px solid rgba(255,255,255,0.2)" }}
+                  style={{ background: "transparent", color: "var(--text-link)", border: "1px solid var(--border-input)" }}
                 >
                   Show Details
                 </Link>
@@ -1064,21 +1006,38 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
               <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {pricesForYear.map((price, i) => {
                   const from = new Date(price.dateFrom)
+                  const to = new Date(price.dateTo)
+                  /* The month alone was ambiguous: two periods inside the same
+                     month rendered as "Sep" twice at different prices, reading
+                     as a bug. Show the period the rate actually covers. */
+                  const sameMonth = from.getMonth() === to.getMonth()
+                  const range = sameMonth
+                    ? `${from.getDate()}–${to.getDate()} ${MONTH_NAMES[to.getMonth()]}`
+                    : `${from.getDate()} ${MONTH_NAMES[from.getMonth()]} – ${to.getDate()} ${MONTH_NAMES[to.getMonth()]}`
                   return (
                     <div
                       key={i}
-                      className="px-5 py-4 flex flex-col gap-2 transition hover:opacity-90"
-                      style={{ background: "#070c26", border: "0.5px solid rgba(255,255,255,0.15)", borderRadius: 18 }}
+                      className="flex flex-col gap-1.5 px-5 py-4 transition-shadow hover:shadow-[var(--shadow-md)]"
+                      style={{
+                        background: "var(--surface-card)",
+                        border: "1px solid var(--border-hairline)",
+                        borderRadius: "var(--iyc-radius-lg)",
+                      }}
                     >
-                      <span className="text-white/70 text-sm font-medium">{MONTH_NAMES[from.getMonth()]}</span>
-                      <span className="text-white text-xl font-bold tracking-tight">
-                        {formatPrice(price.price, price.currency)}
+                      <span
+                        className="iyc-mono text-[11px] font-semibold uppercase tracking-wider"
+                        style={{ color: "var(--text-subtle)" }}
+                      >
+                        {range}
                       </span>
                       <span
-                        className="text-[10px] font-semibold px-2.5 py-1 rounded-md self-start mt-1"
-                        style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.45)" }}
+                        className="text-xl font-bold tracking-tight"
+                        style={{ fontFamily: "var(--font-display)", color: "var(--text-heading)" }}
                       >
-                        Per Week+ VAT & APA
+                        {formatPrice(price.price, price.currency)}
+                      </span>
+                      <span className="text-[10px] font-medium" style={{ color: "var(--text-muted)" }}>
+                        {t("yacht.perWeekVat", "Per week + VAT & APA")}
                       </span>
                     </div>
                   )
@@ -1088,7 +1047,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
               {/* Right: Enquire CTA */}
               <div
                 className="hidden lg:flex flex-col gap-4 rounded-xl p-5 shrink-0 w-[260px]"
-                style={{ background: "#0055a9" }}
+                style={{ background: "var(--iyc-ionian-600)" }}
               >
                 <p className="text-white text-sm font-medium">{t("yacht.receiveQuote", "Would you like to receive a quote for this yacht?")}</p>
                 <div className="flex items-center gap-3">
@@ -1126,6 +1085,103 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
         </section>
       )}
 
+      {/* Equipment & Features Tabs */}
+      {categoryTabs.length > 0 && (
+        <section className="w-full bg-white py-12 px-6 md:px-10 relative z-[1] border-t border-[var(--border-hairline)]" style={{ color: "var(--text-heading)" }}>
+          <div className="max-w-[1400px] mx-auto">
+            <div className="mb-8 flex flex-wrap items-baseline justify-between gap-2">
+              <h2
+                className="text-lg font-bold"
+                style={{ fontFamily: "var(--font-display)", color: "var(--text-heading)" }}
+              >
+                {t("yacht.equipmentFeaturesHeading", "Equipment & Features")}
+              </h2>
+              <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                {equipmentCount} {t("yacht.itemsIncluded", "items included")}
+              </span>
+            </div>
+
+            {/* Every category at once, in columns. This was eight tabs over
+                fifty-odd items: seven visible at a time, eight clicks to see
+                the boat's inventory, and never an overview. Grouped columns
+                cost about the same height and ask for nothing. */}
+            <div className="columns-1 gap-x-10 sm:columns-2 lg:columns-3 [&>*]:break-inside-avoid">
+              {categoryTabs.map((tab) => (
+                <div key={tab.id} className="mb-7 inline-block w-full align-top">
+                  <h3
+                    className="mb-2 border-b border-[var(--border-hairline)] pb-1.5 text-[10px] font-bold uppercase tracking-wider"
+                    style={{ color: "var(--text-subtle)" }}
+                  >
+                    {removeGreekTonos(tab.name)}
+                    <span className="ml-1.5 font-normal opacity-70">{tab.items.length}</span>
+                  </h3>
+                  <ul className="flex flex-col gap-1">
+                    {tab.items.map((item, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <Check
+                          className="mt-[3px] h-3 w-3 shrink-0"
+                          style={{ color: "var(--iyc-ionian-500)" }}
+                          aria-hidden
+                        />
+                        <span className="text-xs leading-snug" style={{ color: "var(--text-body)" }}>
+                          {item}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+
+            {/* Services */}
+            {yacht.services.length > 0 && (
+              <div className="mt-10 border-t border-[var(--border-hairline)] pt-8 pb-[100px]">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-lg font-bold" style={{ fontFamily: "var(--font-display)" }}>{t("yacht.availableServices", "Available Services")}</h2>
+                  <span className="text-xs text-[var(--text-muted)]">{t("yacht.optionalAddons", "Optional add-ons for your charter")}</span>
+                </div>
+                <div className="flex flex-wrap gap-x-2 gap-y-4">
+                  {[...yacht.services].sort((a, b) => {
+                    // Free / included first, then paid
+                    const aFree = a.price === 0 || a.obligatory ? 0 : 1
+                    const bFree = b.price === 0 || b.obligatory ? 0 : 1
+                    return aFree - bFree
+                  }).map((service, i) => {
+                    const isObligatory = service.obligatory
+                    return (
+                      <div
+                        key={i}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium relative ${
+                          isObligatory
+                            ? "text-white"
+                            : "border-2 border-[var(--border-hairline)] text-[var(--text-muted)] hover:border-[var(--text-subtle)] hover:text-[var(--text-subtle)] transition cursor-pointer"
+                        }`}
+                        style={isObligatory ? { backgroundColor: i < 3 ? "var(--iyc-ionian-900)" : "var(--text-subtle)" } : undefined}
+                      >
+                        {!isObligatory && service.price > 0 && (
+                          <span
+                            className="absolute -top-2 -right-2 text-white text-[9px] px-1.5 py-0.5 rounded-full font-semibold"
+                            style={{ backgroundColor: "var(--iyc-ionian-900)" }}
+                          >
+                            {formatPrice(service.price, service.currency)}
+                          </span>
+                        )}
+                        {isObligatory ? (
+                          <Check className="w-3.5 h-3.5" />
+                        ) : (
+                          <Plus className="w-3.5 h-3.5" />
+                        )}
+                        {resolveT(service.nameTranslations, locale, service.name)}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
       {/* Booking Modal */}
       {bookingOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden">
@@ -1135,7 +1191,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
             {bookingSuccess ? (
               /* Success */
               <div className="relative overflow-hidden">
-                <div className="relative px-8 pt-10 pb-8 text-center" style={{ background: "linear-gradient(135deg, #070c26 0%, #0055a9 60%, #0077cc 100%)" }}>
+                <div className="relative px-8 pt-10 pb-8 text-center" style={{ background: "linear-gradient(135deg, var(--iyc-ionian-900) 0%, var(--iyc-ionian-600) 60%, var(--iyc-ionian-500) 100%)" }}>
                   <button onClick={() => setBookingOpen(false)} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition cursor-pointer">
                     <X className="w-4 h-4 text-white/70" />
                   </button>
@@ -1143,7 +1199,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                     <div className="w-16 h-16 rounded-full bg-white/15 flex items-center justify-center mx-auto mb-5 backdrop-blur-sm border border-white/20">
                       <CheckCircle2 className="w-8 h-8 text-white" />
                     </div>
-                    <h3 className="text-xl font-bold mb-2 tracking-tight" style={{ color: "#ffffff" }}>
+                    <h3 className="text-xl font-bold mb-2 tracking-tight" style={{ fontFamily: "var(--font-display)",  color: "#ffffff" }}>
                       {bookingForm.firstName ? `${t("yacht.excellentChoice", "Excellent Choice")}, ${bookingForm.firstName}!` : t("yacht.excellentChoiceAlt", "Excellent Choice!")}
                     </h3>
                     <p className="text-white/70 text-sm leading-relaxed max-w-sm mx-auto">
@@ -1153,30 +1209,30 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                 </div>
 
                 <div className="px-8 -mt-4 relative z-10">
-                  <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-5">
+                  <div className="bg-white rounded-xl shadow-lg border border-[var(--border-hairline)] p-5">
                     {/* Booking summary */}
-                    <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-100">
+                    <div className="flex items-center justify-between mb-4 pb-4 border-b border-[var(--border-hairline)]">
                       <div className="text-center flex-1">
-                        <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5">{tUpper("yacht.checkIn", "Check-in")}</span>
-                        <span className="text-xs font-bold" style={{ color: "#070c26" }}>{dateRange?.from ? format(dateRange.from, "dd MMM yyyy") : "—"}</span>
+                        <span className="block text-[9px] uppercase font-bold text-[var(--text-subtle)] mb-0.5">{tUpper("yacht.checkIn", "Check-in")}</span>
+                        <span className="text-xs font-bold" style={{ color: "var(--text-heading)" }}>{dateRange?.from ? format(dateRange.from, "dd MMM yyyy") : "—"}</span>
                       </div>
                       <div className="w-8 flex items-center justify-center">
-                        <ChevronRight className="w-4 h-4 text-gray-300" />
+                        <ChevronRight className="w-4 h-4 text-[var(--text-muted)]" />
                       </div>
                       <div className="text-center flex-1">
-                        <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5">{tUpper("yacht.checkOut", "Check-out")}</span>
-                        <span className="text-xs font-bold" style={{ color: "#070c26" }}>{dateRange?.to ? format(dateRange.to, "dd MMM yyyy") : "—"}</span>
+                        <span className="block text-[9px] uppercase font-bold text-[var(--text-subtle)] mb-0.5">{tUpper("yacht.checkOut", "Check-out")}</span>
+                        <span className="text-xs font-bold" style={{ color: "var(--text-heading)" }}>{dateRange?.to ? format(dateRange.to, "dd MMM yyyy") : "—"}</span>
                       </div>
-                      <div className="text-center flex-1 border-l border-gray-100 pl-3">
-                        <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5">{tUpper("yacht.stat.guests", "Guests")}</span>
-                        <span className="text-xs font-bold" style={{ color: "#070c26" }}>{guestCount}</span>
+                      <div className="text-center flex-1 border-l border-[var(--border-hairline)] pl-3">
+                        <span className="block text-[9px] uppercase font-bold text-[var(--text-subtle)] mb-0.5">{tUpper("yacht.stat.guests", "Guests")}</span>
+                        <span className="text-xs font-bold" style={{ color: "var(--text-heading)" }}>{guestCount}</span>
                       </div>
                     </div>
 
                     {selectedDatePrice && (
-                      <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-100">
-                        <span className="text-xs text-gray-500">{t("yacht.estimatedTotal", "Estimated Total")}</span>
-                        <span className="text-base font-bold" style={{ color: "#0055a9" }}>{formatPrice(selectedDatePrice.total, selectedDatePrice.currency)}</span>
+                      <div className="flex justify-between items-center mb-4 pb-4 border-b border-[var(--border-hairline)]">
+                        <span className="text-xs text-[var(--text-muted)]">{t("yacht.estimatedTotal", "Estimated Total")}</span>
+                        <span className="text-base font-bold" style={{ color: "var(--iyc-ionian-300)" }}>{formatPrice(selectedDatePrice.total, selectedDatePrice.currency)}</span>
                       </div>
                     )}
 
@@ -1184,13 +1240,13 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                     {yacht.staffRep && (
                       <div className="flex items-center gap-3">
                         {yacht.staffRep.image ? (
-                          <Image src={yacht.staffRep.image} alt={yacht.staffRep.name} width={44} height={44} className="w-11 h-11 rounded-full object-cover shrink-0 border-2 border-gray-100" />
+                          <Image src={yacht.staffRep.image} alt={yacht.staffRep.name} width={44} height={44} className="w-11 h-11 rounded-full object-cover shrink-0 border-2 border-[var(--border-hairline)]" />
                         ) : (
-                          <div className="w-11 h-11 rounded-full bg-[#070c26] flex items-center justify-center text-white text-xs font-bold shrink-0">IYC</div>
+                          <div className="w-11 h-11 rounded-full bg-[var(--surface-inverse)] flex items-center justify-center text-white text-xs font-bold shrink-0">IYC</div>
                         )}
                         <div className="flex-1">
-                          <p className="text-xs font-semibold text-gray-800">{yacht.staffRep.name}</p>
-                          <p className="text-[10px] text-gray-400">{staffPosition || t("yacht.charterAdvisor", "Charter Advisor")}</p>
+                          <p className="text-xs font-semibold text-[var(--text-body)]">{yacht.staffRep.name}</p>
+                          <p className="text-[10px] text-[var(--text-subtle)]">{staffPosition || t("yacht.charterAdvisor", "Charter Advisor")}</p>
                         </div>
                         <span className="text-[9px] text-green-600 font-medium flex items-center gap-1">
                           <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
@@ -1202,16 +1258,16 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                 </div>
 
                 <div className="px-8 pt-5 pb-8 text-center">
-                  <button onClick={() => setBookingOpen(false)} className="px-8 py-3 rounded-xl text-xs font-bold text-white transition-all duration-300 hover:shadow-lg hover:shadow-[#0055a9]/20 active:scale-[0.98] cursor-pointer" style={{ background: "linear-gradient(135deg, #0055a9 0%, #003d7a 100%)" }}>
+                  <button onClick={() => setBookingOpen(false)} className="px-8 py-3 rounded-xl text-xs font-bold text-white transition-all duration-300 hover:shadow-lg hover:shadow-[var(--iyc-ionian-600)]/20 active:scale-[0.98] cursor-pointer" style={{ background: "linear-gradient(135deg, var(--iyc-ionian-600) 0%, var(--iyc-ionian-700) 100%)" }}>
                     Continue Browsing
                   </button>
-                  <p className="text-[10px] text-gray-400 mt-3">A confirmation email has been sent to {bookingForm.email || "your inbox"}</p>
+                  <p className="text-[10px] text-[var(--text-subtle)] mt-3">A confirmation email has been sent to {bookingForm.email || "your inbox"}</p>
                 </div>
               </div>
             ) : (
               /* Booking form */
               <>
-                <div className="relative px-6 pt-6 pb-4 rounded-t-2xl" style={{ background: "linear-gradient(135deg, #070c26 0%, #0055a9 100%)" }}>
+                <div className="relative px-6 pt-6 pb-4 rounded-t-2xl" style={{ background: "linear-gradient(135deg, var(--iyc-ionian-900) 0%, var(--iyc-ionian-600) 100%)" }}>
                   <button onClick={() => setBookingOpen(false)} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition cursor-pointer">
                     <X className="w-4 h-4 text-white/70" />
                   </button>
@@ -1222,7 +1278,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                       <div className="w-12 h-12 rounded-full bg-white/15 flex items-center justify-center text-white font-bold text-sm shrink-0 border border-white/20">IYC</div>
                     )}
                     <div>
-                      <h2 className="text-base font-bold text-white">{t("yacht.confirmBooking", "Confirm Your Booking")}</h2>
+                      <h2 className="text-base font-bold text-white" style={{ fontFamily: "var(--font-display)" }}>{t("yacht.confirmBooking", "Confirm Your Booking")}</h2>
                       <p className="text-[11px] text-white/60 mt-0.5">{yacht.name}</p>
                     </div>
                   </div>
@@ -1230,68 +1286,68 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
 
                 <div className="px-6 py-5">
                   {/* Booking summary card */}
-                  <div className="bg-gray-50 rounded-xl p-4 mb-5 border border-gray-100">
+                  <div className="bg-[var(--surface-sunken)] rounded-xl p-4 mb-5 border border-[var(--border-hairline)]">
                     <div className="flex items-center justify-between mb-3">
                       <div className="text-center flex-1">
-                        <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5">{tUpper("yacht.checkIn", "Check-in")}</span>
-                        <span className="text-xs font-bold" style={{ color: "#070c26" }}>{dateRange?.from ? format(dateRange.from, "dd MMM yyyy") : "—"}</span>
+                        <span className="block text-[9px] uppercase font-bold text-[var(--text-subtle)] mb-0.5">{tUpper("yacht.checkIn", "Check-in")}</span>
+                        <span className="text-xs font-bold" style={{ color: "var(--text-heading)" }}>{dateRange?.from ? format(dateRange.from, "dd MMM yyyy") : "—"}</span>
                       </div>
                       <div className="w-6 flex items-center justify-center">
-                        <ChevronRight className="w-3.5 h-3.5 text-gray-300" />
+                        <ChevronRight className="w-3.5 h-3.5 text-[var(--text-muted)]" />
                       </div>
                       <div className="text-center flex-1">
-                        <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5">{tUpper("yacht.checkOut", "Check-out")}</span>
-                        <span className="text-xs font-bold" style={{ color: "#070c26" }}>{dateRange?.to ? format(dateRange.to, "dd MMM yyyy") : "—"}</span>
+                        <span className="block text-[9px] uppercase font-bold text-[var(--text-subtle)] mb-0.5">{tUpper("yacht.checkOut", "Check-out")}</span>
+                        <span className="text-xs font-bold" style={{ color: "var(--text-heading)" }}>{dateRange?.to ? format(dateRange.to, "dd MMM yyyy") : "—"}</span>
                       </div>
-                      <div className="text-center flex-1 border-l border-gray-200 pl-3">
-                        <span className="block text-[9px] uppercase font-bold text-gray-400 mb-0.5">{tUpper("yacht.stat.guests", "Guests")}</span>
-                        <span className="text-xs font-bold" style={{ color: "#070c26" }}>{guestCount}</span>
+                      <div className="text-center flex-1 border-l border-[var(--border-hairline)] pl-3">
+                        <span className="block text-[9px] uppercase font-bold text-[var(--text-subtle)] mb-0.5">{tUpper("yacht.stat.guests", "Guests")}</span>
+                        <span className="text-xs font-bold" style={{ color: "var(--text-heading)" }}>{guestCount}</span>
                       </div>
                     </div>
                     {selectedDatePrice && (
-                      <div className="flex justify-between items-center pt-3 border-t border-gray-200">
-                        <span className="text-xs font-bold text-gray-500">{t("yacht.estimatedTotal", "Estimated Total")}</span>
-                        <span className="text-base font-bold" style={{ color: "#0055a9" }}>{formatPrice(selectedDatePrice.total, selectedDatePrice.currency)}</span>
+                      <div className="flex justify-between items-center pt-3 border-t border-[var(--border-hairline)]">
+                        <span className="text-xs font-bold text-[var(--text-muted)]">{t("yacht.estimatedTotal", "Estimated Total")}</span>
+                        <span className="text-base font-bold" style={{ color: "var(--iyc-ionian-300)" }}>{formatPrice(selectedDatePrice.total, selectedDatePrice.currency)}</span>
                       </div>
                     )}
-                    <p className="text-[9px] text-gray-400 mt-1.5">{t("yacht.priceDisclaimer", "Excl. VAT & APA. Final price confirmed in proposal.")}</p>
+                    <p className="text-[9px] text-[var(--text-subtle)] mt-1.5">{t("yacht.priceDisclaimer", "Excl. VAT & APA. Final price confirmed in proposal.")}</p>
                   </div>
 
                   {/* Contact fields */}
                   <div className="flex items-center gap-2 mb-3">
-                    <User className="w-4 h-4 text-[#0055a9]" />
-                    <span className="text-[11px] font-bold text-gray-800 uppercase tracking-wide">{tUpper("yacht.yourDetails", "Your Details")}</span>
+                    <User className="w-4 h-4 text-[var(--text-link)]" />
+                    <span className="text-[11px] font-bold text-[var(--text-body)] uppercase tracking-wide">{tUpper("yacht.yourDetails", "Your Details")}</span>
                   </div>
                   <div className="space-y-3">
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">{tUpper("yacht.firstName", "First Name")} *</label>
-                        <input type="text" value={bookingForm.firstName} onChange={(e) => setBookingForm({ ...bookingForm, firstName: e.target.value })} placeholder="John" className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[#0055a9] focus:ring-1 focus:ring-[#0055a9]/20 transition bg-gray-50/50" style={{ color: "#070c26" }} />
+                        <label className="block text-[9px] uppercase font-bold text-[var(--text-subtle)] mb-1 tracking-wide">{tUpper("yacht.firstName", "First Name")} *</label>
+                        <input type="text" value={bookingForm.firstName} onChange={(e) => setBookingForm({ ...bookingForm, firstName: e.target.value })} placeholder="John" className="w-full border border-[var(--border-input)] rounded-[var(--iyc-radius-sm)] px-3 py-2.5 text-xs bg-transparent placeholder:text-[var(--text-subtle)] focus:outline-none focus:border-[var(--text-link)] transition" style={{ color: "var(--text-body)" }} />
                       </div>
                       <div>
-                        <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">{tUpper("yacht.lastName", "Last Name")}</label>
-                        <input type="text" value={bookingForm.lastName} onChange={(e) => setBookingForm({ ...bookingForm, lastName: e.target.value })} placeholder="Doe" className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[#0055a9] focus:ring-1 focus:ring-[#0055a9]/20 transition bg-gray-50/50" style={{ color: "#070c26" }} />
+                        <label className="block text-[9px] uppercase font-bold text-[var(--text-subtle)] mb-1 tracking-wide">{tUpper("yacht.lastName", "Last Name")}</label>
+                        <input type="text" value={bookingForm.lastName} onChange={(e) => setBookingForm({ ...bookingForm, lastName: e.target.value })} placeholder="Doe" className="w-full border border-[var(--border-input)] rounded-[var(--iyc-radius-sm)] px-3 py-2.5 text-xs bg-transparent placeholder:text-[var(--text-subtle)] focus:outline-none focus:border-[var(--text-link)] transition" style={{ color: "var(--text-body)" }} />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">{tUpper("yacht.email", "Email")} *</label>
-                      <input type="email" value={bookingForm.email} onChange={(e) => setBookingForm({ ...bookingForm, email: e.target.value })} placeholder="john@example.com" className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[#0055a9] focus:ring-1 focus:ring-[#0055a9]/20 transition bg-gray-50/50" style={{ color: "#070c26" }} />
+                      <label className="block text-[9px] uppercase font-bold text-[var(--text-subtle)] mb-1 tracking-wide">{tUpper("yacht.email", "Email")} *</label>
+                      <input type="email" value={bookingForm.email} onChange={(e) => setBookingForm({ ...bookingForm, email: e.target.value })} placeholder="john@example.com" className="w-full border border-[var(--border-input)] rounded-[var(--iyc-radius-sm)] px-3 py-2.5 text-xs bg-transparent placeholder:text-[var(--text-subtle)] focus:outline-none focus:border-[var(--text-link)] transition" style={{ color: "var(--text-body)" }} />
                     </div>
                     <div>
-                      <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">{tUpper("yacht.phone", "Phone")}</label>
-                      <input type="tel" value={bookingForm.phone} onChange={(e) => setBookingForm({ ...bookingForm, phone: e.target.value })} placeholder="+30 123 456 7890" className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[#0055a9] focus:ring-1 focus:ring-[#0055a9]/20 transition bg-gray-50/50" style={{ color: "#070c26" }} />
+                      <label className="block text-[9px] uppercase font-bold text-[var(--text-subtle)] mb-1 tracking-wide">{tUpper("yacht.phone", "Phone")}</label>
+                      <input type="tel" value={bookingForm.phone} onChange={(e) => setBookingForm({ ...bookingForm, phone: e.target.value })} placeholder="+30 123 456 7890" className="w-full border border-[var(--border-input)] rounded-[var(--iyc-radius-sm)] px-3 py-2.5 text-xs bg-transparent placeholder:text-[var(--text-subtle)] focus:outline-none focus:border-[var(--text-link)] transition" style={{ color: "var(--text-body)" }} />
                     </div>
                     <div>
-                      <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">{tUpper("yacht.specialRequests", "Special Requests")}</label>
-                      <textarea value={bookingForm.notes} onChange={(e) => setBookingForm({ ...bookingForm, notes: e.target.value })} placeholder="Celebrations, dietary needs, preferred destinations..." rows={3} className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[#0055a9] focus:ring-1 focus:ring-[#0055a9]/20 transition resize-none bg-gray-50/50" style={{ color: "#070c26" }} />
+                      <label className="block text-[9px] uppercase font-bold text-[var(--text-subtle)] mb-1 tracking-wide">{tUpper("yacht.specialRequests", "Special Requests")}</label>
+                      <textarea value={bookingForm.notes} onChange={(e) => setBookingForm({ ...bookingForm, notes: e.target.value })} placeholder="Celebrations, dietary needs, preferred destinations..." rows={3} className="w-full border border-[var(--border-input)] rounded-[var(--iyc-radius-sm)] px-3 py-2.5 text-xs bg-transparent placeholder:text-[var(--text-subtle)] focus:outline-none focus:border-[var(--text-link)] transition resize-none" style={{ color: "var(--text-body)" }} />
                     </div>
                   </div>
 
                   <button
                     onClick={handleSubmitBooking}
                     disabled={!bookingForm.firstName || !bookingForm.email || bookingSubmitting}
-                    className="w-full text-white py-3.5 rounded-xl text-xs font-bold transition-all duration-300 mt-5 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer hover:shadow-lg hover:shadow-[#0055a9]/20 active:scale-[0.98]"
-                    style={{ background: "linear-gradient(135deg, #0055a9 0%, #003d7a 100%)" }}
+                    className="w-full text-white py-3.5 rounded-xl text-xs font-bold transition-all duration-300 mt-5 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer hover:shadow-lg hover:shadow-[var(--iyc-ionian-600)]/20 active:scale-[0.98]"
+                    style={{ background: "linear-gradient(135deg, var(--iyc-ionian-600) 0%, var(--iyc-ionian-700) 100%)" }}
                   >
                     {bookingSubmitting ? (
                       <>
@@ -1305,7 +1361,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                       </>
                     )}
                   </button>
-                  <p className="text-center text-[10px] text-gray-400 mt-2.5">No payment required &middot; Free cancellation</p>
+                  <p className="text-center text-[10px] text-[var(--text-subtle)] mt-2.5">No payment required &middot; Free cancellation</p>
                 </div>
               </>
             )}
@@ -1315,7 +1371,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
 
       {/* Floating phone button */}
       <div className="fixed right-6 bottom-6 z-50">
-        <button className="w-14 h-14 rounded-full flex items-center justify-center text-white shadow-xl hover:scale-105 active:scale-95 transition" style={{ backgroundColor: "#8C7D70" }}>
+        <button className="w-14 h-14 rounded-full flex items-center justify-center text-white shadow-xl hover:scale-105 active:scale-95 transition" style={{ backgroundColor: "var(--text-subtle)" }}>
           <Phone className="w-6 h-6" />
         </button>
       </div>
@@ -1332,7 +1388,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
               /* Success state — personalized marketing message */
               <div className="relative overflow-hidden">
                 {/* Gradient hero */}
-                <div className="relative px-8 pt-10 pb-8 text-center" style={{ background: "linear-gradient(135deg, #070c26 0%, #0055a9 60%, #0077cc 100%)" }}>
+                <div className="relative px-8 pt-10 pb-8 text-center" style={{ background: "linear-gradient(135deg, var(--iyc-ionian-900) 0%, var(--iyc-ionian-600) 60%, var(--iyc-ionian-500) 100%)" }}>
                   <div className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")" }} />
 
                   {/* Close button */}
@@ -1349,7 +1405,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                       <CheckCircle2 className="w-8 h-8 text-white" />
                     </div>
 
-                    <h3 className="text-xl font-bold text-white mb-2 tracking-tight">
+                    <h3 className="text-xl font-bold text-white mb-2 tracking-tight" style={{ fontFamily: "var(--font-display)" }}>
                       {enquiryForm.firstName ? `Thank You, ${enquiryForm.firstName}!` : "Thank You!"}
                     </h3>
                     <p className="text-white/70 text-sm leading-relaxed max-w-sm mx-auto">
@@ -1360,18 +1416,18 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
 
                 {/* Details card */}
                 <div className="px-8 -mt-4 relative z-10">
-                  <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-5">
+                  <div className="bg-white rounded-xl shadow-lg border border-[var(--border-hairline)] p-5">
                     {/* Staff advisor */}
                     {yacht.staffRep && (
-                      <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-100">
+                      <div className="flex items-center gap-3 mb-4 pb-4 border-b border-[var(--border-hairline)]">
                         {yacht.staffRep.image ? (
-                          <Image src={yacht.staffRep.image} alt={yacht.staffRep.name} width={44} height={44} className="w-11 h-11 rounded-full object-cover shrink-0 border-2 border-gray-100" />
+                          <Image src={yacht.staffRep.image} alt={yacht.staffRep.name} width={44} height={44} className="w-11 h-11 rounded-full object-cover shrink-0 border-2 border-[var(--border-hairline)]" />
                         ) : (
-                          <div className="w-11 h-11 rounded-full bg-[#070c26] flex items-center justify-center text-white text-xs font-bold shrink-0">IYC</div>
+                          <div className="w-11 h-11 rounded-full bg-[var(--surface-inverse)] flex items-center justify-center text-white text-xs font-bold shrink-0">IYC</div>
                         )}
                         <div className="flex-1">
-                          <p className="text-xs font-semibold text-gray-800">{yacht.staffRep.name}</p>
-                          <p className="text-[10px] text-gray-400">{staffPosition || t("yacht.charterAdvisor", "Charter Advisor")}</p>
+                          <p className="text-xs font-semibold text-[var(--text-body)]">{yacht.staffRep.name}</p>
+                          <p className="text-[10px] text-[var(--text-subtle)]">{staffPosition || t("yacht.charterAdvisor", "Charter Advisor")}</p>
                         </div>
                         <span className="text-[9px] text-green-600 font-medium flex items-center gap-1">
                           <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
@@ -1383,21 +1439,21 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                     {/* What happens next */}
                     <div className="space-y-3">
                       <div className="flex items-start gap-3">
-                        <div className="w-6 h-6 rounded-full bg-[#0055a9]/10 flex items-center justify-center shrink-0 mt-0.5">
-                          <Mail className="w-3 h-3 text-[#0055a9]" />
+                        <div className="w-6 h-6 rounded-full bg-[var(--iyc-ionian-600)]/10 flex items-center justify-center shrink-0 mt-0.5">
+                          <Mail className="w-3 h-3 text-[var(--text-link)]" />
                         </div>
                         <div>
-                          <p className="text-xs font-semibold text-gray-800">{t("yacht.confirmationSent", "Confirmation sent")}</p>
-                          <p className="text-[10px] text-gray-400">Check your inbox at {enquiryForm.email || "your email"}</p>
+                          <p className="text-xs font-semibold text-[var(--text-body)]">{t("yacht.confirmationSent", "Confirmation sent")}</p>
+                          <p className="text-[10px] text-[var(--text-subtle)]">Check your inbox at {enquiryForm.email || "your email"}</p>
                         </div>
                       </div>
                       <div className="flex items-start gap-3">
-                        <div className="w-6 h-6 rounded-full bg-[#0055a9]/10 flex items-center justify-center shrink-0 mt-0.5">
-                          <CalendarDays className="w-3 h-3 text-[#0055a9]" />
+                        <div className="w-6 h-6 rounded-full bg-[var(--iyc-ionian-600)]/10 flex items-center justify-center shrink-0 mt-0.5">
+                          <CalendarDays className="w-3 h-3 text-[var(--text-link)]" />
                         </div>
                         <div>
-                          <p className="text-xs font-semibold text-gray-800">Tailored proposal within 24h</p>
-                          <p className="text-[10px] text-gray-400">
+                          <p className="text-xs font-semibold text-[var(--text-body)]">Tailored proposal within 24h</p>
+                          <p className="text-[10px] text-[var(--text-subtle)]">
                             {selectedMonths.length > 0
                               ? `Availability & pricing for ${selectedMonths.map((m) => { const [y, mo] = m.split("-"); return `${MONTH_NAMES[parseInt(mo) - 1]} ${y}` }).join(", ")}`
                               : "Best available dates and pricing options"
@@ -1406,12 +1462,12 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                         </div>
                       </div>
                       <div className="flex items-start gap-3">
-                        <div className="w-6 h-6 rounded-full bg-[#0055a9]/10 flex items-center justify-center shrink-0 mt-0.5">
-                          <Anchor className="w-3 h-3 text-[#0055a9]" />
+                        <div className="w-6 h-6 rounded-full bg-[var(--iyc-ionian-600)]/10 flex items-center justify-center shrink-0 mt-0.5">
+                          <Anchor className="w-3 h-3 text-[var(--text-link)]" />
                         </div>
                         <div>
-                          <p className="text-xs font-semibold text-gray-800">{t("yacht.itinerarySuggestions", "Itinerary suggestions included")}</p>
-                          <p className="text-[10px] text-gray-400">Routes curated for {enquiryGuestCount} guest{enquiryGuestCount !== 1 ? "s" : ""} aboard {yacht.name}</p>
+                          <p className="text-xs font-semibold text-[var(--text-body)]">{t("yacht.itinerarySuggestions", "Itinerary suggestions included")}</p>
+                          <p className="text-[10px] text-[var(--text-subtle)]">Routes curated for {enquiryGuestCount} guest{enquiryGuestCount !== 1 ? "s" : ""} aboard {yacht.name}</p>
                         </div>
                       </div>
                     </div>
@@ -1422,13 +1478,13 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                 <div className="px-8 pt-5 pb-8 text-center">
                   <button
                     onClick={() => setEnquiryOpen(false)}
-                    className="px-8 py-3 rounded-xl text-xs font-bold text-white transition-all duration-300 hover:shadow-lg hover:shadow-[#0055a9]/20 active:scale-[0.98] cursor-pointer"
-                    style={{ background: "linear-gradient(135deg, #0055a9 0%, #003d7a 100%)" }}
+                    className="px-8 py-3 rounded-xl text-xs font-bold text-white transition-all duration-300 hover:shadow-lg hover:shadow-[var(--iyc-ionian-600)]/20 active:scale-[0.98] cursor-pointer"
+                    style={{ background: "linear-gradient(135deg, var(--iyc-ionian-600) 0%, var(--iyc-ionian-700) 100%)" }}
                   >
                     Continue Browsing
                   </button>
-                  <p className="text-[10px] text-gray-400 mt-3">
-                    Have questions? Call us at <span className="font-semibold text-gray-500">+30 210 XXX XXXX</span>
+                  <p className="text-[10px] text-[var(--text-subtle)] mt-3">
+                    Have questions? Call us at <span className="font-semibold text-[var(--text-muted)]">+30 210 XXX XXXX</span>
                   </p>
                 </div>
               </div>
@@ -1436,7 +1492,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
               /* Form */
               <>
                 {/* Modal header with gradient */}
-                <div className="relative px-6 pt-6 pb-4" style={{ background: "linear-gradient(135deg, #070c26 0%, #0055a9 100%)" }}>
+                <div className="relative px-6 pt-6 pb-4" style={{ background: "linear-gradient(135deg, var(--iyc-ionian-900) 0%, var(--iyc-ionian-600) 100%)" }}>
                   <button
                     onClick={() => setEnquiryOpen(false)}
                     className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition cursor-pointer"
@@ -1450,7 +1506,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                       <div className="w-12 h-12 rounded-full bg-white/15 flex items-center justify-center text-white font-bold text-sm shrink-0 border border-white/20">IYC</div>
                     )}
                     <div>
-                      <h2 className="text-base font-bold text-white">{t("yacht.planYourCharter", "Plan Your Charter")}</h2>
+                      <h2 className="text-base font-bold text-white" style={{ fontFamily: "var(--font-display)" }}>{t("yacht.planYourCharter", "Plan Your Charter")}</h2>
                       <p className="text-[11px] text-white/60 mt-0.5">
                         {yacht.staffRep ? `${yacht.staffRep.name} will prepare your proposal` : `Personalized proposal for ${yacht.name}`}
                       </p>
@@ -1462,10 +1518,10 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                   {/* Charter preferences */}
                   <div className="mb-5">
                     <div className="flex items-center gap-2 mb-3">
-                      <CalendarDays className="w-4 h-4 text-[#0055a9]" />
-                      <span className="text-[11px] font-bold text-gray-800 uppercase tracking-wide">{tUpper("yacht.preferredPeriod", "Preferred Period")}</span>
+                      <CalendarDays className="w-4 h-4 text-[var(--text-link)]" />
+                      <span className="text-[11px] font-bold text-[var(--text-body)] uppercase tracking-wide">{tUpper("yacht.preferredPeriod", "Preferred Period")}</span>
                     </div>
-                    <div className="bg-gray-50 rounded-xl p-3.5 border border-gray-100">
+                    <div className="bg-[var(--surface-sunken)] rounded-xl p-3.5 border border-[var(--border-hairline)]">
                       {(() => {
                         const byYear: Record<number, string[]> = {}
                         for (const m of availableMonths) {
@@ -1475,7 +1531,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                         }
                         return Object.entries(byYear).map(([year, months]) => (
                           <div key={year} className="mb-2 last:mb-0">
-                            <span className="text-[9px] uppercase font-bold text-gray-400 tracking-wider mb-1.5 block">{year}</span>
+                            <span className="text-[9px] uppercase font-bold text-[var(--text-subtle)] tracking-wider mb-1.5 block">{year}</span>
                             <div className="flex flex-wrap gap-1.5">
                               {months.map((m) => {
                                 const selected = selectedMonths.includes(m)
@@ -1488,9 +1544,9 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                                     className={`px-2.5 py-1.5 rounded-lg text-[10px] font-semibold transition-all duration-200 cursor-pointer border ${
                                       selected
                                         ? "text-white border-transparent shadow-sm"
-                                        : "border-gray-200 text-gray-500 hover:border-[#0055a9]/40 hover:text-[#0055a9] hover:bg-[#0055a9]/5"
+                                        : "border-[var(--border-hairline)] text-[var(--text-muted)] hover:border-[var(--iyc-ionian-600)]/40 hover:text-[var(--text-link)] hover:bg-[var(--iyc-ionian-600)]/5"
                                     }`}
-                                    style={selected ? { backgroundColor: "#0055a9" } : undefined}
+                                    style={selected ? { backgroundColor: "var(--iyc-ionian-600)" } : undefined}
                                   >
                                     {MONTH_NAMES[monthIdx]}
                                   </button>
@@ -1501,19 +1557,19 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                         ))
                       })()}
                       {availableMonths.length === 0 && (
-                        <p className="text-[10px] text-gray-400 italic">No availability data yet</p>
+                        <p className="text-[10px] text-[var(--text-subtle)] italic">No availability data yet</p>
                       )}
 
                       {/* Guests inline */}
-                      <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-200">
+                      <div className="flex items-center justify-between mt-3 pt-3 border-t border-[var(--border-hairline)]">
                         <div className="flex items-center gap-1.5">
-                          <User className="w-3.5 h-3.5 text-gray-400" />
-                          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">{tUpper("yacht.stat.guests", "Guests")}</span>
+                          <User className="w-3.5 h-3.5 text-[var(--text-subtle)]" />
+                          <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wide">{tUpper("yacht.stat.guests", "Guests")}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <button type="button" onClick={() => setGuestCount(Math.max(1, guestCount - 1))} className="w-6 h-6 rounded-lg border border-gray-200 flex items-center justify-center text-xs text-gray-500 hover:bg-white hover:border-gray-300 transition cursor-pointer">-</button>
-                          <span className="text-xs font-bold w-4 text-center" style={{ color: "#070c26" }}>{guestCount}</span>
-                          <button type="button" onClick={() => setGuestCount(Math.min(yacht.maxPersons || 20, guestCount + 1))} className="w-6 h-6 rounded-lg border border-gray-200 flex items-center justify-center text-xs text-gray-500 hover:bg-white hover:border-gray-300 transition cursor-pointer">+</button>
+                          <button type="button" onClick={() => setGuestCount(Math.max(1, guestCount - 1))} className="w-6 h-6 rounded-lg border border-[var(--border-hairline)] flex items-center justify-center text-xs text-[var(--text-muted)] hover:bg-white hover:border-[var(--border-input)] transition cursor-pointer">-</button>
+                          <span className="text-xs font-bold w-4 text-center" style={{ color: "var(--text-heading)" }}>{guestCount}</span>
+                          <button type="button" onClick={() => setGuestCount(Math.min(yacht.maxPersons || 20, guestCount + 1))} className="w-6 h-6 rounded-lg border border-[var(--border-hairline)] flex items-center justify-center text-xs text-[var(--text-muted)] hover:bg-white hover:border-[var(--border-input)] transition cursor-pointer">+</button>
                         </div>
                       </div>
                     </div>
@@ -1521,68 +1577,68 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
 
                   {/* Contact fields */}
                   <div className="flex items-center gap-2 mb-3">
-                    <Mail className="w-4 h-4 text-[#0055a9]" />
-                    <span className="text-[11px] font-bold text-gray-800 uppercase tracking-wide">{tUpper("yacht.yourDetails", "Your Details")}</span>
+                    <Mail className="w-4 h-4 text-[var(--text-link)]" />
+                    <span className="text-[11px] font-bold text-[var(--text-body)] uppercase tracking-wide">{tUpper("yacht.yourDetails", "Your Details")}</span>
                   </div>
                   <div className="space-y-3">
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">{tUpper("yacht.firstName", "First Name")} *</label>
+                        <label className="block text-[9px] uppercase font-bold text-[var(--text-subtle)] mb-1 tracking-wide">{tUpper("yacht.firstName", "First Name")} *</label>
                         <input
                           type="text"
                           value={enquiryForm.firstName}
                           onChange={(e) => setEnquiryForm({ ...enquiryForm, firstName: e.target.value })}
                           placeholder="John"
-                          className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[#0055a9] focus:ring-1 focus:ring-[#0055a9]/20 transition bg-gray-50/50"
-                          style={{ color: "#070c26" }}
+                          className="w-full border border-[var(--border-input)] rounded-[var(--iyc-radius-sm)] px-3 py-2.5 text-xs bg-transparent placeholder:text-[var(--text-subtle)] focus:outline-none focus:border-[var(--text-link)] transition"
+                          style={{ color: "var(--text-body)" }}
                         />
                       </div>
                       <div>
-                        <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">{tUpper("yacht.lastName", "Last Name")}</label>
+                        <label className="block text-[9px] uppercase font-bold text-[var(--text-subtle)] mb-1 tracking-wide">{tUpper("yacht.lastName", "Last Name")}</label>
                         <input
                           type="text"
                           value={enquiryForm.lastName}
                           onChange={(e) => setEnquiryForm({ ...enquiryForm, lastName: e.target.value })}
                           placeholder="Doe"
-                          className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[#0055a9] focus:ring-1 focus:ring-[#0055a9]/20 transition bg-gray-50/50"
-                          style={{ color: "#070c26" }}
+                          className="w-full border border-[var(--border-input)] rounded-[var(--iyc-radius-sm)] px-3 py-2.5 text-xs bg-transparent placeholder:text-[var(--text-subtle)] focus:outline-none focus:border-[var(--text-link)] transition"
+                          style={{ color: "var(--text-body)" }}
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">{tUpper("yacht.email", "Email")} *</label>
+                      <label className="block text-[9px] uppercase font-bold text-[var(--text-subtle)] mb-1 tracking-wide">{tUpper("yacht.email", "Email")} *</label>
                       <input
                         type="email"
                         value={enquiryForm.email}
                         onChange={(e) => setEnquiryForm({ ...enquiryForm, email: e.target.value })}
                         placeholder="john@example.com"
-                        className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[#0055a9] focus:ring-1 focus:ring-[#0055a9]/20 transition bg-gray-50/50"
-                        style={{ color: "#070c26" }}
+                        className="w-full border border-[var(--border-input)] rounded-[var(--iyc-radius-sm)] px-3 py-2.5 text-xs bg-transparent placeholder:text-[var(--text-subtle)] focus:outline-none focus:border-[var(--text-link)] transition"
+                        style={{ color: "var(--text-body)" }}
                       />
                     </div>
 
                     <div>
-                      <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">{tUpper("yacht.phone", "Phone")}</label>
+                      <label className="block text-[9px] uppercase font-bold text-[var(--text-subtle)] mb-1 tracking-wide">{tUpper("yacht.phone", "Phone")}</label>
                       <input
                         type="tel"
                         value={enquiryForm.phone}
                         onChange={(e) => setEnquiryForm({ ...enquiryForm, phone: e.target.value })}
                         placeholder="+30 123 456 7890"
-                        className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[#0055a9] focus:ring-1 focus:ring-[#0055a9]/20 transition bg-gray-50/50"
-                        style={{ color: "#070c26" }}
+                        className="w-full border border-[var(--border-input)] rounded-[var(--iyc-radius-sm)] px-3 py-2.5 text-xs bg-transparent placeholder:text-[var(--text-subtle)] focus:outline-none focus:border-[var(--text-link)] transition"
+                        style={{ color: "var(--text-body)" }}
                       />
                     </div>
 
                     <div>
-                      <label className="block text-[9px] uppercase font-bold text-gray-400 mb-1 tracking-wide">{tUpper("yacht.specialRequests", "Special Requests")}</label>
+                      <label className="block text-[9px] uppercase font-bold text-[var(--text-subtle)] mb-1 tracking-wide">{tUpper("yacht.specialRequests", "Special Requests")}</label>
                       <textarea
                         value={enquiryForm.notes}
                         onChange={(e) => setEnquiryForm({ ...enquiryForm, notes: e.target.value })}
                         placeholder="Celebrations, dietary needs, preferred destinations..."
                         rows={3}
-                        className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[#0055a9] focus:ring-1 focus:ring-[#0055a9]/20 transition resize-none bg-gray-50/50"
-                        style={{ color: "#070c26" }}
+                        className="w-full border border-[var(--border-input)] rounded-[var(--iyc-radius-sm)] px-3 py-2.5 text-xs bg-transparent placeholder:text-[var(--text-subtle)] focus:outline-none focus:border-[var(--text-link)] transition resize-none"
+                        style={{ color: "var(--text-body)" }}
                       />
                     </div>
                   </div>
@@ -1590,8 +1646,8 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                   <button
                     onClick={handleSubmitEnquiry}
                     disabled={!enquiryForm.firstName || !enquiryForm.email || enquirySubmitting}
-                    className="w-full text-white py-3.5 rounded-xl text-xs font-bold transition-all duration-300 mt-5 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer hover:shadow-lg hover:shadow-[#0055a9]/20 active:scale-[0.98]"
-                    style={{ background: "linear-gradient(135deg, #0055a9 0%, #003d7a 100%)" }}
+                    className="w-full text-white py-3.5 rounded-xl text-xs font-bold transition-all duration-300 mt-5 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer hover:shadow-lg hover:shadow-[var(--iyc-ionian-600)]/20 active:scale-[0.98]"
+                    style={{ background: "linear-gradient(135deg, var(--iyc-ionian-600) 0%, var(--iyc-ionian-700) 100%)" }}
                   >
                     {enquirySubmitting ? (
                       <>
@@ -1605,7 +1661,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                       </>
                     )}
                   </button>
-                  <p className="text-center text-[10px] text-gray-400 mt-2.5">
+                  <p className="text-center text-[10px] text-[var(--text-subtle)] mt-2.5">
                     No commitment &middot; Free personalized proposal
                   </p>
                 </div>

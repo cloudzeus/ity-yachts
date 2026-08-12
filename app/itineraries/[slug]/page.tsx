@@ -69,7 +69,7 @@ export default async function ItineraryPage({ params }: { params: Promise<{ slug
     <main>
       <div
         className="relative z-10 min-h-screen"
-        style={{ background: "#060c27", clipPath: "polygon(0% 0, 100% 0%, 100% 100%, 0 100%)" }}
+        style={{ background: "var(--surface-page)", clipPath: "polygon(0% 0, 100% 0%, 100% 100%, 0 100%)" }}
       >
         <SiteHeader />
         <ItineraryDetailClient itinerary={data} mapsKey={mapsKey} />

@@ -168,7 +168,7 @@ export function EditorClient({ page: initialPage }: EditorClientProps) {
             className="h-8 text-sm flex-1 min-w-0"
             style={{ background: "transparent", border: "none", padding: "0" }}
           />
-          <span className="text-xs px-2 py-1 rounded" style={{ background: page.status === "published" ? "rgba(45,106,79,0.1)" : "rgba(117,117,117,0.1)", color: page.status === "published" ? "#2D6A4F" : "#626262" }}>
+          <span className="text-xs px-2 py-1 rounded" style={{ background: page.status === "published" ? "rgba(45,106,79,0.1)" : "rgba(117,117,117,0.1)", color: page.status === "published" ? "#4F7A46" : "#6B5F57" }}>
             {page.status.charAt(0).toUpperCase() + page.status.slice(1)}
           </span>
         </div>

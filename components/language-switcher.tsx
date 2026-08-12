@@ -119,7 +119,7 @@ export function LanguageSwitcher() {
       ref={containerRef}
       className="relative flex items-center gap-0.5 rounded-full px-[3px] py-[3px]"
       style={{
-        background: "rgba(0, 33, 71, 0.5)",
+        background: "rgba(4,13,25,0.5)",
         border: "1px solid rgba(0, 99, 153, 0.25)",
       }}
     >

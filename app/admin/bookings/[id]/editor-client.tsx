@@ -219,22 +219,22 @@ function toInputDate(iso: string | null): string {
 
 function statusColor(status: string): { bg: string; text: string } {
   switch (status) {
-    case "OPTION": return { bg: "rgba(117,117,117,0.1)", text: "#626262" }
-    case "CONFIRMED": return { bg: "rgba(30,136,229,0.1)", text: "#1E88E5" }
-    case "PAID": return { bg: "rgba(45,106,79,0.1)", text: "#2D6A4F" }
-    case "COMPLETED": return { bg: "rgba(45,106,79,0.15)", text: "#1B5E20" }
-    case "CANCELLED": return { bg: "rgba(211,47,47,0.1)", text: "#D32F2F" }
-    default: return { bg: "rgba(117,117,117,0.1)", text: "#626262" }
+    case "OPTION": return { bg: "rgba(117,117,117,0.1)", text: "#6B5F57" }
+    case "CONFIRMED": return { bg: "rgba(30,136,229,0.1)", text: "#2A90CE" }
+    case "PAID": return { bg: "rgba(45,106,79,0.1)", text: "#4F7A46" }
+    case "COMPLETED": return { bg: "rgba(45,106,79,0.15)", text: "#436A3B" }
+    case "CANCELLED": return { bg: "rgba(211,47,47,0.1)", text: "#A93B2F" }
+    default: return { bg: "rgba(117,117,117,0.1)", text: "#6B5F57" }
   }
 }
 
 function paymentStatusColor(status: string): { bg: string; text: string } {
   switch (status) {
-    case "PENDING": return { bg: "rgba(30,136,229,0.1)", text: "#1E88E5" }
-    case "COMPLETED": return { bg: "rgba(45,106,79,0.1)", text: "#2D6A4F" }
-    case "FAILED": return { bg: "rgba(211,47,47,0.1)", text: "#D32F2F" }
-    case "REFUNDED": return { bg: "rgba(245,124,0,0.1)", text: "#F57C00" }
-    default: return { bg: "rgba(117,117,117,0.1)", text: "#626262" }
+    case "PENDING": return { bg: "rgba(30,136,229,0.1)", text: "#2A90CE" }
+    case "COMPLETED": return { bg: "rgba(45,106,79,0.1)", text: "#4F7A46" }
+    case "FAILED": return { bg: "rgba(211,47,47,0.1)", text: "#A93B2F" }
+    case "REFUNDED": return { bg: "rgba(245,124,0,0.1)", text: "#C1782A" }
+    default: return { bg: "rgba(117,117,117,0.1)", text: "#6B5F57" }
   }
 }
 
@@ -937,7 +937,7 @@ export function BookingEditorClient({ booking: initialBooking }: BookingEditorCl
                             <td className="text-right py-2 px-2 font-medium" style={{ color: "var(--on-surface)" }}>{extra.totalPrice.toFixed(2)} {extra.currency}</td>
                             <td className="text-right py-2 px-2">
                               <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => removeExtra(extra.id)}>
-                                <Trash2 className="size-3" style={{ color: "#D32F2F" }} />
+                                <Trash2 className="size-3" style={{ color: "#A93B2F" }} />
                               </Button>
                             </td>
                           </tr>
@@ -1054,14 +1054,14 @@ export function BookingEditorClient({ booking: initialBooking }: BookingEditorCl
                             <td className="text-right py-2 px-2" style={{ color: "var(--on-surface)" }}>{svc.totalPrice.toFixed(2)} {svc.currency}</td>
                             <td className="text-center py-2 px-2">
                               {svc.obligatory ? (
-                                <span className="text-xs px-2 py-0.5 rounded" style={{ background: "rgba(245,124,0,0.1)", color: "#F57C00" }}>Required</span>
+                                <span className="text-xs px-2 py-0.5 rounded" style={{ background: "rgba(245,124,0,0.1)", color: "#C1782A" }}>Required</span>
                               ) : (
-                                <span className="text-xs px-2 py-0.5 rounded" style={{ background: "rgba(117,117,117,0.1)", color: "#626262" }}>Optional</span>
+                                <span className="text-xs px-2 py-0.5 rounded" style={{ background: "rgba(117,117,117,0.1)", color: "#6B5F57" }}>Optional</span>
                               )}
                             </td>
                             <td className="text-right py-2 px-2">
                               <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => removeService(svc.id)}>
-                                <Trash2 className="size-3" style={{ color: "#D32F2F" }} />
+                                <Trash2 className="size-3" style={{ color: "#A93B2F" }} />
                               </Button>
                             </td>
                           </tr>
@@ -1148,11 +1148,11 @@ export function BookingEditorClient({ booking: initialBooking }: BookingEditorCl
                 </div>
                 <div className="p-3 rounded" style={{ background: "var(--surface-container-lowest)", boxShadow: "var(--shadow-ambient)" }}>
                   <p className="text-[10px] uppercase tracking-wide mb-1" style={{ color: "var(--on-surface-variant)" }}>Total Paid</p>
-                  <p className="text-sm font-semibold" style={{ color: "#2D6A4F" }}>{totalPaid.toFixed(2)} {booking.currency}</p>
+                  <p className="text-sm font-semibold" style={{ color: "#4F7A46" }}>{totalPaid.toFixed(2)} {booking.currency}</p>
                 </div>
                 <div className="p-3 rounded" style={{ background: "var(--surface-container-lowest)", boxShadow: "var(--shadow-ambient)" }}>
                   <p className="text-[10px] uppercase tracking-wide mb-1" style={{ color: "var(--on-surface-variant)" }}>Remaining</p>
-                  <p className="text-sm font-semibold" style={{ color: totalRemaining > 0 ? "#D32F2F" : "#2D6A4F" }}>{totalRemaining.toFixed(2)} {booking.currency}</p>
+                  <p className="text-sm font-semibold" style={{ color: totalRemaining > 0 ? "#A93B2F" : "#4F7A46" }}>{totalRemaining.toFixed(2)} {booking.currency}</p>
                 </div>
               </div>
 
@@ -1201,7 +1201,7 @@ export function BookingEditorClient({ booking: initialBooking }: BookingEditorCl
                               <td className="py-2 px-2" style={{ color: "var(--on-surface)" }}>{formatDate(payment.paidAt || payment.createdAt)}</td>
                               <td className="text-right py-2 px-2">
                                 <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => removePayment(payment.id)}>
-                                  <Trash2 className="size-3" style={{ color: "#D32F2F" }} />
+                                  <Trash2 className="size-3" style={{ color: "#A93B2F" }} />
                                 </Button>
                               </td>
                             </tr>
@@ -1351,7 +1351,7 @@ export function BookingEditorClient({ booking: initialBooking }: BookingEditorCl
                           <div className="flex flex-col gap-0.5 min-w-0">
                             <span className="text-xs font-medium truncate" style={{ color: "var(--on-surface)" }}>{doc.name}</span>
                             <div className="flex items-center gap-2">
-                              <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "rgba(30,136,229,0.1)", color: "#1E88E5" }}>
+                              <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "rgba(30,136,229,0.1)", color: "#2A90CE" }}>
                                 {doc.type || "OTHER"}
                               </span>
                               <span className="text-[10px]" style={{ color: "var(--on-surface-variant)" }}>
@@ -1370,7 +1370,7 @@ export function BookingEditorClient({ booking: initialBooking }: BookingEditorCl
                             </Button>
                           </a>
                           <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => removeDocument(doc.id)}>
-                            <Trash2 className="size-3" style={{ color: "#D32F2F" }} />
+                            <Trash2 className="size-3" style={{ color: "#A93B2F" }} />
                           </Button>
                         </div>
                       </div>

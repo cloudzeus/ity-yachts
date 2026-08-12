@@ -1,139 +1,371 @@
 @import "tailwindcss";
 
-/* ─── Maritime Enterprise Design System ─────────────────────────────────── */
+/* ═══ IYC Design System ═══════════════════════════════════════════════════
+   "The working harbour, not the marina lounge."
+   Deep Ionian blues from the logo and brochure, grounded in warm limestone
+   surfaces with a sunset-amber CTA. Replaces the cold near-black /
+   electric-blue "Maritime Enterprise" palette.
+   Source: Claude Design — IYC Design System (563951f3).
+   ════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  /* Surfaces — background shifts replace borders */
-  --surface:                  #F8F9FA;
-  --surface-container-low:    #F3F4F5;
-  --surface-container-lowest: #FFFFFF;
-  --surface-container-high:   #E8EAEB;
-  --surface-container-highest:#E1E3E4;
+  /* ── Ionian blues — sampled from the IYC brochure cover and the logo waves ── */
+  --iyc-ionian-50:  #EAF4FB;
+  --iyc-ionian-100: #CFE6F6;
+  --iyc-ionian-200: #9CCBEC;
+  --iyc-ionian-300: #5FAEDF;
+  --iyc-ionian-400: #2A90CE;
+  --iyc-ionian-500: #0F79BE;  /* signature brand blue */
+  --iyc-ionian-600: #0B6099;
+  --iyc-ionian-700: #0A4A76;
+  --iyc-ionian-800: #0B3A5C;
+  --iyc-ionian-900: #05111F;  /* deep sea — near-black Ionian night */
 
-  /* Brand */
-  --primary:            #000A1E;
-  --primary-container:  #002147;
-  --secondary:          #006399;
-  --secondary-light:    #0077B6;
+  /* ── Warm neutrals — Lefkada limestone, sailcloth, teak deck ── */
+  --iyc-sand-50:   #FBF9F5;
+  --iyc-sand-100:  #F5F1E9;
+  --iyc-sand-200:  #EBE4D8;
+  --iyc-sand-300:  #DBD1C0;
+  --iyc-sand-400:  #BFB2A0;
+  --iyc-taupe-500: #84776E;   /* carried over from the current IYC site */
+  --iyc-taupe-600: #6B5F57;
+  --iyc-ink-700:   #4A4640;
+  --iyc-ink-800:   #2E2C28;
+  --iyc-ink-900:   #1C1B18;
+
+  /* ── Accents ── */
+  --iyc-sun-300:   #F6CE91;
+  --iyc-sun-500:   #E2963C;   /* Ionian sunset — CTA + highlight */
+  --iyc-sun-600:   #C1782A;
+  --iyc-olive-400: #9AA678;
+  --iyc-olive-600: #6E7A50;   /* olive groves — availability / "in fleet" */
+
+  /* ── Semantic ──
+     `-surface` = tint fill, plain = dot/fill/icon, `-text` = label ON that tint.
+     The plain tones are too light to carry small text on their own surface
+     (success 4.43:1, warning 3.11:1), so text gets its own darker sibling. */
+  --iyc-success:         #4F7A46;
+  --iyc-success-surface: #EDF3EA;
+  --iyc-success-text:    #436A3B;  /* 5.53:1 on success-surface */
+  --iyc-warning:         #C1782A;
+  --iyc-warning-surface: #FBF0E0;
+  --iyc-warning-text:    #96591B;  /* 4.98:1 on warning-surface */
+  --iyc-danger:          #A93B2F;
+  --iyc-danger-surface:  #F9E9E6;
+  --iyc-danger-text:     #A93B2F;  /* 5.32:1 — already compliant */
+  --iyc-info:            #0B6099;
+  --iyc-info-surface:    #EAF4FB;
+  --iyc-info-text:       #0B6099;  /* 5.98:1 — already compliant */
+}
+
+:root {
+  /* ── Semantic aliases — always author against these ── */
+  --surface-page:           var(--iyc-sand-50);
+  --surface-card:           #FFFFFF;
+  --surface-sunken:         var(--iyc-sand-100);
+  --surface-raised:         #FFFFFF;
+  --surface-accent:         var(--iyc-sand-200);
+  --surface-inverse:        var(--iyc-ionian-900);
+  --surface-inverse-raised: #0A2138;
+  --surface-brand:          var(--iyc-ionian-500);
+
+  --text-heading:          var(--iyc-ionian-900);
+  --text-body:             var(--iyc-ink-800);
+  --text-muted:            var(--iyc-taupe-600);
+  /* Not taupe-500 itself: the brand taupe is 4.12:1 on sand and misses AA for
+     small copy. This is its accessible sibling (4.70:1); taupe-500 stays the
+     brand tone for fills, hovers and large display text. */
+  --text-subtle:           #7A6E65;
+  --text-on-inverse:       #FFFFFF;
+  --text-on-inverse-muted: rgba(255, 255, 255, .66);
+  --text-on-brand:         #FFFFFF;
+  /* The sunset-amber CTA carries DARK text, never white: white on #E2963C is
+     2.42:1 and fails AA outright, while ink-900 on it is 7.10:1. */
+  --text-on-accent:        var(--iyc-ink-900);
+  --text-link:             var(--iyc-ionian-600);
+  --text-link-hover:       var(--iyc-ionian-800);
+
+  --border-hairline: var(--iyc-sand-200);
+  --border-default:  var(--iyc-sand-300);
+  --border-strong:   var(--iyc-sand-400);
+  /* Form-control boundaries are UI components: WCAG 1.4.11 wants 3:1, and the
+     sand hairlines only reach ~1.5:1. Decorative dividers keep the hairlines. */
+  --border-input:    #9C8E7C;
+  --border-inverse:  rgba(255, 255, 255, .16);
+  --border-focus:    var(--iyc-ionian-500);
+
+  --action-primary:       var(--iyc-ionian-800);
+  --action-primary-hover: var(--iyc-ionian-900);
+  --action-accent:        var(--iyc-sun-500);
+  --action-accent-hover:  var(--iyc-sun-600);
+
+  /* Photo scrims — text sits directly on imagery, no capsules */
+  --scrim-photo: linear-gradient(to top, rgba(4,13,25,.90) 0%, rgba(4,13,25,.42) 45%, rgba(4,13,25,0) 78%);
+  --scrim-hero:  linear-gradient(to bottom, rgba(4,13,25,.48) 0%, rgba(4,13,25,.20) 40%, rgba(4,13,25,.84) 100%);
+
+  /* Card scrim — the same fade the hero uses: photography at the top settling
+     into limestone at the foot, so a card reads as part of the page rather
+     than a dark tile on it. Text over this foot must be dark.
+     A card has a fraction of the hero's height, so the limestone has to arrive
+     sooner — solid by 80%, giving the caption band a surface to sit on instead
+     of a half-transparent wash over a busy photograph. */
+  --scrim-card: linear-gradient(
+    to bottom,
+    rgba(4,13,25,0) 0%,
+    rgba(4,13,25,.10) 28%,
+    rgba(251,249,245,.72) 55%,
+    rgba(251,249,245,.96) 72%,
+    var(--surface-page) 82%
+  );
+}
+
+:root {
+  /* ── Typography ── */
+  --font-display: var(--font-manrope), var(--font-commissioner), system-ui, sans-serif;
+  --font-body:    var(--font-inter), var(--font-commissioner), system-ui, sans-serif;
+  --font-mono:    var(--font-plex-mono), ui-monospace, SFMono-Regular, monospace;
+
+  --text-display-xl: clamp(2.75rem, 6vw, 4.5rem);
+  --text-display-lg: clamp(2.25rem, 4.5vw, 3.5rem);
+  --text-display-md: clamp(1.875rem, 3vw, 2.5rem);
+  --text-display-sm: 1.75rem;
+
+  --text-lead:    1.1875rem;
+  --text-caption: 0.8125rem;
+  --text-micro:   0.6875rem;
+
+  --leading-display: 1.06;
+  --leading-heading: 1.18;
+  --leading-body:    1.62;
+  --leading-tight:   1.35;
+
+  --tracking-display: -0.022em;
+  --tracking-eyebrow: 0.16em;
+  --tracking-mono:    0.04em;
+
+  --weight-display: 800;
+
+  /* ── Spacing / layout rhythm ── */
+  --section-y:        clamp(4rem, 8vw, 7.5rem);
+  --gutter:           clamp(1.25rem, 4vw, 3rem);
+  --measure:          64ch;
+  --container:        1320px;
+  --container-narrow: 840px;
+
+  /* ── Radii — cards 14px, controls 4px, chips pill. Nothing else.
+     Namespaced: Tailwind's `@theme inline` re-emits `--radius-*` into :root,
+     so the raw scale must not share those names. ── */
+  --iyc-radius-xs:   2px;
+  --iyc-radius-sm:   4px;   /* controls */
+  --iyc-radius-md:   8px;
+  --iyc-radius-lg:   14px;  /* cards */
+  --iyc-radius-xl:   22px;
+  --iyc-radius-full: 999px;
+
+  /* ── Elevation — warm-tinted (taupe/ink), never neutral black ── */
+  --shadow-hairline:  0 0 0 1px var(--border-hairline);
+  --shadow-sm:        0 1px 2px rgba(46,44,40,.05), 0 2px 6px rgba(46,44,40,.04);
+  --shadow-md:        0 2px 4px rgba(46,44,40,.05), 0 8px 20px rgba(46,44,40,.07);
+  --shadow-lg:        0 4px 8px rgba(46,44,40,.05), 0 18px 44px rgba(46,44,40,.10);
+  --shadow-photo:     0 24px 60px rgba(8,42,66,.20);
+  --shadow-inset-top: inset 0 1px 0 rgba(255,255,255,.6);
+  --focus-ring:       0 0 0 3px rgba(15,121,190,.32);
+
+  /* ── Motion — quick for controls, long water-like drifts for reveals ── */
+  --ease-out:    cubic-bezier(.22,.61,.36,1);
+  --ease-in-out: cubic-bezier(.45,.05,.55,.95);
+  --ease-drift:  cubic-bezier(.33,.02,.28,1);
+  --dur-instant: 120ms;
+  --dur-fast:    200ms;
+  --dur-base:    320ms;
+  --dur-slow:    600ms;
+  --dur-drift:   1100ms;
+  --lift-hover:  -2px;
+  --press-scale: .985;
+  --zoom-image-hover: 1.04;
+
+  /* Ionian gradient for CTAs & rings (retained class name, new palette) */
+  --gradient-ocean: linear-gradient(135deg, var(--iyc-ionian-500), var(--iyc-ionian-800));
+
+  /* Ambient shadow — warm-tinted */
+  --shadow-ambient: 0 2px 4px rgba(46,44,40,.05), 0 12px 32px rgba(46,44,40,.07);
+}
+
+/* ── Compatibility layer ─────────────────────────────────────────────────
+   The app and its shadcn primitives reference these names throughout.
+   Names are kept; values now resolve to the IYC palette. ── */
+:root {
+  --surface:                   var(--surface-page);
+  --surface-container-low:     var(--iyc-sand-100);
+  --surface-container-lowest:  #FFFFFF;
+  --surface-container-high:    var(--iyc-sand-200);
+  --surface-container-highest: var(--iyc-sand-300);
+
+  --primary:            var(--iyc-ionian-900);
+  --primary-container:  var(--action-primary);
+  --secondary:          var(--iyc-ionian-600);
+  --secondary-light:    var(--iyc-ionian-500);
   --on-primary:         #FFFFFF;
-  --on-surface:         #191C1D;
-  --on-surface-variant: #43474E;
+  --on-surface:         var(--text-body);
+  --on-surface-variant: var(--text-muted);
 
-  /* Semantic */
-  --tertiary-fixed:     #A7EDFF;
-  --tertiary-fixed-dim: #58D6F1;
-  --tertiary-container: #00262D;
-  --error:              #BA1A1A;
-  --error-container:    #FFDAD6;
-  --warning:            #FFB703;
-  --outline-variant:    rgba(196, 198, 207, 0.2); /* Ghost border */
+  --tertiary-fixed:     var(--iyc-ionian-100);
+  --tertiary-fixed-dim: var(--iyc-ionian-300);
+  --tertiary-container: var(--iyc-ionian-800);
+  --error:              var(--iyc-danger);
+  --error-container:    var(--iyc-danger-surface);
+  --warning:            var(--iyc-warning);
+  --outline-variant:    var(--border-hairline);
 
-  /* Ambient shadow — tinted primary */
-  --shadow-ambient: 0px 12px 32px rgba(0, 10, 30, 0.06);
-
-  /* Radius — max md, instrument-panel feel */
-  --radius-xs: 0.125rem;  /* sm — buttons */
-  --radius-sm: 0.25rem;
-  --radius-md: 0.375rem;  /* max allowed */
-
-  /* Ocean gradient for CTAs & rings */
-  --gradient-ocean: linear-gradient(135deg, #006399, #002147);
-
-  /* Fonts */
-  --font-display: var(--font-manrope), system-ui, sans-serif;
-  --font-body:    var(--font-inter), system-ui, sans-serif;
-
-  /* Legacy compat for shadcn components */
-  --background:          var(--surface);
-  --foreground:          var(--on-surface);
-  --card:                var(--surface-container-lowest);
-  --card-foreground:     var(--on-surface);
-  --popover:             var(--surface-container-lowest);
-  --popover-foreground:  var(--on-surface);
-  --primary-bg:          var(--primary-container);
-  --primary-fg:          var(--on-primary);
-  --muted:               var(--surface-container-low);
-  --muted-foreground:    var(--on-surface-variant);
-  --accent:              var(--surface-container-highest);
-  --accent-foreground:   var(--on-surface);
-  --destructive:         var(--error);
+  --background:             var(--surface-page);
+  --foreground:             var(--text-body);
+  --card:                   var(--surface-card);
+  --card-foreground:        var(--text-body);
+  --popover:                var(--surface-card);
+  --popover-foreground:     var(--text-body);
+  --primary-bg:             var(--action-primary);
+  --primary-fg:             #FFFFFF;
+  --muted:                  var(--surface-sunken);
+  --muted-foreground:       var(--text-muted);
+  --accent:                 var(--surface-accent);
+  --accent-foreground:      var(--text-heading);
+  --destructive:            var(--iyc-danger);
   --destructive-foreground: #FFFFFF;
-  --border:              var(--outline-variant);
-  --input:               var(--outline-variant);
-  --ring:                var(--secondary);
-  --radius:              0.375rem;
+  --border:                 var(--border-hairline);
+  --input:                  var(--border-input);
+  --ring:                   var(--border-focus);
+  --radius:                 var(--iyc-radius-sm);
 }
 
 @theme inline {
-  --color-background:          var(--surface);
-  --color-foreground:          var(--on-surface);
-  --color-card:                var(--surface-container-lowest);
-  --color-card-foreground:     var(--on-surface);
-  --color-popover:             var(--surface-container-lowest);
-  --color-popover-foreground:  var(--on-surface);
-  --color-primary:             var(--primary-container);
-  --color-primary-foreground:  var(--on-primary);
-  --color-secondary:           var(--secondary);
-  --color-secondary-foreground:var(--on-primary);
-  --color-muted:               var(--surface-container-low);
-  --color-muted-foreground:    var(--on-surface-variant);
-  --color-accent:              var(--surface-container-highest);
-  --color-accent-foreground:   var(--on-surface);
-  --color-destructive:         var(--error);
-  --color-border:              var(--outline-variant);
-  --color-input:               var(--outline-variant);
-  --color-ring:                var(--secondary);
+  --color-background:           var(--surface-page);
+  --color-foreground:           var(--text-body);
+  --color-card:                 var(--surface-card);
+  --color-card-foreground:      var(--text-body);
+  --color-popover:              var(--surface-card);
+  --color-popover-foreground:   var(--text-body);
+  --color-primary:              var(--action-primary);
+  --color-primary-foreground:   #FFFFFF;
+  --color-secondary:            var(--iyc-ionian-600);
+  --color-secondary-foreground: #FFFFFF;
+  --color-muted:                var(--surface-sunken);
+  --color-muted-foreground:     var(--text-muted);
+  --color-accent:               var(--surface-accent);
+  --color-accent-foreground:    var(--text-heading);
+  --color-destructive:          var(--iyc-danger);
+  --color-border:               var(--border-hairline);
+  --color-input:                var(--border-input);
+  --color-ring:                 var(--border-focus);
+
+  /* Brand ramps as Tailwind utilities — bg-ionian-500, text-sand-200, … */
+  --color-ionian-50:  var(--iyc-ionian-50);
+  --color-ionian-100: var(--iyc-ionian-100);
+  --color-ionian-200: var(--iyc-ionian-200);
+  --color-ionian-300: var(--iyc-ionian-300);
+  --color-ionian-400: var(--iyc-ionian-400);
+  --color-ionian-500: var(--iyc-ionian-500);
+  --color-ionian-600: var(--iyc-ionian-600);
+  --color-ionian-700: var(--iyc-ionian-700);
+  --color-ionian-800: var(--iyc-ionian-800);
+  --color-ionian-900: var(--iyc-ionian-900);
+  --color-sand-50:    var(--iyc-sand-50);
+  --color-sand-100:   var(--iyc-sand-100);
+  --color-sand-200:   var(--iyc-sand-200);
+  --color-sand-300:   var(--iyc-sand-300);
+  --color-sand-400:   var(--iyc-sand-400);
+  --color-taupe-500:  var(--iyc-taupe-500);
+  --color-taupe-600:  var(--iyc-taupe-600);
+  --color-ink-700:    var(--iyc-ink-700);
+  --color-ink-800:    var(--iyc-ink-800);
+  --color-ink-900:    var(--iyc-ink-900);
+  --color-sun-300:    var(--iyc-sun-300);
+  --color-sun-500:    var(--iyc-sun-500);
+  --color-sun-600:    var(--iyc-sun-600);
+  --color-olive-400:  var(--iyc-olive-400);
+  --color-olive-600:  var(--iyc-olive-600);
+  --color-success:    var(--iyc-success);
+  --color-warning:    var(--iyc-warning);
+  --color-info:       var(--iyc-info);
+
   /* Point at the next/font variables directly rather than bouncing through the
      same-named :root vars, so the emitted utilities carry the real stack. */
-  --font-sans:                 var(--font-inter), system-ui, sans-serif;
-  --font-display:              var(--font-manrope), system-ui, sans-serif;
-  --font-body:                 var(--font-inter), system-ui, sans-serif;
-  --radius-sm:                 var(--radius-xs);
-  --radius-md:                 var(--radius-sm);
-  --radius-lg:                 var(--radius-md);
-  --radius-xl:                 var(--radius-md);
+  --font-sans:    var(--font-inter), var(--font-commissioner), system-ui, sans-serif;
+  --font-display: var(--font-manrope), var(--font-commissioner), system-ui, sans-serif;
+  --font-body:    var(--font-inter), var(--font-commissioner), system-ui, sans-serif;
+  --font-mono:    var(--font-plex-mono), ui-monospace, SFMono-Regular, monospace;
+
+  /* Tailwind's stock shadow scale is neutral black, which reads as a dirty
+     grey halo on limestone. Point the whole scale at the warm ink tint so
+     `shadow-sm` / `hover:shadow-xl` are on-brand wherever they're used. */
+  --shadow-2xs: 0 1px 1px rgba(46,44,40,.04);
+  --shadow-xs:  0 1px 2px rgba(46,44,40,.05);
+  --shadow-sm:  0 1px 2px rgba(46,44,40,.05), 0 2px 6px rgba(46,44,40,.04);
+  --shadow-md:  0 2px 4px rgba(46,44,40,.05), 0 8px 20px rgba(46,44,40,.07);
+  --shadow-lg:  0 4px 8px rgba(46,44,40,.05), 0 18px 44px rgba(46,44,40,.10);
+  --shadow-xl:  0 6px 12px rgba(46,44,40,.06), 0 26px 60px rgba(46,44,40,.12);
+  --shadow-2xl: 0 10px 20px rgba(46,44,40,.07), 0 40px 90px rgba(46,44,40,.16);
+
+  /* Controls read 4px; cards read 14px. Tailwind's `rounded-lg` is the
+     control radius across the shadcn primitives, `rounded-xl` the card. */
+  --radius-sm: var(--iyc-radius-xs);
+  --radius-md: var(--iyc-radius-sm);
+  --radius-lg: var(--iyc-radius-sm);
+  --radius-xl: var(--iyc-radius-lg);
+  --radius-2xl: var(--iyc-radius-xl);
 }
 
 /* ─── Base ──────────────────────────────────────────────────────────────── */
 
 body {
-  background: var(--surface);
-  color: var(--on-surface);
+  background: var(--surface-page);
+  color: var(--text-body);
   font-family: var(--font-body);
+  line-height: var(--leading-body);
   -webkit-font-smoothing: antialiased;
+  text-wrap: pretty;
 }
 
-/* Display typography — Manrope */
+/* Display typography — Manrope 800, tight tracking */
 h1, h2, h3, h4,
 .font-display {
   font-family: var(--font-display);
-  letter-spacing: -0.01em;
+  font-weight: var(--weight-display);
+  letter-spacing: var(--tracking-display);
+  line-height: var(--leading-heading);
 }
 
 /* Default heading color for light surfaces only */
 @layer base {
   :where(h1, h2, h3, h4, .font-display) {
-    color: var(--primary);
+    color: var(--text-heading);
   }
 }
 
-/* Label caps utility */
+/* Label caps utility — the brand eyebrow */
 .label-sm {
   font-family: var(--font-body);
-  font-size: 0.6875rem;
+  font-size: var(--text-micro);
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: var(--tracking-eyebrow);
   text-transform: uppercase;
 }
 
-/* Ocean gradient utility */
+/* Mono utility — specs, prices, coordinates. Always tabular. */
+.iyc-mono {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  letter-spacing: var(--tracking-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Ionian gradient utility */
 .gradient-ocean {
   background: var(--gradient-ocean);
 }
 
-/* Ghost border utility */
+/* Hairline border utility */
 .border-ghost {
-  border: 1px solid var(--outline-variant);
+  border: 1px solid var(--border-hairline);
 }
 
 /* Ambient shadow */
@@ -141,10 +373,10 @@ h1, h2, h3, h4,
   box-shadow: var(--shadow-ambient);
 }
 
-/* Thin timeline scrollbar */
+/* Thin timeline scrollbar — warm-tinted */
 .timeline-scroll {
   scrollbar-width: thin;
-  scrollbar-color: rgba(0,0,0,0.12) transparent;
+  scrollbar-color: rgba(46, 44, 40, 0.14) transparent;
 }
 .timeline-scroll::-webkit-scrollbar {
   width: 3px;
@@ -153,11 +385,11 @@ h1, h2, h3, h4,
   background: transparent;
 }
 .timeline-scroll::-webkit-scrollbar-thumb {
-  background: rgba(0,0,0,0.12);
+  background: rgba(46, 44, 40, 0.14);
   border-radius: 3px;
 }
 .timeline-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(0,0,0,0.2);
+  background: rgba(46, 44, 40, 0.24);
 }
 
 /* ─── Itinerary below-map animations ────────────────────────────────────── */
@@ -192,7 +424,168 @@ h1, h2, h3, h4,
 .dash-move    { animation: dash-move 1.2s linear infinite; }
 .blink-dot    { animation: blink-dot 2.5s ease-in-out infinite; }
 .coord-scan {
-  background: linear-gradient(90deg, transparent 0%, rgba(88,214,241,0.15) 50%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, rgba(15,121,190,0.15) 50%, transparent 100%);
   background-size: 200% 100%;
   animation: coord-scan 4s linear infinite;
+}
+
+/* ─── Motion system ──────────────────────────────────────────────────────────
+   The brief's numbers, as utilities: reveals fade + rise 26px on --ease-drift
+   staggered ~100ms; cards lift 2px to shadow-md; images settle to 1.04 over
+   1100ms. No bounces anywhere. ── */
+
+/* Scroll reveal. Set --reveal-i on each child for the 100ms stagger. */
+@keyframes iyc-reveal {
+  from { opacity: 0; transform: translateY(26px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.iyc-reveal {
+  opacity: 0;
+  animation: iyc-reveal var(--dur-slow) var(--ease-drift) forwards;
+  animation-delay: calc(var(--reveal-i, 0) * 100ms);
+}
+/* Only animate once scrolled to, when the browser can do it declaratively. */
+@supports (animation-timeline: view()) {
+  .iyc-reveal {
+    animation-timeline: view();
+    animation-range: entry 10% cover 32%;
+    animation-fill-mode: both;
+    animation-delay: 0s;
+  }
+}
+
+/* Cards — lift one step, warm shadow. */
+.iyc-card {
+  transition:
+    transform var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out);
+  box-shadow: var(--shadow-sm);
+}
+.iyc-card:hover {
+  transform: translateY(var(--lift-hover));
+  box-shadow: var(--shadow-md);
+}
+
+/* Images — slow settle on card hover, never on tap. */
+.iyc-zoom { overflow: hidden; }
+.iyc-zoom > img,
+.iyc-zoom > * > img,
+.iyc-zoom .iyc-zoom-target {
+  transition: transform var(--dur-drift) var(--ease-drift);
+  will-change: transform;
+}
+@media (hover: hover) {
+  .iyc-zoom:hover > img,
+  .iyc-zoom:hover > * > img,
+  .iyc-zoom:hover .iyc-zoom-target {
+    transform: scale(var(--zoom-image-hover));
+  }
+}
+
+/* Hero photography — Ken-Burns 1.07 -> 1. */
+@keyframes iyc-ken-burns {
+  from { transform: scale(1.07); }
+  to   { transform: scale(1); }
+}
+.iyc-ken-burns {
+  animation: iyc-ken-burns 12s var(--ease-drift) forwards;
+}
+
+/* Ambient drift — watercolour backdrop elements only. */
+@keyframes iyc-drift {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-9px); }
+}
+.iyc-drift {
+  animation: iyc-drift 11s var(--ease-drift) infinite alternate;
+}
+
+/* Gradient hairline sweeping a card's bottom edge on hover. */
+.iyc-hairline { position: relative; }
+.iyc-hairline::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--iyc-ionian-500), transparent);
+  transform: scaleX(0);
+  transition: transform var(--dur-base) var(--ease-out);
+}
+.iyc-hairline:hover::after { transform: scaleX(1); }
+
+/* Editorial prose — long-form destination and itinerary copy. */
+.iyc-prose > p { margin-bottom: 1.15em; }
+.iyc-prose > p:last-child { margin-bottom: 0; }
+.iyc-prose > p:first-of-type::first-letter {
+  float: left;
+  font-family: var(--font-display);
+  font-weight: var(--weight-display);
+  font-size: 3.4em;
+  line-height: 0.84;
+  padding: 0.06em 0.12em 0 0;
+  color: var(--iyc-ionian-600);
+}
+.iyc-prose a { color: var(--text-link); text-underline-offset: 3px; }
+.iyc-prose strong { color: var(--text-heading); font-weight: 600; }
+
+/* Media that drifts inside a fixed frame has to be oversized, or the travel
+   exposes the frame edge. 140% covers travel up to 0.4. */
+.iyc-parallax-media {
+  position: absolute;
+  inset: -20% 0;
+  height: 140%;
+  width: 100%;
+  object-fit: cover;
+  will-change: transform;
+}
+
+/* Photo scrims — text sits on imagery, not in capsules. */
+.iyc-scrim-photo { background: var(--scrim-photo); }
+.iyc-scrim-hero  { background: var(--scrim-hero); }
+
+/* Ambient watercolour layer. */
+.iyc-ambient {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+.iyc-ambient > * { position: absolute; opacity: .5; }
+
+/* ─── Reduced motion ────────────────────────────────────────────────────────
+   The site runs GSAP reveals, Ken-Burns hero zooms and the ambient float
+   loops above. Honour the OS setting rather than drifting things at users
+   who asked for stillness. ── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .float-slow,
+  .float-slower,
+  .pulse-ring,
+  .dash-move,
+  .blink-dot,
+  .coord-scan,
+  .iyc-drift,
+  .iyc-ken-burns {
+    animation: none !important;
+  }
+  /* Critical: a reveal that starts at opacity 0 must not be left invisible
+     when its animation is suppressed. */
+  .iyc-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+  }
+  .iyc-card:hover { transform: none; }
+  .iyc-zoom:hover > img,
+  .iyc-zoom:hover > * > img,
+  .iyc-zoom:hover .iyc-zoom-target { transform: none; }
 }

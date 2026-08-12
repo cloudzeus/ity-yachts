@@ -139,9 +139,9 @@ export default function AvailabilityCalendar({ checkInPeriods, prices, bookings 
 
   function getColor(status: string): string {
     switch (status) {
-      case "available": return "#2D6A4F"
+      case "available": return "#4F7A46"
       case "booked": return "var(--primary)"
-      case "option": return "#E67E22"
+      case "option": return "#C1782A"
       default: return "var(--outline-variant)"
     }
   }
@@ -344,9 +344,9 @@ export default function AvailabilityCalendar({ checkInPeriods, prices, bookings 
         }}
       >
         {[
-          { color: "#2D6A4F", label: "Available" },
+          { color: "#4F7A46", label: "Available" },
           { color: "var(--primary)", label: "Booked" },
-          { color: "#E67E22", label: "Option" },
+          { color: "#C1782A", label: "Option" },
           { color: "var(--outline-variant)", label: "Not available" },
         ].map((item) => (
           <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -360,7 +360,7 @@ export default function AvailabilityCalendar({ checkInPeriods, prices, bookings 
               width: 12,
               height: 12,
               borderRadius: 3,
-              background: "#2D6A4F",
+              background: "#4F7A46",
               flexShrink: 0,
               display: "flex",
               alignItems: "center",

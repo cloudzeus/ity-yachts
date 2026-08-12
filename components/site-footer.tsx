@@ -7,7 +7,7 @@ import { useTranslations } from "@/lib/use-translations"
 import { removeGreekTonos } from "@/components/locale-text"
 import { useNavigation } from "@/lib/use-navigation"
 
-const iconColor = "#0055a9"
+const iconColor = "#0B6099"
 
 export function SiteFooter() {
   const { t, locale } = useTranslations()
@@ -26,7 +26,7 @@ export function SiteFooter() {
     >
       <footer
         className="fixed bottom-0 left-0 right-0 h-[600px]"
-        style={{ background: "#060c27" }}
+        style={{ background: "#05111F" }}
       >
         <div className="mx-auto flex h-full max-w-[1400px] flex-col justify-between px-6 py-16 lg:px-12">
           {/* Top: 3 columns */}
@@ -35,7 +35,7 @@ export function SiteFooter() {
             <div>
               <Link href="/" className="mb-6 inline-block">
                 <Image
-                  src="https://iycweb.b-cdn.net/IYC_LOGO_TRANS_white.svg"
+                  src="/brand/iyc-logo-white.svg"
                   alt="IYC Yachts"
                   width={140}
                   height={56}
@@ -43,7 +43,7 @@ export function SiteFooter() {
                 />
               </Link>
               <p
-                className="mb-8 max-w-xs text-sm leading-relaxed text-white/40"
+                className="mb-8 max-w-xs text-sm leading-relaxed text-white/70"
                 style={{ fontFamily: "var(--font-body)" }}
               >
                 {t("footer.tagline", "Bespoke yacht charters and luxury maritime experiences across the world's most coveted destinations.")}
@@ -51,21 +51,21 @@ export function SiteFooter() {
               <div className="flex flex-col gap-3">
                 <a
                   href="mailto:info@iyc.de"
-                  className="flex items-center gap-2.5 text-sm text-white/50 transition-colors hover:text-white"
+                  className="flex items-center gap-2.5 text-sm text-white/70 transition-colors hover:text-white"
                 >
                   <Mail className="h-4 w-4" style={{ color: iconColor }} />
                   info@iyc.de
                 </a>
                 <a
                   href="mailto:bookings@iyc.de"
-                  className="flex items-center gap-2.5 text-sm text-white/50 transition-colors hover:text-white"
+                  className="flex items-center gap-2.5 text-sm text-white/70 transition-colors hover:text-white"
                 >
                   <Mail className="h-4 w-4" style={{ color: iconColor }} />
                   bookings@iyc.de
                 </a>
                 <a
                   href="tel:+4901609927870"
-                  className="flex items-center gap-2.5 text-sm text-white/50 transition-colors hover:text-white"
+                  className="flex items-center gap-2.5 text-sm text-white/70 transition-colors hover:text-white"
                 >
                   <Phone className="h-4 w-4" style={{ color: iconColor }} />
                   +49 160 99279870
@@ -76,7 +76,7 @@ export function SiteFooter() {
             {/* Column 2: Pages */}
             <div>
               <h4
-                className="mb-4 text-xs font-semibold uppercase tracking-widest text-white/30"
+                className="mb-4 text-xs font-semibold uppercase tracking-widest text-white/70"
                 style={{ fontFamily: "var(--font-body)" }}
               >
                 {removeGreekTonos(t("footer.company", "Company"))}
@@ -86,7 +86,7 @@ export function SiteFooter() {
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="text-sm text-white/50 transition-colors hover:text-white"
+                      className="text-sm text-white/70 transition-colors hover:text-white"
                     >
                       {link.label}
                     </Link>
@@ -98,7 +98,7 @@ export function SiteFooter() {
             {/* Column 3: Newsletter + Help & Contact */}
             <div>
               <h4
-                className="mb-3 text-xs font-semibold uppercase tracking-widest text-white/30"
+                className="mb-3 text-xs font-semibold uppercase tracking-widest text-white/70"
                 style={{ fontFamily: "var(--font-body)" }}
               >
                 {removeGreekTonos(t("footer.stayUpdated", "Stay Updated"))}
@@ -107,7 +107,7 @@ export function SiteFooter() {
                 <input
                   type="email"
                   placeholder={t("footer.emailPlaceholder", "Your email")}
-                  className="flex-1 border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/25 focus:border-white/25 focus:outline-none"
+                  className="flex-1 border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/70 focus:border-white/25 focus:outline-none"
                   style={{ borderRadius: "6px", fontFamily: "var(--font-body)" }}
                 />
                 <button
@@ -141,18 +141,18 @@ export function SiteFooter() {
                     <path d="M23.012 27.5a2.505 2.505 0 0 0-3.537 0l-.738.737-4.487-4.487.737-.738a2.505 2.505 0 0 0 0-3.537l-3.237-3.238a2.505 2.505 0 0 0-3.538 0l-1.4 1.4a6.22 6.22 0 0 0-1.825 4.425v.863c0 1.675.65 3.237 1.825 4.425l8.325 8.325a6.22 6.22 0 0 0 4.425 1.825h.863c1.675 0 3.237-.65 4.425-1.825l1.4-1.4a2.505 2.505 0 0 0 0-3.538L23.012 27.5zm.063 6.4c-.7.7-1.663 1.1-2.65 1.1h-.863c-.987 0-1.95-.4-2.65-1.1l-8.325-8.325c-.7-.7-1.1-1.663-1.1-2.65v-.863c0-.987.4-1.95 1.1-2.65l1.4-1.4 3.238 3.238-1.613 1.612a1.245 1.245 0 0 0 0 1.763l6.25 6.25a1.245 1.245 0 0 0 1.763 0l1.612-1.613 3.238 3.238-1.4 1.4z" fill={iconColor} />
                   </svg>
                   <div className="flex flex-col">
-                    <span className="text-[10px] md:text-xs text-white/50 whitespace-nowrap">{t("footer.callService", "Call Customer Service")}</span>
-                    <a href="tel:+4901609927870" className="text-xs md:text-sm text-white hover:text-[#84776e] transition-all duration-300" rel="noopener noreferrer" target="_blank">+49 160 99279870</a>
+                    <span className="text-[10px] md:text-xs text-white/70 whitespace-nowrap">{t("footer.callService", "Call Customer Service")}</span>
+                    <a href="tel:+4901609927870" className="text-xs md:text-sm text-white hover:text-[var(--text-subtle)] transition-all duration-300" rel="noopener noreferrer" target="_blank">+49 160 99279870</a>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-8 lg:size-10 shrink-0">
                     <path d="M20.005 0h-.01C8.967 0 0 8.97 0 20c0 4.375 1.41 8.43 3.808 11.723l-2.493 7.43 7.688-2.458A19.827 19.827 0 0 0 20.005 40C31.032 40 40 31.027 40 20S31.032 0 20.005 0z" fill={iconColor} />
-                    <path d="M31.643 28.242c-.482 1.363-2.397 2.493-3.925 2.823-1.045.223-2.41.4-7.005-1.505-5.877-2.435-9.662-8.407-9.957-8.795-.283-.387-2.375-3.163-2.375-6.033 0-2.87 1.457-4.267 2.045-4.867.482-.493 1.28-.718 2.045-.718.247 0 .47.013.67.023.587.025.882.06 1.27.988.482 1.162 1.657 4.032 1.797 4.327.143.295.285.695.085 1.083-.187.4-.352.577-.647.917-.295.34-.575.6-.87.965-.27.317-.575.658-.235 1.245.34.575 1.515 2.492 3.245 4.032 2.232 1.988 4.042 2.623 4.69 2.893.482.2 1.057.152 1.41-.223.447-.482 1-1.282 1.562-2.07.4-.565.905-.635 1.435-.435.54.188 3.398 1.6 3.985 1.893.588.295.975.435 1.118.683.14.247.14 1.41-.343 2.774z" fill="#060c27" />
+                    <path d="M31.643 28.242c-.482 1.363-2.397 2.493-3.925 2.823-1.045.223-2.41.4-7.005-1.505-5.877-2.435-9.662-8.407-9.957-8.795-.283-.387-2.375-3.163-2.375-6.033 0-2.87 1.457-4.267 2.045-4.867.482-.493 1.28-.718 2.045-.718.247 0 .47.013.67.023.587.025.882.06 1.27.988.482 1.162 1.657 4.032 1.797 4.327.143.295.285.695.085 1.083-.187.4-.352.577-.647.917-.295.34-.575.6-.87.965-.27.317-.575.658-.235 1.245.34.575 1.515 2.492 3.245 4.032 2.232 1.988 4.042 2.623 4.69 2.893.482.2 1.057.152 1.41-.223.447-.482 1-1.282 1.562-2.07.4-.565.905-.635 1.435-.435.54.188 3.398 1.6 3.985 1.893.588.295.975.435 1.118.683.14.247.14 1.41-.343 2.774z" fill="#05111F" />
                   </svg>
                   <div className="flex flex-col">
-                    <span className="text-[10px] md:text-xs text-white/50 whitespace-nowrap">{t("footer.whatsappService", "WhatsApp Customer Service")}</span>
-                    <a href="https://wa.me/4901609927870" className="text-xs md:text-sm text-white hover:text-[#84776e] transition-all duration-300" rel="noopener noreferrer" target="_blank">{t("footer.whatsappCta", "Click and start")}</a>
+                    <span className="text-[10px] md:text-xs text-white/70 whitespace-nowrap">{t("footer.whatsappService", "WhatsApp Customer Service")}</span>
+                    <a href="https://wa.me/4901609927870" className="text-xs md:text-sm text-white hover:text-[var(--text-subtle)] transition-all duration-300" rel="noopener noreferrer" target="_blank">{t("footer.whatsappCta", "Click and start")}</a>
                   </div>
                 </div>
               </div>
@@ -161,7 +161,7 @@ export function SiteFooter() {
 
           {/* Bottom bar */}
           <div className="flex flex-col items-center justify-between gap-6 border-t border-white/8 pt-8 md:flex-row">
-            <p className="text-xs text-white/30" style={{ fontFamily: "var(--font-body)" }}>
+            <p className="text-xs text-white/70" style={{ fontFamily: "var(--font-body)" }}>
               {t("footer.copyright", "© 2026 IYC Yachts. All rights reserved.")}
             </p>
 
@@ -181,7 +181,7 @@ export function SiteFooter() {
               </a>
             </div>
 
-            <div className="flex items-center gap-1 text-xs text-white/30">
+            <div className="flex items-center gap-1 text-xs text-white/70">
               <Anchor className="h-3 w-3" style={{ color: iconColor }} />
               <span style={{ fontFamily: "var(--font-body)" }}>
                 {t("footer.craftedForSea", "Crafted for the sea")}

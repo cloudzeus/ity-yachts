@@ -25,10 +25,10 @@ type User = {
 
 const roleBadge = (role: string) => {
   const styles: Record<string, { bg: string; color: string }> = {
-    ADMIN:    { bg: "rgba(0,99,153,0.12)",   color: "#006399" },
-    MANAGER:  { bg: "rgba(0,119,182,0.12)",  color: "#0077B6" },
-    EDITOR:   { bg: "rgba(88,214,241,0.14)", color: "#00262D" },
-    EMPLOYEE: { bg: "rgba(45,106,79,0.12)",  color: "#2D6A4F" },
+    ADMIN:    { bg: "rgba(0,99,153,0.12)",   color: "#0B6099" },
+    MANAGER:  { bg: "rgba(0,119,182,0.12)",  color: "#0F79BE" },
+    EDITOR:   { bg: "rgba(88,214,241,0.14)", color: "#0B3A5C" },
+    EMPLOYEE: { bg: "rgba(45,106,79,0.12)",  color: "#4F7A46" },
     CUSTOMER: { bg: "var(--surface-container-high)", color: "var(--on-surface-variant)" },
   }
   const s = styles[role] ?? styles.CUSTOMER
@@ -44,7 +44,7 @@ const verifiedBadge = (verified: string | null) => {
   return (
     <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium" style={{
       background: isVerified ? "rgba(45,106,79,0.1)" : "var(--error-container)",
-      color: isVerified ? "#2D6A4F" : "var(--error)",
+      color: isVerified ? "#4F7A46" : "var(--error)",
       borderRadius: "var(--radius-xs)",
     }}>
       {isVerified ? "Verified" : "Unverified"}

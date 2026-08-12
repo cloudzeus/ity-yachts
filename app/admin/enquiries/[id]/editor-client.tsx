@@ -54,11 +54,11 @@ interface Props {
 const STATUS_OPTIONS = ["NEW", "CONTACTED", "QUOTED", "CONVERTED", "LOST"] as const
 
 const STATUS_COLORS: Record<string, string> = {
-  NEW:       "#1976D2",
-  CONTACTED: "#F57C00",
+  NEW:       "#0F79BE",
+  CONTACTED: "#C1782A",
   QUOTED:    "#7B1FA2",
-  CONVERTED: "#2D6A4F",
-  LOST:      "#626262",
+  CONVERTED: "#4F7A46",
+  LOST:      "#6B5F57",
 }
 
 function SectionCard({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) {
@@ -211,7 +211,7 @@ export function EnquiryEditorClient({ enquiry }: Props) {
               <Select value={status} onValueChange={setStatus}>
                 <SelectTrigger className="h-7 w-36 text-xs" style={{ borderColor: STATUS_COLORS[status] ?? "var(--outline-variant)" }}>
                   <div className="flex items-center gap-1.5">
-                    <span className="size-2 rounded-full" style={{ background: STATUS_COLORS[status] ?? "#626262" }} />
+                    <span className="size-2 rounded-full" style={{ background: STATUS_COLORS[status] ?? "#6B5F57" }} />
                     <SelectValue />
                   </div>
                 </SelectTrigger>
@@ -318,7 +318,7 @@ export function EnquiryEditorClient({ enquiry }: Props) {
             {/* Status */}
             <SectionCard title="Status">
               <div className="flex items-center gap-2">
-                <span className="size-3 rounded-full" style={{ background: STATUS_COLORS[status] ?? "#626262" }} />
+                <span className="size-3 rounded-full" style={{ background: STATUS_COLORS[status] ?? "#6B5F57" }} />
                 <Select value={status} onValueChange={setStatus}>
                   <SelectTrigger className="h-8 text-xs flex-1" style={{ background: "var(--surface-container-lowest)", borderColor: "var(--outline-variant)" }}>
                     <SelectValue />

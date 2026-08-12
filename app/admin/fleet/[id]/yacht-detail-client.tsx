@@ -1,12 +1,29 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import {
   ArrowLeft, Save, Loader2, Plus, Trash2, Users, Globe,
-  Ship, Image, DollarSign, Wrench, Languages,
+  Ship, Image, DollarSign, Wrench, Languages, GripVertical, Star,
 } from "lucide-react"
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core"
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  rectSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -117,6 +134,99 @@ type TabKey = (typeof TABS)[number]["key"]
 // ─── Main Component ──────────────────────────────────────────
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
+/* ─── Sortable website image ──────────────────────────────────────────────
+   The order of `websiteImages` is what the public site reads — index 0 is the
+   card image everywhere. Until now the only control was delete, so changing
+   the featured shot meant deleting and re-uploading in order.               */
+
+type WebsiteImage = { url: string; caption?: string }
+
+function SortableWebsiteImage({
+  img,
+  index,
+  onDelete,
+  onMakeMain,
+}: {
+  img: WebsiteImage
+  index: number
+  onDelete: () => void
+  onMakeMain: () => void
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: img.url })
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+    zIndex: isDragging ? 10 : undefined,
+  }
+
+  const isMain = index === 0
+
+  return (
+    <div ref={setNodeRef} style={style} className="relative group">
+      <div
+        className="h-36 w-full bg-cover bg-center"
+        style={{
+          backgroundImage: `url(${img.url})`,
+          borderRadius: "var(--radius-md)",
+          outline: isMain ? "2px solid var(--primary)" : undefined,
+          outlineOffset: isMain ? "2px" : undefined,
+        }}
+      />
+
+      {/* Drag handle — its own target, so dragging never fights the buttons */}
+      <button
+        type="button"
+        {...attributes}
+        {...listeners}
+        aria-label={`Reorder image ${index + 1}`}
+        className="absolute bottom-1.5 left-1.5 w-6 h-6 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
+        style={{ background: "rgba(0,0,0,0.6)", color: "#fff" }}
+      >
+        <GripVertical className="w-3 h-3" />
+      </button>
+
+      {isMain ? (
+        <span
+          className="absolute top-1.5 left-1.5 px-1.5 py-0.5 text-[9px] font-bold uppercase text-white rounded"
+          style={{ background: "var(--primary)" }}
+        >
+          Featured
+        </span>
+      ) : (
+        <button
+          type="button"
+          onClick={onMakeMain}
+          title="Use as featured image"
+          aria-label="Use as featured image"
+          className="absolute top-1.5 left-1.5 w-6 h-6 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+          style={{ background: "rgba(0,0,0,0.6)", color: "#fff" }}
+        >
+          <Star className="w-3 h-3" />
+        </button>
+      )}
+
+      <button
+        type="button"
+        onClick={onDelete}
+        aria-label="Delete image"
+        className="absolute top-1.5 right-1.5 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+      >
+        <Trash2 className="w-3 h-3" />
+      </button>
+
+      {img.caption && (
+        <p className="text-[9px] text-center mt-1 truncate" style={{ color: "var(--on-surface-variant)" }}>
+          {img.caption}
+        </p>
+      )}
+    </div>
+  )
+}
+
 export function YachtDetailClient({ yacht: initial, lookups }: { yacht: any; lookups: any }) {
   const router = useRouter()
   const [saving, setSaving] = useState(false)
@@ -126,6 +236,22 @@ export function YachtDetailClient({ yacht: initial, lookups }: { yacht: any; loo
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
   const [translatingAll, setTranslatingAll] = useState(false)
   const [mediaUploading, setMediaUploading] = useState(false)
+
+  // Our own bookings plus the periods mirrored from NAUSYS. A charter we sold
+  // ourselves shows up in both, so NAUSYS rows covering a range we already
+  // hold are dropped — otherwise the same week renders twice.
+  const mergedBookings = useMemo(() => {
+    type CalendarPeriod = {
+      id: string; dateFrom: string; dateTo: string; status: string; bookingNumber?: string
+    }
+    const own = (yacht.bookings ?? []) as CalendarPeriod[]
+    const sameRange = (a: string, b: string) =>
+      new Date(a).toDateString() === new Date(b).toDateString()
+    const external = ((yacht.availability ?? []) as CalendarPeriod[]).filter(
+      (a) => !own.some((b) => sameRange(a.dateFrom, b.dateFrom) && sameRange(a.dateTo, b.dateTo))
+    )
+    return [...own, ...external]
+  }, [yacht.bookings, yacht.availability])
 
   // ─── Translate All via DeepSeek ──────────────────────────
 
@@ -181,6 +307,13 @@ export function YachtDetailClient({ yacht: initial, lookups }: { yacht: any; loo
   const setInt = (field: string, v: string) => set(field, v === "" ? null : parseInt(v))
 
   // ─── Save yacht fields ──────────────────────────────────
+
+  // Pointer needs a small threshold so a click on the star/delete button is
+  // not swallowed as the start of a drag.
+  const imageSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
 
   const handleSave = useCallback(async () => {
     setSaving(true)
@@ -636,42 +769,46 @@ export function YachtDetailClient({ yacht: initial, lookups }: { yacht: any; loo
             }
           >
             {(() => {
-              const wsImages = (yacht.websiteImages || []) as Array<{ url: string; caption?: string }>
+              const wsImages = (yacht.websiteImages || []) as WebsiteImage[]
+
+              const commit = (next: WebsiteImage[]) =>
+                setYacht((y: typeof yacht) => ({ ...y, websiteImages: next }))
+
+              const onDragEnd = (event: DragEndEvent) => {
+                const { active, over } = event
+                if (!over || active.id === over.id) return
+                const from = wsImages.findIndex((im) => im.url === active.id)
+                const to = wsImages.findIndex((im) => im.url === over.id)
+                if (from === -1 || to === -1) return
+                commit(arrayMove(wsImages, from, to))
+              }
+
               return wsImages.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                  {wsImages.map((img, i) => (
-                    <div key={i} className="relative group">
-                      <div
-                        className="h-36 w-full bg-cover bg-center rounded-lg"
-                        style={{ backgroundImage: `url(${img.url})`, borderRadius: "var(--radius-md)" }}
-                      />
-                      {i === 0 && (
-                        <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 text-[9px] font-bold uppercase text-white rounded"
-                          style={{ background: "var(--primary)" }}>
-                          Featured
-                        </span>
-                      )}
-                      <button
-                        onClick={() => {
-                          const updated = [...wsImages]
-                          updated.splice(i, 1)
-                          setYacht((y: typeof yacht) => ({ ...y, websiteImages: updated }))
-                        }}
-                        className="absolute top-1.5 right-1.5 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                      {img.caption && (
-                        <p className="text-[9px] text-center mt-1 truncate" style={{ color: "var(--on-surface-variant)" }}>
-                          {img.caption}
-                        </p>
-                      )}
+                <DndContext
+                  sensors={imageSensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={onDragEnd}
+                >
+                  <SortableContext items={wsImages.map((im) => im.url)} strategy={rectSortingStrategy}>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                      {wsImages.map((img, i) => (
+                        <SortableWebsiteImage
+                          key={img.url}
+                          img={img}
+                          index={i}
+                          onMakeMain={() => commit([img, ...wsImages.filter((_, j) => j !== i)])}
+                          onDelete={() => commit(wsImages.filter((_, j) => j !== i))}
+                        />
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </SortableContext>
+                  <p className="mt-2 text-[10px]" style={{ color: "var(--on-surface-variant)" }}>
+                    Drag to reorder · the first image is what the website shows. Changes save with the yacht.
+                  </p>
+                </DndContext>
               ) : (
-                <p className="text-xs py-4 text-center" style={{ color: "var(--on-surface-variant)" }}>
-                  No custom images yet. Upload images to display on the public yacht page. Auto-converted to WebP.
+                <p className="text-xs" style={{ color: "var(--on-surface-variant)" }}>
+                  No website images yet.
                 </p>
               )
             })()}
@@ -709,7 +846,7 @@ export function YachtDetailClient({ yacht: initial, lookups }: { yacht: any; loo
           <AvailabilityCalendar
             checkInPeriods={yacht.checkInPeriods ?? []}
             prices={yacht.prices ?? []}
-            bookings={yacht.bookings ?? []}
+            bookings={mergedBookings}
           />
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -873,7 +1010,7 @@ export function YachtDetailClient({ yacht: initial, lookups }: { yacht: any; loo
                     <div key={s.id} className="flex items-center justify-between py-1 text-xs group" style={{ borderBottom: "1px solid var(--outline-variant)" }}>
                       <div>
                         <span style={{ color: "var(--on-surface)" }}>{lang(s.service.name)}</span>
-                        {s.obligatory && <span className="ml-1 text-[10px] font-medium" style={{ color: "#D32F2F" }}>Required</span>}
+                        {s.obligatory && <span className="ml-1 text-[10px] font-medium" style={{ color: "#A93B2F" }}>Required</span>}
                         {s.price && <span className="ml-2" style={{ color: "var(--on-surface-variant)" }}>{s.price} {s.currency}</span>}
                       </div>
                       <button onClick={() => removeService(s.id)} className="opacity-0 group-hover:opacity-100 p-0.5 hover:text-red-600 transition-opacity" style={{ color: "var(--on-surface-variant)" }}>

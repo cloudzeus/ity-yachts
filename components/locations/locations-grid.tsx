@@ -1,11 +1,11 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
-import { MapPin, ArrowRight, Compass, Navigation } from "lucide-react"
+import { MapPin, ArrowRight, Navigation } from "lucide-react"
 import { useTranslations } from "@/lib/use-translations"
 import { removeGreekTonos } from "@/lib/greek-utils"
 
@@ -29,7 +29,8 @@ interface LocationItem {
   longitude: number | null
 }
 
-/* ─── Coordinate formatter ──────────────────────────────────────────────── */
+/* ─── Coordinates ─────────────────────────────────────────────────────── */
+
 function formatCoord(val: number, isLat: boolean) {
   const dir = isLat ? (val >= 0 ? "N" : "S") : val >= 0 ? "E" : "W"
   const abs = Math.abs(val)
@@ -38,380 +39,248 @@ function formatCoord(val: number, isLat: boolean) {
   return `${deg}°${min}'${dir}`
 }
 
-/** Resolve a field that may be a translated JSON or a plain string */
 function resolveField(field: string | TranslatedField, locale: string): string {
   if (!field) return ""
   if (typeof field === "string") return field
   return field[locale] || field.en || ""
 }
 
-/* ─── Main Grid ─────────────────────────────────────────────────────────── */
+/* ─── Grid ─────────────────────────────────────────────────────────────
+   One card, one rhythm. The previous layout used two divergent card
+   components on a 12/7/5 span pattern, so every row had a different height
+   and a different visual language. A single portrait card on an even grid
+   lets the photography carry the page.                                    */
 
 export function LocationsGrid({ locations }: { locations: LocationItem[] }) {
-  const { t } = useTranslations()
   const gridRef = useRef<HTMLDivElement>(null)
+  const { t } = useTranslations()
 
   useEffect(() => {
-    if (!gridRef.current) return
+    const el = gridRef.current
+    if (!el) return
+    // Cards render with opacity:0 for the stagger. If we skip the animation we
+    // must still show them, or reduced-motion users get an empty grid.
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      el.querySelectorAll<HTMLElement>(".loc-card").forEach((c) => (c.style.opacity = "1"))
+      return
+    }
 
-    const cards = gridRef.current.querySelectorAll("[data-loc-card]")
-    cards.forEach((card, i) => {
+    const ctx = gsap.context(() => {
       gsap.fromTo(
-        card,
-        { opacity: 0, y: 80, scale: 0.96 },
+        ".loc-card",
+        { opacity: 0, y: 26 },
         {
           opacity: 1,
           y: 0,
-          scale: 1,
-          duration: 0.9,
-          delay: i * 0.08,
+          duration: 0.6,
           ease: "power3.out",
-          scrollTrigger: {
-            trigger: card,
-            start: "top 90%",
-            toggleActions: "play none none none",
-          },
+          stagger: 0.04, // 40ms — reads as a sequence, not a queue
+          scrollTrigger: { trigger: el, start: "top 85%", once: true },
         }
       )
-    })
-
-    return () => {
-      ScrollTrigger.getAll().forEach((t) => t.kill())
-    }
-  }, [locations.length])
+    }, el)
+    return () => ctx.revert()
+  }, [locations])
 
   if (locations.length === 0) {
     return (
-      <p className="text-center text-white/40 py-20 text-lg">
+      <p className="py-20 text-center text-lg text-[var(--text-muted)]">
         {t("locations.noDestinations", "No destinations available yet. Check back soon.")}
       </p>
     )
   }
 
-  const [featured, ...rest] = locations
+  // The grid adapts to the count. Three columns holding two cards leaves a
+  // dead third; one portrait card alone reads as an orphan. Fewer cards get
+  // fewer, wider columns and a landscape crop.
+  const n = locations.length
+  const cols =
+    n === 1
+      ? "grid-cols-1"
+      : n === 2
+        ? "grid-cols-1 sm:grid-cols-2"
+        : n === 4
+          ? "grid-cols-1 sm:grid-cols-2"
+          : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+  const ratio = n === 1 ? "aspect-[21/9]" : n <= 2 ? "aspect-[3/2]" : n === 4 ? "aspect-[16/10]" : "aspect-[4/5]"
 
   return (
-    <div ref={gridRef}>
-      {/* Featured hero card */}
-      <FeaturedCard location={featured} />
-
-      {/* Bento grid */}
-      {rest.length > 0 && (
-        <div className="mt-10 grid grid-cols-1 md:grid-cols-12 gap-5">
-          {rest.map((loc, i) => {
-            // Alternating pattern: wide(8col) + narrow(4col), then narrow(4col) + wide(8col)
-            const pairIndex = Math.floor(i / 2)
-            const isFirst = i % 2 === 0
-            const isWide = pairIndex % 2 === 0 ? isFirst : !isFirst
-            // If it's the last item and alone, make it full width
-            const isLastAlone = i === rest.length - 1 && i % 2 === 0
-
-            return (
-              <div
-                key={loc.id}
-                data-loc-card
-                className={
-                  isLastAlone
-                    ? "md:col-span-12"
-                    : isWide
-                      ? "md:col-span-7"
-                      : "md:col-span-5"
-                }
-                style={{ opacity: 0 }}
-              >
-                <LocationCard location={loc} tall={isWide} />
-              </div>
-            )
-          })}
-        </div>
-      )}
+    <div ref={gridRef} className={`mt-10 grid gap-6 ${cols}`}>
+      {locations.map((location) => (
+        <LocationCard key={location.id} location={location} ratio={ratio} />
+      ))}
     </div>
   )
 }
 
-/* ─── Featured Card ─────────────────────────────────────────────────────── */
+/* ─── Card ─────────────────────────────────────────────────────────────── */
 
-function FeaturedCard({ location }: { location: LocationItem }) {
+function LocationCard({ location, ratio }: { location: LocationItem; ratio: string }) {
   const { locale, t } = useTranslations()
-  const locName = resolveField(location.nameTranslations, locale) || location.name
-  const locShortDesc = resolveField(location.shortDesc, locale)
-  const locPrefecture = resolveField(location.prefecture, locale)
   const cardRef = useRef<HTMLAnchorElement>(null)
-  const imgRef = useRef<HTMLDivElement>(null)
-  const [mouse, setMouse] = useState({ x: 0.5, y: 0.5 })
+  const coordRef = useRef<HTMLSpanElement>(null)
+  const imageRef = useRef<HTMLDivElement>(null)
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!cardRef.current) return
-    const rect = cardRef.current.getBoundingClientRect()
-    setMouse({
-      x: (e.clientX - rect.left) / rect.width,
-      y: (e.clientY - rect.top) / rect.height,
-    })
-    if (imgRef.current) {
-      const moveX = (0.5 - mouse.x) * 20
-      const moveY = (0.5 - mouse.y) * 20
-      imgRef.current.style.transform = `scale(1.08) translate(${moveX}px, ${moveY}px)`
-    }
-  }
+  const name = resolveField(location.nameTranslations, locale) || location.name
+  const desc = resolveField(location.shortDesc, locale)
+  const region = resolveField(location.prefecture, locale) || "Ionian Sea"
 
-  const handleMouseLeave = () => {
-    if (imgRef.current) {
-      imgRef.current.style.transform = "scale(1)"
+  const baseLat = location.latitude
+  const baseLon = location.longitude
+  const hasCoords = baseLat != null && baseLon != null
+  const isVideo =
+    location.imageType === "video" || /\.(mp4|webm|mov)(\?|$)/i.test(location.image ?? "")
+
+  // The coordinate readout tracks the pointer, like a cursor position on a
+  // chart. Written straight to the DOM on an animation frame — putting this
+  // through React state would re-render the card on every mouse move.
+  useEffect(() => {
+    const card = cardRef.current
+    const out = coordRef.current
+    if (!card || !out || !hasCoords) return
+    if (window.matchMedia("(pointer: coarse)").matches) return
+
+    let frame: number | null = null
+    let nx = 0.5
+    let ny = 0.5
+
+    const paint = () => {
+      frame = null
+      // ±0.04° across the card — enough to feel live, still the real place
+      const lat = (baseLat as number) + (0.5 - ny) * 0.08
+      const lon = (baseLon as number) + (nx - 0.5) * 0.08
+      out.textContent = `${formatCoord(lat, true)}  ${formatCoord(lon, false)}`
+      if (imageRef.current) {
+        imageRef.current.style.transform =
+          `scale(1.06) translate3d(${(nx - 0.5) * -14}px, ${(ny - 0.5) * -14}px, 0)`
+      }
     }
-  }
+
+    const onMove = (e: MouseEvent) => {
+      const r = card.getBoundingClientRect()
+      nx = (e.clientX - r.left) / r.width
+      ny = (e.clientY - r.top) / r.height
+      if (frame === null) frame = requestAnimationFrame(paint)
+    }
+
+    const onLeave = () => {
+      if (frame !== null) cancelAnimationFrame(frame)
+      frame = null
+      out.textContent = `${formatCoord(baseLat as number, true)}  ${formatCoord(baseLon as number, false)}`
+      if (imageRef.current) imageRef.current.style.transform = ""
+    }
+
+    card.addEventListener("mousemove", onMove)
+    card.addEventListener("mouseleave", onLeave)
+    return () => {
+      if (frame !== null) cancelAnimationFrame(frame)
+      card.removeEventListener("mousemove", onMove)
+      card.removeEventListener("mouseleave", onLeave)
+    }
+  }, [baseLat, baseLon, hasCoords])
 
   return (
     <Link
       ref={cardRef}
       href={`/locations/${location.slug}`}
-      data-loc-card
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      className="group relative block w-full rounded-2xl overflow-hidden"
-      style={{ aspectRatio: "21/9", opacity: 0 }}
+      className="loc-card iyc-card group relative flex flex-col overflow-hidden rounded-2xl border border-[var(--border-hairline)] bg-card"
+      style={{ opacity: 0 }}
     >
-      {/* Image */}
-      <div
-        ref={imgRef}
-        className="absolute inset-0 transition-transform duration-700 ease-out will-change-transform"
-      >
+      {/* Photograph */}
+      <div className={`relative w-full overflow-hidden ${ratio}`}>
         {location.image ? (
-          location.imageType === "video" ? (
-            <video
-              src={location.image}
-              muted
-              autoPlay
-              loop
-              playsInline
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <Image
-              src={location.image}
-              alt={location.name}
-              fill
-              className="object-cover"
-              sizes="100vw"
-              priority
-            />
-          )
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-[#0a1628] to-[#0d2847]" />
-        )}
-      </div>
-
-      {/* Gradient overlays */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background: "linear-gradient(135deg, rgba(0,10,30,0.7) 0%, transparent 50%, rgba(0,10,30,0.5) 100%)",
-        }}
-      />
-      <div
-        className="absolute inset-0"
-        style={{
-          background: "linear-gradient(to top, rgba(0,10,30,0.9) 0%, transparent 50%)",
-        }}
-      />
-
-      {/* Hover glow */}
-      <div
-        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"
-        style={{
-          background: `radial-gradient(600px circle at ${mouse.x * 100}% ${mouse.y * 100}%, rgba(0,119,182,0.08), transparent 60%)`,
-        }}
-      />
-
-      {/* Featured badge */}
-      <div className="absolute top-5 left-5 z-10 flex items-center gap-2">
-        <span className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] rounded-full bg-white/10 text-white/80 backdrop-blur-md border border-white/10">
-          <Compass className="w-3 h-3 inline-block mr-1.5 -mt-0.5" />
-          {removeGreekTonos(t("locations.featuredDestination", "Featured Destination"))}
-        </span>
-      </div>
-
-      {/* Coordinates */}
-      {location.latitude && location.longitude && (
-        <div className="absolute top-5 right-5 z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/5">
-          <Navigation className="w-3 h-3 text-[#0077B6]/70" />
-          <span className="text-[10px] font-mono text-white/40 tracking-wider">
-            {formatCoord(location.latitude, true)}
-          </span>
-        </div>
-      )}
-
-      {/* Content */}
-      <div className="absolute inset-x-0 bottom-0 p-8 md:p-12 z-10">
-        <div className="max-w-2xl">
-          {(locPrefecture || location.city) && (
-            <div className="flex items-center gap-2 mb-3">
-              <MapPin className="w-3.5 h-3.5 text-[#0077B6]" />
-              <span className="text-xs uppercase tracking-[0.15em] text-white/50 font-medium">
-                {removeGreekTonos([locPrefecture, location.city].filter(Boolean).join(" · "))}
-              </span>
-            </div>
-          )}
-          <h2
-            className="text-3xl md:text-5xl font-bold mb-3 transition-colors duration-500 group-hover:!text-[#0077B6]"
-            style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em", color: "#fff" }}
+          <div
+            ref={imageRef}
+            className="absolute inset-0 transition-transform duration-[1100ms]"
+            style={{ transitionTimingFunction: "var(--ease-drift)" }}
           >
-            {locName}
-          </h2>
-          {locShortDesc && (
-            <p className="text-base text-white/50 line-clamp-2 max-w-lg mb-5">
-              {locShortDesc}
-            </p>
-          )}
-          <div className="flex items-center gap-2.5 text-[#0077B6] text-sm font-semibold opacity-0 group-hover:opacity-100 translate-y-3 group-hover:translate-y-0 transition-all duration-500">
-            {t("locations.exploreDestination", "Explore destination")}
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </div>
-        </div>
-      </div>
-
-      {/* Decorative line */}
-      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#0077B6]/40 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-700" />
-    </Link>
-  )
-}
-
-/* ─── Standard Card ─────────────────────────────────────────────────────── */
-
-function LocationCard({ location, tall }: { location: LocationItem; tall: boolean }) {
-  const { locale, t } = useTranslations()
-  const locName = resolveField(location.nameTranslations, locale) || location.name
-  const locShortDesc = resolveField(location.shortDesc, locale)
-  const locPrefecture = resolveField(location.prefecture, locale)
-  const cardRef = useRef<HTMLAnchorElement>(null)
-  const imgRef = useRef<HTMLDivElement>(null)
-  const glowRef = useRef<HTMLDivElement>(null)
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!cardRef.current) return
-    const rect = cardRef.current.getBoundingClientRect()
-    const x = (e.clientX - rect.left) / rect.width
-    const y = (e.clientY - rect.top) / rect.height
-
-    if (imgRef.current) {
-      imgRef.current.style.transform = `scale(1.06) translate(${(0.5 - x) * 12}px, ${(0.5 - y) * 12}px)`
-    }
-    if (glowRef.current) {
-      glowRef.current.style.background = `radial-gradient(400px circle at ${x * 100}% ${y * 100}%, rgba(0,119,182,0.1), transparent 60%)`
-      glowRef.current.style.opacity = "1"
-    }
-  }
-
-  const handleMouseLeave = () => {
-    if (imgRef.current) {
-      imgRef.current.style.transform = "scale(1)"
-    }
-    if (glowRef.current) {
-      glowRef.current.style.opacity = "0"
-    }
-  }
-
-  return (
-    <Link
-      ref={cardRef}
-      href={`/locations/${location.slug}`}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      className="group relative flex flex-col rounded-xl overflow-hidden h-full"
-      style={{
-        background: "rgba(255,255,255,0.03)",
-        border: "1px solid rgba(255,255,255,0.06)",
-        minHeight: tall ? "420px" : "360px",
-      }}
-    >
-      {/* Image area */}
-      <div className="relative flex-1 overflow-hidden" style={{ minHeight: tall ? "260px" : "200px" }}>
-        <div
-          ref={imgRef}
-          className="absolute inset-0 transition-transform duration-700 ease-out will-change-transform"
-        >
-          {location.image ? (
-            location.imageType === "video" ? (
+            {isVideo ? (
+              // Several destinations ship an .mp4 as their default media —
+              // next/image cannot decode those, it renders an empty box.
               <video
                 src={location.image}
                 muted
+                autoPlay
+                loop
                 playsInline
                 preload="metadata"
-                className="w-full h-full object-cover"
+                aria-label={name}
+                className="h-full w-full object-cover"
               />
             ) : (
               <Image
                 src={location.image}
-                alt={location.name}
+                alt={name}
                 fill
                 className="object-cover"
-                sizes="(max-width: 768px) 100vw, 50vw"
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               />
-            )
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-[#0a1628] to-[#0d2847]" />
-          )}
-        </div>
-
-        {/* Overlay */}
-        <div
-          className="absolute inset-0"
-          style={{ background: "linear-gradient(to top, rgba(0,10,30,0.8) 0%, transparent 60%)" }}
-        />
-
-        {/* Glow follow */}
-        <div
-          ref={glowRef}
-          className="absolute inset-0 pointer-events-none transition-opacity duration-500"
-          style={{ opacity: 0 }}
-        />
-
-        {/* Coordinates chip */}
-        {location.latitude && location.longitude && (
-          <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/5">
-            <Navigation className="w-3 h-3 text-[#0077B6]/70" />
-            <span className="text-[10px] font-mono text-white/40 tracking-wider">
-              {formatCoord(location.latitude, true)}
-            </span>
+            )}
           </div>
+        ) : (
+          <div className="absolute inset-0" style={{ background: "var(--gradient-ocean)" }} />
         )}
 
-        {/* Bottom name overlay (on image) */}
-        <div className="absolute bottom-0 inset-x-0 p-5 z-10">
-          {(locPrefecture || location.city) && (
-            <div className="flex items-center gap-1.5 mb-2">
-              <MapPin className="w-3 h-3 text-[#0077B6]/80" />
-              <span className="text-[10px] uppercase tracking-[0.15em] text-white/40 font-medium">
-                {removeGreekTonos([locPrefecture, location.city].filter(Boolean).join(" · "))}
+        {/* The card scrim used everywhere else: photograph settling into limestone */}
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-0"
+          style={{ height: "62%", background: "var(--scrim-card)" }}
+        />
+
+        {/* Region badge */}
+        <span className="absolute left-4 top-4 z-10 rounded-full bg-[var(--action-accent)] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--text-on-accent)]">
+          {removeGreekTonos(region)}
+        </span>
+
+        {/* Live coordinate readout */}
+        {hasCoords && (
+          <span className="absolute right-4 top-4 z-10 inline-flex items-center gap-1.5 rounded-full bg-[rgba(4,13,25,0.72)] px-2.5 py-1 backdrop-blur-md">
+            <Navigation className="h-3 w-3 text-[var(--iyc-ionian-300)]" />
+            <span
+              ref={coordRef}
+              className="iyc-mono text-[10px] text-white/85"
+              style={{ fontSize: "10px" }}
+            >
+              {formatCoord(baseLat as number, true)}&nbsp;&nbsp;
+              {formatCoord(baseLon as number, false)}
+            </span>
+          </span>
+        )}
+
+        {/* Caption, on the limestone foot */}
+        <div className="absolute inset-x-0 bottom-0 z-10 p-5">
+          {location.city && (
+            <div className="mb-1.5 flex items-center gap-1.5 text-[var(--text-subtle)]">
+              <MapPin className="h-3 w-3" />
+              <span className="text-[10px] font-semibold uppercase tracking-[0.16em]">
+                {removeGreekTonos(location.city)}
               </span>
             </div>
           )}
           <h3
-            className="text-xl md:text-2xl font-bold transition-colors duration-500 group-hover:!text-[#0077B6]"
-            style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.01em", color: "#fff" }}
+            className="text-2xl font-bold text-[var(--text-heading)] transition-colors duration-300 group-hover:text-[var(--text-link)]"
+            style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em" }}
           >
-            {locName}
+            {name}
           </h3>
         </div>
       </div>
 
-      {/* Content area */}
-      <div className="p-5 pt-3">
-        {locShortDesc && (
-          <p className="text-sm text-white/45 line-clamp-2 mb-4">
-            {locShortDesc}
+      {/* Body */}
+      <div className="flex flex-1 flex-col p-5 pt-4">
+        {desc && (
+          <p className="line-clamp-3 text-sm leading-relaxed text-[var(--text-muted)]">
+            {desc}
           </p>
         )}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-[#0077B6] text-xs font-semibold opacity-0 group-hover:opacity-100 translate-y-1 group-hover:translate-y-0 transition-all duration-400">
-            {t("locations.explore", "Explore")}
-            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-          </div>
-          <div className="w-8 h-[1px] bg-white/10 group-hover:bg-[#0077B6]/30 group-hover:w-12 transition-all duration-500" />
-        </div>
+        <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[var(--text-link)] transition-all group-hover:gap-3">
+          {t("locations.explore", "Explore destination")}
+          <ArrowRight className="h-4 w-4" />
+        </span>
       </div>
 
-      {/* Bottom accent line */}
-      <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#0077B6]/30 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-600" />
+      {/* Hairline sweep on hover, as on the rest of the system */}
+      <span className="pointer-events-none absolute inset-x-0 bottom-0 h-[2px] origin-left scale-x-0 bg-gradient-to-r from-transparent via-[var(--iyc-ionian-500)] to-transparent transition-transform duration-[320ms] group-hover:scale-x-100" />
     </Link>
   )
 }

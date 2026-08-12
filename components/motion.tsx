@@ -1,5 +1,7 @@
 "use client"
 
+import Image from "next/image"
+
 import { useEffect, useRef, ReactNode } from "react"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
@@ -79,7 +81,7 @@ export function ParallaxImage({
   useEffect(() => {
     if (!containerRef.current || !imgRef.current) return
 
-    gsap.to(imgRef.current, {
+    const tween = gsap.to(imgRef.current, {
       yPercent: -20 * speed,
       ease: "none",
       scrollTrigger: {
@@ -91,19 +93,25 @@ export function ParallaxImage({
     })
 
     return () => {
-      ScrollTrigger.getAll().forEach((t) => {
-        if (t.trigger === containerRef.current) t.kill()
-      })
+      // Only this instance's trigger — ScrollTrigger.getAll() reaches the
+      // whole page, including the global parallax and scroller sync.
+      tween.scrollTrigger?.kill()
+      tween.kill()
     }
   }, [speed])
 
   return (
     <div ref={containerRef} className={`overflow-hidden ${className}`}>
-      <div
-        ref={imgRef}
-        className="w-full h-[120%] bg-cover bg-center"
-        style={{ backgroundImage: `url(${src})` }}
-      />
+      <div ref={imgRef} className="relative w-full h-[120%]">
+        <Image
+          src={src}
+          alt=""
+          aria-hidden="true"
+          fill
+          sizes="100vw"
+          className="object-cover"
+        />
+      </div>
     </div>
   )
 }

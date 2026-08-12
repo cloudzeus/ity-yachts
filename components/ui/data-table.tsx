@@ -358,7 +358,7 @@ export function DataTable<TData extends { id: string }>({
                           borderBottom: (!isExpanded && !isLast) ? "1px solid var(--outline-variant)" : undefined,
                           background: isSelected
                             ? "rgba(0,99,153,0.05)"
-                            : i % 2 === 1 ? "rgba(0,10,30,0.015)" : undefined,
+                            : i % 2 === 1 ? "rgba(46,44,40,0.015)" : undefined,
                         }}
                         className="transition-colors hover:bg-black/[0.02]"
                       >
@@ -427,7 +427,7 @@ export function DataTable<TData extends { id: string }>({
                           <td
                             colSpan={totalColCount}
                             className="px-6 py-4"
-                            style={{ background: "rgba(0,33,71,0.03)" }}
+                            style={{ background: "rgba(46,44,40,0.03)" }}
                           >
                             <div
                               className="rounded p-4"

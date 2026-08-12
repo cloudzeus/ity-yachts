@@ -39,11 +39,11 @@ const STATUSES = ["ALL", "OPTION", "CONFIRMED", "PAID", "COMPLETED", "CANCELLED"
 
 const statusBadge = (status: string) => {
   const styles: Record<string, { bg: string; color: string }> = {
-    OPTION:    { bg: "rgba(33,150,243,0.12)",  color: "#1976D2" },
-    CONFIRMED: { bg: "rgba(255,152,0,0.12)",  color: "#F57C00" },
-    PAID:      { bg: "rgba(45,106,79,0.12)",   color: "#2D6A4F" },
-    COMPLETED: { bg: "rgba(76,175,80,0.12)",   color: "#388E3C" },
-    CANCELLED: { bg: "rgba(244,67,54,0.12)",   color: "#D32F2F" },
+    OPTION:    { bg: "rgba(33,150,243,0.12)",  color: "#0F79BE" },
+    CONFIRMED: { bg: "rgba(255,152,0,0.12)",  color: "#C1782A" },
+    PAID:      { bg: "rgba(45,106,79,0.12)",   color: "#4F7A46" },
+    COMPLETED: { bg: "rgba(76,175,80,0.12)",   color: "#4F7A46" },
+    CANCELLED: { bg: "rgba(244,67,54,0.12)",   color: "#A93B2F" },
   }
   const s = styles[status] ?? styles.OPTION
   return <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium" style={{ background: s.bg, color: s.color, borderRadius: "var(--radius-xs)" }}>{status}</span>
@@ -51,7 +51,7 @@ const statusBadge = (status: string) => {
 
 const charterBadge = (type: string) => {
   const isCrewed = type === "CREWED"
-  return <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium" style={{ background: isCrewed ? "rgba(156,39,176,0.12)" : "rgba(33,150,243,0.12)", color: isCrewed ? "#7B1FA2" : "#1976D2", borderRadius: "var(--radius-xs)" }}>{type}</span>
+  return <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium" style={{ background: isCrewed ? "rgba(156,39,176,0.12)" : "rgba(33,150,243,0.12)", color: isCrewed ? "#7B1FA2" : "#0F79BE", borderRadius: "var(--radius-xs)" }}>{type}</span>
 }
 
 function formatPrice(amount: number, currency: string) {
