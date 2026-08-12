@@ -13,6 +13,7 @@ import { ItinerariesSection } from "./itineraries-section"
 import { FeaturedYachtsSection } from "./featured-yachts-section"
 import { TestimonialsSection } from "./testimonials-section"
 import { ServicesSection } from "./services-section"
+import { FamilySection, type FamilyMember } from "./family-section"
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger)
@@ -88,6 +89,7 @@ interface HomepageProps {
     image?: string | null
     date: string
   }>
+  staff: FamilyMember[]
 }
 
 function r(field: string | T | undefined, locale: string): string {
@@ -96,7 +98,7 @@ function r(field: string | T | undefined, locale: string): string {
   return field[locale] || field.en || ""
 }
 
-export function HomepageClient({ hero, destinations, itineraries, yachts, fleetYachts, reviews }: HomepageProps) {
+export function HomepageClient({ hero, destinations, itineraries, yachts, fleetYachts, reviews, staff }: HomepageProps) {
   const { locale, t } = useTranslations()
   const heroVideoRef = useRef<HTMLVideoElement>(null)
 
@@ -340,6 +342,9 @@ export function HomepageClient({ hero, destinations, itineraries, yachts, fleetY
 
       {/* Testimonials */}
       <TestimonialsSection reviews={reviewResolved} />
+
+      {/* The family behind the business */}
+      <FamilySection members={staff} />
 
     </>
   )
