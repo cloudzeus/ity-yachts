@@ -23,7 +23,6 @@ import {
 } from "lucide-react"
 import { LocationMap } from "./location-map"
 import { useTranslations } from "@/lib/use-translations"
-import { ScrollTypewriter } from "@/components/scroll-typewriter"
 import { removeGreekTonos } from "@/lib/greek-utils"
 
 if (typeof window !== "undefined") {
@@ -623,13 +622,9 @@ export function LocationDetailClient({ location, mapsKey }: { location: Location
                 </span>
               </div>
             )}
-            <ScrollTypewriter
-              as="h1"
-              className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4"
-              style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.03em", color: "#fff" }}
-            >
+            
               {locName}
-            </ScrollTypewriter>
+            
             {locShortDesc && (
               <p className="text-lg md:text-xl text-white/85 max-w-2xl leading-relaxed">
                 {locShortDesc}

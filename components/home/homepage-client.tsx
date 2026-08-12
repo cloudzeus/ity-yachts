@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useMemo } from "react"
+import Link from "next/link"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { useTranslations } from "@/lib/use-translations"
@@ -11,7 +12,7 @@ import { LocationsSection } from "./locations-section"
 import { ItinerariesSection } from "./itineraries-section"
 import { FeaturedYachtsSection } from "./featured-yachts-section"
 import { TestimonialsSection } from "./testimonials-section"
-import { ServicesSection, type ServiceItem } from "./services-section"
+import { ConditionsSection } from "./conditions-section"
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger)
@@ -87,7 +88,6 @@ interface HomepageProps {
     image?: string | null
     date: string
   }>
-  services: ServiceItem[]
 }
 
 function r(field: string | T | undefined, locale: string): string {
@@ -96,8 +96,8 @@ function r(field: string | T | undefined, locale: string): string {
   return field[locale] || field.en || ""
 }
 
-export function HomepageClient({ hero, destinations, itineraries, yachts, fleetYachts, reviews, services }: HomepageProps) {
-  const { locale } = useTranslations()
+export function HomepageClient({ hero, destinations, itineraries, yachts, fleetYachts, reviews }: HomepageProps) {
+  const { locale, t } = useTranslations()
   const heroVideoRef = useRef<HTMLVideoElement>(null)
 
   // Resolve all translation objects to current locale strings
@@ -154,6 +154,7 @@ export function HomepageClient({ hero, destinations, itineraries, yachts, fleetY
     // and, worse, the element keeps the opacity:0 it starts with.
     const heading = document.querySelector(".hero-heading")
     const sub = document.querySelector(".hero-subheading")
+    const actions = document.querySelector(".hero-actions")
     const tl = gsap.timeline({ defaults: { ease: "power3.out" } })
 
     if (heading) {
@@ -170,6 +171,9 @@ export function HomepageClient({ hero, destinations, itineraries, yachts, fleetY
         { opacity: 1, y: 0, duration: 0.9 },
         heading ? "-=0.6" : 0
       )
+    }
+    if (actions) {
+      tl.fromTo(actions, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.7 }, "-=0.5")
     }
 
     // Refresh ScrollTrigger after layout settles
@@ -234,7 +238,9 @@ export function HomepageClient({ hero, destinations, itineraries, yachts, fleetY
 
           {/* Hero Text — absolute center */}
           <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
-            <div className="text-center pointer-events-auto">
+            {/* 880px, as the kit sets it. Unconstrained, the headline broke
+                after "γερμανική" and left "ακρίβεια." orphaned on its own line. */}
+            <div className="pointer-events-auto mx-auto max-w-[880px] px-6 text-center">
               {heroResolved.overSubheading && (
                 <div className="mb-5 inline-block rounded-sm border border-white/20 px-4 py-1.5">
                   <span
@@ -248,10 +254,11 @@ export function HomepageClient({ hero, destinations, itineraries, yachts, fleetY
 
               {heroResolved.heading && (
                 <h1
-                  className="hero-heading mb-5 text-4xl font-bold leading-tight md:text-6xl lg:text-7xl"
+                  className="hero-heading mb-5 text-4xl font-bold md:text-5xl lg:text-6xl"
                   style={{
                     fontFamily: "var(--font-display)",
                     letterSpacing: "var(--tracking-display)",
+                    lineHeight: 1.08,
                     opacity: 0,
                     // The hero headline sits on the deep sea: ionian-600 was
                     // 2.84:1 there. The kit sets it white.
@@ -265,12 +272,48 @@ export function HomepageClient({ hero, destinations, itineraries, yachts, fleetY
 
               {heroResolved.subheading && (
                 <p
-                  className="hero-subheading mx-auto max-w-xl text-lg text-white/90"
-                  style={{ fontFamily: "var(--font-body)", opacity: 0, textShadow: "0 1px 10px rgba(0,0,0,0.2)" }}
+                  className="hero-subheading mx-auto text-lg md:text-xl"
+                  style={{
+                    fontFamily: "var(--font-body)",
+                    maxWidth: "48ch",
+                    color: "rgba(255,255,255,0.92)",
+                    opacity: 0,
+                    textShadow: "0 1px 10px rgba(4,13,25,0.35)",
+                  }}
                 >
                   {heroResolved.subheading}
                 </p>
               )}
+
+              {/* The kit closes the hero with two actions before the search bar:
+                  one filled, one outlined. Ours went straight from copy to the
+                  search form, so the headline had nothing to lead into. */}
+              <div className="hero-actions mt-8 flex flex-wrap items-center justify-center gap-3" style={{ opacity: 0 }}>
+                <Link
+                  href="/contact"
+                  className="inline-flex items-center gap-2 px-7 py-3.5 text-sm font-semibold transition-all hover:opacity-90"
+                  style={{
+                    background: "var(--action-accent)",
+                    color: "var(--text-on-accent)",
+                    borderRadius: "var(--iyc-radius-sm)",
+                    fontFamily: "var(--font-display)",
+                  }}
+                >
+                  {t("home.hero.requestOffer", "Request an offer")}
+                </Link>
+                <Link
+                  href="/fleet"
+                  className="inline-flex items-center gap-2 px-7 py-3.5 text-sm font-semibold transition-all hover:bg-white/10"
+                  style={{
+                    border: "1px solid rgba(251,249,245,0.5)",
+                    color: "var(--iyc-sand-50)",
+                    borderRadius: "var(--iyc-radius-sm)",
+                    fontFamily: "var(--font-display)",
+                  }}
+                >
+                  {t("home.hero.exploreFleet", "Explore the fleet")}
+                </Link>
+              </div>
             </div>
           </div>
 
@@ -289,8 +332,8 @@ export function HomepageClient({ hero, destinations, itineraries, yachts, fleetY
       {/* Locations - Mythic Grid */}
       <LocationsSection destinations={destResolved} />
 
-      {/* Services — Curated Experiences */}
-      <ServicesSection services={services} />
+      {/* Live conditions at the marina + who we are */}
+      <ConditionsSection />
 
       {/* Itineraries - Parallax Cards */}
       <ItinerariesSection itineraries={itinResolved} />

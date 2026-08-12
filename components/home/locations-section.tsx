@@ -8,7 +8,6 @@ import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { ArrowRight, Globe, Activity, ChevronsUpDown, Anchor, Shield, Compass } from "lucide-react"
 import { useTranslations } from "@/lib/use-translations"
 import { removeGreekTonos } from "@/components/locale-text"
-import { ScrollTypewriter } from "@/components/scroll-typewriter"
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger)
@@ -182,21 +181,15 @@ export function LocationsSection({ destinations }: { destinations: Location[] })
               className="text-4xl md:text-5xl lg:text-6xl mb-5 tracking-wide"
               style={{ fontFamily: "var(--font-display)", color: "var(--text-heading)", perspective: "600px" }}
             >
-              <ScrollTypewriter as="span">
-              <span className="inline-block font-light">Navigate</span>{" "}
-              <span className="inline-block font-light">Your</span>{" "}
-              <span className="inline-block font-extrabold" style={{ color: "var(--iyc-ionian-600)" }}>Odyssey</span>
-              </ScrollTypewriter>
+              <span className="font-light">{t("home.locations.headingLead", "Navigate Your")}</span>{" "}
+              <span className="font-extrabold" style={{ color: "var(--iyc-ionian-600)" }}>
+                {t("home.locations.headingAccent", "Odyssey")}
+              </span>
             </h2>
 
-            <ScrollTypewriter
-              as="p"
-              delay={0.4}
-              className="loc-subtitle text-[var(--text-muted)] text-sm md:text-base leading-relaxed max-w-[620px]"
-              style={{ fontFamily: "var(--font-body)" }}
-            >
+            
               {t("home.locations.description", "Trace the wake of ancient heroes. Discover secluded sanctuaries, monumental cliffs, and sapphire waters aboard our premium fleet where legendary myth meets modern luxury.")}
-            </ScrollTypewriter>
+            
           </div>
 
           {/* Filter pills */}

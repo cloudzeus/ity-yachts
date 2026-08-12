@@ -6,7 +6,6 @@ import { LocationsGrid } from "@/components/locations/locations-grid"
 import Image from "next/image"
 import { MapPin } from "lucide-react"
 import { LocaleText } from "@/components/locale-text"
-import { ScrollTypewriter } from "@/components/scroll-typewriter"
 
 export const dynamic = "force-dynamic"
 
@@ -102,15 +101,11 @@ export default async function LocationsListPage() {
                     ? <LocaleText translations={locHero.badge} fallback="Charter Destinations" uppercase />
                     : <LocaleText tKey="locations.badge" fallback="Charter Destinations" uppercase />}
                 </span>
-                <ScrollTypewriter
-                  as="h1"
-                  className="text-4xl md:text-5xl lg:text-6xl font-bold mt-4"
-                  style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.03em", color: "#fff" }}
-                >
+                
                   {locHero?.title
                     ? <LocaleText translations={locHero.title} fallback="Discover the Ionian Sea" />
                     : <LocaleText tKey="locations.title" fallback="Discover the Ionian Sea" />}
-                </ScrollTypewriter>
+                
               </div>
               <p className="text-base text-white/50 max-w-md md:text-right leading-relaxed md:pb-1">
                 {locHero?.subtitle

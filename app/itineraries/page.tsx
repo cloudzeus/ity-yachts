@@ -7,7 +7,6 @@ import { SiteFooter } from "@/components/site-footer"
 import { LocaleText } from "@/components/locale-text"
 import { getMottoRaw } from "@/lib/mottos"
 import { RouteCardsMotion } from "@/components/itineraries/route-cards-motion"
-import { ScrollTypewriter } from "@/components/scroll-typewriter"
 
 export const dynamic = "force-dynamic"
 
@@ -87,11 +86,11 @@ export default async function ItinerariesListPage() {
               className="mb-4 text-3xl font-bold text-white md:text-[2.6rem] md:leading-[1.1]"
               style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em" }}
             >
-              <ScrollTypewriter as="span">
+              
                 {mottoHeading
                   ? <LocaleText translations={mottoHeading} fallback="Routes drawn by people who sail them." />
                   : <LocaleText tKey="itineraries.title" fallback="Sailing Itineraries" />}
-              </ScrollTypewriter>
+              
             </h1>
 
             <p
@@ -284,9 +283,9 @@ export default async function ItinerariesListPage() {
                 className="mt-3 text-2xl font-bold md:text-3xl"
                 style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em", color: "var(--text-heading)" }}
               >
-                <ScrollTypewriter as="span" delay={0.15}>
+                
                   <LocaleText tKey="itineraries.area.title" fallback="Why the Ionian is an easy sea to learn on" />
-                </ScrollTypewriter>
+                
               </h2>
             </div>
 
@@ -345,9 +344,9 @@ export default async function ItinerariesListPage() {
                 className="mb-4 text-2xl font-bold md:text-3xl"
                 style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em", color: "var(--text-heading)" }}
               >
-                <ScrollTypewriter as="span" delay={0.1}>
+                
                   <LocaleText tKey="itineraries.cta.title" fallback="Tell us where you want to wake up." />
-                </ScrollTypewriter>
+                
               </h2>
               <p className="mb-7 max-w-md text-[15px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
                 <LocaleText

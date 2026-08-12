@@ -1,2 +1,10 @@
+# Node comes from the nixpkgs snapshot nixpacks pins, not from NIXPACKS_NODE_VERSION
+# alone. Nixpacks 1.41's default snapshot (ffeebf0, April 2025) carries node
+# 20.18.1 / 22.11.0 / 23.x — and Prisma 7 refuses to install below 20.19, 22.12
+# or 24.0, so `npm ci` aborts in its preinstall script before the build starts.
+# No value of NIXPACKS_NODE_VERSION fixes that; every node in that snapshot is
+# too old. Pinning a newer snapshot does: nixos-25.05 ships node 22.20.0, which
+# the existing NIXPACKS_NODE_VERSION=22 resolves to.
 [phases.setup]
+nixpkgsArchive = "ac62194c3917d5f474c1a844b6fd6da2db95077d"
 aptPkgs = ["ffmpeg"]

@@ -6,7 +6,6 @@ import Link from "next/link"
 import { Heart, ChevronLeft, ChevronRight, ArrowUpRight, Ruler, BedDouble, Users, Sailboat, Anchor } from "lucide-react"
 import { useTranslations } from "@/lib/use-translations"
 import { removeGreekTonos } from "@/components/locale-text"
-import { ScrollTypewriter } from "@/components/scroll-typewriter"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 
@@ -160,17 +159,14 @@ export function FleetCarouselSection({ yachts: rawYachts }: { yachts: FleetYacht
             className="text-4xl md:text-5xl lg:text-6xl mb-5 tracking-wide"
             style={{ fontFamily: "var(--font-display)", color: "var(--text-heading)", perspective: "600px" }}
           >
-            <ScrollTypewriter as="span">
-            <span className="inline-block font-light">Yachts</span>{" "}
-            <span className="inline-block font-light">&amp;</span>{" "}
-            <span className="inline-block font-light">Catamarans</span>{" "}
-            <span className="inline-block font-extrabold">for</span>{" "}
-            <span className="inline-block font-extrabold">Charter</span>
-            </ScrollTypewriter>
+            {/* Was five hardcoded English words split for the typewriter, so
+                the Greek and German sites showed an English heading. */}
+            <span className="font-light">{t("home.fleet.headingLead", "Yachts & Catamarans")}</span>{" "}
+            <span className="font-extrabold">{t("home.fleet.headingAccent", "for Charter")}</span>
           </h2>
-          <ScrollTypewriter as="p" delay={0.4} className="fleet-desc text-[var(--text-muted)] text-sm md:text-base leading-relaxed max-w-[620px]">
+          
             {t("home.fleet.description", "We do not simply list boats; we curate legendary journeys. Explore our privately owned fleet in the Ionian Sea—hand-picked for superior comfort and exceptional crews. From our base in Lefkada, follow the wake of Odysseus on a voyage tailored just for you.")}
-          </ScrollTypewriter>
+          
         </div>
         <div className="fleet-cta" style={{ opacity: 0 }}>
           <Link

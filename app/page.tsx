@@ -3,12 +3,13 @@ import { yachtThumb } from "@/lib/yacht-images"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { HomepageClient } from "@/components/home/homepage-client"
+import { getMottoRaw } from "@/lib/mottos"
 
 export const dynamic = "force-dynamic"
 
 export default async function Home() {
   // Fetch all homepage data in parallel
-  const [homePage, locations, itineraries, yachts, reviews, services] = await Promise.all([
+  const [homePage, locations, itineraries, yachts, reviews, motto] = await Promise.all([
     db.page.findFirst({
       where: { isHomePage: true },
       select: { heroSection: true },
@@ -37,10 +38,7 @@ export default async function Home() {
       orderBy: { sortOrder: "asc" },
       take: 6,
     }),
-    db.service.findMany({
-      where: { status: "published", showOnHomepage: true },
-      orderBy: { sortOrder: "asc" },
-    }),
+    getMottoRaw("hero-greek-soul-german-precision"),
   ])
 
   // Extract hero data from admin-configured page
@@ -50,10 +48,23 @@ export default async function Home() {
     subheading?: Record<string, string>
   } | null
 
+  /* The stored hero is `{ en: "", el: "", de: "" }` — an object, so `||` never
+     reached the fallback and the homepage rendered no headline at all. Treat an
+     all-empty set as absent, and fall back to the saved motto so the flagship
+     line lives in one editable place rather than hardcoded here. */
+  const filled = (v?: Record<string, string> | null) =>
+    v && Object.values(v).some((x) => x?.trim()) ? v : null
+
+  const mottoHeading = filled(motto?.heading as Record<string, string> | undefined)
+  const mottoSub = filled(motto?.subheading as Record<string, string> | undefined)
+
   const heroData = {
-    overSubheading: heroJson?.overSubheading || { en: "Luxury Yacht Charters" },
-    heading: heroJson?.heading || { en: "IONISCHE YACHT CHARTER" },
-    subheading: heroJson?.subheading || { en: "Bespoke yacht charters and luxury maritime experiences crafted for the most discerning travellers." },
+    overSubheading:
+      filled(heroJson?.overSubheading) ?? { en: "Sailing Greece since 1979", el: "Στην Ελλάδα από το 1979", de: "In Griechenland seit 1979" },
+    heading:
+      filled(heroJson?.heading) ?? mottoHeading ?? { en: "IONISCHE YACHT CHARTER" },
+    subheading:
+      filled(heroJson?.subheading) ?? mottoSub ?? { en: "Bespoke yacht charters and luxury maritime experiences crafted for the most discerning travellers." },
   }
 
   // Transform data for client components — pass full translation objects
@@ -104,18 +115,6 @@ export default async function Home() {
     }
   })
 
-  const serviceData = services.map((s) => ({
-    id: s.id,
-    title: (s.title ?? {}) as Record<string, string>,
-    label: (s.label ?? {}) as Record<string, string>,
-    shortDesc: (s.shortDesc ?? {}) as Record<string, string>,
-    defaultMedia: s.defaultMedia,
-    defaultMediaType: s.defaultMediaType,
-    link: s.link,
-    icon: s.icon,
-    sortOrder: s.sortOrder,
-  }))
-
   const reviewData = reviews.map((r) => ({
     id: r.id,
     name: r.name,
@@ -144,7 +143,6 @@ export default async function Home() {
           yachts={yachtData}
           fleetYachts={yachtData}
           reviews={reviewData}
-          services={serviceData}
         />
       </div>
 
