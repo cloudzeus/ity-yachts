@@ -4,6 +4,15 @@ import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
+import {
+  FileCheck,
+  CarTaxiFront,
+  ShoppingBasket,
+  CloudSun,
+  Compass,
+  House,
+  type LucideIcon,
+} from "lucide-react"
 import { useTranslations } from "@/lib/use-translations"
 
 if (typeof window !== "undefined") {
@@ -20,18 +29,60 @@ interface WeatherData {
   wave_height_m: number | null
 }
 
+/**
+ * The six things IYC actually does for a crew, taken from the design kit.
+ * The copy lives in the translation table so it stays editable in /admin; the
+ * strings here are only the English fallback.
+ */
+const SERVICES: { key: string; icon: LucideIcon; title: string; body: string }[] = [
+  {
+    key: "paperwork",
+    icon: FileCheck,
+    title: "We handle the paperwork",
+    body: "Your officially approved charter contract is ready when you arrive. Greece's full EU membership means no clearing in and out of ports.",
+  },
+  {
+    key: "taxi",
+    icon: CarTaxiFront,
+    title: "Taxi from the airport",
+    body: "Your taxi waits at Preveza with your name on a board and brings you to the boat in twenty minutes.",
+  },
+  {
+    key: "provisioning",
+    icon: ShoppingBasket,
+    title: "A cold fridge waiting",
+    body: "Send us your provisioning list and the fridge is stocked before you step aboard.",
+  },
+  {
+    key: "weather",
+    icon: CloudSun,
+    title: "Weather by SMS",
+    body: "All the important weather information reaches your phone throughout the whole trip.",
+  },
+  {
+    key: "skipper",
+    icon: Compass,
+    title: "Skipper on request",
+    body: "We can arrange a skipper or sailing instructor who knows the area properly.",
+  },
+  {
+    key: "onland",
+    icon: House,
+    title: "A week on land",
+    body: "Holiday houses and apartments on Lefkada, before or after the sailing trip.",
+  },
+]
+
 function kphToKnots(kph: number) {
   return Math.round(kph * 0.539957)
 }
 
 /**
- * Live conditions at the marina, paired with who we are.
- *
- * This band used to carry the service cards as well. They came out at the
- * client's request and the row was rebalanced to two halves rather than left
- * as two narrow cards against an empty six columns.
+ * Our service — the six-card block from the design kit, with the live marina
+ * conditions and the IYC card kept underneath. The weather card earns its place
+ * here rather than standing on its own: "weather by SMS" is one of the six.
  */
-export function ConditionsSection() {
+export function ServicesSection() {
   const { t, tUpper } = useTranslations()
   const sectionRef = useRef<HTMLDivElement>(null)
   const [weather, setWeather] = useState<WeatherData | null>(null)
@@ -50,6 +101,18 @@ export function ConditionsSection() {
     if (!el) return
 
     const ctx = gsap.context(() => {
+      gsap.fromTo(
+        ".svc-tile",
+        { opacity: 0, y: 40 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.7,
+          stagger: 0.08,
+          ease: "power3.out",
+          scrollTrigger: { trigger: ".svc-tiles", start: "top 85%" },
+        }
+      )
       gsap.fromTo(
         ".svc-card",
         { opacity: 0, y: 60, scale: 0.97 },
@@ -84,13 +147,7 @@ export function ConditionsSection() {
           WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, black 16%, black 84%, transparent 100%)",
         }}
       >
-        <Image
-          src="/brand/topographic.svg"
-          alt=""
-          fill
-          className="object-cover opacity-60"
-          unoptimized
-        />
+        <Image src="/brand/topographic.svg" alt="" fill className="object-cover opacity-60" unoptimized />
         <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(251,249,245,.97), rgba(251,249,245,.88) 50%, rgba(251,249,245,.97))" }} />
       </div>
 
@@ -99,7 +156,71 @@ export function ConditionsSection() {
       <div className="absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full pointer-events-none z-0" style={{ background: "var(--iyc-sand-200)", filter: "blur(100px)", opacity: 0.7, transform: "translate(-25%, 25%)" }} />
 
       <div className="relative z-10 w-full max-w-[1400px] mx-auto px-6 py-20 md:py-24">
-        <div className="svc-grid grid grid-cols-1 md:grid-cols-12 gap-6 relative">
+        {/* Centred heading, as the kit sets it */}
+        {/* Width in px, not ch: `ch` resolves against the container's 16px body
+            size, so a 52ch box is ~420px and broke the 56px heading over four
+            lines. */}
+        <div className="mx-auto mb-14 max-w-[860px] text-center">
+          <span className="label-sm mb-3 block" style={{ color: "var(--iyc-taupe-500)" }}>
+            {tUpper("home.service.eyebrow", "Our service")}
+          </span>
+          <h2 className="section-heading" style={{ color: "var(--text-heading)" }}>
+            <span className="font-light">{t("home.service.headingLead", "German thoroughness,")}</span>{" "}
+            <span className="font-extrabold" style={{ color: "var(--iyc-ionian-600)" }}>
+              {t("home.service.headingAccent", "Greek hospitality")}
+            </span>
+          </h2>
+        </div>
+
+        {/* The six service cards */}
+        <div className="svc-tiles grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {SERVICES.map(({ key, icon: Icon, title, body }) => (
+            <div
+              key={key}
+              className="svc-tile flex gap-4 rounded-3xl p-6"
+              style={{
+                opacity: 0,
+                background: "var(--surface-card)",
+                border: "1px solid var(--border-hairline)",
+                boxShadow: "var(--shadow-sm)",
+                transition: "transform var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out)",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(var(--lift-hover))"
+                e.currentTarget.style.boxShadow = "var(--shadow-md)"
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "translateY(0)"
+                e.currentTarget.style.boxShadow = "var(--shadow-sm)"
+              }}
+            >
+              <span
+                className="grid h-10 w-10 flex-shrink-0 place-items-center"
+                style={{
+                  borderRadius: "var(--iyc-radius-md)",
+                  background: "var(--iyc-ionian-50)",
+                  color: "var(--iyc-ionian-600)",
+                }}
+              >
+                <Icon size={18} strokeWidth={1.5} aria-hidden="true" />
+              </span>
+              <div>
+                <h3
+                  className="text-[1.1875rem] leading-snug"
+                  style={{ fontFamily: "var(--font-display)", color: "var(--text-heading)" }}
+                >
+                  {t(`home.service.${key}.title`, title)}
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                  {t(`home.service.${key}.body`, body)}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Live conditions at the marina + who we are */}
+        <div className="svc-grid relative mt-6 grid grid-cols-1 gap-6 md:grid-cols-12">
           {/* Weather Card */}
           <div
             className="svc-card md:col-span-12 lg:col-span-5 relative h-[420px] rounded-3xl overflow-hidden p-8 flex flex-col"
@@ -123,7 +244,7 @@ export function ConditionsSection() {
               <div className="text-center mb-6">
                 <span className="text-7xl font-extralight text-[var(--text-heading)] tracking-tighter">{weather ? `${weather.temp_c}°` : "—"}</span>
                 <div className="mt-2">
-                  <span className="text-[var(--text-muted)] text-sm">{weather?.condition ?? "Loading..."}</span>
+                  <span className="text-[var(--text-muted)] text-sm">{weather?.condition ?? "…"}</span>
                   <span className="text-xs ml-2" style={{ color: "var(--text-subtle)" }}>{weather ? `H:${weather.high_c}° L:${weather.low_c}°` : ""}</span>
                 </div>
               </div>
@@ -161,17 +282,11 @@ export function ConditionsSection() {
             }}
           >
             <div className="w-36 h-14 relative mb-6">
-              <Image
-                src="/brand/iyc-logo-navy.svg"
-                alt="IYC Logo"
-                fill
-                className="object-contain brightness-0 invert"
-                unoptimized
-              />
+              <Image src="/brand/iyc-logo-navy.svg" alt="IYC Logo" fill className="object-contain brightness-0 invert" unoptimized />
             </div>
-            <h4 className="text-2xl md:text-3xl mb-5 uppercase tracking-wide font-light" style={{ fontFamily: "var(--font-display)", color: "#ffffff", letterSpacing: "0.05em" }}>
+            <h3 className="text-2xl md:text-3xl mb-5 uppercase tracking-wide font-light" style={{ fontFamily: "var(--font-display)", color: "#ffffff", letterSpacing: "0.05em" }}>
               {tUpper("home.services.theOdyssey", "The Odyssey")}
-            </h4>
+            </h3>
             <p className="text-base leading-relaxed mb-8 max-w-[52ch]" style={{ color: "rgba(255,255,255,0.88)" }}>
               {t("home.services.odysseyDescription", "Since 2015, we've been crafting mythic voyages through the Ionian Isles. Every journey honors the spirit of exploration.")}
             </p>
@@ -186,16 +301,6 @@ export function ConditionsSection() {
                 <span className="text-[10px] uppercase tracking-wider block mt-1" style={{ color: "rgba(255,255,255,0.82)" }}>{tUpper("home.services.yachts", "Yachts")}</span>
               </div>
             </div>
-          </div>
-
-          {/* Decorative circles */}
-          <div className="absolute top-1/3 -right-20 opacity-20 pointer-events-none z-0">
-            <svg width="200" height="200" viewBox="0 0 100 100" fill="none">
-              <circle cx="50" cy="50" r="45" stroke="#84776e" strokeWidth="0.5" />
-              <circle cx="50" cy="50" r="35" stroke="#84776e" strokeWidth="0.5" />
-              <line x1="50" y1="5" x2="50" y2="95" stroke="#84776e" strokeWidth="0.5" />
-              <line x1="5" y1="50" x2="95" y2="50" stroke="#84776e" strokeWidth="0.5" />
-            </svg>
           </div>
         </div>
       </div>

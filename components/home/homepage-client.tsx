@@ -12,7 +12,7 @@ import { LocationsSection } from "./locations-section"
 import { ItinerariesSection } from "./itineraries-section"
 import { FeaturedYachtsSection } from "./featured-yachts-section"
 import { TestimonialsSection } from "./testimonials-section"
-import { ConditionsSection } from "./conditions-section"
+import { ServicesSection } from "./services-section"
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger)
@@ -332,8 +332,8 @@ export function HomepageClient({ hero, destinations, itineraries, yachts, fleetY
       {/* Locations - Mythic Grid */}
       <LocationsSection destinations={destResolved} />
 
-      {/* Live conditions at the marina + who we are */}
-      <ConditionsSection />
+      {/* Our service — six cards, then live conditions and the IYC card */}
+      <ServicesSection />
 
       {/* Itineraries - Parallax Cards */}
       <ItinerariesSection itineraries={itinResolved} />
