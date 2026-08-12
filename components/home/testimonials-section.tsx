@@ -52,11 +52,11 @@ export function TestimonialsSection({ reviews }: { reviews: ReviewItem[] }) {
               </span>
             </TextReveal>
             <TextReveal delay={0.1}>
-              <h2
-                className="text-4xl md:text-6xl font-bold text-[var(--text-heading)]"
-                style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em" }}
-              >
-                {t("home.testimonials.title", "What Our Guests Say")}
+              <h2 className="section-heading" style={{ color: "var(--text-heading)" }}>
+                <span className="font-light">{t("home.testimonials.headingLead", "What Our")}</span>{" "}
+                <span className="font-extrabold" style={{ color: "var(--iyc-ionian-600)" }}>
+                  {t("home.testimonials.headingAccent", "Guests Say")}
+                </span>
               </h2>
             </TextReveal>
           </div>

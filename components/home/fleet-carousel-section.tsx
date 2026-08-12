@@ -156,8 +156,8 @@ export function FleetCarouselSection({ yachts: rawYachts }: { yachts: FleetYacht
             <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--text-subtle)" }}>{removeGreekTonos(t("home.fleet.badge", "Our Fleet"))}</span>
           </div>
           <h2
-            className="text-4xl md:text-5xl lg:text-6xl mb-5 tracking-wide"
-            style={{ fontFamily: "var(--font-display)", color: "var(--text-heading)", perspective: "600px" }}
+            className="section-heading mb-5"
+            style={{ color: "var(--text-heading)", perspective: "600px" }}
           >
             {/* Was five hardcoded English words split for the typewriter, so
                 the Greek and German sites showed an English heading. */}

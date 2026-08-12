@@ -178,8 +178,8 @@ export function LocationsSection({ destinations }: { destinations: Location[] })
             </div>
 
             <h2
-              className="text-4xl md:text-5xl lg:text-6xl mb-5 tracking-wide"
-              style={{ fontFamily: "var(--font-display)", color: "var(--text-heading)", perspective: "600px" }}
+              className="section-heading mb-5"
+              style={{ color: "var(--text-heading)", perspective: "600px" }}
             >
               <span className="font-light">{t("home.locations.headingLead", "Navigate Your")}</span>{" "}
               <span className="font-extrabold" style={{ color: "var(--iyc-ionian-600)" }}>

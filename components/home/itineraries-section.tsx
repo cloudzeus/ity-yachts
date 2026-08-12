@@ -44,14 +44,11 @@ export function ItinerariesSection({ itineraries }: { itineraries: ItineraryItem
           </span>
         </TextReveal>
         <TextReveal delay={0.1}>
-          <h2
-            className="text-4xl md:text-6xl font-bold max-w-3xl text-[var(--text-heading)]"
-            style={{
-              fontFamily: "var(--font-display)",
-              letterSpacing: "-0.02em",
-            }}
-          >
-            {t("home.itineraries.badge", "Curated Sailing Routes")}
+          <h2 className="section-heading mb-5 max-w-3xl" style={{ color: "var(--text-heading)" }}>
+            <span className="font-light">{t("home.itineraries.headingLead", "Curated Sailing")}</span>{" "}
+            <span className="font-extrabold" style={{ color: "var(--iyc-ionian-600)" }}>
+              {t("home.itineraries.headingAccent", "Routes")}
+            </span>
           </h2>
         </TextReveal>
         <TextReveal delay={0.2}>
