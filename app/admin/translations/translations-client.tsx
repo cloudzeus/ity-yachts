@@ -67,7 +67,23 @@ export function TranslationsClient({ initialData }: { initialData: SiteTranslati
   const [form, setForm] = useState({ key: "", namespace: "common", en: "", el: "", de: "" })
   const [activeLang, setActiveLang] = useState<typeof LANGS[number]>("en")
 
-  const namespaces = [...new Set(items.map((i) => i.namespace))].sort()
+  /* Namespaces with their counts. There are more than twenty of them, which is
+     why a row of pills ran off the side of the screen and pushed the status
+     filter out of reach — this belongs in a select. */
+  const namespaces = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const i of items) counts.set(i.namespace, (counts.get(i.namespace) ?? 0) + 1)
+    return [...counts.entries()].sort((a, b) => a[0].localeCompare(b[0]))
+  }, [items])
+
+  /* Missing is counted per language, because "56 missing" never said which. */
+  const gaps = useMemo(
+    () => ({
+      el: items.filter((i) => !i.el?.trim()).length,
+      de: items.filter((i) => !i.de?.trim()).length,
+    }),
+    [items]
+  )
 
   // Filter + sort
   const filtered = useMemo(() => {
@@ -316,9 +332,23 @@ export function TranslationsClient({ initialData }: { initialData: SiteTranslati
             >
               Site Translations
             </h1>
-            <p className="mt-1 text-sm" style={{ color: "var(--on-surface-variant)" }}>
-              {items.length} keys · <span style={{ color: "var(--primary)" }}>{completeCount} translated</span> · <span style={{ color: untranslatedCount > 0 ? "var(--warning, #C1782A)" : "var(--on-surface-variant)" }}>{untranslatedCount} missing</span>
-            </p>
+            {/* Which language is short, not just how many rows are incomplete. */}
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm" style={{ color: "var(--on-surface-variant)" }}>
+              <span className="tabular-nums">{items.length} keys</span>
+              {([["🇬🇷", "Greek", gaps.el], ["🇩🇪", "German", gaps.de]] as const).map(([flag, name, n]) => (
+                <span key={name} className="inline-flex items-center gap-1.5 tabular-nums">
+                  <span aria-hidden="true">{flag}</span>
+                  {n === 0 ? (
+                    <span style={{ color: "var(--primary)" }}>{name} complete</span>
+                  ) : (
+                    <span style={{ color: "#C1782A" }}>{n} {name} missing</span>
+                  )}
+                </span>
+              ))}
+              {untranslatedCount === 0 && items.length > 0 && (
+                <span style={{ color: "var(--primary)" }}>· nothing outstanding</span>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-2">
             {items.length === 0 && (
@@ -341,55 +371,55 @@ export function TranslationsClient({ initialData }: { initialData: SiteTranslati
           </div>
         </div>
 
-        {/* Search + namespace filter */}
-        <div className="flex items-center gap-3 mt-4">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4" style={{ color: "var(--on-surface-variant)" }} />
+        {/* Search · namespace · status. Wraps rather than overflowing: the
+            status filter used to be pushed off the right edge by the pills and
+            could not be reached at all. */}
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <div className="relative min-w-[200px] flex-1">
+            <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2" style={{ color: "var(--on-surface-variant)" }} />
             <Input
-              placeholder="Search keys or text..."
+              placeholder="Search keys or text…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-8 h-9 text-sm"
+              className="h-9 pl-8 text-sm"
               style={{ background: "var(--surface-container-lowest)", borderColor: "var(--outline-variant)" }}
             />
           </div>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => setNsFilter(null)}
-              className="px-2.5 py-1 text-xs font-medium rounded transition-colors"
-              style={{
-                background: !nsFilter ? "var(--primary)" : "var(--surface-container)",
-                color: !nsFilter ? "var(--on-primary)" : "var(--on-surface-variant)",
-              }}
-            >
-              All
-            </button>
-            {namespaces.map((ns) => (
-              <button
-                key={ns}
-                onClick={() => setNsFilter(ns)}
-                className="px-2.5 py-1 text-xs font-medium rounded transition-colors"
-                style={{
-                  background: nsFilter === ns ? "var(--primary)" : "var(--surface-container)",
-                  color: nsFilter === ns ? "var(--on-primary)" : "var(--on-surface-variant)",
-                }}
-              >
-                {ns}
-              </button>
+
+          <select
+            value={nsFilter ?? ""}
+            onChange={(e) => setNsFilter(e.target.value || null)}
+            className="h-9 rounded-md border px-2.5 text-xs font-medium"
+            style={{
+              background: "var(--surface-container-lowest)",
+              borderColor: nsFilter ? "var(--primary)" : "var(--outline-variant)",
+              color: "var(--on-surface)",
+              maxWidth: 260,
+            }}
+          >
+            <option value="">All groups ({items.length})</option>
+            {namespaces.map(([ns, n]) => (
+              <option key={ns} value={ns}>{ns} ({n})</option>
             ))}
-          </div>
-          <div className="flex items-center gap-1 ml-2 pl-2" style={{ borderLeft: "1px solid var(--outline-variant)" }}>
+          </select>
+
+          <div
+            className="flex items-center overflow-hidden rounded-md border"
+            style={{ borderColor: "var(--outline-variant)" }}
+          >
             {([
               { value: "all" as const, label: "All" },
-              { value: "untranslated" as const, label: `Missing (${untranslatedCount})` },
-              { value: "complete" as const, label: "Complete" },
+              { value: "untranslated" as const, label: `Missing ${untranslatedCount}` },
+              { value: "complete" as const, label: "Done" },
             ]).map(({ value, label }) => (
               <button
                 key={value}
                 onClick={() => setStatusFilter(value)}
-                className="px-2.5 py-1 text-xs font-medium rounded transition-colors"
+                className="h-9 px-3 text-xs font-medium transition-colors"
                 style={{
-                  background: statusFilter === value ? (value === "untranslated" ? "#C1782A" : "var(--primary)") : "var(--surface-container)",
+                  background: statusFilter === value
+                    ? (value === "untranslated" ? "#C1782A" : "var(--primary)")
+                    : "transparent",
                   color: statusFilter === value ? "#fff" : "var(--on-surface-variant)",
                 }}
               >
@@ -397,6 +427,20 @@ export function TranslationsClient({ initialData }: { initialData: SiteTranslati
               </button>
             ))}
           </div>
+
+          {(nsFilter || search || statusFilter !== "all") && (
+            <button
+              onClick={() => { setNsFilter(null); setSearch(""); setStatusFilter("all") }}
+              className="h-9 px-2.5 text-xs font-medium underline underline-offset-2"
+              style={{ color: "var(--on-surface-variant)" }}
+            >
+              Clear
+            </button>
+          )}
+
+          <span className="ml-auto text-xs tabular-nums" style={{ color: "var(--on-surface-variant)" }}>
+            {filtered.length} shown
+          </span>
         </div>
       </div>
 
@@ -465,7 +509,10 @@ export function TranslationsClient({ initialData }: { initialData: SiteTranslati
         <table className="w-full text-sm" style={{ tableLayout: "fixed" }}>
           <colgroup>
             <col style={{ width: "220px" }} />
-            <col style={{ width: "80px" }} />
+            {/* 80px could not hold `catalogue.equipmentCategory`, and the badge
+                had nothing to clip it, so the namespace ran straight over the
+                English column. */}
+            <col style={{ width: "170px" }} />
             <col />
             <col />
             <col />
@@ -519,7 +566,8 @@ export function TranslationsClient({ initialData }: { initialData: SiteTranslati
                   {/* Namespace */}
                   <td className="px-3 py-2">
                     <span
-                      className="inline-flex px-1.5 py-0.5 text-[10px] font-medium rounded"
+                      title={item.namespace}
+                      className="block max-w-full truncate rounded px-1.5 py-0.5 text-[10px] font-medium"
                       style={{ background: "var(--surface-container)", color: "var(--on-surface-variant)" }}
                     >
                       {item.namespace}
