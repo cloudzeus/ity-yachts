@@ -99,31 +99,16 @@ export function AITab({ initialData }: { initialData?: Partial<AIData> }) {
           </div>
         </div>
 
-        <MaskedField
-          label="OpenAI API Key"
-          description="Powers GPT-based content generation and AI chat features."
-          value={data.openaiKey}
-          onChange={(v) => setData((p) => ({ ...p, openaiKey: v }))}
-          placeholder="sk-..."
-        />
-
-        <div style={{ borderTop: "1px solid var(--outline-variant)", paddingTop: "1rem" }}>
+        {/* The OpenAI and Anthropic fields that used to sit here were read by
+            no code at all — two empty boxes that did nothing. With the third
+            no longer naming its provider they made the working one impossible
+            to identify, so they are gone. The stored values are untouched. */}
+        <div>
+          {/* Provider-neutral on screen by request. The field still writes to
+              `deepseekKey` and the endpoint is unchanged — only the label. */}
           <MaskedField
-            label="Anthropic API Key"
-            description="Powers Claude AI integration for advanced reasoning tasks."
-            value={data.anthropicKey}
-            onChange={(v) => setData((p) => ({ ...p, anthropicKey: v }))}
-            placeholder="sk-ant-..."
-          />
-        </div>
-
-        <div style={{ borderTop: "1px solid var(--outline-variant)", paddingTop: "1rem" }}>
-          {/* The provider is named here and nowhere else: this is the one place
-              it has to be, because you cannot fetch the right key without
-              knowing whose account to fetch it from. */}
-          <MaskedField
-            label="AI API key (DeepSeek)"
-            description="Powers the translation and content-writing buttons across the admin. Get it from your DeepSeek account."
+            label="AI API key"
+            description="Powers the translation and content-writing buttons across the admin."
             value={data.deepseekKey}
             onChange={(v) => setData((p) => ({ ...p, deepseekKey: v }))}
             placeholder="sk-..."
