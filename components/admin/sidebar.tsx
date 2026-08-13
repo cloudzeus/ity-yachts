@@ -75,7 +75,9 @@ const navGroups = [
       { label: "Mottos", href: "/admin/mottos", icon: Quote },
       { label: "Locations", href: "/admin/locations", icon: MapPin },
       { label: "Itineraries", href: "/admin/itineraries", icon: Route },
-      { label: "Articles", href: "/admin/articles", icon: Newspaper },
+      // The public route is /news and the page is headed "News & Articles";
+      // only this label said "Articles", which is why it could not be found.
+      { label: "News", href: "/admin/articles", icon: Newspaper },
       { label: "Reviews", href: "/admin/reviews", icon: Star },
       { label: "Services", href: "/admin/services", icon: Sparkles },
       { label: "Media", href: "/admin/media", icon: ImageIcon },
