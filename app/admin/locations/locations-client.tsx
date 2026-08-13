@@ -11,6 +11,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { MapLocationPicker, type MapPickerResult } from "@/components/admin/locations/map-location-picker"
+import { PhotoCoordinatePicker } from "@/components/admin/locations/photo-coordinate-picker"
 
 type Location = {
   id: string
@@ -492,6 +493,9 @@ export function LocationsClient({ initialData, mapsKey }: Props) {
                 <Search className="size-3" />
                 {geocoding ? "…" : "Geocode"}
               </Button>
+              {/* A geocoder guesses from a name; a camera recorded the fact.
+                  For a bay with no address the photograph is the better source. */}
+              <PhotoCoordinatePicker onPick={(lat, lng) => { setNewLat(lat); setNewLng(lng) }} />
             </div>
 
             <div className="flex justify-end gap-2 pt-1">

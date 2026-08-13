@@ -1,7 +1,7 @@
 import { db } from "@/lib/db"
 import { getSession } from "@/lib/auth-session"
 import { uploadToBunnyCDN, createFolder } from "@/lib/bunny-cdn"
-import { processImage, isImage, isSvg, isVideo, slugify } from "@/lib/media-processor"
+import { processImage, isImage, isSvg, isVideo, slugify, readGeotag, type Geotag } from "@/lib/media-processor"
 import { NextRequest, NextResponse } from "next/server"
 
 export const maxDuration = 300
@@ -35,6 +35,7 @@ export async function POST(req: NextRequest) {
     let mimeType = originalMime
     let width: number | null = null
     let height: number | null = null
+    let geotag: Geotag | null = null
 
     // Strip original extension from name for slug base
     const baseName = originalName.replace(/\.[^.]+$/, "")
@@ -46,6 +47,11 @@ export async function POST(req: NextRequest) {
       mimeType = "image/svg+xml"
       fileName = `${Date.now()}-${slugify(baseName)}.svg`
     } else if (isImage(originalMime)) {
+      /* Before the conversion, not after: webp encoding drops the EXIF block,
+         and we would rather it did — the position belongs in our database, not
+         embedded in a file served from a public CDN. */
+      geotag = await readGeotag(buffer)
+
       const processed = await processImage(buffer)
       // @ts-ignore
       buffer = processed.buffer
@@ -85,6 +91,9 @@ export async function POST(req: NextRequest) {
         size: buffer.length,
         width,
         height,
+        latitude: geotag?.latitude ?? null,
+        longitude: geotag?.longitude ?? null,
+        capturedAt: geotag?.capturedAt ?? null,
       },
       update: {
         url: result.url,
@@ -92,6 +101,9 @@ export async function POST(req: NextRequest) {
         size: buffer.length,
         width,
         height,
+        latitude: geotag?.latitude ?? null,
+        longitude: geotag?.longitude ?? null,
+        capturedAt: geotag?.capturedAt ?? null,
       },
     })
 

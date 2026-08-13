@@ -76,6 +76,11 @@ model Media {
   size      Int
   width     Int?
   height    Int?
+  // Lifted from the original EXIF at upload. The published file has none — the
+  // webp conversion drops it, which is what we want on a public CDN.
+  latitude   Float?
+  longitude  Float?
+  capturedAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

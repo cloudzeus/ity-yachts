@@ -77,6 +77,10 @@ export async function GET(req: NextRequest) {
         size: db?.size ?? f.Length,
         width: db?.width ?? null,
         height: db?.height ?? null,
+        // Where the photograph was taken, when its EXIF carried a fix.
+        latitude: db?.latitude ?? null,
+        longitude: db?.longitude ?? null,
+        capturedAt: db?.capturedAt ?? null,
         lastChanged: f.LastChanged,
         id: db?.id ?? f.ObjectName,
       }
