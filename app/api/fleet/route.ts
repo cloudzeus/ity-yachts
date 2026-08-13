@@ -50,11 +50,26 @@ export async function GET(req: NextRequest) {
       if (loaMin) where.loa.gte = parseFloat(loaMin)
       if (loaMax) where.loa.lte = parseFloat(loaMax)
     }
+    /* Berths filter. It read `maxPersons`, which NAUSYS leaves null on every
+       one of our yachts — so any guest filter returned an empty fleet, always.
+       Berths live in `berthsTotal`; `maxPersons` is only a fallback, which is
+       how the cards and the detail page have always read it.
+
+       Goes in AND, not OR: `search` already owns `where.OR`, and assigning
+       over it would have widened the search instead of narrowing it. */
     if (guestsMin) {
-      where.OR = [
-        ...(where.OR ? (where.OR as Prisma.NausysYachtWhereInput[]) : []),
-      ]
-      where.maxPersons = { gte: parseInt(guestsMin) }
+      const min = parseInt(guestsMin)
+      if (Number.isFinite(min)) {
+        where.AND = [
+          ...(Array.isArray(where.AND) ? where.AND : where.AND ? [where.AND] : []),
+          {
+            OR: [
+              { berthsTotal: { gte: min } },
+              { berthsTotal: null, maxPersons: { gte: min } },
+            ],
+          },
+        ]
+      }
     }
     if (charterType) where.charterType = charterType
 

@@ -4,12 +4,13 @@ import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { HomepageClient } from "@/components/home/homepage-client"
 import { getMottoRaw } from "@/lib/mottos"
+import { getFleetRanges } from "@/lib/fleet-ranges.server"
 
 export const dynamic = "force-dynamic"
 
 export default async function Home() {
   // Fetch all homepage data in parallel
-  const [homePage, locations, itineraries, yachts, reviews, staff, motto] = await Promise.all([
+  const [homePage, locations, itineraries, yachts, reviews, staff, motto, fleetRanges] = await Promise.all([
     db.page.findFirst({
       where: { isHomePage: true },
       select: { heroSection: true },
@@ -44,6 +45,7 @@ export default async function Home() {
       select: { id: true, name: true, position: true, city: true, bio: true, image: true },
     }),
     getMottoRaw("hero-greek-soul-german-precision"),
+    getFleetRanges(),
   ])
 
   // Extract hero data from admin-configured page
@@ -158,6 +160,7 @@ export default async function Home() {
           fleetYachts={yachtData}
           reviews={reviewData}
           staff={staffData}
+          fleetRanges={fleetRanges}
         />
       </div>
 

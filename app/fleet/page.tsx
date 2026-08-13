@@ -3,6 +3,7 @@ import { yachtThumb } from "@/lib/yacht-images"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { FleetListClient } from "./fleet-list-client"
+import { getFleetRanges } from "@/lib/fleet-ranges.server"
 
 export const dynamic = "force-dynamic"
 
@@ -13,7 +14,7 @@ export const metadata = {
 
 export default async function FleetPage() {
   // Fetch filter options based only on yachts we actually have, plus initial yachts
-  const [usedCategoryIds, usedBuilderIds, yachts, total, fleetComponent] = await Promise.all([
+  const [usedCategoryIds, usedBuilderIds, yachts, total, fleetComponent, fleetRanges] = await Promise.all([
     db.nausysYacht.findMany({ select: { categoryId: true }, distinct: ["categoryId"], where: { categoryId: { not: null } } }),
     db.nausysYacht.findMany({ select: { builderId: true }, distinct: ["builderId"], where: { builderId: { not: null } } }),
     db.nausysYacht.findMany({
@@ -36,6 +37,7 @@ export default async function FleetPage() {
       where: { page: { slug: "fleet" }, type: "fleet-content", status: "active" },
       select: { props: true },
     }),
+    getFleetRanges(),
   ])
 
   const catIds = usedCategoryIds.map((r) => r.categoryId!).filter(Boolean)
@@ -71,6 +73,7 @@ export default async function FleetPage() {
         categories={categoryOptions}
         builders={builderOptions}
         hero={fleetHero}
+        ranges={fleetRanges}
       />
       <SiteFooter />
     </>

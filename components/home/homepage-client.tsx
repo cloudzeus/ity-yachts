@@ -14,6 +14,7 @@ import { FeaturedYachtsSection } from "./featured-yachts-section"
 import { TestimonialsSection } from "./testimonials-section"
 import { ServicesSection } from "./services-section"
 import { FamilySection, type FamilyMember } from "./family-section"
+import type { FleetRanges } from "@/lib/fleet-ranges"
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger)
@@ -90,6 +91,7 @@ interface HomepageProps {
     date: string
   }>
   staff: FamilyMember[]
+  fleetRanges: FleetRanges
 }
 
 function r(field: string | T | undefined, locale: string): string {
@@ -98,7 +100,7 @@ function r(field: string | T | undefined, locale: string): string {
   return field[locale] || field.en || ""
 }
 
-export function HomepageClient({ hero, destinations, itineraries, yachts, fleetYachts, reviews, staff }: HomepageProps) {
+export function HomepageClient({ hero, destinations, itineraries, yachts, fleetYachts, reviews, staff, fleetRanges }: HomepageProps) {
   const { locale, t } = useTranslations()
   const heroVideoRef = useRef<HTMLVideoElement>(null)
 
@@ -321,7 +323,7 @@ export function HomepageClient({ hero, destinations, itineraries, yachts, fleetY
 
           {/* Search form pinned to bottom — z-40 so dropdowns appear above next section */}
           <div className="relative z-40 w-full max-w-5xl mx-auto mt-auto mb-16 md:mb-28 px-0">
-            <CharterSearchForm />
+            <CharterSearchForm ranges={fleetRanges} />
           </div>
         </div>
       </section>

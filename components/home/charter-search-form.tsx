@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
+import { buckets, lengthBands, type FleetRanges } from "@/lib/fleet-ranges"
 import gsap from "gsap"
 import {
   Ship,
@@ -40,30 +41,10 @@ const BUDGET_RANGES = [
   { value: "50000+", label: "Over €50,000" },
 ]
 
-const GUESTS = [
-  { value: "", label: "Any" },
-  { value: "1-4", label: "1 – 4" },
-  { value: "5-8", label: "5 – 8" },
-  { value: "9-12", label: "9 – 12" },
-  { value: "13+", label: "13+" },
-]
-
-const CABINS = [
-  { value: "", label: "Any" },
-  { value: "1-2", label: "1 – 2" },
-  { value: "3-4", label: "3 – 4" },
-  { value: "5-6", label: "5 – 6" },
-  { value: "7+", label: "7+" },
-]
-
-const LENGTH_RANGES = [
-  { value: "", label: "Any Length" },
-  { value: "0-12", label: "Under 12m" },
-  { value: "12-15", label: "12 – 15m" },
-  { value: "15-20", label: "15 – 20m" },
-  { value: "20-30", label: "20 – 30m" },
-  { value: "30+", label: "Over 30m" },
-]
+/* Berth, cabin and length options are no longer written down here. They used
+   to offer 30m+, 7+ cabins and 13+ berths against a fleet that tops out at
+   16m / 5 cabins / 12 berths, so those options could only ever return nothing.
+   They are now built from the fleet the server measured — see lib/fleet-ranges. */
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
@@ -223,7 +204,7 @@ function RangeCalendar({
 
 /* ─── Main Search Form ───────────────────────────────────────────────── */
 
-export function CharterSearchForm() {
+export function CharterSearchForm({ ranges }: { ranges: FleetRanges }) {
   const { t } = useTranslations()
   const router = useRouter()
   const formRef = useRef<HTMLDivElement>(null)
@@ -281,11 +262,42 @@ export function CharterSearchForm() {
       : `${formatDate(startDate)} — ${t("search.checkout", "Check-out")}`
     : t("search.selectDates", "Select dates")
 
-  const bottomFields: SearchField[] = [
-    { icon: Users, label: "Berths", key: "guests", options: GUESTS },
-    { icon: DoorOpen, label: "Cabins", key: "cabins", options: CABINS },
-    { icon: Ruler, label: "Length", key: "length", options: LENGTH_RANGES },
-  ]
+  /* Built from the fleet, not from a fixed list, so the options can never
+     offer a boat we do not have. Recomputed only when the ranges change. */
+  const bottomFields: SearchField[] = useMemo(() => {
+    const any = { value: "", label: t("search.any", "Any") }
+    const m = t("search.metresShort", "m")
+
+    return [
+      {
+        icon: Users,
+        label: "Berths",
+        key: "guests",
+        options: [any, ...buckets(ranges.maxBerths, 4).map((b) => ({ value: b.value, label: b.label }))],
+      },
+      {
+        icon: DoorOpen,
+        label: "Cabins",
+        key: "cabins",
+        options: [any, ...buckets(ranges.maxCabins, 2).map((b) => ({ value: b.value, label: b.label }))],
+      },
+      {
+        icon: Ruler,
+        label: "Length",
+        key: "length",
+        options: [
+          { value: "", label: t("search.anyLength", "Any length") },
+          ...lengthBands(ranges.minLoa, ranges.maxLoa).map((b) => ({
+            value: b.value,
+            label:
+              b.kind === "under"
+                ? `${t("search.under", "Under")} ${b.to}${m}`
+                : `${b.from} – ${b.to}${m}`,
+          })),
+        ],
+      },
+    ]
+  }, [ranges, t])
 
   // The bar sits low in the hero, so a panel opening downward can fall off the
   // bottom of the screen. Measure the room under the trigger and flip upward

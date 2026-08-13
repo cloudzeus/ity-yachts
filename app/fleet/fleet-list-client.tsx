@@ -1,8 +1,10 @@
 "use client"
 
 import { useState, useCallback, useEffect, useRef } from "react"
+import { useSearchParams } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
+import type { FleetRanges } from "@/lib/fleet-ranges"
 import {
   Search,
   SlidersHorizontal,
@@ -57,6 +59,7 @@ interface FleetListProps {
   categories: FilterOption[]
   builders: FilterOption[]
   hero?: HeroContent | null
+  ranges: FleetRanges
 }
 
 export function FleetListClient({
@@ -65,6 +68,7 @@ export function FleetListClient({
   categories,
   builders,
   hero,
+  ranges,
 }: FleetListProps) {
   const { locale, t, tUpper } = useTranslations()
 
@@ -79,21 +83,52 @@ export function FleetListClient({
   const [loading, setLoading] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
 
+  /* The homepage search bar pushes its selection here as `?guests=5-8&
+     cabins=1-2&length=12-14`, and none of it was ever read: you chose four
+     berths, pressed search, and landed on the unfiltered fleet. Seed the
+     filters from the URL so the search actually carries over.
+
+     The bar sends ranges but the API takes minima, so the low end of each
+     range is what applies; length maps to both ends because loaMin/loaMax
+     exist. */
+  const q = useSearchParams()
+  const rangeStart = (key: string) => {
+    const raw = q.get(key)
+    if (!raw) return ""
+    const from = Number(raw.split("-")[0])
+    return Number.isFinite(from) && from > 0 ? String(from) : ""
+  }
+  const rangeEnd = (key: string) => {
+    const raw = q.get(key)
+    if (!raw) return ""
+    const to = Number(raw.split("-")[1])
+    return Number.isFinite(to) && to > 0 ? String(to) : ""
+  }
+
   // Filter state
   const [search, setSearch] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
   const [categoryId, setCategoryId] = useState("")
   const [builderId, setBuilderId] = useState("")
-  const [cabinsMin, setCabinsMin] = useState("")
-  const [guestsMin, setGuestsMin] = useState("")
-  const [loaMin, setLoaMin] = useState("")
-  const [loaMax, setLoaMax] = useState("")
+  const [cabinsMin, setCabinsMin] = useState(() => rangeStart("cabins"))
+  /* The guests select only offers even numbers, so a bar selection of "5 – 8"
+     rounds down to 4. Down, not up: 4+ is a superset of 5+, so the boat the
+     visitor asked for is still in the list. Rounding up would hide it. */
+  const [guestsMin, setGuestsMin] = useState(() => {
+    const from = Number(rangeStart("guests"))
+    return from >= 2 ? String(Math.max(2, Math.floor(from / 2) * 2)) : ""
+  })
+  const [loaMin, setLoaMin] = useState(() => rangeStart("length"))
+  const [loaMax, setLoaMax] = useState(() => rangeEnd("length"))
   const [yearMin, setYearMin] = useState("")
   const [charterType, setCharterType] = useState("")
   const [sortBy, setSortBy] = useState("name")
 
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const isFirstRender = useRef(true)
+  /* Normally the first render is skipped, because the server already sent the
+     first page. When the URL seeded a filter that no longer holds — those
+     yachts are the unfiltered list — so let the first fetch through. */
+  const isFirstRender = useRef(!(cabinsMin || guestsMin || loaMin || loaMax))
 
   const fetchYachts = useCallback(
     async (pageNum: number) => {
@@ -406,7 +441,9 @@ export function FleetListClient({
                     className="px-3 py-2.5 rounded-[var(--iyc-radius-sm)] text-xs transition focus:outline-none bg-transparent border border-[var(--border-input)] text-[var(--text-body)] focus:border-[var(--text-link)]"
                   >
                     <option value="">{t("fleet.filter.any", "Any")}</option>
-                    {[1, 2, 3, 4, 5, 6, 8].map((n) => (
+                    {/* 1..max from the fleet. The old list ran to 8 against a
+                        fleet whose biggest boat has 5 — three dead options. */}
+                    {Array.from({ length: ranges.maxCabins }, (_, i) => i + 1).map((n) => (
                       <option key={n} value={n}>
                         {n}+ {t("fleet.filter.cabins", "cabins")}
                       </option>
@@ -425,7 +462,7 @@ export function FleetListClient({
                     className="px-3 py-2.5 rounded-[var(--iyc-radius-sm)] text-xs transition focus:outline-none bg-transparent border border-[var(--border-input)] text-[var(--text-body)] focus:border-[var(--text-link)]"
                   >
                     <option value="">{t("fleet.filter.any", "Any")}</option>
-                    {[2, 4, 6, 8, 10, 12].map((n) => (
+                    {Array.from({ length: Math.floor(ranges.maxBerths / 2) }, (_, i) => (i + 1) * 2).map((n) => (
                       <option key={n} value={n}>
                         {n}+ {t("fleet.filter.guests", "guests")}
                       </option>
@@ -442,7 +479,9 @@ export function FleetListClient({
                     type="number"
                     value={loaMin}
                     onChange={(e) => setLoaMin(e.target.value)}
-                    placeholder="e.g. 10"
+                    min={ranges.minLoa}
+                    max={ranges.maxLoa}
+                    placeholder={String(ranges.minLoa)}
                     className="px-3 py-2.5 rounded-[var(--iyc-radius-sm)] text-xs transition focus:outline-none bg-transparent border border-[var(--border-input)] text-[var(--text-body)] focus:border-[var(--text-link)] placeholder:text-[var(--text-subtle)]"
                   />
                 </div>
@@ -456,7 +495,9 @@ export function FleetListClient({
                     type="number"
                     value={loaMax}
                     onChange={(e) => setLoaMax(e.target.value)}
-                    placeholder="e.g. 20"
+                    min={ranges.minLoa}
+                    max={ranges.maxLoa}
+                    placeholder={String(ranges.maxLoa)}
                     className="px-3 py-2.5 rounded-[var(--iyc-radius-sm)] text-xs transition focus:outline-none bg-transparent border border-[var(--border-input)] text-[var(--text-body)] focus:border-[var(--text-link)] placeholder:text-[var(--text-subtle)]"
                   />
                 </div>
