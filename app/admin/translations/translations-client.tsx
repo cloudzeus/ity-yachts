@@ -49,11 +49,13 @@ export function TranslationsClient({ initialData }: { initialData: SiteTranslati
   } | null>(null)
   const [translatingRowId, setTranslatingRowId] = useState<string | null>(null)
 
-  // Inline editing state
-  const [editingCell, setEditingCell] = useState<{ id: string; lang: string } | null>(null)
-  const [editingValue, setEditingValue] = useState("")
-  const [savingCell, setSavingCell] = useState(false)
-  const editInputRef = useRef<HTMLTextAreaElement>(null)
+  /* One row is open at a time and all three languages are edited together.
+     Cell-by-cell editing meant a save per language and a box too small to
+     translate a sentence in. */
+  const [openId, setOpenId] = useState<string | null>(null)
+  const [draft, setDraft] = useState<Record<string, string>>({ en: "", el: "", de: "" })
+  const [savingRow, setSavingRow] = useState(false)
+  const firstFieldRef = useRef<HTMLTextAreaElement>(null)
 
   // Pagination
   const [page, setPage] = useState(1)
@@ -129,50 +131,68 @@ export function TranslationsClient({ initialData }: { initialData: SiteTranslati
   const untranslatedCount = items.filter((i) => !i.el || !i.de).length
   const completeCount = items.filter((i) => i.en && i.el && i.de).length
 
-  // Focus textarea when editing starts
+  // Put the caret in the first field as soon as a row opens.
   useEffect(() => {
-    if (editingCell && editInputRef.current) {
-      editInputRef.current.focus()
-      editInputRef.current.select()
-    }
-  }, [editingCell])
+    if (openId && firstFieldRef.current) firstFieldRef.current.focus()
+  }, [openId])
 
-  // ── Inline edit handlers ──
-  const startEdit = useCallback((item: SiteTranslation, lang: string) => {
-    setEditingCell({ id: item.id, lang })
-    setEditingValue((item as Record<string, string>)[lang] || "")
-  }, [])
+  // ── Row editing ──
+  const openRow = useCallback((item: SiteTranslation) => {
+    if (openId === item.id) { setOpenId(null); return }
+    setOpenId(item.id)
+    setDraft({ en: item.en ?? "", el: item.el ?? "", de: item.de ?? "" })
+  }, [openId])
 
-  const cancelEdit = useCallback(() => {
-    setEditingCell(null)
-    setEditingValue("")
-  }, [])
+  const closeRow = useCallback(() => setOpenId(null), [])
 
-  const saveEdit = useCallback(async () => {
-    if (!editingCell) return
-    setSavingCell(true)
+  const saveRow = useCallback(async () => {
+    if (!openId) return
+    setSavingRow(true)
     try {
-      await fetch(`/api/admin/site-translations/${editingCell.id}`, {
+      await fetch(`/api/admin/site-translations/${openId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ [editingCell.lang]: editingValue }),
+        body: JSON.stringify({ en: draft.en, el: draft.el, de: draft.de }),
       })
-      setItems((prev) =>
-        prev.map((i) =>
-          i.id === editingCell.id ? { ...i, [editingCell.lang]: editingValue } : i
-        )
-      )
-      setEditingCell(null)
-      setEditingValue("")
+      setItems((prev) => prev.map((i) => (i.id === openId ? { ...i, ...draft } : i)))
+      setOpenId(null)
     } finally {
-      setSavingCell(false)
+      setSavingRow(false)
     }
-  }, [editingCell, editingValue])
+  }, [openId, draft])
 
+  /**
+   * Translate one language of the open row from its English, into the draft.
+   *
+   * It fills the box rather than saving: the point of opening a row is to read
+   * what comes back and correct it before it is committed.
+   */
+  const [translatingLang, setTranslatingLang] = useState<string | null>(null)
+
+  const translateInto = useCallback(async (lang: "el" | "de") => {
+    const source = draft.en?.trim()
+    if (!source) return
+    setTranslatingLang(lang)
+    try {
+      const res = await fetch("/api/admin/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: source, languages: [lang] }),
+      })
+      const data = await res.json()
+      const value = data?.translations?.[lang]
+      if (value) setDraft((d) => ({ ...d, [lang]: value }))
+    } finally {
+      setTranslatingLang(null)
+    }
+  }, [draft.en])
+
+  /* Enter belongs to the text — a translation can run to several lines. Save is
+     the modifier chord, Escape abandons. */
   const handleEditKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); saveEdit() }
-    if (e.key === "Escape") cancelEdit()
-  }, [saveEdit, cancelEdit])
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); saveRow() }
+    if (e.key === "Escape") closeRow()
+  }, [saveRow, closeRow])
 
   // ── Other handlers ──
   const handleSave = useCallback(async () => {
@@ -525,131 +545,185 @@ export function TranslationsClient({ initialData }: { initialData: SiteTranslati
               No translations found
             </li>
           ) : (
-            paged.map((item, i) => (
-              <li
-                key={item.id}
-                className="group px-4 py-3 transition-colors hover:bg-black/[0.015]"
-                style={{ borderTop: i ? "1px solid var(--outline-variant)" : undefined }}
-              >
-                {/* Key line */}
-                <div className="mb-2 flex items-start gap-2">
-                  <code
-                    className="min-w-0 flex-1 break-all font-mono text-[11px] leading-tight"
-                    style={{ color: "var(--primary)" }}
-                  >
-                    {item.key}
-                  </code>
-                  <span
-                    title={item.namespace}
-                    className="flex-shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium"
-                    style={{ background: "var(--surface-container)", color: "var(--on-surface-variant)" }}
-                  >
-                    {item.namespace}
-                  </span>
-                  <button
-                    onClick={() => handleRowTranslate(item)}
-                    disabled={translatingRowId === item.id || !item.en}
-                    className="flex-shrink-0 rounded p-1 transition hover:bg-black/[0.06] disabled:opacity-30"
-                    title="Fill the missing languages from the English"
-                  >
-                    {translatingRowId === item.id ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" style={{ color: "var(--secondary)" }} />
-                    ) : (
-                      <Sparkles className="h-3.5 w-3.5" style={{ color: "var(--secondary-light)" }} />
-                    )}
-                  </button>
-                  <button
-                    onClick={() => handleDelete(item.id)}
-                    className="flex-shrink-0 rounded p-1 opacity-0 transition hover:bg-red-50 group-hover:opacity-100"
-                    title="Delete"
-                  >
-                    <Trash2 className="h-3.5 w-3.5 text-red-400" />
-                  </button>
-                </div>
+            paged.map((item, i) => {
+              const isOpen = openId === item.id
+              const missing = LANGS.filter((l) => !item[l]?.trim())
 
-                {/* The three languages. A fixed table could not hold them —
-                    three columns behind 470px of key, namespace and actions
-                    left about 95px each, and they printed over one another.
-                    Side by side when there is room, stacked when there is not. */}
-                <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-                  {(["en", "el", "de"] as const).map((lang) => {
-                    const isEditing = editingCell?.id === item.id && editingCell?.lang === lang
-                    const value = item[lang]
-                    const missing = !value?.trim()
+              return (
+                <li
+                  key={item.id}
+                  className="group"
+                  style={{
+                    borderTop: i ? "1px solid var(--outline-variant)" : undefined,
+                    background: isOpen ? "var(--surface-container-low)" : undefined,
+                  }}
+                >
+                  {/* Collapsed header — scannable, one line per key */}
+                  <div className="flex items-center gap-2 px-4 py-2.5">
+                    <button
+                      onClick={() => openRow(item)}
+                      className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
+                      aria-expanded={isOpen}
+                    >
+                      <ChevronRight
+                        className="size-3.5 flex-shrink-0 transition-transform"
+                        style={{
+                          color: "var(--on-surface-variant)",
+                          transform: isOpen ? "rotate(90deg)" : "none",
+                        }}
+                      />
+                      <code
+                        className="flex-shrink-0 font-mono text-[11px]"
+                        style={{ color: "var(--primary)" }}
+                      >
+                        {item.key}
+                      </code>
+                      {/* A glance at the English, so the key alone is not all
+                          there is to go on when scanning. */}
+                      {!isOpen && item.en && (
+                        <span
+                          className="min-w-0 flex-1 truncate text-[11px]"
+                          style={{ color: "var(--on-surface-variant)" }}
+                        >
+                          {item.en}
+                        </span>
+                      )}
+                    </button>
 
-                    return (
-                      <div key={lang} className="min-w-0">
-                        <div className="mb-1 flex items-center gap-1.5">
-                          <span aria-hidden="true" className="text-[11px]">{LANG_FLAGS[lang]}</span>
+                    {/* Which languages are done, at a glance */}
+                    <span className="flex flex-shrink-0 items-center gap-1">
+                      {LANGS.map((l) => {
+                        const has = Boolean(item[l]?.trim())
+                        return (
                           <span
-                            className="text-[9px] font-semibold uppercase tracking-wider"
-                            style={{ color: missing && lang !== "en" ? "#C1782A" : "var(--on-surface-variant)" }}
-                          >
-                            {lang}
-                          </span>
-                        </div>
-
-                        {isEditing ? (
-                          <div className="flex flex-col gap-1">
-                            <textarea
-                              ref={editInputRef}
-                              value={editingValue}
-                              onChange={(e) => setEditingValue(e.target.value)}
-                              onKeyDown={handleEditKeyDown}
-                              rows={3}
-                              className="w-full resize-y rounded border px-2 py-1.5 text-xs outline-none"
-                              style={{
-                                borderColor: "var(--primary)",
-                                color: "var(--on-surface)",
-                                background: "var(--surface-container-lowest)",
-                              }}
-                            />
-                            <div className="flex items-center gap-1">
-                              <button
-                                onClick={saveEdit}
-                                disabled={savingCell}
-                                className="flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-medium text-white transition"
-                                style={{ background: "var(--primary)" }}
-                              >
-                                {savingCell ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
-                                Save
-                              </button>
-                              <button
-                                onClick={cancelEdit}
-                                className="flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-medium transition"
-                                style={{ color: "var(--on-surface-variant)", background: "var(--surface-container)" }}
-                              >
-                                <X className="h-3 w-3" /> Cancel
-                              </button>
-                              <span className="ml-1 text-[9px]" style={{ color: "var(--on-surface-variant)" }}>
-                                ⌘↵ to save · Esc to cancel
-                              </span>
-                            </div>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => startEdit(item, lang)}
-                            className="block min-h-[38px] w-full cursor-text rounded border px-2 py-1.5 text-left text-xs leading-snug transition hover:border-[var(--primary)]"
+                            key={l}
+                            title={`${LANG_LABELS[l]}: ${has ? "done" : "missing"}`}
+                            className="rounded px-1 py-0.5 text-[9px] font-semibold uppercase"
                             style={{
-                              borderColor: missing && lang !== "en" ? "rgba(193,120,42,.45)" : "var(--outline-variant)",
-                              background: missing ? "transparent" : "var(--surface-container-lowest)",
-                              color: value ? "var(--on-surface)" : "var(--outline)",
+                              background: has ? "rgba(79,122,70,0.13)" : "rgba(193,120,42,0.14)",
+                              color: has ? "#3E6136" : "#8A5418",
                             }}
-                            title="Click to edit"
                           >
-                            {value || (
-                              <span className="italic" style={{ color: lang === "en" ? "var(--outline)" : "#C1782A" }}>
-                                {lang === "en" ? "empty" : "missing — click to add"}
-                              </span>
-                            )}
-                          </button>
-                        )}
+                            {l}
+                          </span>
+                        )
+                      })}
+                    </span>
+
+                    <span
+                      title={item.namespace}
+                      className="hidden max-w-[150px] flex-shrink-0 truncate rounded px-1.5 py-0.5 text-[10px] font-medium sm:block"
+                      style={{ background: "var(--surface-container)", color: "var(--on-surface-variant)" }}
+                    >
+                      {item.namespace}
+                    </span>
+
+                    <button
+                      onClick={() => handleRowTranslate(item)}
+                      disabled={translatingRowId === item.id || !item.en || !missing.length}
+                      className="flex-shrink-0 rounded p-1 transition hover:bg-black/[0.06] disabled:opacity-25"
+                      title={missing.length ? "Fill the missing languages from the English" : "Nothing missing"}
+                    >
+                      {translatingRowId === item.id ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" style={{ color: "var(--secondary)" }} />
+                      ) : (
+                        <Sparkles className="h-3.5 w-3.5" style={{ color: "var(--secondary-light)" }} />
+                      )}
+                    </button>
+                    <button
+                      onClick={() => handleDelete(item.id)}
+                      className="flex-shrink-0 rounded p-1 opacity-0 transition hover:bg-red-50 group-hover:opacity-100"
+                      title="Delete"
+                    >
+                      <Trash2 className="h-3.5 w-3.5 text-red-400" />
+                    </button>
+                  </div>
+
+                  {/* Expanded — room to actually write in */}
+                  {isOpen && (
+                    <div className="px-4 pb-4 pl-10">
+                      <div className="flex flex-col gap-3">
+                        {LANGS.map((l, idx) => {
+                          const empty = !draft[l]?.trim()
+                          return (
+                            <div key={l} className="flex flex-col gap-1">
+                              <div className="flex items-center gap-1.5">
+                                <span aria-hidden="true" className="text-xs">{LANG_FLAGS[l]}</span>
+                                <span
+                                  className="text-[10px] font-semibold uppercase tracking-wider"
+                                  style={{ color: "var(--on-surface-variant)" }}
+                                >
+                                  {LANG_LABELS[l]}
+                                </span>
+                                {empty && (
+                                  <span className="text-[10px]" style={{ color: "#C1782A" }}>· missing</span>
+                                )}
+
+                                {/* Fills this box from the English so it can be
+                                    read and corrected before saving — it does
+                                    not write to the database on its own. */}
+                                {l !== "en" && (
+                                  <button
+                                    onClick={() => translateInto(l as "el" | "de")}
+                                    disabled={!draft.en?.trim() || translatingLang !== null}
+                                    className="ml-1 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium transition hover:bg-black/[0.06] disabled:opacity-30"
+                                    style={{ color: "var(--secondary)" }}
+                                    title={draft.en?.trim()
+                                      ? `Translate the English into ${LANG_LABELS[l]}`
+                                      : "Write the English first"}
+                                  >
+                                    {translatingLang === l
+                                      ? <Loader2 className="size-3 animate-spin" />
+                                      : <Sparkles className="size-3" />}
+                                    Translate
+                                  </button>
+                                )}
+
+                                <span
+                                  className="ml-auto text-[10px] tabular-nums"
+                                  style={{ color: "var(--on-surface-variant)", opacity: 0.7 }}
+                                >
+                                  {draft[l]?.length ?? 0}
+                                </span>
+                              </div>
+                              <textarea
+                                ref={idx === 0 ? firstFieldRef : undefined}
+                                value={draft[l] ?? ""}
+                                onChange={(e) => setDraft({ ...draft, [l]: e.target.value })}
+                                onKeyDown={handleEditKeyDown}
+                                rows={3}
+                                spellCheck
+                                lang={l}
+                                className="w-full resize-y rounded-md border px-3 py-2 text-sm leading-relaxed outline-none focus:border-[var(--primary)]"
+                                style={{
+                                  borderColor: empty ? "rgba(193,120,42,.45)" : "var(--outline-variant)",
+                                  color: "var(--on-surface)",
+                                  background: "var(--surface-container-lowest)",
+                                  minHeight: 76,
+                                }}
+                              />
+                            </div>
+                          )
+                        })}
                       </div>
-                    )
-                  })}
-                </div>
-              </li>
-            ))
+
+                      <div className="mt-3 flex items-center gap-2">
+                        <Button size="sm" className="h-7 gap-1 text-xs" onClick={saveRow} disabled={savingRow}>
+                          {savingRow ? <Loader2 className="size-3 animate-spin" /> : <Check className="size-3" />}
+                          Save all three
+                        </Button>
+                        <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" onClick={closeRow} disabled={savingRow}>
+                          <X className="size-3" /> Cancel
+                        </Button>
+                        <span className="text-[10px]" style={{ color: "var(--on-surface-variant)" }}>
+                          ⌘↵ saves · Esc closes · Enter is a new line
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </li>
+              )
+            })
           )}
         </ul>
       </div>
