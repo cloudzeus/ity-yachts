@@ -22,7 +22,14 @@ type Phase = "talking" | "sending" | "sent" | "error"
  * envelope. Quick replies do most of the work: on a phone, typing free text
  * for eight questions is the fastest way to lose someone.
  */
-export function PlanAgent() {
+export function PlanAgent({
+  variant = "standalone",
+  headerAction,
+}: {
+  /** "panel" fills its docked container; "standalone" sizes itself. */
+  variant?: "standalone" | "panel"
+  headerAction?: React.ReactNode
+} = {}) {
   const { t, locale } = useTranslations()
   const [messages, setMessages] = useState<Msg[]>([])
   const [answers, setAnswers] = useState<Partial<PlanAnswers>>({})
@@ -135,7 +142,13 @@ export function PlanAgent() {
   return (
     <div
       className="flex flex-col overflow-hidden rounded-3xl"
-      style={{ background: "var(--surface-card)", border: "1px solid var(--border-hairline)", boxShadow: "var(--shadow-md)", height: "min(72vh, 680px)" }}
+      style={{
+        background: "var(--surface-card)",
+        border: "1px solid var(--border-hairline)",
+        boxShadow: variant === "panel" ? "none" : "var(--shadow-md)",
+        borderRadius: variant === "panel" ? 20 : undefined,
+        height: variant === "panel" ? "100%" : "min(72vh, 680px)",
+      }}
     >
       {/* Who you are talking to */}
       <div className="flex items-center gap-3 px-6 py-4" style={{ borderBottom: "1px solid var(--border-hairline)", background: "linear-gradient(158deg, var(--iyc-ionian-700), var(--iyc-ionian-900))" }}>
@@ -148,6 +161,7 @@ export function PlanAgent() {
             {t("plan.agent.role", "Lefkada · answers in a minute")}
           </div>
         </div>
+        {headerAction && <div className="ml-auto">{headerAction}</div>}
       </div>
 
       {/* Conversation */}

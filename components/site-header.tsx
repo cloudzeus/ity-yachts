@@ -9,6 +9,7 @@ import { SearchModal } from "@/components/search-modal"
 import { LanguageSwitcher } from "@/components/language-switcher"
 import { useTranslations } from "@/lib/use-translations"
 import { useNavigation } from "@/lib/use-navigation"
+import { openPlanner } from "@/components/plan/plan-launcher"
 
 export function SiteHeader() {
   const headerRef = useRef<HTMLElement>(null)
@@ -144,8 +145,11 @@ export function SiteHeader() {
 
           {/* Right actions */}
           <div className="flex items-center gap-2">
-            <Link
-              href="/start-planning"
+            {/* Opens the docked planner rather than navigating: the visitor
+                keeps the page they were reading. */}
+            <button
+              type="button"
+              onClick={openPlanner}
               className="btn-plan hidden items-center gap-1.5 px-3 py-1.5 text-xs font-semibold sm:inline-flex"
               style={{
                 borderRadius: "6px",
@@ -154,7 +158,7 @@ export function SiteHeader() {
             >
               <Anchor className="h-3.5 w-3.5" strokeWidth={1.5} />
               {t("header.startPlanning", "Start Planning")}
-            </Link>
+            </button>
 
             <div className="mx-2">
               <LanguageSwitcher />
@@ -221,9 +225,9 @@ export function SiteHeader() {
                 {link.label}
               </Link>
             ))}
-            <Link
-              href="/start-planning"
-              onClick={() => setMobileOpen(false)}
+            <button
+              type="button"
+              onClick={() => { setMobileOpen(false); openPlanner() }}
               className="btn-plan mt-4 px-5 py-3 text-center text-sm font-semibold"
               style={{
                 borderRadius: "6px",
@@ -231,7 +235,7 @@ export function SiteHeader() {
               }}
             >
               {t("header.startPlanning", "Start Planning")}
-            </Link>
+            </button>
             <div className="mt-4 flex justify-center">
               <LanguageSwitcher />
             </div>

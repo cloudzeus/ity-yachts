@@ -4,6 +4,7 @@ import { TranslationProvider } from "@/lib/use-translations"
 import { SmoothScroll } from "@/components/smooth-scroll"
 import { Parallax } from "@/components/parallax"
 import { RevealFailsafe } from "@/components/reveal-failsafe"
+import { PlanLauncher } from "@/components/plan/plan-launcher"
 import "./globals.css"
 
 const manrope = Manrope({
@@ -53,7 +54,11 @@ export default function RootLayout({
         <SmoothScroll />
         <Parallax />
         <RevealFailsafe />
-        <TranslationProvider>{children}</TranslationProvider>
+        <TranslationProvider>
+          {children}
+          {/* Mounted once here, so the conversation survives navigation. */}
+          <PlanLauncher />
+        </TranslationProvider>
       </body>
     </html>
   )

@@ -6,6 +6,7 @@ import Image from "next/image"
 import gsap from "gsap"
 import { useTranslations } from "@/lib/use-translations"
 import { removeGreekTonos } from "@/lib/greek-utils"
+import { openPlanner } from "@/components/plan/plan-launcher"
 
 export interface HeroSectionProps {
   /** Admin-configured hero data from page.heroSection */
@@ -182,7 +183,7 @@ export function HeroSection({ data }: HeroSectionProps) {
 
         <div ref={ctaRef} className="flex flex-col items-center justify-center gap-4 sm:flex-row" style={{ opacity: 0 }}>
           <Link
-            href="/start-planning"
+            href="#" onClick={(e) => { e.preventDefault(); openPlanner() }}
             className="bg-white px-8 py-3.5 text-sm font-semibold transition-all duration-200 hover:bg-[var(--iyc-taupe-500)] hover:text-white active:scale-[0.985]"
             style={{ borderRadius: "var(--iyc-radius-sm)", color: "var(--iyc-ionian-900)", fontFamily: "var(--font-display)" }}
           >
