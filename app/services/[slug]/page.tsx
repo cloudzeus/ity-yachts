@@ -13,6 +13,11 @@ interface Props {
 
 const plain = (html: string) => html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()
 
+const CARD = {
+  id: true, slug: true, title: true, label: true, icon: true,
+  shortDesc: true, defaultMedia: true, defaultMediaType: true,
+} as const
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
   const service = await db.service.findUnique({
@@ -41,20 +46,33 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ServiceDetailPage({ params }: Props) {
   const { slug } = await params
 
-  const [service, others] = await Promise.all([
+  const [service, published] = await Promise.all([
     db.service.findUnique({ where: { slug } }),
+    /* The whole published set, in order: a service page should say where it
+       sits among the others, and offer the one on either side of it. */
     db.service.findMany({
-      where: { status: "published", NOT: { slug } },
+      where: { status: "published" },
       orderBy: { sortOrder: "asc" },
-      take: 3,
-      select: {
-        id: true, slug: true, title: true, label: true, icon: true,
-        shortDesc: true, defaultMedia: true, defaultMediaType: true,
-      },
+      select: CARD,
     }),
   ])
 
   if (!service || service.status !== "published") notFound()
+
+  const index = published.findIndex((s) => s.slug === slug)
+  const card = (s: (typeof published)[number] | undefined) =>
+    s
+      ? {
+          id: s.id,
+          slug: s.slug,
+          title: s.title as Record<string, string>,
+          label: s.label as Record<string, string>,
+          shortDesc: s.shortDesc as Record<string, string>,
+          media: s.defaultMedia,
+          mediaType: s.defaultMediaType,
+          icon: s.icon,
+        }
+      : null
 
   return (
     <main>
@@ -75,17 +93,16 @@ export default async function ServiceDetailPage({ params }: Props) {
             media: service.defaultMedia,
             mediaType: service.defaultMediaType,
             icon: service.icon,
+            certification: (service.certification ?? null) as {
+              logo?: string
+              name?: Record<string, string>
+              body?: Record<string, string>
+            } | null,
           }}
-          others={others.map((s) => ({
-            id: s.id,
-            slug: s.slug,
-            title: s.title as Record<string, string>,
-            label: s.label as Record<string, string>,
-            shortDesc: s.shortDesc as Record<string, string>,
-            media: s.defaultMedia,
-            mediaType: s.defaultMediaType,
-            icon: s.icon,
-          }))}
+          position={{ index: index + 1, total: published.length }}
+          prev={card(index > 0 ? published[index - 1] : undefined)}
+          next={card(index >= 0 && index < published.length - 1 ? published[index + 1] : undefined)}
+          others={published.filter((s) => s.slug !== slug).slice(0, 3).map((s) => card(s)!)}
         />
       </div>
 

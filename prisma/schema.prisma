@@ -1189,6 +1189,9 @@ model Service {
   defaultMedia     String?                   // URL to default image or video
   defaultMediaType String?                   // "image" | "video"
   icon             String?                   // optional icon identifier or SVG
+  /// Accrediting body, when the service leads to one:
+  /// { logo, name: { en, el, de }, body: { en, el, de } }
+  certification    Json?
   link             String?                   // internal page link e.g. /services/custom-routes
   showOnHomepage   Boolean  @default(false)
   sortOrder        Int      @default(0)

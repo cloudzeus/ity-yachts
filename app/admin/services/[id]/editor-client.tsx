@@ -24,6 +24,7 @@ type ServiceData = {
   defaultMedia: string | null
   defaultMediaType: string | null
   icon: string | null
+  certification: Certification | null
   link: string | null
   showOnHomepage: boolean
   sortOrder: number
@@ -32,6 +33,13 @@ type ServiceData = {
 }
 
 type PageOption = { id: string; name: string; slug: string; status: string }
+
+/** An accrediting body, when a service leads to one. */
+type Certification = {
+  logo?: string
+  name?: Record<string, string>
+  body?: Record<string, string>
+}
 
 interface Props {
   service: ServiceData
@@ -307,6 +315,8 @@ export function ServiceEditorClient({ service }: Props) {
   const [defaultMedia, setDefaultMedia] = useState(service.defaultMedia ?? "")
   const [defaultMediaType, setDefaultMediaType] = useState(service.defaultMediaType ?? "")
   const [icon, setIcon] = useState(service.icon ?? "")
+  const [certification, setCertification] = useState<Certification | null>(service.certification ?? null)
+  const [certPickerOpen, setCertPickerOpen] = useState(false)
   const [link, setLink] = useState(service.link ?? "")
   const [showOnHomepage, setShowOnHomepage] = useState(service.showOnHomepage)
 
@@ -420,6 +430,7 @@ export function ServiceEditorClient({ service }: Props) {
           defaultMedia: defaultMedia || null,
           defaultMediaType: defaultMediaType || null,
           icon: icon || null,
+          certification,
           link: link || null,
           showOnHomepage,
         }),
@@ -428,7 +439,7 @@ export function ServiceEditorClient({ service }: Props) {
     } finally {
       setSaving(false)
     }
-  }, [service.id, title, slug, status, label, header, shortDesc, description, defaultMedia, defaultMediaType, icon, link, showOnHomepage])
+  }, [service.id, title, slug, status, label, header, shortDesc, description, defaultMedia, defaultMediaType, icon, certification, link, showOnHomepage])
 
   useEffect(() => {
     if (saveTimer.current) clearTimeout(saveTimer.current)
@@ -666,6 +677,69 @@ export function ServiceEditorClient({ service }: Props) {
               <IconPicker value={icon} onChange={setIcon} />
             </div>
 
+            {/* Certification. Follows the language tab above, so the name and
+                the sentence are written one language at a time like everything
+                else on this page. */}
+            <div className="flex flex-col gap-2 pt-2" style={{ borderTop: "1px solid var(--outline-variant)" }}>
+              <div className="flex items-center justify-between">
+                <Label className="text-[10px] uppercase tracking-wide" style={{ color: "var(--on-surface-variant)" }}>
+                  Certification ({LANG_LABELS[activeLang]})
+                </Label>
+                {certification && (
+                  <button
+                    onClick={() => setCertification(null)}
+                    className="text-[10px] underline"
+                    style={{ color: "var(--on-surface-variant)" }}
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+
+              {certification?.logo ? (
+                <div className="relative h-16 w-full overflow-hidden rounded-md" style={{ background: "#ffffff", border: "1px solid var(--outline-variant)" }}>
+                  <Image src={certification.logo} alt="" fill sizes="240px" className="object-contain p-2" />
+                </div>
+              ) : null}
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-[10px]"
+                onClick={() => setCertPickerOpen(true)}
+                style={{ borderColor: "var(--outline-variant)" }}
+              >
+                <ImageIcon className="mr-1.5 size-3" />
+                {certification?.logo ? "Change logo" : "Choose logo"}
+              </Button>
+
+              <Input
+                value={certification?.name?.[activeLang] ?? ""}
+                onChange={(e) =>
+                  setCertification((prev) => ({
+                    ...prev,
+                    name: { ...(prev?.name ?? {}), [activeLang]: e.target.value },
+                  }))
+                }
+                placeholder="Awarding body"
+                className="h-7 text-xs"
+                style={{ background: "var(--surface-container)", borderColor: "var(--outline-variant)" }}
+              />
+              <textarea
+                value={certification?.body?.[activeLang] ?? ""}
+                onChange={(e) =>
+                  setCertification((prev) => ({
+                    ...prev,
+                    body: { ...(prev?.body ?? {}), [activeLang]: e.target.value },
+                  }))
+                }
+                placeholder="What the certificate is, in one or two sentences"
+                rows={4}
+                className="rounded-md px-2 py-1.5 text-xs"
+                style={{ background: "var(--surface-container)", border: "1px solid var(--outline-variant)", color: "var(--on-surface)" }}
+              />
+            </div>
+
             <div className="flex items-center gap-2 pt-1">
               <button
                 onClick={() => setShowOnHomepage(!showOnHomepage)}
@@ -729,6 +803,17 @@ export function ServiceEditorClient({ service }: Props) {
           </div>
 
           <MediaPicker open={pickerOpen} onClose={() => setPickerOpen(false)} onSelect={handlePick} accept="all" />
+
+          <MediaPicker
+            open={certPickerOpen}
+            accept="image"
+            onClose={() => setCertPickerOpen(false)}
+            onSelect={(media) => {
+              const one = Array.isArray(media) ? media[0] : (media as PickedMedia)
+              if (one) setCertification((prev) => ({ ...prev, logo: one.url }))
+              setCertPickerOpen(false)
+            }}
+          />
         </div>
       </div>
     </div>

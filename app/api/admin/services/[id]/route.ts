@@ -31,7 +31,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     const { id } = await params
     const body = await req.json()
-    const { title, slug, label, header, shortDesc, description, status, defaultMedia, defaultMediaType, icon, link, showOnHomepage } = body
+    const { title, slug, label, header, shortDesc, description, status, defaultMedia, defaultMediaType, icon, certification, link, showOnHomepage } = body
 
     // Slug uniqueness
     if (slug) {
@@ -54,6 +54,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         ...(defaultMedia !== undefined && { defaultMedia }),
         ...(defaultMediaType !== undefined && { defaultMediaType }),
         ...(icon !== undefined && { icon }),
+        ...(certification !== undefined && { certification }),
         ...(link !== undefined && { link }),
         ...(showOnHomepage !== undefined && { showOnHomepage }),
       },

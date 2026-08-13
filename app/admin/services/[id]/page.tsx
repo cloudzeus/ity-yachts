@@ -26,6 +26,11 @@ export default async function ServiceEditorPage({ params }: { params: Promise<{ 
         header: service.header as Record<string, string>,
         shortDesc: service.shortDesc as Record<string, string>,
         description: service.description as Record<string, string>,
+        certification: (service.certification ?? null) as {
+          logo?: string
+          name?: Record<string, string>
+          body?: Record<string, string>
+        } | null,
         createdAt: service.createdAt.toISOString(),
         updatedAt: service.updatedAt.toISOString(),
       }}
