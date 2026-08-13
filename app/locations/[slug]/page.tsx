@@ -1,4 +1,7 @@
 import { db } from "@/lib/db"
+import { en, metaDescription, metaTitle, pageMeta } from "@/lib/seo"
+import { JsonLd } from "@/components/json-ld"
+import { breadcrumbLd, destinationLd } from "@/lib/structured-data"
 import { notFound } from "next/navigation"
 import { Metadata } from "next"
 import { SiteHeader } from "@/components/site-header"
@@ -12,23 +15,29 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params
   const location = await db.location.findUnique({
     where: { slug },
-    select: { name: true, nameTranslations: true, metaTitle: true, metaDesc: true, shortDesc: true, defaultMedia: true },
-  })
-  if (!location) return { title: "Location Not Found" }
-
-  const names = location.nameTranslations as Record<string, string>
-  const name = names?.en || location.name
-  const shortDesc = (location.shortDesc as Record<string, string>)?.en || ""
-
-  return {
-    title: location.metaTitle || `${name} — Destinations — IYC Yachts`,
-    description: location.metaDesc || shortDesc || undefined,
-    openGraph: {
-      title: location.metaTitle || name,
-      description: location.metaDesc || shortDesc || undefined,
-      images: location.defaultMedia ? [location.defaultMedia] : undefined,
+    select: {
+      name: true, nameTranslations: true, metaTitle: true, metaDesc: true,
+      shortDesc: true, defaultMedia: true, prefecture: true,
     },
-  }
+  })
+  if (!location) return { title: "Location not found" }
+
+  const name = en(location.nameTranslations, location.name)
+  const region = en(location.prefecture, "Ionian Islands")
+
+  const description = metaDescription(
+    location.metaDesc ||
+      `${en(location.shortDesc)} Sailing to ${name} in the ${region} — what to expect, where to anchor, and how far it is from our base in Lefkada.`.trim()
+  )
+
+  return pageMeta({
+    // The place name alone competes with the whole travel industry; naming the
+    // sea and the activity is what this business can actually win.
+    title: location.metaTitle || metaTitle(`${name} — Sailing the Ionian`),
+    description,
+    path: `/locations/${slug}`,
+    image: location.defaultMedia,
+  })
 }
 
 export default async function LocationPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -58,6 +67,25 @@ export default async function LocationPage({ params }: { params: Promise<{ slug:
 
   return (
     <main>
+      {/* TouristDestination with real coordinates: this is what an answer
+          engine reads when asked where a place is and what is there. */}
+      <JsonLd
+        data={[
+          destinationLd({
+            name: en(location.nameTranslations, location.name),
+            description: en(location.shortDesc),
+            path: `/locations/${slug}`,
+            image: location.defaultMedia,
+            latitude: location.latitude,
+            longitude: location.longitude,
+          }),
+          breadcrumbLd([
+            { name: "Home", path: "/" },
+            { name: "Destinations", path: "/locations" },
+            { name: en(location.nameTranslations, location.name), path: `/locations/${slug}` },
+          ]),
+        ]}
+      />
       <div
         className="relative z-10 min-h-screen"
         style={{ background: "var(--surface-page)", clipPath: "polygon(0% 0, 100% 0%, 100% 100%, 0 100%)" }}

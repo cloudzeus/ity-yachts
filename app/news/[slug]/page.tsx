@@ -3,6 +3,9 @@ import { notFound } from "next/navigation"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { getArticleBySlug, getRelatedNews } from "@/lib/news"
+import { JsonLd } from "@/components/json-ld"
+import { articleLd, breadcrumbLd } from "@/lib/structured-data"
+import { en, metaTitle, padDescription, pageMeta } from "@/lib/seo"
 import { ArticleBody } from "./article-body"
 import { RelatedNews } from "./related-news"
 
@@ -22,20 +25,18 @@ export async function generateMetadata({
   const title = (article.title as Record<string, string>)?.en || "Article"
   const short = plain((article.shortDesc as Record<string, string>)?.en ?? "")
 
-  return {
-    title: article.metaTitle || `${title} — IYC Yachts`,
-    description: article.metaDesc || short.slice(0, 155),
-    openGraph: {
-      title: article.metaTitle || title,
-      description: article.metaDesc || short.slice(0, 155),
-      type: "article",
-      publishedTime: (article.publishedAt ?? article.date)?.toISOString(),
-      images:
-        article.defaultMedia && article.defaultMediaType !== "video"
-          ? [{ url: article.defaultMedia }]
-          : undefined,
-    },
-  }
+  return pageMeta({
+    title: article.metaTitle || metaTitle(title),
+    // A 90-character summary leaves half the snippet to Google's own guess.
+    description: padDescription(
+      article.metaDesc || short,
+      "Written from our charter base in Lefkada, in the Ionian."
+    ),
+    path: `/news/${slug}`,
+    image: article.defaultMediaType === "video" ? null : article.defaultMedia,
+    type: "article",
+    publishedTime: (article.publishedAt ?? article.date)?.toISOString(),
+  })
 }
 
 export default async function ArticlePage({ params }: { params: Promise<{ slug: string }> }) {
@@ -47,6 +48,23 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
 
   return (
     <main>
+      <JsonLd
+        data={[
+          articleLd({
+            headline: en(article.title, "Article"),
+            description: en(article.shortDesc),
+            path: `/news/${slug}`,
+            image: article.defaultMediaType === "video" ? null : article.defaultMedia,
+            published: (article.publishedAt ?? article.date)?.toISOString() ?? null,
+            author: article.author || undefined,
+          }),
+          breadcrumbLd([
+            { name: "Home", path: "/" },
+            { name: "News", path: "/news" },
+            { name: en(article.title, "Article"), path: `/news/${slug}` },
+          ]),
+        ]}
+      />
       <div
         className="relative z-10 min-h-screen"
         style={{ background: "var(--surface-page)", clipPath: "polygon(0% 0, 100% 0%, 100% 100%, 0 100%)" }}

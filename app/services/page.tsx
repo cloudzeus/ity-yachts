@@ -3,14 +3,16 @@ import { Metadata } from "next"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { ServicesClient } from "./services-client"
+import { pageMeta } from "@/lib/seo"
 
 export const dynamic = "force-dynamic"
 
-export const metadata: Metadata = {
-  title: "Charter Services — IYC Yachts",
+export const metadata: Metadata = pageMeta({
+  title: "Charter Services in Lefkada",
   description:
-    "Everything around the boat: routes, provisioning, a skipper, the paperwork. What we look after so you do not have to.",
-}
+    "Everything around the boat: a skipper or hostess, provisioning, tailored routes, transfers and the paperwork. What we arrange before you reach Lefkada.",
+  path: "/services",
+})
 
 export default async function ServicesPage() {
   const [services, svcsComponent] = await Promise.all([

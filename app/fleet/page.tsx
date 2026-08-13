@@ -1,4 +1,6 @@
+import type { Metadata } from "next"
 import { db } from "@/lib/db"
+import { pageMeta } from "@/lib/seo"
 import { yachtThumb } from "@/lib/yacht-images"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
@@ -7,10 +9,14 @@ import { getFleetRanges } from "@/lib/fleet-ranges.server"
 
 export const dynamic = "force-dynamic"
 
-export const metadata = {
-  title: "Our Fleet | IYC Yachts",
-  description: "Browse our full fleet of yachts and catamarans available for charter.",
-}
+/* The old title and description named neither the place nor what is on offer,
+   so the page competed for "our fleet" and nothing else. */
+export const metadata: Metadata = pageMeta({
+  title: "Charter Fleet Lefkada — Yachts & Catamarans",
+  description:
+    "Our charter fleet in Lefkada: sailing yachts and catamarans, 2 to 6 cabins, bareboat or skippered. Live availability and prices for the Ionian.",
+  path: "/fleet",
+})
 
 export default async function FleetPage() {
   // Fetch filter options based only on yachts we actually have, plus initial yachts

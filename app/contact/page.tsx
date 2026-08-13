@@ -1,4 +1,5 @@
 import { db } from "@/lib/db"
+import { pageMeta } from "@/lib/seo"
 import { Metadata } from "next"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
@@ -6,14 +7,12 @@ import { ContactPageClient } from "@/components/contact/contact-page-client"
 
 export const dynamic = "force-dynamic"
 
-export const metadata: Metadata = {
-  title: "Contact — IYC Yachts",
-  description: "Get in touch with IYC Ionische Yacht Charter. Offices in Munich and Lefkada, Greece. We're here to help plan your perfect yacht charter.",
-  openGraph: {
-    title: "Contact — IYC Yachts",
-    description: "Get in touch with IYC Ionische Yacht Charter. Offices in Munich and Lefkada.",
-  },
-}
+export const metadata: Metadata = pageMeta({
+  title: "Contact — Our Base in Lefkada",
+  description:
+    "Talk to the people who run the base. Our office is at Filippa Panagou 22, Lefkada 31100, Greece, with a second in Munich. We answer in Greek, German and English.",
+  path: "/contact",
+})
 
 export default async function ContactPage() {
   const [staff, contactComponent] = await Promise.all([

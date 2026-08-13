@@ -4,6 +4,7 @@ import { db } from "@/lib/db"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { StoryPage } from "./story-page"
+import { pageMeta } from "@/lib/seo"
 
 export const dynamic = "force-dynamic"
 
@@ -39,10 +40,13 @@ async function loadStory() {
 export async function generateMetadata(): Promise<Metadata> {
   const data = await loadStory()
   if (!data) return {}
-  return {
-    title: data.page.metaTitle || "Our story — IYC Yachts",
-    description: data.page.metaDesc || undefined,
-  }
+  return pageMeta({
+    title: data.page.metaTitle || "Our Story — Family-run Yacht Charter in Lefkada since 1979",
+    description:
+      data.page.metaDesc ||
+      "Two countries, one family, and the Ionian since 1979. How Ionische Yacht Charter came to be, told from our base in Lefkada.",
+    path: "/about-us",
+  })
 }
 
 export default async function AboutUsPage() {

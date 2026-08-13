@@ -1,5 +1,9 @@
+import type { Metadata } from "next"
 import { db } from "@/lib/db"
-import { yachtGallery } from "@/lib/yacht-images"
+import { yachtGallery, yachtThumb } from "@/lib/yacht-images"
+import { JsonLd } from "@/components/json-ld"
+import { breadcrumbLd, yachtLd } from "@/lib/structured-data"
+import { en, metaDescription, metaTitle, pageMeta } from "@/lib/seo"
 import { notFound } from "next/navigation"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
@@ -7,19 +11,54 @@ import { YachtDetailClient } from "./yacht-detail-client"
 
 export const dynamic = "force-dynamic"
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+/**
+ * A yacht page carried only a title and inherited the site description, so
+ * every boat in the fleet was offering search engines the same 39 characters
+ * about an "enterprise management platform".
+ */
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params
   const yachtId = parseInt(id)
-  if (isNaN(yachtId)) return { title: "Yacht Not Found" }
+  if (isNaN(yachtId)) return { title: "Yacht not found" }
 
   const yacht = await db.nausysYacht.findUnique({
     where: { id: yachtId },
-    select: { name: true, model: { select: { name: true } } },
+    select: {
+      name: true, buildYear: true, cabins: true, berthsTotal: true, maxPersons: true, loa: true,
+      websiteImages: true, mainPictureUrl: true, picturesUrl: true,
+      model: { select: { name: true } },
+      category: { select: { name: true } },
+      base: { select: { location: { select: { name: true } } } },
+    },
   })
+  if (!yacht) return { title: "Yacht not found" }
 
-  return {
-    title: yacht ? `${yacht.name || yacht.model?.name || "Yacht"} | IYC Yachts` : "Yacht Not Found",
-  }
+  const name = yacht.name || yacht.model?.name || "Yacht"
+  const model = yacht.model?.name
+  const kind = en(yacht.category?.name, "Sailing yacht")
+  const place = en(yacht.base?.location?.name, "Lefkada")
+  const berths = yacht.berthsTotal || yacht.maxPersons
+
+  // Everything a search result needs to qualify the click: what it is, how big,
+  // how many it sleeps, from where.
+  const facts = [
+    model && model !== name ? model : null,
+    yacht.buildYear ? `${yacht.buildYear}` : null,
+    yacht.loa ? `${yacht.loa} m` : null,
+    yacht.cabins ? `${yacht.cabins} cabins` : null,
+    berths ? `${berths} berths` : null,
+  ].filter(Boolean).join(" · ")
+
+  const description = metaDescription(
+    `${name} — ${kind.toLowerCase()} for charter from ${place}, Greece. ${facts}. Bareboat or skippered, with IYC in the Ionian since 1979.`
+  )
+
+  return pageMeta({
+    title: metaTitle(`${name}${model && model !== name ? ` ${model}` : ""} — Charter ${place}`),
+    description,
+    path: `/fleet/${yachtId}`,
+    image: yachtThumb(yacht),
+  })
 }
 
 export default async function YachtDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -178,6 +217,26 @@ export default async function YachtDetailPage({ params }: { params: Promise<{ id
 
   return (
     <>
+      <JsonLd
+        data={[
+          yachtLd({
+            name: yachtData.name,
+            description: description || note || `${categoryName} for charter from ${locationName || "Lefkada"}, Greece.`,
+            path: `/fleet/${yacht.id}`,
+            image: allImages[0] ?? null,
+            model: yacht.model?.name ?? null,
+            year: yacht.buildYear,
+            cabins: yacht.cabins,
+            berths: yacht.berthsTotal || yacht.maxPersons,
+            loa: yacht.loa,
+          }),
+          breadcrumbLd([
+            { name: "Home", path: "/" },
+            { name: "Fleet", path: "/fleet" },
+            { name: yachtData.name, path: `/fleet/${yacht.id}` },
+          ]),
+        ]}
+      />
       <SiteHeader />
       <YachtDetailClient yacht={yachtData} />
       <SiteFooter />

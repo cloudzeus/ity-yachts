@@ -4,6 +4,9 @@ import { Metadata } from "next"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { ServiceDetail } from "./service-detail"
+import { JsonLd } from "@/components/json-ld"
+import { breadcrumbLd, serviceLd } from "@/lib/structured-data"
+import { en, metaTitle, padDescription, pageMeta } from "@/lib/seo"
 
 export const dynamic = "force-dynamic"
 
@@ -29,18 +32,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const t = service.title as Record<string, string>
   const d = plain((service.shortDesc as Record<string, string>)?.en ?? "")
 
-  return {
-    title: `${t.en ?? "Service"} — IYC Yachts`,
-    description: d || undefined,
-    openGraph: {
-      title: t.en ?? "Service",
-      description: d || undefined,
-      images:
-        service.defaultMedia && service.defaultMediaType !== "video"
-          ? [{ url: service.defaultMedia }]
-          : undefined,
-    },
-  }
+  return pageMeta({
+    title: metaTitle(`${t.en ?? "Service"} — Charter Services, Lefkada`),
+    description: padDescription(
+      d || `${t.en ?? "Service"} for your charter from Lefkada.`,
+      "Arranged before you arrive, by the family who have run this base since 1979."
+    ),
+    path: `/services/${slug}`,
+    image: service.defaultMediaType === "video" ? null : service.defaultMedia,
+  })
 }
 
 export default async function ServiceDetailPage({ params }: Props) {
@@ -76,6 +76,21 @@ export default async function ServiceDetailPage({ params }: Props) {
 
   return (
     <main>
+      <JsonLd
+        data={[
+          serviceLd({
+            name: en(service.title, "Service"),
+            description: en(service.shortDesc),
+            path: `/services/${slug}`,
+            image: service.defaultMediaType === "video" ? null : service.defaultMedia,
+          }),
+          breadcrumbLd([
+            { name: "Home", path: "/" },
+            { name: "Services", path: "/services" },
+            { name: en(service.title, "Service"), path: `/services/${slug}` },
+          ]),
+        ]}
+      />
       <div
         className="relative z-10 min-h-screen"
         style={{ background: "var(--surface-page)", clipPath: "polygon(0% 0, 100% 0%, 100% 100%, 0 100%)" }}

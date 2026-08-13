@@ -6,14 +6,16 @@ import { NewsListClient } from "./news-list-client"
 import { NewsHeroCopy } from "./news-hero-copy"
 import { getNewsCategories, getNewsList } from "@/lib/news"
 import { getMottoRaw } from "@/lib/mottos"
+import { pageMeta } from "@/lib/seo"
 
 export const dynamic = "force-dynamic"
 
-export const metadata: Metadata = {
-  title: "News & Articles — IYC Yachts",
+export const metadata: Metadata = pageMeta({
+  title: "Sailing the Ionian — Notes from Lefkada",
   description:
-    "Sailing the Ionian out of Lefkada — winds, anchorages, boats and what a week aboard is actually like.",
-}
+    "Winds, anchorages, boats and what a week aboard is actually like, written by the people who run the base in Lefkada and sail these islands every season.",
+  path: "/news",
+})
 
 const HERO =
   "https://iycweb.b-cdn.net/general/1786528737070-sailor-steering-wheel-on-sailboat-in-ocean-navigat-2026-03-25-03-56-36-utc.webp"

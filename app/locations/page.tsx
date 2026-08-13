@@ -1,4 +1,5 @@
 import { db } from "@/lib/db"
+import { pageMeta } from "@/lib/seo"
 import { Metadata } from "next"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
@@ -9,15 +10,12 @@ import { LocaleText } from "@/components/locale-text"
 
 export const dynamic = "force-dynamic"
 
-export const metadata: Metadata = {
-  title: "Destinations — IYC Yachts",
+export const metadata: Metadata = pageMeta({
+  title: "Ionian Sailing Destinations from Lefkada",
   description:
-    "Explore our charter destinations across the Ionian Sea. Discover the perfect sailing location for your next yacht charter adventure.",
-  openGraph: {
-    title: "Destinations — IYC Yachts",
-    description: "Explore our charter destinations across the Ionian Sea.",
-  },
-}
+    "Where to sail from Lefkada: Ithaca, Kefalonia, Meganisi, Kalamos, Kastos and Paxos. Anchorages, harbours and bays across the Ionian, with the coordinates for each.",
+  path: "/locations",
+})
 
 export default async function LocationsListPage() {
   const [locations, locComponent] = await Promise.all([
@@ -101,11 +99,16 @@ export default async function LocationsListPage() {
                     ? <LocaleText translations={locHero.badge} fallback="Charter Destinations" uppercase />
                     : <LocaleText tKey="locations.badge" fallback="Charter Destinations" uppercase />}
                 </span>
-                
+                {/* This heading had lost its tag, so the page rendered with no
+                    H1 at all — a crawler had nothing to read as its subject. */}
+                <h1
+                  className="text-[clamp(2.25rem,4.5vw,3.5rem)] font-light leading-[1.08] text-white"
+                  style={{ fontFamily: "var(--font-display)", letterSpacing: "0.01em", textWrap: "balance" }}
+                >
                   {locHero?.title
                     ? <LocaleText translations={locHero.title} fallback="Discover the Ionian Sea" />
                     : <LocaleText tKey="locations.title" fallback="Discover the Ionian Sea" />}
-                
+                </h1>
               </div>
               <p className="text-base text-white/50 max-w-md md:text-right leading-relaxed md:pb-1">
                 {locHero?.subtitle

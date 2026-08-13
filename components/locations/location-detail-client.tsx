@@ -622,9 +622,14 @@ export function LocationDetailClient({ location, mapsKey }: { location: Location
                 </span>
               </div>
             )}
-            
+            {/* Its tag had been stripped, leaving the destination name as a
+                bare text node — every location page rendered with no H1. */}
+            <h1
+              className="mb-5 text-[clamp(2.25rem,5vw,3.75rem)] font-light leading-[1.05] text-white"
+              style={{ fontFamily: "var(--font-display)", letterSpacing: "0.01em", textWrap: "balance" }}
+            >
               {locName}
-            
+            </h1>
             {locShortDesc && (
               <p className="text-lg md:text-xl text-white/85 max-w-2xl leading-relaxed">
                 {locShortDesc}

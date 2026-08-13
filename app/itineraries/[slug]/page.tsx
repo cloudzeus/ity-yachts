@@ -1,4 +1,7 @@
 import { db } from "@/lib/db"
+import { en, metaDescription, metaTitle, pageMeta } from "@/lib/seo"
+import { JsonLd } from "@/components/json-ld"
+import { breadcrumbLd, tripLd } from "@/lib/structured-data"
 import { notFound } from "next/navigation"
 import { Metadata } from "next"
 import { SiteHeader } from "@/components/site-header"
@@ -10,18 +13,36 @@ export const dynamic = "force-dynamic"
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
-  const itinerary = await db.itinerary.findUnique({ where: { slug }, select: { name: true, metaTitle: true, metaDesc: true, defaultMedia: true } })
-  if (!itinerary) return { title: "Itinerary Not Found" }
-  const name = (itinerary.name as Record<string, string>)?.en || "Itinerary"
-  return {
-    title: itinerary.metaTitle || `${name} — IYC Yachts`,
-    description: itinerary.metaDesc || undefined,
-    openGraph: {
-      title: itinerary.metaTitle || name,
-      description: itinerary.metaDesc || undefined,
-      images: itinerary.defaultMedia ? [itinerary.defaultMedia] : undefined,
+  const itinerary = await db.itinerary.findUnique({
+    where: { slug },
+    select: {
+      name: true, metaTitle: true, metaDesc: true, defaultMedia: true,
+      shortDesc: true, totalDays: true, totalMiles: true, startFrom: true,
     },
-  }
+  })
+  if (!itinerary) return { title: "Itinerary not found" }
+
+  const name = en(itinerary.name, "Itinerary")
+
+  /* metaDesc is optional and mostly empty, and the old code passed `undefined`
+     straight through — so these pages shipped with no description at all.
+     Build one from the route's own facts instead. */
+  const facts = [
+    itinerary.totalDays ? `${itinerary.totalDays} days` : null,
+    itinerary.totalMiles ? `${itinerary.totalMiles} nautical miles` : null,
+    itinerary.startFrom ? `from ${itinerary.startFrom}` : "from Lefkada",
+  ].filter(Boolean).join(", ")
+
+  const description = metaDescription(
+    itinerary.metaDesc || `${en(itinerary.shortDesc)} ${name}: ${facts}. Day by day, with the anchorages and harbours along the way.`.trim()
+  )
+
+  return pageMeta({
+    title: itinerary.metaTitle || metaTitle(`${name} — Ionian Route`),
+    description,
+    path: `/itineraries/${slug}`,
+    image: itinerary.defaultMedia,
+  })
 }
 
 export default async function ItineraryPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -67,6 +88,22 @@ export default async function ItineraryPage({ params }: { params: Promise<{ slug
 
   return (
     <main>
+      <JsonLd
+        data={[
+          tripLd({
+            name: en(itinerary.name, "Sailing route"),
+            description: en(itinerary.shortDesc),
+            path: `/itineraries/${slug}`,
+            image: itinerary.defaultMedia,
+            days: itinerary.totalDays,
+          }),
+          breadcrumbLd([
+            { name: "Home", path: "/" },
+            { name: "Itineraries", path: "/itineraries" },
+            { name: en(itinerary.name, "Sailing route"), path: `/itineraries/${slug}` },
+          ]),
+        ]}
+      />
       <div
         className="relative z-10 min-h-screen"
         style={{ background: "var(--surface-page)", clipPath: "polygon(0% 0, 100% 0%, 100% 100%, 0 100%)" }}

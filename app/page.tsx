@@ -1,5 +1,9 @@
+import type { Metadata } from "next"
 import { db } from "@/lib/db"
 import { yachtThumb } from "@/lib/yacht-images"
+import { JsonLd } from "@/components/json-ld"
+import { faqLd } from "@/lib/structured-data"
+import { SITE_URL, DEFAULT_OG_IMAGE, ORG } from "@/lib/seo"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { HomepageClient } from "@/components/home/homepage-client"
@@ -8,6 +12,59 @@ import { getFleetRanges } from "@/lib/fleet-ranges.server"
 import { getLatestNews } from "@/lib/news"
 
 export const dynamic = "force-dynamic"
+
+/**
+ * The homepage had no metadata of its own, so it inherited the layout default
+ * and told search engines this was a "Maritime enterprise management platform".
+ */
+export const metadata: Metadata = {
+  // Absolute, or the layout template would append "— IYC Yachts" twice.
+  title: { absolute: "Yacht Charter Lefkada, Greece — Sailing the Ionian | IYC" },
+  description:
+    "Family-run yacht charter from Lefkada since 1979. Sailing yachts and catamarans in the Ionian, bareboat or with a skipper — Greek hospitality, German thoroughness.",
+  alternates: { canonical: SITE_URL },
+  openGraph: {
+    title: "Yacht Charter Lefkada, Greece — Sailing the Ionian since 1979",
+    description:
+      "Family-run yacht charter from Lefkada since 1979. Sailing yachts and catamarans in the Ionian, bareboat or with a skipper.",
+    url: SITE_URL,
+    type: "website",
+    images: [{ url: DEFAULT_OG_IMAGE, width: 1200, height: 630, alt: ORG.name }],
+  },
+}
+
+/**
+ * Questions a reader actually asks before booking, answered in the 40–60 words
+ * an answer engine will lift. These are facts about how this business works,
+ * not marketing copy — that is the difference between being cited and ignored.
+ */
+const FAQ = [
+  {
+    question: "Where does an IYC charter start?",
+    answer:
+      "Every charter starts from our base in Lefkada, on the Ionian coast of Greece. Lefkada is reached by road from Preveza (Aktion) airport, about 30 minutes away, with no ferry crossing needed.",
+  },
+  {
+    question: "Do I need a licence to charter a yacht in Greece?",
+    answer:
+      "For a bareboat charter Greek law requires a recognised sailing licence and a second crew member with basic experience. If you do not hold one, we can provide a skipper, and our Skippers School runs courses to Deutscher Segler-Verband standards.",
+  },
+  {
+    question: "When is the best time to sail the Ionian?",
+    answer:
+      "From May to October. The prevailing north-westerly Maistros gets up around eleven, holds through the afternoon at 3 to 5 Beaufort and drops with the sun, which makes the Ionian a forgiving sea to learn in.",
+  },
+  {
+    question: "Which islands can you reach from Lefkada?",
+    answer:
+      "Ithaca, Kefalonia, Meganisi, Kalamos, Kastos, Paxos and Zakynthos are all within reach, most of them only a few hours' sailing apart, with sheltered bays and small harbours throughout.",
+  },
+  {
+    question: "Can I charter a yacht without a skipper?",
+    answer:
+      "Yes. Bareboat charter is available to holders of a recognised licence. We also offer skippered charter, and can arrange a hostess, provisioning and transfers before you arrive.",
+  },
+]
 
 export default async function Home() {
   // Fetch all homepage data in parallel
@@ -145,6 +202,9 @@ export default async function Home() {
 
   return (
     <main>
+      {/* What people ask before booking, in a form answer engines can lift. */}
+      <JsonLd data={faqLd(FAQ)} />
+
       {/* Page content — clip-path lets the fixed footer reveal beneath */}
       <div
         className="relative z-10 min-h-screen"

@@ -707,7 +707,10 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
           {/* Left Column */}
           <div className="lg:col-span-8 flex flex-col">
-            <h1 className="text-3xl font-bold mb-2" style={{ fontFamily: "var(--font-display)" }}>{yacht.modelName || yacht.name}</h1>
+            {/* The boat's name is the H1, over the gallery. This is its model,
+                which is a subheading — two H1s left the page with no single
+                subject for a crawler to settle on. */}
+            <h2 className="text-3xl font-bold mb-2" style={{ fontFamily: "var(--font-display)" }}>{yacht.modelName || yacht.name}</h2>
             {yachtLocation && (
               <div className="flex items-center gap-2 text-[var(--text-muted)] mb-8">
                 <MapPin className="w-5 h-5 text-[var(--text-subtle)]" />

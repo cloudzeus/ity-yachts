@@ -1,4 +1,5 @@
 import { db } from "@/lib/db"
+import { pageMeta } from "@/lib/seo"
 import Link from "next/link"
 import Image from "next/image"
 import { Metadata } from "next"
@@ -10,10 +11,12 @@ import { RouteCardsMotion } from "@/components/itineraries/route-cards-motion"
 
 export const dynamic = "force-dynamic"
 
-export const metadata: Metadata = {
-  title: "Sailing Itineraries — IYC Yachts",
-  description: "Explore our curated sailing itineraries across the Greek islands and beyond.",
-}
+export const metadata: Metadata = pageMeta({
+  title: "Ionian Sailing Routes from Lefkada",
+  description:
+    "Week-long sailing routes out of Lefkada, day by day: distances, anchorages and harbours through Meganisi, Ithaca, Kefalonia and the Inland Sea.",
+  path: "/itineraries",
+})
 
 export default async function ItinerariesListPage() {
   const [itineraries, itinComponent, motto] = await Promise.all([
