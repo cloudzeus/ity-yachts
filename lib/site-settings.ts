@@ -28,6 +28,8 @@ export interface SiteSettings {
   geo: { latitude: number; longitude: number } | null
   /** Profile URLs, for the entity graph. */
   sameAs: string[]
+  /** Tags that only load once the visitor has agreed. Blank means not in use. */
+  analytics: { gaId: string; metaPixelId: string }
 }
 
 const FALLBACK = {
@@ -57,6 +59,8 @@ type CompanySetting = Partial<{
 
 type SocialSetting = Record<string, string>
 
+type AnalyticsSetting = Partial<{ gaMeasurementId: string; gaId: string; metaPixelId: string }>
+
 const pick = (value: string | undefined | null, fallback: string) =>
   value && value.trim() ? value.trim() : fallback
 
@@ -68,14 +72,16 @@ const num = (value: string | undefined, fallback: number) => {
 export async function getSiteSettings(): Promise<SiteSettings> {
   let company: CompanySetting = {}
   let social: SocialSetting = {}
+  let analytics: AnalyticsSetting = {}
 
   /* Never let a settings read take a page down — metadata and structured data
      are decoration on a page that must still render. */
   try {
-    const rows = await db.setting.findMany({ where: { key: { in: ["company", "social"] } } })
+    const rows = await db.setting.findMany({ where: { key: { in: ["company", "social", "analytics"] } } })
     for (const row of rows) {
       if (row.key === "company") company = (row.value ?? {}) as CompanySetting
       if (row.key === "social") social = (row.value ?? {}) as SocialSetting
+      if (row.key === "analytics") analytics = (row.value ?? {}) as AnalyticsSetting
     }
   } catch {
     // fall through to the defaults below
@@ -104,5 +110,10 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     },
     // Only real URLs: an empty field would otherwise claim a broken profile.
     sameAs: Object.values(social).filter((v) => typeof v === "string" && /^https?:\/\//i.test(v.trim())),
+    analytics: {
+      // `gaId` is the older name; the settings tab writes `gaMeasurementId`.
+      gaId: (analytics.gaMeasurementId ?? analytics.gaId ?? "").trim(),
+      metaPixelId: (analytics.metaPixelId ?? "").trim(),
+    },
   }
 }

@@ -1237,3 +1237,28 @@ model Motto {
   @@index([isActive])
   @@map("mottos")
 }
+
+/// Newsletter list. Double opt-in: a row is created as `pending` and only
+/// counts as subscribed once the confirmation link is followed, which is the
+/// consent record German law effectively requires.
+model NewsletterSubscriber {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  name           String?
+  locale         String    @default("en")
+  /// pending | subscribed | unsubscribed
+  status         String    @default("pending")
+  /// Where they signed up, so a list can be traced back to its form.
+  source         String    @default("footer")
+  token          String    @unique
+  confirmedAt    DateTime?
+  unsubscribedAt DateTime?
+  /// Hashed, not stored raw — proof of opt-in without keeping an address.
+  ipHash         String?
+  userAgent      String?   @db.VarChar(255)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([status])
+  @@map("newsletter_subscribers")
+}

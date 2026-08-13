@@ -4,14 +4,18 @@ import Link from "next/link"
 import Image from "next/image"
 import { Anchor, Mail, Phone, MapPin, ArrowUpRight } from "lucide-react"
 import { useTranslations } from "@/lib/use-translations"
+import { NewsletterForm } from "@/components/newsletter-form"
+import { openConsentPreferences } from "@/components/consent/consent-provider"
 import { removeGreekTonos } from "@/components/locale-text"
 import { useNavigation } from "@/lib/use-navigation"
+import { useLegalPages } from "@/lib/use-legal-pages"
 
 const iconColor = "#0B6099"
 
 export function SiteFooter() {
   const { t, locale } = useTranslations()
   const { items: navItems } = useNavigation()
+  const legalPages = useLegalPages()
 
   const company = navItems
     .filter((item) => !item.isHomePage)
@@ -103,21 +107,7 @@ export function SiteFooter() {
               >
                 {removeGreekTonos(t("footer.stayUpdated", "Stay Updated"))}
               </h4>
-              <div className="flex gap-2">
-                <input
-                  type="email"
-                  placeholder={t("footer.emailPlaceholder", "Your email")}
-                  className="flex-1 border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/70 focus:border-white/25 focus:outline-none"
-                  style={{ borderRadius: "6px", fontFamily: "var(--font-body)" }}
-                />
-                <button
-                  className="flex items-center justify-center bg-white/10 px-3 py-2 text-white/60 transition-colors hover:bg-white/15 hover:text-white"
-                  style={{ borderRadius: "6px" }}
-                  aria-label="Subscribe"
-                >
-                  <ArrowUpRight className="h-4 w-4" style={{ color: iconColor }} />
-                </button>
-              </div>
+              <NewsletterForm iconColor={iconColor} />
 
               {/* Help & Support */}
               <div className="mt-8 flex max-lg:flex-col max-lg:justify-center items-center gap-3 md:gap-4">
@@ -157,6 +147,28 @@ export function SiteFooter() {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Legal. The privacy policy had been written and translated but
+              had nowhere to link from, so nobody could reach it. */}
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 border-t border-white/8 pb-6 pt-8 text-xs md:justify-start">
+            {legalPages.map((p) => (
+              <Link
+                key={p.slug}
+                href={`/legal/${p.slug}`}
+                className="text-white/70 transition-opacity hover:opacity-70"
+                style={{ fontFamily: "var(--font-body)" }}
+              >
+                {p.title?.[locale] || p.title?.en || p.slug}
+              </Link>
+            ))}
+            <button
+              onClick={openConsentPreferences}
+              className="text-white/70 underline-offset-2 transition-opacity hover:opacity-70 hover:underline"
+              style={{ fontFamily: "var(--font-body)" }}
+            >
+              {t("consent.settings", "Cookie settings")}
+            </button>
           </div>
 
           {/* Bottom bar */}

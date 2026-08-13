@@ -42,6 +42,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const OWN_ROUTES = new Set(["home", "fleet", "locations", "itineraries", "services", "news", "about-us", "contact"])
 
+  /* The legal pages live in a settings record rather than a table, so they
+     have to be read separately — and they are a trust signal worth indexing. */
+  const legalRow = await db.setting.findUnique({ where: { key: "legal" } })
+  const legal = ((legalRow?.value as { pages?: { slug: string; content: Record<string, string> }[] } | null)?.pages ?? [])
+    .filter((p) => p.slug && Object.values(p.content ?? {}).some((v) => v?.trim()))
+
   return [
     entry("/", now, "daily", 1),
     entry("/fleet", now, "daily", 0.9),
@@ -59,5 +65,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...services.map((s) => entry(`/services/${s.slug}`, s.updatedAt, "monthly", 0.6)),
     ...articles.map((a) => entry(`/news/${a.slug}`, a.updatedAt, "monthly", 0.6)),
     ...pages.filter((p) => !OWN_ROUTES.has(p.slug)).map((p) => entry(`/${p.slug}`, p.updatedAt, "yearly", 0.3)),
+    ...legal.map((p) => entry(`/legal/${p.slug}`, now, "yearly", 0.3)),
   ]
 }

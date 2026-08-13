@@ -32,6 +32,7 @@ import {
   Sparkles,
   Quote,
   BookOpen,
+  Send,
 } from "lucide-react"
 import {
   Tooltip,
@@ -75,6 +76,7 @@ const navGroups = [
       { label: "Translations", href: "/admin/translations", icon: Languages },
       { label: "Mottos", href: "/admin/mottos", icon: Quote },
       { label: "Our story", href: "/admin/story", icon: BookOpen },
+      { label: "Newsletter", href: "/admin/newsletter", icon: Send },
       { label: "Locations", href: "/admin/locations", icon: MapPin },
       { label: "Itineraries", href: "/admin/itineraries", icon: Route },
       // The public route is /news and the page is headed "News & Articles";

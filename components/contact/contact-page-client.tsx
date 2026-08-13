@@ -61,7 +61,7 @@ const DEFAULT_OFFICES: OfficeData[] = [
     country: "Greece",
     phone: "+30 26450 26393",
     mobile: "+30 6932 637171",
-    email: "maria@iyc.de",
+    email: "Lefkas@iyc.de",
     hours: "Mon – Sat: 08:00 – 20:00 EEST (Season)",
     mapUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d12500!2d20.7069!3d38.8337!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzjCsDUwJzAxLjMiTiAyMMKwNDInMjQuOCJF!5e0!3m2!1sen!2sgr!4v1",
     coords: { lat: 38.8337, lng: 20.7069 },

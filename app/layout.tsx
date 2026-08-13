@@ -10,6 +10,9 @@ import { organizationLd, webSiteLd } from "@/lib/structured-data"
 import { DEFAULT_OG_IMAGE } from "@/lib/seo"
 import { getSiteSettings } from "@/lib/site-settings"
 import { HtmlLang } from "@/components/html-lang"
+import { ConsentProvider } from "@/components/consent/consent-provider"
+import { CookieBanner } from "@/components/consent/cookie-banner"
+import { GatedScripts } from "@/components/consent/gated-scripts"
 import "./globals.css"
 
 const manrope = Manrope({
@@ -106,9 +109,16 @@ export default async function RootLayout({
         <TranslationProvider>
           {/* Keeps <html lang> honest when the reader switches language. */}
           <HtmlLang />
-          {children}
-          {/* Mounted once here, so the conversation survives navigation. */}
-          <PlanLauncher />
+
+          {/* Wraps everything, so any page can ask what the visitor allowed. */}
+          <ConsentProvider>
+            {children}
+            {/* Mounted once here, so the conversation survives navigation. */}
+            <PlanLauncher />
+            <CookieBanner />
+            {/* Nothing here reaches the page before a choice is made. */}
+            <GatedScripts gaId={site.analytics.gaId} metaPixelId={site.analytics.metaPixelId} />
+          </ConsentProvider>
         </TranslationProvider>
       </body>
     </html>
