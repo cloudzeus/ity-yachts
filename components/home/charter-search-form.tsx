@@ -26,12 +26,6 @@ interface SearchField {
   options: { value: string; label: string }[]
 }
 
-const YACHT_TYPES = [
-  { value: "", label: "All Types" },
-  { value: "sailing", label: "Sailing Yacht" },
-  { value: "catamaran", label: "Catamaran" },
-]
-
 const BUDGET_RANGES = [
   { value: "", label: "Any Budget" },
   { value: "0-5000", label: "Under €5,000" },
@@ -271,19 +265,19 @@ export function CharterSearchForm({ ranges }: { ranges: FleetRanges }) {
     return [
       {
         icon: Users,
-        label: "Berths",
+        label: t("search.berths", "Berths"),
         key: "guests",
         options: [any, ...buckets(ranges.maxBerths, 4).map((b) => ({ value: b.value, label: b.label }))],
       },
       {
         icon: DoorOpen,
-        label: "Cabins",
+        label: t("search.cabins", "Cabins"),
         key: "cabins",
         options: [any, ...buckets(ranges.maxCabins, 2).map((b) => ({ value: b.value, label: b.label }))],
       },
       {
         icon: Ruler,
-        label: "Length",
+        label: t("search.length", "Length"),
         key: "length",
         options: [
           { value: "", label: t("search.anyLength", "Any length") },
@@ -314,7 +308,13 @@ export function CharterSearchForm({ ranges }: { ranges: FleetRanges }) {
     setActiveDropdown(key)
   }
 
-  const yachtTypeOption = YACHT_TYPES.find((o) => o.value === values.yachtType)
+  const yachtTypes = useMemo(() => [
+    { value: "", label: t("search.allTypes", "All types") },
+    { value: "sailing", label: t("search.sailingYacht", "Sailing yacht") },
+    { value: "catamaran", label: t("search.catamaran", "Catamaran") },
+  ], [t])
+
+  const yachtTypeOption = yachtTypes.find((o) => o.value === values.yachtType)
   const yachtTypeOpen = activeDropdown === "yachtType"
 
   return (
@@ -377,7 +377,7 @@ export function CharterSearchForm({ ranges }: { ranges: FleetRanges }) {
                   {removeGreekTonos(t("search.yachtType", "Yacht Type"))}
                 </div>
                 <div className="text-[13px] text-[var(--text-body)] font-medium whitespace-nowrap">
-                  {yachtTypeOption?.label || "All Types"}
+                  {yachtTypeOption?.label || t("search.allTypes", "All types")}
                 </div>
               </div>
               <ChevronDown className={`w-3.5 h-3.5 text-[var(--text-link)] transition-transform ${yachtTypeOpen ? "rotate-180" : ""}`} />
@@ -388,7 +388,7 @@ export function CharterSearchForm({ ranges }: { ranges: FleetRanges }) {
                 className={`absolute left-0 z-50 min-w-[200px] py-1 ${dropUp ? "bottom-full mb-1" : "top-full mt-1"} rounded-[var(--iyc-radius-lg)] shadow-[var(--shadow-lg)] border border-[var(--border-hairline)]`}
                 style={{ background: "white" }}
               >
-                {YACHT_TYPES.map((option) => (
+                {yachtTypes.map((option) => (
                   <button
                     key={option.value}
                     onClick={() => handleSelect("yachtType", option.value)}
@@ -419,7 +419,8 @@ export function CharterSearchForm({ ranges }: { ranges: FleetRanges }) {
                   <Icon className="w-4 h-4 text-[var(--text-link)] shrink-0" />
                   <div className="flex-1 min-w-0">
                     <div className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-subtle)]">
-                      {field.label}
+                      {/* Set uppercase — Greek capitals carry no accent. */}
+                      {removeGreekTonos(field.label)}
                     </div>
                     <div className="text-[13px] text-[var(--text-body)] font-medium truncate mt-0.5">
                       {selectedOption?.label || field.options[0]?.label}
