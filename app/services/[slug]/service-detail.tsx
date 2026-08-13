@@ -79,8 +79,6 @@ export function ServiceDetail({
 
   const rootRef = useRef<HTMLDivElement>(null)
   const mediaRef = useRef<HTMLDivElement>(null)
-  const articleRef = useRef<HTMLElement>(null)
-  const progressRef = useRef<HTMLDivElement>(null)
 
   const title = r(service.title)
   const label = r(service.label)
@@ -142,20 +140,6 @@ export function ServiceDetail({
           )
         })
       }
-
-      /* How far through the reading you are. Scrubbed rather than animated, so
-         it tracks the scrollbar exactly and reverses with it. */
-      if (progressRef.current && articleRef.current) {
-        gsap.fromTo(
-          progressRef.current,
-          { scaleX: 0 },
-          {
-            scaleX: 1,
-            ease: "none",
-            scrollTrigger: { trigger: articleRef.current, start: "top 80%", end: "bottom bottom", scrub: 0.3 },
-          }
-        )
-      }
     }, root)
 
     return () => ctx.revert()
@@ -163,16 +147,6 @@ export function ServiceDetail({
 
   return (
     <div ref={rootRef}>
-      {/* Reading progress. Sits on the header's lower edge, where a browser
-          chrome affordance belongs, and is decorative to assistive tech. */}
-      <div className="pointer-events-none fixed left-0 right-0 top-[80px] z-[55] h-[2px]" aria-hidden="true">
-        <div
-          ref={progressRef}
-          className="h-full w-full origin-left"
-          style={{ background: "var(--action-accent)", transform: "scaleX(0)" }}
-        />
-      </div>
-
       {/* ── Hero ─────────────────────────────────────────────────────────
           Anchored bottom-left against the container, not centred: the index
           page is the centred one, and a reader should feel the difference
@@ -246,7 +220,7 @@ export function ServiceDetail({
 
       {/* ── Body + the rail ──────────────────────────────────────────────── */}
       <div className="mx-auto grid w-full max-w-[1280px] grid-cols-1 gap-x-16 px-6 pb-8 pt-14 md:px-10 lg:grid-cols-[minmax(0,1fr)_300px] lg:pt-20">
-        <article ref={articleRef} className="min-w-0">
+        <article className="min-w-0">
           {kicker && kicker !== title && (
             <div className="mb-8 flex items-center gap-3">
               <span className="h-px w-10" style={{ background: "var(--iyc-ionian-500)" }} />
