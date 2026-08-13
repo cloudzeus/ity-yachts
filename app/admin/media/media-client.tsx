@@ -19,6 +19,11 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { cn, formatBytes } from "@/lib/utils"
 
+/* Bunny is listed and paged in memory, not queried per page, so a larger page
+   costs nothing extra on the network — it just saves paging through a library
+   twenty at a time. */
+const PAGE_SIZE = 200
+
 interface MediaFile {
   id: string
   name: string
@@ -57,7 +62,7 @@ export function MediaClient() {
   const [view, setView] = useState<"grid" | "list">("grid")
   const [files, setFiles] = useState<MediaFile[]>([])
   const [folders, setFolders] = useState<BunnyFolder[]>([])
-  const [pagination, setPagination] = useState<PaginationData>({ page: 1, limit: 20, total: 0, totalPages: 0 })
+  const [pagination, setPagination] = useState<PaginationData>({ page: 1, limit: PAGE_SIZE, total: 0, totalPages: 0 })
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [uploads, setUploads] = useState<UploadItem[]>([])
@@ -72,12 +77,12 @@ export function MediaClient() {
   const fetchMedia = useCallback(async (f: string, p: number = 1) => {
     setLoading(true)
     try {
-      const res = await fetch(`/api/admin/media?folder=${encodeURIComponent(f)}&page=${p}&limit=20`)
+      const res = await fetch(`/api/admin/media?folder=${encodeURIComponent(f)}&page=${p}&limit=${PAGE_SIZE}`)
       if (res.ok) {
         const data = await res.json()
         setFiles(data.files ?? [])
         setFolders(data.folders ?? [])
-        setPagination(data.pagination ?? { page: 1, limit: 20, total: 0, totalPages: 0 })
+        setPagination(data.pagination ?? { page: 1, limit: PAGE_SIZE, total: 0, totalPages: 0 })
       }
     } finally {
       setLoading(false)
