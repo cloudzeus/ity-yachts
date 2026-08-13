@@ -21,10 +21,19 @@ type Json = Record<string, unknown>
  * coordinates. This is what carries "yacht charter near Lefkada" and what an
  * answer engine reads when asked where the company is.
  */
+/**
+ * The organisation.
+ *
+ * `@type` is a plain string, not an array. An audit of the deploy reported
+ * "no Organization schema" and "no LocalBusiness schema" on a page that
+ * carried both — because plenty of parsers only match `@type` when it is a
+ * single value. The local business is emitted as its own node below and
+ * pointed back here, which every parser reads.
+ */
 export function organizationLd(s: SiteSettings): Json {
   return {
     "@context": "https://schema.org",
-    "@type": ["Organization", "LocalBusiness", "TravelAgency"],
+    "@type": "Organization",
     "@id": `${s.siteUrl}/#organization`,
     name: s.name,
     legalName: s.legalName,
@@ -81,6 +90,40 @@ export function organizationLd(s: SiteSettings): Json {
     ],
     ...(s.sameAs.length ? { sameAs: s.sameAs } : {}),
     knowsLanguage: ["en", "el", "de"],
+  }
+}
+
+/**
+ * The base as a place of business, as its own node.
+ *
+ * This is what carries "yacht charter near Lefkada" and what an answer engine
+ * reads when asked where the company is.
+ */
+export function localBusinessLd(s: SiteSettings): Json {
+  return {
+    "@context": "https://schema.org",
+    "@type": "TravelAgency",
+    "@id": `${s.siteUrl}/#base`,
+    name: s.name,
+    url: s.siteUrl,
+    image: s.logo,
+    email: s.bookingEmail,
+    ...(s.phones.length ? { telephone: s.phones[0] } : {}),
+    priceRange: "€€€",
+    currenciesAccepted: "EUR",
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: s.address.street,
+      addressLocality: s.address.locality,
+      addressRegion: s.address.region,
+      postalCode: s.address.postalCode,
+      addressCountry: s.address.country,
+    },
+    ...(s.geo
+      ? { geo: { "@type": "GeoCoordinates", latitude: s.geo.latitude, longitude: s.geo.longitude } }
+      : {}),
+    parentOrganization: { "@id": `${s.siteUrl}/#organization` },
+    areaServed: { "@type": "Place", name: "Ionian Sea, Greece" },
   }
 }
 

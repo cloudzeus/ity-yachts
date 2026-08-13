@@ -2,20 +2,32 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { Anchor, Mail, Phone, MapPin, ArrowUpRight } from "lucide-react"
+import { Anchor, Mail, Phone } from "lucide-react"
 import { useTranslations } from "@/lib/use-translations"
 import { NewsletterForm } from "@/components/newsletter-form"
 import { openConsentPreferences } from "@/components/consent/consent-provider"
 import { removeGreekTonos } from "@/components/locale-text"
 import { useNavigation } from "@/lib/use-navigation"
 import { useLegalPages } from "@/lib/use-legal-pages"
+import { useSocialLinks } from "@/lib/use-social-links"
 
 const iconColor = "#0B6099"
+
+/** Keyed by the field names the social settings use. */
+const SOCIAL_ICONS: Record<string, { label: string; filled?: boolean; path: React.ReactNode }> = {
+  instagram: { label: "Instagram", path: <><rect x="2" y="2" width="20" height="20" rx="5" /><circle cx="12" cy="12" r="5" /><circle cx="17.5" cy="6.5" r="1" fill={iconColor} stroke="none" /></> },
+  facebook: { label: "Facebook", path: <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" /> },
+  twitter: { label: "X", filled: true, path: <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /> },
+  youtube: { label: "YouTube", path: <><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17" /><path d="m10 15 5-3-5-3z" /></> },
+  linkedin: { label: "LinkedIn", path: <><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6z" /><rect x="2" y="9" width="4" height="12" /><circle cx="4" cy="4" r="2" /></> },
+  tiktok: { label: "TikTok", path: <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" /> },
+}
 
 export function SiteFooter() {
   const { t, locale } = useTranslations()
   const { items: navItems } = useNavigation()
   const legalPages = useLegalPages()
+  const socialLinks = useSocialLinks()
 
   const company = navItems
     .filter((item) => !item.isHomePage)
@@ -177,21 +189,31 @@ export function SiteFooter() {
               {t("footer.copyright", "© 2026 IYC Yachts. All rights reserved.")}
             </p>
 
-            {/* Social icons */}
-            <div className="flex items-center gap-4">
-              <a href="#" className="flex h-8 w-8 items-center justify-center transition-opacity hover:opacity-70" aria-label="Instagram">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={iconColor} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1" fill={iconColor} stroke="none"/></svg>
-              </a>
-              <a href="#" className="flex h-8 w-8 items-center justify-center transition-opacity hover:opacity-70" aria-label="Facebook">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={iconColor} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
-              </a>
-              <a href="#" className="flex h-8 w-8 items-center justify-center transition-opacity hover:opacity-70" aria-label="X">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill={iconColor}><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-              </a>
-              <a href="#" className="flex h-8 w-8 items-center justify-center transition-opacity hover:opacity-70" aria-label="YouTube">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={iconColor} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/><path d="m10 15 5-3-5-3z"/></svg>
-              </a>
-            </div>
+            {/* Social icons. Every one of these was href="#" — four dead
+                links on every page. They come from the social settings now,
+                and a network with no URL is simply not shown. */}
+            {socialLinks.length > 0 && (
+              <div className="flex items-center gap-4">
+                {socialLinks.map((link) => {
+                  const icon = SOCIAL_ICONS[link.network]
+                  if (!icon) return null
+                  return (
+                    <a
+                      key={link.network}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex h-8 w-8 items-center justify-center transition-opacity hover:opacity-70"
+                      aria-label={icon.label}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill={icon.filled ? iconColor : "none"} stroke={icon.filled ? undefined : iconColor} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        {icon.path}
+                      </svg>
+                    </a>
+                  )
+                })}
+              </div>
+            )}
 
             <div className="flex items-center gap-1 text-xs text-white/70">
               <Anchor className="h-3 w-3" style={{ color: iconColor }} />

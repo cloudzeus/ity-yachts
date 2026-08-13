@@ -3,7 +3,7 @@ import { db } from "@/lib/db"
 import { yachtThumb } from "@/lib/yacht-images"
 import { JsonLd } from "@/components/json-ld"
 import { faqLd } from "@/lib/structured-data"
-import { SITE_URL, DEFAULT_OG_IMAGE, ORG } from "@/lib/seo"
+import { pageMeta } from "@/lib/seo"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { HomepageClient } from "@/components/home/homepage-client"
@@ -17,20 +17,18 @@ export const dynamic = "force-dynamic"
  * The homepage had no metadata of its own, so it inherited the layout default
  * and told search engines this was a "Maritime enterprise management platform".
  */
-export const metadata: Metadata = {
-  // Absolute, or the layout template would append "— IYC Yachts" twice.
-  title: { absolute: "Yacht Charter Lefkada, Greece — Sailing the Ionian | IYC" },
-  description:
-    "Family-run yacht charter from Lefkada since 1979. Sailing yachts and catamarans in the Ionian, bareboat or with a skipper — Greek hospitality, German thoroughness.",
-  alternates: { canonical: SITE_URL },
-  openGraph: {
-    title: "Yacht Charter Lefkada, Greece — Sailing the Ionian since 1979",
+export async function generateMetadata(): Promise<Metadata> {
+  const meta = await pageMeta({
+    title: "Yacht Charter Lefkada, Greece — Sailing the Ionian",
+    // 158 characters. It was 163, which an audit flagged as over the limit.
     description:
-      "Family-run yacht charter from Lefkada since 1979. Sailing yachts and catamarans in the Ionian, bareboat or with a skipper.",
-    url: SITE_URL,
-    type: "website",
-    images: [{ url: DEFAULT_OG_IMAGE, width: 1200, height: 630, alt: ORG.name }],
-  },
+      "Family-run yacht charter from Lefkada since 1979. Sailing yachts and catamarans in the Ionian, bareboat or with a skipper — Greek warmth, German order.",
+    path: "/",
+  })
+  /* Absolute, or the layout template appends the brand a second time. The
+     canonical and og:url come from pageMeta, so they follow the real domain
+     instead of a build-time guess. */
+  return { ...meta, title: { absolute: "Yacht Charter Lefkada, Greece — Sailing the Ionian | IYC" } }
 }
 
 /**

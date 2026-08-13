@@ -15,13 +15,17 @@ interface SearchModalProps {
 export function SearchModal({ open, onClose }: SearchModalProps) {
   const { t } = useTranslations()
 
+  /* These pointed at /destinations/mediterranean, /destinations/caribbean,
+     /experiences/day-charter and /experiences/weekly-charter — four routes
+     that do not exist, and which a crawler duly found and followed. They also
+     offered the Caribbean, which this business does not sail. */
   const quickLinks = [
-    { label: t("search.link.motorYachts", "Motor Yachts"), href: "/fleet?type=motor" },
-    { label: t("search.link.sailingYachts", "Sailing Yachts"), href: "/fleet?type=sailing" },
-    { label: t("search.link.mediterranean", "Mediterranean"), href: "/destinations/mediterranean" },
-    { label: t("search.link.caribbean", "Caribbean"), href: "/destinations/caribbean" },
-    { label: t("search.link.catamarans", "Catamarans"), href: "/experiences/day-charter" },
-    { label: t("search.link.luxury", "Luxury Charters"), href: "/experiences/weekly-charter" },
+    { label: t("search.link.sailingYachts", "Sailing yachts"), href: "/fleet?type=sailing" },
+    { label: t("search.link.catamarans", "Catamarans"), href: "/fleet?type=catamaran" },
+    { label: t("search.link.destinations", "Destinations"), href: "/locations" },
+    { label: t("search.link.routes", "Sailing routes"), href: "/itineraries" },
+    { label: t("search.link.services", "Services"), href: "/services" },
+    { label: t("search.link.story", "Our story"), href: "/about-us" },
   ]
   const overlayRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)

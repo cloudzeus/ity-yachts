@@ -69,6 +69,29 @@ const num = (value: string | undefined, fallback: number) => {
   return Number.isFinite(n) ? n : fallback
 }
 
+/**
+ * The domain this request actually arrived on.
+ *
+ * A canonical URL naming a different site is the most damaging thing a page
+ * can say — it tells search engines "the real version is over there", and an
+ * audit of the staging deploy found every page pointing at iyc.de. So when the
+ * setting is blank, follow the host rather than a build-time guess: a
+ * misconfigured deploy then describes itself instead of somebody else.
+ */
+async function hostFromRequest(): Promise<string | null> {
+  try {
+    const { headers } = await import("next/headers")
+    const h = await headers()
+    const host = h.get("x-forwarded-host") ?? h.get("host")
+    if (!host) return null
+    const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https")
+    return `${proto}://${host}`.replace(/\/$/, "")
+  } catch {
+    // Outside a request (build, sitemap generation) there is no host to read.
+    return null
+  }
+}
+
 export async function getSiteSettings(): Promise<SiteSettings> {
   let company: CompanySetting = {}
   let social: SocialSetting = {}
@@ -87,10 +110,15 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     // fall through to the defaults below
   }
 
+  /* Configured domain first; otherwise the host this request came in on;
+     otherwise the build value. */
+  const configured = (company.siteUrl ?? "").trim()
+  const siteUrl = (configured || (await hostFromRequest()) || FALLBACK.siteUrl).replace(/\/$/, "")
+
   return {
     name: pick(company.name, FALLBACK.name),
     legalName: pick(company.legalName, FALLBACK.legalName),
-    siteUrl: pick(company.siteUrl, FALLBACK.siteUrl).replace(/\/$/, ""),
+    siteUrl,
     founded: pick(company.founded, FALLBACK.founded),
     logo: pick(company.logoUrl, FALLBACK.logo),
     email: pick(company.companyEmail, FALLBACK.email),

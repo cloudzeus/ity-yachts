@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next"
-import { SITE_URL } from "@/lib/seo"
+import { getSiteUrl } from "@/lib/seo"
 
 /**
  * There was no robots.txt at all, so nothing pointed crawlers at a sitemap and
@@ -9,7 +9,8 @@ import { SITE_URL } from "@/lib/seo"
  * cited in AI answers, and a silent default is not the same as a decision.
  * Blocking any of them is a one-line change here.
  */
-export default function robots(): MetadataRoute.Robots {
+export default async function robots(): Promise<MetadataRoute.Robots> {
+  const siteUrl = await getSiteUrl()
   return {
     rules: [
       {
@@ -24,7 +25,7 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/admin", "/admin/", "/api/", "/login"],
       },
     ],
-    sitemap: `${SITE_URL}/sitemap.xml`,
-    host: SITE_URL,
+    sitemap: `${siteUrl}/sitemap.xml`,
+    host: siteUrl,
   }
 }

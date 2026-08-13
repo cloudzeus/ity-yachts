@@ -7,6 +7,7 @@ import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { ArrowRight, Globe, Activity, ChevronsUpDown, Anchor, Shield, Compass } from "lucide-react"
 import { useTranslations } from "@/lib/use-translations"
+import { LazyVideo } from "@/components/lazy-video"
 import { removeGreekTonos } from "@/components/locale-text"
 
 if (typeof window !== "undefined") {
@@ -477,14 +478,12 @@ function LocationMedia({ location, sizes }: { location: Location; sizes: string 
   }
 
   if (isVideo) {
+    /* Off screen this costs nothing: autoPlay would otherwise pull the whole
+       file down, and these location clips run to tens of megabytes. */
     return (
-      <video
+      <LazyVideo
         src={location.image}
-        autoPlay
-        muted
-        loop
-        playsInline
-        className="absolute inset-0 w-full h-full object-cover transition-transform duration-[800ms] group-hover:scale-[1.08]"
+        className="absolute inset-0 w-full h-full transition-transform duration-[800ms] group-hover:scale-[1.08]"
         style={{ transitionTimingFunction: "cubic-bezier(0.25,0.46,0.45,0.94)" }}
       />
     )

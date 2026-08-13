@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next"
 import { db } from "@/lib/db"
-import { SITE_URL } from "@/lib/seo"
+import { getSiteUrl } from "@/lib/seo"
 
 export const dynamic = "force-dynamic"
 
@@ -15,13 +15,14 @@ export const dynamic = "force-dynamic"
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date()
+  const siteUrl = await getSiteUrl()
 
   const entry = (
     path: string,
     lastModified: Date,
     changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"],
     priority: number
-  ) => ({ url: `${SITE_URL}${path}`, lastModified, changeFrequency, priority })
+  ) => ({ url: `${siteUrl}${path}`, lastModified, changeFrequency, priority })
 
   const [locations, itineraries, services, articles, yachts, pages] = await Promise.all([
     db.location.findMany({ where: { status: "published" }, select: { slug: true, updatedAt: true } }),

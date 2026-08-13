@@ -6,7 +6,7 @@ import { Parallax } from "@/components/parallax"
 import { RevealFailsafe } from "@/components/reveal-failsafe"
 import { PlanLauncher } from "@/components/plan/plan-launcher"
 import { JsonLd } from "@/components/json-ld"
-import { organizationLd, webSiteLd } from "@/lib/structured-data"
+import { localBusinessLd, organizationLd, webSiteLd } from "@/lib/structured-data"
 import { DEFAULT_OG_IMAGE } from "@/lib/seo"
 import { getSiteSettings } from "@/lib/site-settings"
 import { HtmlLang } from "@/components/html-lang"
@@ -101,7 +101,7 @@ export default async function RootLayout({
       <body className="min-h-full flex flex-col">
         {/* The business and the site, declared once. Everything else on the
             site points at these two @ids rather than restating them. */}
-        <JsonLd data={[organizationLd(site), webSiteLd(site)]} />
+        <JsonLd data={[organizationLd(site), localBusinessLd(site), webSiteLd(site)]} />
 
         <SmoothScroll />
         <Parallax />

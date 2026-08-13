@@ -209,6 +209,10 @@ export function HomepageClient({ hero, destinations, itineraries, yachts, fleetY
               aria-hidden="true"
               className="absolute inset-0 h-full w-full object-cover"
             />
+            {/* preload="auto" pulled the whole file down before anything else
+                on the page could load. The poster carries the first paint and
+                the clip arrives after. NOTE: this URL currently returns 404 —
+                the poster is all that renders until it is replaced. */}
             <video
               ref={heroVideoRef}
               src="https://iycweb.b-cdn.net/1774760973356-lonely-sailboat-sailing-on-blue-water-aerial-view-2026-01-21-13-48-12-utc.mp4"
@@ -217,7 +221,7 @@ export function HomepageClient({ hero, destinations, itineraries, yachts, fleetY
               muted
               loop
               playsInline
-              preload="auto"
+              preload="none"
               className="absolute inset-0 h-full w-full object-cover"
               suppressHydrationWarning
             />
