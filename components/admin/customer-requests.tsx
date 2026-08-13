@@ -9,14 +9,30 @@ import Link from "next/link"
 export interface CustomerRequest {
   id: string
   status: string
+  source: string
   createdAt: Date
   notes: string | null
+  aiBrief: string | null
+  wizard: unknown
   dateFrom: Date | null
   dateTo: Date | null
   guests: number | null
   budget: number | null
   currency: string | null
   customer: { firstName: string; lastName: string; email: string } | null
+}
+
+/** The shape the planning conversation stores — only the parts shown here. */
+interface WizardShape {
+  timing?: string
+  duration?: string
+  windowFrom?: string
+  windowTo?: string
+  months?: string[]
+  adults?: number
+  children?: number
+  boatKind?: string
+  crewMode?: string
 }
 
 export function CustomerRequests({
@@ -138,6 +154,40 @@ function describeRequest(r: CustomerRequest) {
   const d = (v: Date) =>
     `${String(v.getUTCDate()).padStart(2, "0")}/${String(v.getUTCMonth() + 1).padStart(2, "0")}`
 
+  /* A conversation carries far more than a form, so it gets its own summary:
+     who is aboard, what they want to sail and when. The brief is preferred
+     when there is one — it is a sentence written for exactly this glance. */
+  if (r.source === "WIZARD") {
+    const w = (r.wizard && typeof r.wizard === "object" ? r.wizard : {}) as WizardShape
+    const crew = (w.adults ?? 0) + (w.children ?? 0)
+    const CREW: Record<string, string> = {
+      bareboat: "bareboat", skippered: "skippered", crewed: "crewed", advise: "advice wanted",
+    }
+    const BOAT: Record<string, string> = { monohull: "sailing yacht", catamaran: "catamaran" }
+
+    let dates: string | null = null
+    if (w.timing === "exact" && r.dateFrom && r.dateTo) dates = `${d(r.dateFrom)}–${d(r.dateTo)}`
+    else if (w.timing === "window" && r.dateFrom && r.dateTo) dates = `${d(r.dateFrom)}–${d(r.dateTo)} window`
+    else if (w.timing === "months" && w.months?.length) dates = w.months.join(", ")
+
+    const facts = [
+      crew ? `${crew} aboard` : null,
+      w.duration && w.duration !== "unsure" ? DURATION[w.duration] ?? null : null,
+      dates,
+      w.boatKind ? BOAT[w.boatKind] ?? null : null,
+      w.crewMode ? CREW[w.crewMode] ?? null : null,
+    ].filter(Boolean).join(" · ")
+
+    return {
+      who,
+      detail: r.aiBrief?.split("\n")[0]?.trim() || facts || "—",
+      kind: "Conversation",
+      kindBg: "rgba(11,96,153,0.14)",
+      kindFg: "#0A4A76",
+      age: relativeAge(r.createdAt),
+    }
+  }
+
   let detail: string
   if (isContact) {
     const subject = notes.match(/^Subject: (.+)$/m)?.[1]
@@ -165,6 +215,13 @@ function describeRequest(r: CustomerRequest) {
     kindFg: isContact ? "#4A565F" : "#0B6099",
     age: relativeAge(r.createdAt),
   }
+}
+
+const DURATION: Record<string, string> = {
+  week: "1 week",
+  tendays: "10 days",
+  twoweeks: "2 weeks",
+  longer: "2+ weeks",
 }
 
 /** "3d" reads faster than a date when scanning an inbox. */

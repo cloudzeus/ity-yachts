@@ -77,20 +77,24 @@ export default async function AdminPage() {
 
   const newEnquiries = await db.enquiry.count({ where: { status: "NEW" } })
 
-  // Everything the public site sends us. Both the contact form and the yacht
-  // booking form land in `enquiry`; what separates them is that a charter
-  // request carries dates and a general message does not.
+  /* Everything the public site sends us. The contact form and the yacht booking
+     form both land as WEBSITE — a charter request carries dates, a general
+     message does not — and the planning conversation lands as WIZARD.
+     Filtering on WEBSITE alone hid every request the agent collected. */
+  const PUBLIC_SOURCES = ["WEBSITE", "WIZARD"]
+
   const requests = await db.enquiry.findMany({
-    where: { source: "WEBSITE" },
+    where: { source: { in: PUBLIC_SOURCES } },
     orderBy: { createdAt: "desc" },
     take: 8,
     select: {
-      id: true, status: true, createdAt: true, notes: true,
+      id: true, status: true, source: true, createdAt: true, notes: true,
+      aiBrief: true, wizard: true,
       dateFrom: true, dateTo: true, guests: true, budget: true, currency: true,
       customer: { select: { firstName: true, lastName: true, email: true } },
     },
   })
-  const totalRequests = await db.enquiry.count({ where: { source: "WEBSITE" } })
+  const totalRequests = await db.enquiry.count({ where: { source: { in: PUBLIC_SOURCES } } })
 
   const stats = [
     {
