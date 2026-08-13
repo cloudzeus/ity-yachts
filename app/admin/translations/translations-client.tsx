@@ -60,8 +60,8 @@ export function TranslationsClient({ initialData }: { initialData: SiteTranslati
   const [pageSize, setPageSize] = useState(25)
 
   // Sort
-  const [sortCol, setSortCol] = useState<string>("key")
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc")
+  // Default to the work: what still needs translating comes first.
+  const [sortMode, setSortMode] = useState<"missing" | "key">("missing")
   const [statusFilter, setStatusFilter] = useState<"all" | "untranslated" | "complete">("all")
 
   const [form, setForm] = useState({ key: "", namespace: "common", en: "", el: "", de: "" })
@@ -98,17 +98,23 @@ export function TranslationsClient({ initialData }: { initialData: SiteTranslati
       return true
     })
 
-    if (sortCol) {
-      result = [...result].sort((a, b) => {
-        const aVal = (a as Record<string, string>)[sortCol] || ""
-        const bVal = (b as Record<string, string>)[sortCol] || ""
-        const cmp = aVal.localeCompare(bVal)
-        return sortDir === "desc" ? -cmp : cmp
-      })
-    }
+    /* Work first. Sorting a 515-row list alphabetically buries the handful of
+       rows that actually need someone — the ones with a gap rise to the top,
+       the emptier the higher, and finished rows sink. Alphabetical is still
+       available for hunting down a specific key. */
+    const gapsOf = (t: SiteTranslation) =>
+      (t.el?.trim() ? 0 : 1) + (t.de?.trim() ? 0 : 1) + (t.en?.trim() ? 0 : 1)
+
+    result = [...result].sort((a, b) => {
+      if (sortMode === "missing") {
+        const d = gapsOf(b) - gapsOf(a)
+        if (d) return d
+      }
+      return a.key.localeCompare(b.key)
+    })
 
     return result
-  }, [items, nsFilter, search, sortCol, sortDir, statusFilter])
+  }, [items, nsFilter, search, sortMode, statusFilter])
 
   const totalPages = Math.ceil(filtered.length / pageSize)
   const paged = useMemo(() => {
@@ -311,15 +317,6 @@ export function TranslationsClient({ initialData }: { initialData: SiteTranslati
     }
   }, [])
 
-  const handleSort = (col: string) => {
-    if (sortCol === col) {
-      setSortDir(sortDir === "asc" ? "desc" : "asc")
-    } else {
-      setSortCol(col)
-      setSortDir("asc")
-    }
-  }
-
   return (
     <div className="flex flex-col h-full max-h-full overflow-hidden">
       {/* Header — fixed */}
@@ -437,6 +434,22 @@ export function TranslationsClient({ initialData }: { initialData: SiteTranslati
               Clear
             </button>
           )}
+
+          {/* The sortable column headers went with the table, so the choice
+              lives here now. */}
+          <select
+            value={sortMode}
+            onChange={(e) => setSortMode(e.target.value as "missing" | "key")}
+            className="h-9 rounded-md border px-2.5 text-xs font-medium"
+            style={{
+              background: "var(--surface-container-lowest)",
+              borderColor: "var(--outline-variant)",
+              color: "var(--on-surface)",
+            }}
+          >
+            <option value="missing">Needs work first</option>
+            <option value="key">A → Z by key</option>
+          </select>
 
           <span className="ml-auto text-xs tabular-nums" style={{ color: "var(--on-surface-variant)" }}>
             {filtered.length} shown
