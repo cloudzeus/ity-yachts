@@ -7,12 +7,14 @@ import { ContactPageClient } from "@/components/contact/contact-page-client"
 
 export const dynamic = "force-dynamic"
 
-export const metadata: Metadata = pageMeta({
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMeta({
   title: "Contact — Our Base in Lefkada",
   description:
     "Talk to the people who run the base. Our office is at Filippa Panagou 22, Lefkada 31100, Greece, with a second in Munich. We answer in Greek, German and English.",
   path: "/contact",
-})
+  })
+}
 
 export default async function ContactPage() {
   const [staff, contactComponent] = await Promise.all([

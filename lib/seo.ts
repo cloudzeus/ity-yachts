@@ -8,7 +8,17 @@
  * the brand resolvable as a single entity rather than a scatter of pages.
  */
 
+/**
+ * The build-time fallback. The live value comes from the company settings —
+ * see `getSiteUrl()` — so the domain can be corrected without a deploy.
+ */
 export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://iyc.de").replace(/\/$/, "")
+
+/** The domain as configured in the admin, falling back to the build value. */
+export async function getSiteUrl(): Promise<string> {
+  const { getSiteSettings } = await import("@/lib/site-settings")
+  return (await getSiteSettings()).siteUrl
+}
 
 export const LOCALES = ["en", "el", "de"] as const
 export type Locale = (typeof LOCALES)[number]
@@ -118,7 +128,7 @@ export function en(value: unknown, fallback = ""): string {
  * `canonical` was missing sitewide, which lets any query string or trailing
  * variant be indexed as a separate page.
  */
-export function pageMeta({
+export async function pageMeta({
   title, description, path, image, type = "website", publishedTime,
 }: {
   title: string
@@ -128,7 +138,8 @@ export function pageMeta({
   type?: "website" | "article"
   publishedTime?: string
 }) {
-  const url = absolute(path)
+  const base = await getSiteUrl()
+  const url = /^https?:\/\//i.test(path) ? path : `${base}${path.startsWith("/") ? path : `/${path}`}`
   const ogImage = image && !/\.(mp4|webm|mov)$/i.test(image) ? image : DEFAULT_OG_IMAGE
 
   return {

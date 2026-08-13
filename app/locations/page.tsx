@@ -10,12 +10,14 @@ import { LocaleText } from "@/components/locale-text"
 
 export const dynamic = "force-dynamic"
 
-export const metadata: Metadata = pageMeta({
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMeta({
   title: "Ionian Sailing Destinations from Lefkada",
   description:
     "Where to sail from Lefkada: Ithaca, Kefalonia, Meganisi, Kalamos, Kastos and Paxos. Anchorages, harbours and bays across the Ionian, with the coordinates for each.",
   path: "/locations",
-})
+  })
+}
 
 export default async function LocationsListPage() {
   const [locations, locComponent] = await Promise.all([

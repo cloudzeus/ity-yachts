@@ -7,7 +7,8 @@ import { RevealFailsafe } from "@/components/reveal-failsafe"
 import { PlanLauncher } from "@/components/plan/plan-launcher"
 import { JsonLd } from "@/components/json-ld"
 import { organizationLd, webSiteLd } from "@/lib/structured-data"
-import { DEFAULT_OG_IMAGE, ORG, SITE_URL } from "@/lib/seo"
+import { DEFAULT_OG_IMAGE } from "@/lib/seo"
+import { getSiteSettings } from "@/lib/site-settings"
 import { HtmlLang } from "@/components/html-lang"
 import "./globals.css"
 
@@ -51,19 +52,21 @@ const plexMono = IBM_Plex_Mono({
  * `metadataBase` matters as much: without it Next cannot make og:image and
  * canonical absolute, and relative URLs in those are simply ignored.
  */
-export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
+export async function generateMetadata(): Promise<Metadata> {
+  const site = await getSiteSettings()
+  return {
+  metadataBase: new URL(site.siteUrl),
   title: {
     default: "Yacht Charter Lefkada, Greece — IYC Ionische Yacht Charter",
     template: "%s | IYC Yachts",
   },
   description:
     "Sailing yacht and catamaran charter from Lefkada in the Ionian, family-run since 1979. Bareboat or skippered, with a German office and a Greek base.",
-  applicationName: ORG.name,
-  authors: [{ name: ORG.name, url: SITE_URL }],
-  creator: ORG.name,
-  publisher: ORG.name,
-  alternates: { canonical: SITE_URL },
+  applicationName: site.name,
+  authors: [{ name: site.name, url: site.siteUrl }],
+  creator: site.name,
+  publisher: site.name,
+  alternates: { canonical: site.siteUrl },
   robots: {
     index: true,
     follow: true,
@@ -71,19 +74,22 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: "website",
-    siteName: ORG.name,
+    siteName: site.name,
     locale: "en_GB",
     alternateLocale: ["el_GR", "de_DE"],
-    url: SITE_URL,
-    images: [{ url: DEFAULT_OG_IMAGE, width: 1200, height: 630, alt: ORG.name }],
+    url: site.siteUrl,
+    images: [{ url: DEFAULT_OG_IMAGE, width: 1200, height: 630, alt: site.name }],
   },
   twitter: { card: "summary_large_image", images: [DEFAULT_OG_IMAGE] },
   formatDetection: { telephone: true, address: true, email: true },
+  }
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const site = await getSiteSettings()
+
   return (
     <html
       lang="en"
@@ -92,7 +98,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         {/* The business and the site, declared once. Everything else on the
             site points at these two @ids rather than restating them. */}
-        <JsonLd data={[organizationLd(), webSiteLd()]} />
+        <JsonLd data={[organizationLd(site), webSiteLd(site)]} />
 
         <SmoothScroll />
         <Parallax />

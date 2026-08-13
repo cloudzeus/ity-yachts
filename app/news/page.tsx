@@ -10,12 +10,14 @@ import { pageMeta } from "@/lib/seo"
 
 export const dynamic = "force-dynamic"
 
-export const metadata: Metadata = pageMeta({
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMeta({
   title: "Sailing the Ionian — Notes from Lefkada",
   description:
     "Winds, anchorages, boats and what a week aboard is actually like, written by the people who run the base in Lefkada and sail these islands every season.",
   path: "/news",
-})
+  })
+}
 
 const HERO =
   "https://iycweb.b-cdn.net/general/1786528737070-sailor-steering-wheel-on-sailboat-in-ocean-navigat-2026-03-25-03-56-36-utc.webp"

@@ -11,12 +11,14 @@ export const dynamic = "force-dynamic"
 
 /* The old title and description named neither the place nor what is on offer,
    so the page competed for "our fleet" and nothing else. */
-export const metadata: Metadata = pageMeta({
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMeta({
   title: "Charter Fleet Lefkada — Yachts & Catamarans",
   description:
     "Our charter fleet in Lefkada: sailing yachts and catamarans, 2 to 6 cabins, bareboat or skippered. Live availability and prices for the Ionian.",
   path: "/fleet",
-})
+  })
+}
 
 export default async function FleetPage() {
   // Fetch filter options based only on yachts we actually have, plus initial yachts

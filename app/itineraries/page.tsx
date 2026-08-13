@@ -11,12 +11,14 @@ import { RouteCardsMotion } from "@/components/itineraries/route-cards-motion"
 
 export const dynamic = "force-dynamic"
 
-export const metadata: Metadata = pageMeta({
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMeta({
   title: "Ionian Sailing Routes from Lefkada",
   description:
     "Week-long sailing routes out of Lefkada, day by day: distances, anchorages and harbours through Meganisi, Ithaca, Kefalonia and the Inland Sea.",
   path: "/itineraries",
-})
+  })
+}
 
 export default async function ItinerariesListPage() {
   const [itineraries, itinComponent, motto] = await Promise.all([

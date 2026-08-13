@@ -1,4 +1,5 @@
 import { ORG, SITE_URL, absolute, stripHtml } from "@/lib/seo"
+import type { SiteSettings } from "@/lib/site-settings"
 
 /**
  * JSON-LD for the site.
@@ -20,35 +21,33 @@ type Json = Record<string, unknown>
  * coordinates. This is what carries "yacht charter near Lefkada" and what an
  * answer engine reads when asked where the company is.
  */
-export function organizationLd(): Json {
+export function organizationLd(s: SiteSettings): Json {
   return {
     "@context": "https://schema.org",
     "@type": ["Organization", "LocalBusiness", "TravelAgency"],
-    "@id": ORG_ID,
-    name: ORG.name,
-    legalName: ORG.legalName,
+    "@id": `${s.siteUrl}/#organization`,
+    name: s.name,
+    legalName: s.legalName,
     alternateName: [...ORG.alternateName],
-    url: SITE_URL,
-    logo: { "@type": "ImageObject", url: ORG.logo },
-    image: ORG.logo,
-    foundingDate: ORG.founded,
-    vatID: ORG.vatId,
-    email: ORG.email,
-    telephone: ORG.base.phone,
+    url: s.siteUrl,
+    logo: { "@type": "ImageObject", url: s.logo },
+    image: s.logo,
+    foundingDate: s.founded,
+    ...(s.vatId ? { vatID: s.vatId } : {}),
+    email: s.email,
+    ...(s.phones.length ? { telephone: s.phones[0] } : {}),
     priceRange: "€€€",
     address: {
       "@type": "PostalAddress",
-      streetAddress: ORG.base.street,
-      addressLocality: ORG.base.locality,
-      addressRegion: ORG.base.region,
-      postalCode: ORG.base.postalCode,
-      addressCountry: ORG.base.country,
+      streetAddress: s.address.street,
+      addressLocality: s.address.locality,
+      addressRegion: s.address.region,
+      postalCode: s.address.postalCode,
+      addressCountry: s.address.country,
     },
-    geo: {
-      "@type": "GeoCoordinates",
-      latitude: ORG.base.latitude,
-      longitude: ORG.base.longitude,
-    },
+    ...(s.geo
+      ? { geo: { "@type": "GeoCoordinates", latitude: s.geo.latitude, longitude: s.geo.longitude } }
+      : {}),
     /* Where charters actually go, so "Ionian" and the islands attach to the
        business rather than only to individual pages. */
     areaServed: [
@@ -64,37 +63,40 @@ export function organizationLd(): Json {
       {
         "@type": "ContactPoint",
         contactType: "reservations",
-        email: ORG.bookingEmail,
-        telephone: ORG.base.phone,
+        email: s.bookingEmail,
+        ...(s.phones.length ? { telephone: s.phones[0] } : {}),
         areaServed: ["GR", "DE", "AT", "CH"],
         availableLanguage: ["English", "Greek", "German"],
       },
-      {
-        "@type": "ContactPoint",
-        contactType: "customer service",
-        telephone: ORG.office.phone,
-        areaServed: "DE",
-        availableLanguage: ["German", "English"],
-      },
+      // A second number, when one is configured, is the German office.
+      ...(s.phones.length > 1
+        ? [{
+            "@type": "ContactPoint",
+            contactType: "customer service",
+            telephone: s.phones[1],
+            areaServed: "DE",
+            availableLanguage: ["German", "English"],
+          }]
+        : []),
     ],
-    sameAs: [...ORG.sameAs],
+    ...(s.sameAs.length ? { sameAs: s.sameAs } : {}),
     knowsLanguage: ["en", "el", "de"],
   }
 }
 
 /** The site, so a sitelinks search box can attach to it. */
-export function webSiteLd(): Json {
+export function webSiteLd(s: SiteSettings): Json {
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    "@id": SITE_ID,
-    url: SITE_URL,
-    name: ORG.name,
-    publisher: { "@id": ORG_ID },
+    "@id": `${s.siteUrl}/#website`,
+    url: s.siteUrl,
+    name: s.name,
+    publisher: { "@id": `${s.siteUrl}/#organization` },
     inLanguage: ["en", "el", "de"],
     potentialAction: {
       "@type": "SearchAction",
-      target: { "@type": "EntryPoint", urlTemplate: `${SITE_URL}/fleet?q={search_term_string}` },
+      target: { "@type": "EntryPoint", urlTemplate: `${s.siteUrl}/fleet?q={search_term_string}` },
       "query-input": "required name=search_term_string",
     },
   }

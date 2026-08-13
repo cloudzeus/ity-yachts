@@ -7,12 +7,14 @@ import { pageMeta } from "@/lib/seo"
 
 export const dynamic = "force-dynamic"
 
-export const metadata: Metadata = pageMeta({
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMeta({
   title: "Charter Services in Lefkada",
   description:
     "Everything around the boat: a skipper or hostess, provisioning, tailored routes, transfers and the paperwork. What we arrange before you reach Lefkada.",
   path: "/services",
-})
+  })
+}
 
 export default async function ServicesPage() {
   const [services, svcsComponent] = await Promise.all([

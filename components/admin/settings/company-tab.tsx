@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react"
 import Image from "next/image"
-import { Plus, X, Building2, Phone, Mail, FileText, Image as ImageIcon, Upload, FolderOpen, Loader2 } from "lucide-react"
+import { Plus, X, Building2, Phone, Mail, FileText, MapPin, Image as ImageIcon, Upload, FolderOpen, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -11,7 +11,19 @@ import { MediaPicker, type PickedMedia } from "@/components/admin/media-picker"
 
 interface CompanyData {
   name: string
+  legalName: string
+  /** Public site origin, e.g. https://iyc.de — feeds canonical URLs and schema. */
+  siteUrl: string
+  founded: string
   address: string
+  /** Broken out because search engines want the parts, not one string. */
+  street: string
+  locality: string
+  region: string
+  postalCode: string
+  country: string
+  latitude: string
+  longitude: string
   phones: string[]
   gemi: string
   vat: string
@@ -22,7 +34,10 @@ interface CompanyData {
 }
 
 const defaults: CompanyData = {
-  name: "", address: "", phones: [""], gemi: "", vat: "",
+  name: "", legalName: "", siteUrl: "", founded: "",
+  address: "", street: "", locality: "", region: "", postalCode: "", country: "",
+  latitude: "", longitude: "",
+  phones: [""], gemi: "", vat: "",
   bookingEmail: "", companyEmail: "", logoUrl: "", logoPath: "",
 }
 
@@ -130,9 +145,58 @@ export function CompanyTab({ initialData }: { initialData?: Partial<CompanyData>
             <Label className="text-xs" style={{ color: "var(--on-surface-variant)" }}>GEMI Number</Label>
             <Input value={data.gemi} onChange={(e) => set("gemi", e.target.value)} placeholder="000000000" />
           </div>
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-xs" style={{ color: "var(--on-surface-variant)" }}>Legal Name</Label>
+            <Input value={data.legalName} onChange={(e) => set("legalName", e.target.value)} placeholder="Ionische Yacht Charter" />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-xs" style={{ color: "var(--on-surface-variant)" }}>Trading Since</Label>
+            <Input value={data.founded} onChange={(e) => set("founded", e.target.value)} placeholder="1979" />
+          </div>
           <div className="flex flex-col gap-1.5 sm:col-span-2">
-            <Label className="text-xs" style={{ color: "var(--on-surface-variant)" }}>Address</Label>
+            <Label className="text-xs" style={{ color: "var(--on-surface-variant)" }}>Website Address</Label>
+            <Input value={data.siteUrl} onChange={(e) => set("siteUrl", e.target.value)} placeholder="https://iyc.de" />
+            <span className="text-[10px]" style={{ color: "var(--on-surface-variant)" }}>
+              The public domain. Used for canonical links, the sitemap and the data search engines read — get it wrong and every page points at the wrong site.
+            </span>
+          </div>
+          <div className="flex flex-col gap-1.5 sm:col-span-2">
+            <Label className="text-xs" style={{ color: "var(--on-surface-variant)" }}>Address (as displayed)</Label>
             <Textarea value={data.address} onChange={(e) => set("address", e.target.value)} placeholder="Street, City, Postal Code, Country" rows={2} />
+          </div>
+        </div>
+      </SettingSection>
+
+      {/* Search engines and maps need the address in parts, not as one line. */}
+      <SettingSection icon={MapPin} title="Base Location" description="Broken into parts for search engines, maps and local results">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="flex flex-col gap-1.5 sm:col-span-2">
+            <Label className="text-xs" style={{ color: "var(--on-surface-variant)" }}>Street</Label>
+            <Input value={data.street} onChange={(e) => set("street", e.target.value)} placeholder="Filippa Panagou 22" />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-xs" style={{ color: "var(--on-surface-variant)" }}>Town / City</Label>
+            <Input value={data.locality} onChange={(e) => set("locality", e.target.value)} placeholder="Lefkada" />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-xs" style={{ color: "var(--on-surface-variant)" }}>Region</Label>
+            <Input value={data.region} onChange={(e) => set("region", e.target.value)} placeholder="Ionian Islands" />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-xs" style={{ color: "var(--on-surface-variant)" }}>Postal Code</Label>
+            <Input value={data.postalCode} onChange={(e) => set("postalCode", e.target.value)} placeholder="31100" />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-xs" style={{ color: "var(--on-surface-variant)" }}>Country Code</Label>
+            <Input value={data.country} onChange={(e) => set("country", e.target.value)} placeholder="GR" />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-xs" style={{ color: "var(--on-surface-variant)" }}>Latitude</Label>
+            <Input value={data.latitude} onChange={(e) => set("latitude", e.target.value)} placeholder="38.7065734" />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-xs" style={{ color: "var(--on-surface-variant)" }}>Longitude</Label>
+            <Input value={data.longitude} onChange={(e) => set("longitude", e.target.value)} placeholder="20.6416779" />
           </div>
         </div>
       </SettingSection>
