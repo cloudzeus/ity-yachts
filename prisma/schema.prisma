@@ -975,7 +975,9 @@ model Enquiry {
   baseFrom          String?
   baseTo            String?
   notes             String?  @db.Text
-  source            String   @default("")         // WEBSITE, PHONE, EMAIL, REFERRAL
+  wizard            Json?                         // every answer from the planning wizard, verbatim
+  aiBrief           String?  @db.Text             // the brief written from those answers
+  source            String   @default("")         // WEBSITE, WIZARD, PHONE, EMAIL, REFERRAL
   bookingId         String?  @unique              // set when converted to a booking
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt

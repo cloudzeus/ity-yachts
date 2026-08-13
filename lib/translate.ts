@@ -1,15 +1,9 @@
-import { db } from "@/lib/db"
-
 export const SUPPORTED_LOCALES = ["en", "el", "de"] as const
 export type Locale = (typeof SUPPORTED_LOCALES)[number]
 
-async function getDeepSeekKey(): Promise<string> {
-  const record = await db.setting.findUnique({ where: { key: "ai_keys" } })
-  if (!record) throw new Error("AI keys not configured")
-  const keys = record.value as Record<string, string>
-  if (!keys.deepseekKey) throw new Error("DeepSeek API key not configured")
-  return keys.deepseekKey
-}
+// Moved to lib/ai-keys so the planning brief can read the same key.
+export { getDeepSeekKey } from "@/lib/ai-keys"
+import { getDeepSeekKey } from "@/lib/ai-keys"
 
 export async function translate(
   text: string,

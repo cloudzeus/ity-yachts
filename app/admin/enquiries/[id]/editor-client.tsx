@@ -32,6 +32,8 @@ type EnquiryData = {
   baseFrom: string | null
   baseTo: string | null
   notes: string | null
+  wizard: unknown
+  aiBrief: string | null
   source: string
   bookingId: string | null
   createdAt: string
@@ -118,6 +120,20 @@ export function EnquiryEditorClient({ enquiry }: Props) {
   const [source, setSource] = useState(enquiry.source || "")
   const [assignedStaffId, setAssignedStaffId] = useState(enquiry.assignedStaffId ?? "")
   const [notes, setNotes] = useState(enquiry.notes ?? "")
+
+  /* The wizard answers, flattened for display. Rendered from whatever is in
+     the column rather than a fixed list, so a question added to the
+     conversation later shows up here without another change. */
+  const wizardRows: [string, string][] = (() => {
+    const w = enquiry.wizard
+    if (!w || typeof w !== "object") return []
+    return Object.entries(w as Record<string, unknown>)
+      .filter(([, v]) => v !== null && v !== undefined && v !== "" && !(Array.isArray(v) && !v.length))
+      .map(([k, v]) => [
+        k.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase()),
+        Array.isArray(v) ? v.join(", ") : typeof v === "boolean" ? (v ? "Yes" : "No") : String(v),
+      ])
+  })()
 
   // Staff list
   const [staffList, setStaffList] = useState<StaffMember[]>([])
@@ -385,6 +401,7 @@ export function EnquiryEditorClient({ enquiry }: Props) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="WEBSITE">Website</SelectItem>
+                  <SelectItem value="WIZARD">Planning conversation</SelectItem>
                   <SelectItem value="PHONE">Phone</SelectItem>
                   <SelectItem value="EMAIL">Email</SelectItem>
                   <SelectItem value="REFERRAL">Referral</SelectItem>
@@ -392,6 +409,29 @@ export function EnquiryEditorClient({ enquiry }: Props) {
                 </SelectContent>
               </Select>
             </SectionCard>
+
+            {/* What the planning conversation collected. Read-only: this is a
+                record of what the customer said, not something to edit. */}
+            {enquiry.aiBrief && (
+              <SectionCard title="Brief">
+                <p className="whitespace-pre-wrap text-xs leading-relaxed" style={{ color: "var(--on-surface-variant)" }}>
+                  {enquiry.aiBrief}
+                </p>
+              </SectionCard>
+            )}
+
+            {wizardRows.length > 0 && (
+              <SectionCard title="Their answers">
+                <dl className="flex flex-col gap-2 text-[11px]">
+                  {wizardRows.map(([k, v]) => (
+                    <div key={k} className="flex gap-3">
+                      <dt className="w-28 flex-shrink-0 uppercase tracking-wider" style={{ color: "var(--on-surface-variant)", opacity: 0.7 }}>{k}</dt>
+                      <dd style={{ color: "var(--on-surface)" }}>{v}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </SectionCard>
+            )}
 
             {/* Notes */}
             <SectionCard title="Notes">
