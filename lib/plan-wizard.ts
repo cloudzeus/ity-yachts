@@ -5,7 +5,16 @@
  * here — the client bundle needs the types and the option lists.
  */
 
-export type Timing = "exact" | "months" | "unsure"
+/**
+ * How settled the dates are.
+ *
+ *   exact   the charter runs from dateFrom to dateTo
+ *   window  they can sail any `duration` between windowFrom and windowTo —
+ *           the common case, and the one that gives us room to find a boat
+ *   months  only the months are decided
+ *   unsure  nothing decided yet
+ */
+export type Timing = "exact" | "window" | "months" | "unsure"
 export type Duration = "week" | "tendays" | "twoweeks" | "longer" | "unsure"
 export type CrewMode = "bareboat" | "skippered" | "crewed" | "advise"
 export type BoatKind = "monohull" | "catamaran" | "either"
@@ -18,6 +27,8 @@ export interface PlanAnswers {
   timing: Timing
   dateFrom?: string // ISO date, when timing === "exact"
   dateTo?: string
+  windowFrom?: string // ISO date, when timing === "window" — the earliest they could start
+  windowTo?: string // …and the latest they must be back
   months: string[] // "2026-06" …, when timing === "months"
   duration: Duration
   flexible: boolean
@@ -97,6 +108,7 @@ export function validate(a: Partial<PlanAnswers>): string | null {
   if (!a.email?.trim() || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(a.email)) return "email"
   if (!a.timing) return "timing"
   if (a.timing === "exact" && (!a.dateFrom || !a.dateTo)) return "dates"
+  if (a.timing === "window" && (!a.windowFrom || !a.windowTo)) return "window"
   if (a.timing === "months" && !(a.months && a.months.length)) return "months"
   if (!a.adults || a.adults < 1) return "adults"
   return null

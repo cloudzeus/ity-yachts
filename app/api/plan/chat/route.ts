@@ -17,8 +17,14 @@ export const dynamic = "force-dynamic"
  */
 
 const FIELDS = `
-timing            "exact" | "months" | "unsure"
+timing            "exact" | "window" | "months" | "unsure"
+                  "exact"  they know the dates
+                  "window" they can sail any week inside a span — "any time
+                           between 6 and 27 June" — which is the usual answer
+                  "months" only the month or months are decided
 dateFrom,dateTo   ISO yyyy-mm-dd, only when timing is "exact"
+windowFrom,windowTo  ISO yyyy-mm-dd, only when timing is "window": the earliest
+                  they could start and the latest they must be back
 months            ["2026-06", ...] only when timing is "months"
 duration          "week" | "tendays" | "twoweeks" | "longer" | "unsure"
 flexible          boolean — could they shift dates for the right boat
@@ -57,7 +63,8 @@ Have a short conversation and come away with everything a colleague needs to pro
 
 Acknowledge what they just said in a few words before asking the next thing. Keep each reply under about 45 words.
 
-Start by asking when they would like to sail. Leave the contact details for the very end — ask for the name and email only once everything else is settled, and say why you need them.
+Start by asking when they would like to sail. Most people answer with a span rather than two exact dates — "the second half of June", "any week between the 6th and the 27th". Take that as it is, record it as a window, and do not push them towards exact dates; a wide window is what lets us find them the right boat.
+ Leave the contact details for the very end — ask for the name and email only once everything else is settled, and say why you need them.
 
 If they say they do not know, or do not mind, accept it and move on — "unsure", "advise" and "either" are real answers. Never ask the same thing twice. Never invent prices, availability, or yachts. If they ask what you would recommend, answer briefly from what you know of the Ionian and carry on.
 

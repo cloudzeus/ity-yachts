@@ -5,7 +5,7 @@ import { crewSize, type PlanAnswers } from "@/lib/plan-wizard"
 /* Answer codes are stored, not prose, so the admin and the emails can label
    them however they like. These are the English labels for the emails. */
 const LABEL: Record<string, string> = {
-  exact: "Fixed dates", months: "Certain months", unsure: "Not decided yet",
+  exact: "Fixed dates", window: "Anywhere in a span", months: "Certain months", unsure: "Not decided yet",
   week: "One week", tendays: "Ten days", twoweeks: "Two weeks", longer: "Longer than two weeks",
   bareboat: "Bareboat — we sail her ourselves", skippered: "With a skipper",
   crewed: "Fully crewed", advise: "Would like advice",
@@ -42,6 +42,11 @@ const fmtMonth = (m: string) => {
 
 function when(a: PlanAnswers) {
   if (a.timing === "exact") return `${fmtDate(a.dateFrom)} — ${fmtDate(a.dateTo)}`
+  /* A window is the span they can sail inside, not the charter itself. The
+     length is printed alongside by both callers, so it is not repeated here. */
+  if (a.timing === "window") {
+    return `Anywhere between ${fmtDate(a.windowFrom)} and ${fmtDate(a.windowTo)}`
+  }
   if (a.timing === "months") return a.months.map(fmtMonth).join(", ")
   return "Not decided yet"
 }
@@ -83,21 +88,30 @@ const section = (title: string, rows: string) => `
         <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">${rows}</table>
       </div>`
 
-/** Everything the crew told us, laid out the same way in both emails. */
-function answerSections(a: PlanAnswers) {
+/**
+ * Everything the crew told us, laid out the same way in both emails.
+ *
+ * Two headings change voice: the team reads about "them", the customer reads
+ * about themselves. Third person in the customer's own confirmation reads as
+ * though it were written about someone else.
+ */
+function answerSections(a: PlanAnswers, voice: "team" | "customer" = "team") {
+  const sailingTitle = voice === "team" ? "How they want to sail" : "How you want to sail"
+  const wordsTitle = voice === "team" ? "In their own words" : "What you told us"
+
   return (
     section("When", row("Timing", L(a.timing)) + row("Dates", when(a)) + row("Length of charter", L(a.duration)) +
       row("Flexible", a.flexible ? "Yes — can shift to find the right boat" : "No")) +
     section("Who is coming", row("Adults", String(a.adults)) +
       (a.children ? row("Children", `${a.children}${a.childAges ? ` (ages ${a.childAges})` : ""}`) : "") +
       row("Total aboard", String(crewSize(a))) + row("Occasion", L(a.occasion))) +
-    section("How they want to sail", row("Crewing", L(a.crewMode)) + row("Experience", L(a.experience))) +
+    section(sailingTitle, row("Crewing", L(a.crewMode)) + row("Experience", L(a.experience))) +
     section("The boat", row("Type", L(a.boatKind)) + (a.cabins ? row("Cabins wanted", String(a.cabins)) : "") +
       row("What matters", LS(a.priorities))) +
     section("Where", row("Areas", LS(a.regions))) +
     section("Budget", row("Per week", money(a))) +
     (a.extras.length ? section("Extras", row("Asked for", LS(a.extras))) : "") +
-    (a.notes ? section("In their own words",
+    (a.notes ? section(wordsTitle,
       `<tr><td colspan="2" style="padding:6px 0;font-size:15px;line-height:1.6;color:#05111F;white-space:pre-wrap;">${esc(a.notes)}</td></tr>`) : "")
   )
 }
@@ -150,7 +164,7 @@ export function customerEmail(a: PlanAnswers) {
         <p style="margin:0 0 12px;">We have your planning request and one of us — Maria in Lefkada or Thomas in Munich — will write to you personally, usually within a day.</p>
         <p style="margin:0;color:#5A6B7B;">Here is what we noted. If anything is wrong, simply reply to this email and tell us.</p>
       </div>` +
-      answerSections(a) +
+      answerSections(a, "customer") +
       `<div style="padding:20px 32px 30px;font-size:14px;line-height:1.65;color:#5A6B7B;">
         We do not take bookings online. We read every request and answer it ourselves.
       </div>`

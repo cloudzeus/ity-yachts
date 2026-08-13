@@ -7,6 +7,13 @@ import { crewSize, validate, type PlanAnswers } from "@/lib/plan-wizard"
 
 export const dynamic = "force-dynamic"
 
+/** A date the model supplied — never trusted enough to hand straight to Prisma. */
+function dateBound(iso?: string): Date | null {
+  if (!iso) return null
+  const d = new Date(iso.length === 10 ? iso + "T00:00:00Z" : iso)
+  return Number.isNaN(d.getTime()) ? null : d
+}
+
 /**
  * Close of the planning conversation: save it, brief it, send it.
  *
@@ -49,8 +56,11 @@ export async function POST(req: NextRequest) {
         customerId: customer.id,
         status: "NEW",
         source: "WIZARD",
-        dateFrom: answers.timing === "exact" && answers.dateFrom ? new Date(answers.dateFrom) : null,
-        dateTo: answers.timing === "exact" && answers.dateTo ? new Date(answers.dateTo) : null,
+        /* A window fills the date columns with its outer bounds, so the admin
+           list and its date filters work for it too. `wizard.timing` is what
+           says whether those are the charter itself or the span around it. */
+        dateFrom: dateBound(answers.timing === "exact" ? answers.dateFrom : answers.windowFrom),
+        dateTo: dateBound(answers.timing === "exact" ? answers.dateTo : answers.windowTo),
         guests: crewSize(answers) || null,
         preferredCategory: answers.boatKind === "either" ? null : answers.boatKind,
         budget: answers.budgetTo ?? answers.budgetFrom ?? null,
