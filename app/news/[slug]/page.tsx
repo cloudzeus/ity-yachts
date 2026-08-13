@@ -1,49 +1,49 @@
-import { db } from "@/lib/db"
-import { notFound } from "next/navigation"
 import { Metadata } from "next"
-import Image from "next/image"
-import Link from "next/link"
+import { notFound } from "next/navigation"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
-import { LocaleText } from "@/components/locale-text"
-import { ArrowLeft } from "lucide-react"
+import { getArticleBySlug, getRelatedNews } from "@/lib/news"
+import { ArticleBody } from "./article-body"
+import { RelatedNews } from "./related-news"
 
 export const dynamic = "force-dynamic"
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+const plain = (html: string) => html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>
+}): Promise<Metadata> {
   const { slug } = await params
-  const article = await db.article.findUnique({
-    where: { slug },
-    select: { title: true, metaTitle: true, metaDesc: true, shortDesc: true, defaultMedia: true },
-  })
-  if (!article) return { title: "Article Not Found" }
+  const article = await getArticleBySlug(slug)
+  if (!article) return { title: "Not found — IYC Yachts" }
 
   const title = (article.title as Record<string, string>)?.en || "Article"
-  const shortDesc = (article.shortDesc as Record<string, string>)?.en || ""
+  const short = plain((article.shortDesc as Record<string, string>)?.en ?? "")
 
   return {
     title: article.metaTitle || `${title} — IYC Yachts`,
-    description: article.metaDesc || shortDesc || undefined,
+    description: article.metaDesc || short.slice(0, 155),
     openGraph: {
       title: article.metaTitle || title,
-      description: article.metaDesc || shortDesc || undefined,
-      images: article.defaultMedia ? [article.defaultMedia] : undefined,
+      description: article.metaDesc || short.slice(0, 155),
       type: "article",
+      publishedTime: (article.publishedAt ?? article.date)?.toISOString(),
+      images:
+        article.defaultMedia && article.defaultMediaType !== "video"
+          ? [{ url: article.defaultMedia }]
+          : undefined,
     },
   }
 }
 
 export default async function ArticlePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const article = await db.article.findUnique({ where: { slug } })
-  if (!article || article.status !== "published") notFound()
+  const article = await getArticleBySlug(slug)
+  if (!article) notFound()
 
-  const titleObj = article.title as Record<string, string>
-  const categoryObj = article.category as Record<string, string>
-  const shortDescObj = article.shortDesc as Record<string, string>
-  const descriptionObj = article.description as Record<string, string>
-  const titleEn = titleObj?.en || "Untitled"
-  const media = article.media as string[]
+  const related = await getRelatedNews(article.id, article.categoryRef?.slug ?? null, 3)
 
   return (
     <main>
@@ -53,120 +53,33 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
       >
         <SiteHeader />
 
-        {/* Hero */}
-        {article.defaultMedia && (
-          <section className="relative h-[50vh] min-h-[400px]">
-            {article.defaultMediaType === "video" ? (
-              <video
-                src={article.defaultMedia}
-                autoPlay muted loop playsInline
-                className="absolute inset-0 w-full h-full object-cover"
-              />
-            ) : (
-              <Image
-                src={article.defaultMedia}
-                alt={titleEn}
-                fill
-                className="object-cover"
-                priority
-                sizes="100vw"
-              />
-            )}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#05111F] via-[#05111F]/40 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-8 md:p-16 max-w-4xl mx-auto">
-              {categoryObj?.en && (
-                <span className="inline-block px-3 py-1 text-[10px] font-semibold uppercase tracking-wider rounded-full bg-[var(--iyc-taupe-500)]/90 text-white mb-4">
-                  <LocaleText translations={categoryObj} uppercase />
-                </span>
-              )}
-              <h1
-                className="text-3xl md:text-5xl font-bold text-white"
-                style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em" }}
-              >
-                <LocaleText translations={titleObj} fallback="Untitled" />
-              </h1>
-              <div className="flex items-center gap-4 mt-4 text-sm text-white/50">
-                <time>
-                  {new Date(article.date).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" })}
-                </time>
-                {article.author && <span><LocaleText tKey="news.by" fallback="By" /> {article.author}</span>}
-              </div>
-            </div>
-          </section>
-        )}
+        <ArticleBody
+          article={{
+            slug: article.slug,
+            title: article.title as Record<string, string>,
+            shortDesc: article.shortDesc as Record<string, string>,
+            description: article.description as Record<string, string>,
+            media: article.defaultMedia,
+            mediaType: article.defaultMediaType,
+            gallery: Array.isArray(article.media) ? (article.media as string[]) : [],
+            publishedAt: (article.publishedAt ?? article.date)?.toISOString() ?? null,
+            readMinutes: article.readMinutes,
+            author: article.author ?? "",
+            category: article.categoryRef
+              ? {
+                  slug: article.categoryRef.slug,
+                  name: article.categoryRef.name as Record<string, string>,
+                  color: article.categoryRef.color,
+                }
+              : null,
+            tags: article.tags.map((t) => ({
+              slug: t.tag.slug,
+              name: t.tag.name as Record<string, string>,
+            })),
+          }}
+        />
 
-        {/* If no hero image, show text header */}
-        {!article.defaultMedia && (
-          <section className="pt-32 pb-8 px-6">
-            <div className="max-w-4xl mx-auto">
-              {categoryObj?.en && (
-                <span className="inline-block px-3 py-1 text-[10px] font-semibold uppercase tracking-wider rounded-full bg-[var(--iyc-taupe-500)]/90 text-white mb-4">
-                  <LocaleText translations={categoryObj} uppercase />
-                </span>
-              )}
-              <h1
-                className="text-3xl md:text-5xl font-bold text-white mb-4"
-                style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em" }}
-              >
-                <LocaleText translations={titleObj} fallback="Untitled" />
-              </h1>
-              <div className="flex items-center gap-4 text-sm text-white/50">
-                <time>
-                  {new Date(article.date).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" })}
-                </time>
-                {article.author && <span><LocaleText tKey="news.by" fallback="By" /> {article.author}</span>}
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* Content */}
-        <section className="px-6 py-12">
-          <div className="max-w-4xl mx-auto">
-            <Link
-              href="/news"
-              className="inline-flex items-center gap-2 text-sm text-[var(--text-subtle)] hover:text-[var(--text-subtle)]/80 transition-colors mb-8"
-            >
-              <ArrowLeft className="size-4" />
-              <LocaleText tKey="news.backToNews" fallback="Back to News" />
-            </Link>
-
-            {shortDescObj?.en && (
-              <p className="text-xl leading-relaxed text-white/70 mb-10 border-l-2 border-[var(--border-default)] pl-6">
-                <LocaleText translations={shortDescObj} />
-              </p>
-            )}
-
-            {descriptionObj?.en && (
-              <LocaleText
-                translations={descriptionObj}
-                html
-                className="prose prose-lg prose-invert max-w-none"
-                style={{ color: "rgba(255,255,255,0.75)" }}
-              />
-            )}
-          </div>
-        </section>
-
-        {/* Media Gallery */}
-        {media.length > 0 && (
-          <section className="max-w-6xl mx-auto px-6 pb-20">
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {media.map((url, i) => {
-                const isVideo = url.match(/\.(mp4|mov|webm|avi)$/i)
-                return (
-                  <div key={i} className="aspect-[4/3] rounded-lg overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.08)" }}>
-                    {isVideo ? (
-                      <video src={url} controls muted preload="metadata" className="w-full h-full object-cover" />
-                    ) : (
-                      <Image src={url} alt={`${titleEn} ${i + 1}`} fill className="object-cover !relative" sizes="(max-width: 768px) 50vw, 33vw" />
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          </section>
-        )}
+        <RelatedNews articles={related} />
       </div>
 
       <SiteFooter />

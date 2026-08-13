@@ -118,7 +118,7 @@ export default async function LocationsListPage() {
               <div className="mt-8 flex items-center gap-2 text-white/70">
                 <MapPin className="h-3.5 w-3.5" />
                 <span className="text-[11px] font-semibold uppercase tracking-[0.18em]">
-                  <LocaleText translations={featured.nameTranslations} fallback={featured.name} />
+                  <LocaleText uppercase translations={featured.nameTranslations} fallback={featured.name} />
                 </span>
               </div>
             )}

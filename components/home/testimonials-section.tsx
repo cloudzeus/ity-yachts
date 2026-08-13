@@ -22,7 +22,7 @@ interface ReviewItem {
 }
 
 export function TestimonialsSection({ reviews }: { reviews: ReviewItem[] }) {
-  const { t } = useTranslations()
+  const { t, tUpper } = useTranslations()
   const [current, setCurrent] = useState(0)
   const trackRef = useRef<HTMLDivElement>(null)
 
@@ -48,7 +48,7 @@ export function TestimonialsSection({ reviews }: { reviews: ReviewItem[] }) {
           <div>
             <TextReveal>
               <span className="label-sm mb-3 block" style={{ color: "var(--text-subtle)" }}>
-                {t("home.testimonials.badge", "Testimonials")}
+                {tUpper("home.testimonials.badge", "Testimonials")}
               </span>
             </TextReveal>
             <TextReveal delay={0.1}>

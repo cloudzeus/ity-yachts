@@ -5,6 +5,7 @@ import Image from "next/image"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { useTranslations } from "@/lib/use-translations"
+import { removeGreekTonos } from "@/lib/greek-utils"
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger)
@@ -131,7 +132,8 @@ export function FamilySection({ members }: { members: FamilyMember[] }) {
                       className="text-[10px] font-semibold uppercase tracking-wider"
                       style={{ color: "var(--iyc-ionian-600)" }}
                     >
-                      {[role, city].filter(Boolean).join(" · ")}
+                      {/* Set uppercase — Greek capitals carry no accent. */}
+                      {removeGreekTonos([role, city].filter(Boolean).join(" · "))}
                     </span>
                   </div>
                   <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>

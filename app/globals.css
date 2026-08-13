@@ -531,7 +531,9 @@ h1, h2, h3, h4,
 /* Editorial prose — long-form destination and itinerary copy. */
 .iyc-prose > p { margin-bottom: 1.15em; }
 .iyc-prose > p:last-child { margin-bottom: 0; }
-.iyc-prose > p:first-of-type::first-letter {
+/* `first-child`, not `first-of-type`: a body that opens with a heading was
+   putting the drop cap on a paragraph buried mid-article. */
+.iyc-prose > p:first-child::first-letter {
   float: left;
   font-family: var(--font-display);
   font-weight: var(--weight-display);
@@ -542,6 +544,45 @@ h1, h2, h3, h4,
 }
 .iyc-prose a { color: var(--text-link); text-underline-offset: 3px; }
 .iyc-prose strong { color: var(--text-heading); font-weight: 600; }
+
+/* The rich editor also emits headings, lists, quotes and images. Without these
+   they render at browser defaults, which reads as an unstyled page. */
+.iyc-prose h2, .iyc-prose h3 {
+  font-family: var(--font-display);
+  font-weight: 300;
+  color: var(--text-heading);
+  line-height: 1.2;
+  margin: 1.9em 0 0.6em;
+}
+.iyc-prose h2 { font-size: 1.75rem; }
+.iyc-prose h3 { font-size: 1.3rem; font-weight: 400; }
+.iyc-prose h2:first-child, .iyc-prose h3:first-child { margin-top: 0; }
+.iyc-prose ul, .iyc-prose ol { margin: 0 0 1.15em 1.35em; }
+.iyc-prose ul { list-style: disc; }
+.iyc-prose ol { list-style: decimal; }
+.iyc-prose li { margin-bottom: 0.4em; padding-left: 0.25em; }
+.iyc-prose blockquote {
+  margin: 1.6em 0;
+  padding-left: 1.2em;
+  border-left: 2px solid var(--iyc-ionian-500);
+  font-family: var(--font-display);
+  font-size: 1.15em;
+  font-weight: 300;
+  color: var(--text-heading);
+}
+.iyc-prose img { border-radius: var(--iyc-radius-md, 1rem); margin: 1.6em 0; max-width: 100%; height: auto; }
+.iyc-prose hr { margin: 2.2em 0; border: 0; border-top: 1px solid var(--border-hairline); }
+
+/* Standfirst copy sits above the body, so it must not claim the drop cap. */
+.iyc-prose--plain > p:first-child::first-letter {
+  float: none;
+  font-family: inherit;
+  font-weight: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  padding: 0;
+  color: inherit;
+}
 
 /* Media that drifts inside a fixed frame has to be oversized, or the travel
    exposes the frame edge. 140% covers travel up to 0.4. */

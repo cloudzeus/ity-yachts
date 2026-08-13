@@ -79,7 +79,7 @@ export function PlanLauncher() {
           ref={panelRef}
           role="dialog"
           aria-modal="false"
-          aria-label={t("plan.agent.name", "Planning desk")}
+          aria-label={t("plan.agent.name", "Planning assistant")}
           className="fixed z-[95] flex-col overflow-hidden shadow-2xl"
           style={{
             display: open ? "flex" : "none",

@@ -164,7 +164,7 @@ export function PlanAgent({
           <Image src="/brand/iyc-logo-navy.svg" alt="IYC" fill className="object-contain brightness-0 invert" unoptimized />
         </span>
         <div className="min-w-0">
-          <div className="text-sm font-semibold text-white">{t("plan.agent.name", "Planning desk")}</div>
+          <div className="text-sm font-semibold text-white">{t("plan.agent.name", "Planning assistant")}</div>
           <div className="text-[11px]" style={{ color: "rgba(255,255,255,0.66)" }}>
             {t("plan.agent.role", "Lefkada · answers in a minute")}
           </div>

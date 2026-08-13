@@ -25,7 +25,7 @@ interface ItineraryItem {
 }
 
 export function ItinerariesSection({ itineraries }: { itineraries: ItineraryItem[] }) {
-  const { t } = useTranslations()
+  const { t, tUpper } = useTranslations()
   const sectionRef = useRef<HTMLDivElement>(null)
 
   if (itineraries.length === 0) return null
@@ -40,7 +40,7 @@ export function ItinerariesSection({ itineraries }: { itineraries: ItineraryItem
       <div className="relative z-10 max-w-7xl mx-auto mb-16">
         <TextReveal>
           <span className="label-sm mb-3 block" style={{ color: "var(--text-subtle)" }}>
-            {t("home.itineraries.label", "Itineraries")}
+            {tUpper("home.itineraries.label", "Itineraries")}
           </span>
         </TextReveal>
         <TextReveal delay={0.1}>
