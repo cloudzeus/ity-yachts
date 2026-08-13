@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { MediaPicker, type PickedMedia } from "@/components/admin/media-picker"
 import { ArticleTaxonomyFields } from "@/components/admin/articles/article-taxonomy-fields"
 import { ArticleWriter } from "@/components/admin/articles/article-writer"
+import { ArticleLanguagePanels } from "@/components/admin/articles/article-language-panels"
 
 type ArticleData = {
   id: string
@@ -41,65 +42,6 @@ type ArticleData = {
 
 interface Props {
   article: ArticleData
-}
-
-/* ─── Translatable Field ──────────────────────────────────────────────── */
-
-function TranslatableField({ label, value, onChange, multiline }: {
-  label: string
-  value: Record<string, string>
-  onChange: (val: Record<string, string>) => void
-  multiline?: boolean
-}) {
-  const [translating, setTranslating] = useState(false)
-
-  async function handleTranslate() {
-    if (!value.en) return
-    setTranslating(true)
-    try {
-      const res = await fetch("/api/admin/translate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: value.en, languages: ["el", "de"] }),
-      })
-      if (res.ok) {
-        const json = await res.json()
-        onChange({ ...value, el: json.translations.el || "", de: json.translations.de || "" })
-      }
-    } finally {
-      setTranslating(false)
-    }
-  }
-
-  const InputComponent = multiline ? Textarea : Input
-  const inputProps = multiline
-    ? { className: "text-xs min-h-16 resize-none" }
-    : { className: "h-7 text-xs" }
-
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center justify-between">
-        <Label className="text-xs font-medium" style={{ color: "var(--on-surface)" }}>{label}</Label>
-        <Button variant="ghost" size="sm" onClick={handleTranslate} disabled={translating || !value.en} className="h-5 text-[10px] gap-1 px-1.5" style={{ color: "var(--primary)" }}>
-          <Globe className="size-3" />
-          {translating ? "..." : "Translate"}
-        </Button>
-      </div>
-      <div className="flex gap-2">
-        {(["en", "el", "de"] as const).map((lang) => (
-          <div key={lang} className="flex flex-col gap-1 flex-1">
-            <Label className="text-[10px] uppercase tracking-wide" style={{ color: "var(--on-surface-variant)" }}>{lang}</Label>
-            <InputComponent
-              value={value[lang] || ""}
-              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => onChange({ ...value, [lang]: e.target.value })}
-              {...inputProps}
-              style={{ background: "var(--surface-container-lowest)", borderColor: "var(--outline-variant)" }}
-            />
-          </div>
-        ))}
-      </div>
-    </div>
-  )
 }
 
 /* ─── Main Editor ─────────────────────────────────────────────────────── */
@@ -146,6 +88,27 @@ export function ArticleEditorClient({ article }: Props) {
   function removeMedia(url: string) {
     setMedia((prev) => prev.filter((u) => u !== url))
   }
+
+  /* Writes the search title and description from the English article. Sends
+     the text rather than the id, so it works before the draft has been saved. */
+  const [generatingMeta, setGeneratingMeta] = useState(false)
+
+  const generateMeta = useCallback(async () => {
+    setGeneratingMeta(true)
+    try {
+      const res = await fetch("/api/admin/articles/generate-meta", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: title.en, shortDesc: shortDesc.en, description: description.en }),
+      })
+      if (!res.ok) return
+      const json = await res.json()
+      if (json.metaTitle) setMetaTitle(json.metaTitle)
+      if (json.metaDesc) setMetaDesc(json.metaDesc)
+    } finally {
+      setGeneratingMeta(false)
+    }
+  }, [title.en, shortDesc.en, description.en])
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -232,9 +195,6 @@ export function ArticleEditorClient({ article }: Props) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main content */}
         <div className="lg:col-span-2 flex flex-col gap-5">
-          {/* Title */}
-          <TranslatableField label="Title" value={title} onChange={setTitle} />
-
           {/* Slug */}
           <div className="flex flex-col gap-1">
             <Label className="text-xs font-medium" style={{ color: "var(--on-surface)" }}>Slug</Label>
@@ -256,11 +216,15 @@ export function ArticleEditorClient({ article }: Props) {
             onTagsChange={setTagIds}
           />
 
-          {/* Short Description */}
-          <TranslatableField label="Short Description" value={shortDesc} onChange={setShortDesc} multiline />
-
-          {/* Description (rich) */}
-          <TranslatableField label="Full Description" value={description} onChange={setDescription} multiline />
+          {/* One panel per language, each holding that language's title, short
+              description and body. Grouped by field instead, three languages
+              shared the width and an article was being written into a box a
+              few centimetres wide. */}
+          <ArticleLanguagePanels
+            title={title} onTitle={setTitle}
+            shortDesc={shortDesc} onShortDesc={setShortDesc}
+            description={description} onDescription={setDescription}
+          />
         </div>
 
         {/* Sidebar */}
@@ -372,9 +336,33 @@ export function ArticleEditorClient({ article }: Props) {
 
           {/* SEO */}
           <div className="flex flex-col gap-3 rounded-lg p-4" style={{ background: "var(--surface-container)", border: "1px solid var(--outline-variant)" }}>
-            <Label className="text-xs font-semibold" style={{ fontFamily: "var(--font-display)", color: "var(--primary)" }}>SEO / Meta</Label>
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-semibold" style={{ fontFamily: "var(--font-display)", color: "var(--primary)" }}>SEO / Meta</Label>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={generateMeta}
+                disabled={generatingMeta || !(title.en || shortDesc.en || description.en)}
+                className="h-6 gap-1 px-1.5 text-[10px]"
+                style={{ color: "var(--primary)" }}
+                title={(title.en || shortDesc.en || description.en)
+                  ? "Write both from the English article"
+                  : "Write the English first"}
+              >
+                <Globe className="size-3" />
+                {generatingMeta ? "Writing…" : "Generate"}
+              </Button>
+            </div>
+
+            {/* Counters against the limits Google truncates at, so a line that
+                will be cut off is visible before it is saved. */}
             <div className="flex flex-col gap-1">
-              <Label className="text-[10px] uppercase tracking-wide" style={{ color: "var(--on-surface-variant)" }}>Meta Title</Label>
+              <div className="flex items-baseline justify-between">
+                <Label className="text-[10px] uppercase tracking-wide" style={{ color: "var(--on-surface-variant)" }}>Meta Title</Label>
+                <span className="text-[10px] tabular-nums" style={{ color: metaTitle.length > 60 ? "#C1782A" : "var(--on-surface-variant)", opacity: 0.75 }}>
+                  {metaTitle.length}/60
+                </span>
+              </div>
               <Input
                 value={metaTitle}
                 onChange={(e) => setMetaTitle(e.target.value)}
@@ -384,12 +372,18 @@ export function ArticleEditorClient({ article }: Props) {
               />
             </div>
             <div className="flex flex-col gap-1">
-              <Label className="text-[10px] uppercase tracking-wide" style={{ color: "var(--on-surface-variant)" }}>Meta Description</Label>
+              <div className="flex items-baseline justify-between">
+                <Label className="text-[10px] uppercase tracking-wide" style={{ color: "var(--on-surface-variant)" }}>Meta Description</Label>
+                <span className="text-[10px] tabular-nums" style={{ color: metaDesc.length > 155 ? "#C1782A" : "var(--on-surface-variant)", opacity: 0.75 }}>
+                  {metaDesc.length}/155
+                </span>
+              </div>
               <Textarea
                 value={metaDesc}
                 onChange={(e) => setMetaDesc(e.target.value)}
                 placeholder="SEO description (defaults to short description)"
-                className="text-xs min-h-16 resize-none"
+                rows={3}
+                className="resize-y text-xs"
                 style={{ background: "var(--surface-container-lowest)", borderColor: "var(--outline-variant)" }}
               />
             </div>
