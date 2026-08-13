@@ -106,6 +106,14 @@ export function PlanAgent({
     const next = [...messages, { role: "user" as const, content: trimmed }]
     setMessages(next)
     turn(next, answers)
+
+    /* A tapped quick reply is removed from the DOM the moment the turn starts,
+       so focus falls to the body and the next answer has to be aimed at again.
+       Put the caret back where it belongs — on pointer devices only, or a
+       phone would throw its keyboard up after every tap. */
+    if (typeof window !== "undefined" && window.matchMedia?.("(pointer: fine)").matches) {
+      requestAnimationFrame(() => inputRef.current?.focus())
+    }
   }
 
   const restart = () => {
@@ -254,7 +262,12 @@ export function PlanAgent({
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") say(input) }}
-          disabled={thinking || phase !== "talking"}
+          /* Deliberately NOT disabled while the reply is being written.
+             Disabling an input blurs it, and it does not come back when the
+             attribute is removed — so every answer cost the caret. `say`
+             already refuses to send mid-turn, which is the only thing the
+             disabled attribute was buying. */
+          disabled={phase !== "talking"}
           placeholder={t("plan.placeholder", "Type your answer…")}
           className="flex-1 rounded-full px-4 py-2.5 text-[15px] outline-none"
           style={{ background: "var(--surface-sunken)", border: "1px solid var(--border-input)", color: "var(--text-body)" }}

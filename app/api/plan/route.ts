@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { sendMail } from "@/lib/mail"
 import { buildPlanBrief } from "@/lib/plan-brief"
-import { customerEmail, teamEmail, textVersion } from "@/lib/plan-email"
+import { customerEmail, customerSubject, teamEmail, textVersion } from "@/lib/plan-email"
 import { crewSize, validate, type PlanAnswers } from "@/lib/plan-wizard"
 
 export const dynamic = "force-dynamic"
@@ -65,6 +65,9 @@ export async function POST(req: NextRequest) {
         preferredCategory: answers.boatKind === "either" ? null : answers.boatKind,
         budget: answers.budgetTo ?? answers.budgetFrom ?? null,
         currency: "EUR",
+        // Every charter leaves from and returns to the pontoon in Lefkada.
+        baseFrom: "Lefkada",
+        baseTo: "Lefkada",
         notes: answers.notes?.trim() || null,
         wizard: answers as unknown as object,
       },
@@ -109,7 +112,7 @@ export async function POST(req: NextRequest) {
         : Promise.resolve(),
       sendMail({
         to: [email],
-        subject: "Your sailing plan — Ionische Yacht Charter",
+        subject: customerSubject(answers),
         html: customerEmail(answers),
       }),
     ])

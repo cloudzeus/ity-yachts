@@ -80,17 +80,23 @@ export const PRIORITY_OPTIONS = [
   "budget",
 ] as const
 
+/** The services IYC actually offers — the same six on the homepage, plus the
+ *  on-board extras from the yacht pages. Nothing here that we cannot supply. */
 export const EXTRA_OPTIONS = [
   "provisioning",
   "transfer",
   "skipper",
+  "instructor",
   "hostess",
+  "weathersms",
   "sup",
   "outboard",
-  "wifi",
+  "blister",
   "accommodation",
 ] as const
 
+/** Every charter starts and ends on the IYC pontoon in Lefkada harbour. These
+ *  are the waters they sail to, never a choice of base. */
 export const REGION_OPTIONS = [
   "lefkada",
   "meganisi",
