@@ -173,7 +173,7 @@ export function TextComponentEditor({
             className="w-full"
             style={{ borderColor: "var(--primary)", color: "var(--primary)" }}
           >
-            {translating ? "Translating…" : "Translate via DeepSeek"}
+            {translating ? "Translating…" : "Translate with AI assistance"}
           </Button>
 
           <div className="flex justify-end gap-2 pt-2">

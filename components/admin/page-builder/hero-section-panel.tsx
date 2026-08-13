@@ -191,7 +191,7 @@ export function HeroSectionPanel({ data, onChange }: HeroSectionPanelProps) {
               onClick={translateAll}
               disabled={translatingField !== null}
             >
-              {translatingField === "all" ? "Translating\u2026" : "Translate All via DeepSeek"}
+              {translatingField === "all" ? "Translating\u2026" : "Translate all with AI assistance"}
             </Button>
           )}
           <Button
@@ -480,7 +480,7 @@ function TranslatableField({
           onClick={() => onTranslate(field)}
           disabled={translating || !safeValues.en}
         >
-          {translating ? "Translating\u2026" : "DeepSeek"}
+          {translating ? "Translating\u2026" : "Translate"}
         </Button>
       </div>
       <div className="flex gap-2">

@@ -225,7 +225,7 @@ export function TablesClient({ counts }: Props) {
     }
   }
 
-  // DeepSeek translate: translate EN text to EL + DE
+  // AI assistance: translate EN text to EL + DE
   async function translateName(itemId: number, directName?: TranslatedName) {
     const name = directName ?? (editData.name as TranslatedName)
     if (!name?.en) {
@@ -562,7 +562,7 @@ export function TablesClient({ counts }: Props) {
                                     color: "var(--primary)",
                                     border: "1px solid rgba(21,101,192,0.2)",
                                   }}
-                                  title="Translate EN to EL + DE via DeepSeek"
+                                  title="Translate EN to EL and DE with AI assistance"
                                 >
                                   {translating ? (
                                     <Loader2 className="size-3 animate-spin" />
@@ -626,7 +626,7 @@ export function TablesClient({ counts }: Props) {
                                     color: "#9C27B0",
                                     border: "1px solid rgba(156,39,176,0.2)",
                                   }}
-                                  title="Ask DeepSeek to suggest icons"
+                                  title="Suggest icons with AI assistance"
                                 >
                                   {aiSuggestingIcon ? (
                                     <Loader2 className="size-3 animate-spin" />
@@ -764,7 +764,7 @@ export function TablesClient({ counts }: Props) {
                                     color: "#9C27B0",
                                     border: "1px solid rgba(156,39,176,0.2)",
                                   }}
-                                  title="Ask DeepSeek to find logo info"
+                                  title="Find logo details with AI assistance"
                                 >
                                   {aiSuggestingLogo === item.id ? (
                                     <Loader2 className="size-3 animate-spin" />

@@ -253,7 +253,7 @@ export function YachtDetailClient({ yacht: initial, lookups }: { yacht: any; loo
     return [...own, ...external]
   }, [yacht.bookings, yacht.availability])
 
-  // ─── Translate All via DeepSeek ──────────────────────────
+  // ─── Translate all with AI assistance ──────────────────────────
 
   const handleTranslateAll = useCallback(async () => {
     const highlights = yacht.highlightsTranslations?.en
@@ -292,7 +292,7 @@ export function YachtDetailClient({ yacht: initial, lookups }: { yacht: any; loo
         })
       }
     } catch {
-      alert("Translation failed. Check DeepSeek API key in settings.")
+      alert("Translation failed. Check the AI key in settings.")
     } finally {
       setTranslatingAll(false)
     }
@@ -636,7 +636,7 @@ export function YachtDetailClient({ yacht: initial, lookups }: { yacht: any; loo
                   color: "var(--primary)",
                   border: "1px solid rgba(21,101,192,0.2)",
                 }}
-                title="Translate all English text to Greek + German via DeepSeek"
+                title="Translate all English text to Greek and German with AI assistance"
               >
                 {translatingAll ? (
                   <Loader2 className="size-3.5 animate-spin" />

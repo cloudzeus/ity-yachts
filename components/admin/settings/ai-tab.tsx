@@ -118,9 +118,12 @@ export function AITab({ initialData }: { initialData?: Partial<AIData> }) {
         </div>
 
         <div style={{ borderTop: "1px solid var(--outline-variant)", paddingTop: "1rem" }}>
+          {/* The provider is named here and nowhere else: this is the one place
+              it has to be, because you cannot fetch the right key without
+              knowing whose account to fetch it from. */}
           <MaskedField
-            label="DeepSeek API Key"
-            description="Used for all website translations via DeepSeek's language model."
+            label="AI API key (DeepSeek)"
+            description="Powers the translation and content-writing buttons across the admin. Get it from your DeepSeek account."
             value={data.deepseekKey}
             onChange={(v) => setData((p) => ({ ...p, deepseekKey: v }))}
             placeholder="sk-..."

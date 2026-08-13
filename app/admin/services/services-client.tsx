@@ -488,7 +488,7 @@ export function ServicesClient({ initialData }: Props) {
             {/* Translate button */}
             <Button variant="outline" onClick={handleTranslateTitle} disabled={translating || !newTitleEn} className="w-full h-7 text-xs gap-1.5" style={{ borderColor: "var(--primary)", color: "var(--primary)" }}>
               <Globe className="size-3" />
-              {translating ? "Translating…" : "Translate via DeepSeek"}
+              {translating ? "Translating…" : "Translate with AI assistance"}
             </Button>
 
             <div className="flex gap-2">

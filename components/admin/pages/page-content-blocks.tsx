@@ -289,7 +289,7 @@ export function PageContentBlocks({ pageId }: PageContentBlocksProps) {
               className="w-full h-8 text-xs"
               style={{ borderColor: "var(--primary)", color: "var(--primary)" }}
             >
-              {translating ? "Translating…" : "Translate via DeepSeek"}
+              {translating ? "Translating…" : "Translate with AI assistance"}
             </Button>
 
             <div className="flex justify-end gap-2 pt-1">

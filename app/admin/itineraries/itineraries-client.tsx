@@ -362,7 +362,7 @@ export function ItinerariesClient({ initialData }: Props) {
 
             <Button variant="outline" onClick={handleTranslateName} disabled={translatingName || !newNameEn} className="w-full h-7 text-xs gap-1.5" style={{ borderColor: "var(--primary)", color: "var(--primary)" }}>
               <Globe className="size-3" />
-              {translatingName ? "Translating…" : "Translate via DeepSeek"}
+              {translatingName ? "Translating…" : "Translate with AI assistance"}
             </Button>
 
             {/* Slug */}

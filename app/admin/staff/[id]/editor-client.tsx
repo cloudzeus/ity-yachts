@@ -351,7 +351,7 @@ export function StaffEditorClient({ member, users, existingDepartments }: Props)
     }
   }
 
-  // ─── Generate bio via DeepSeek ──────────────────────────────
+  // ─── Generate bio with AI assistance ──────────────────────────────
   const [generating, setGenerating] = useState(false)
   async function handleGenerateBio() {
     if (!name) return
@@ -564,7 +564,7 @@ export function StaffEditorClient({ member, users, existingDepartments }: Props)
               <h2 className="text-sm font-semibold" style={{ fontFamily: "var(--font-display)", color: "var(--on-surface)" }}>Bio</h2>
               <Button variant="outline" size="sm" onClick={handleGenerateBio} disabled={generating || !name} className="h-7 text-[10px] gap-1" style={{ borderColor: "var(--outline-variant)", color: "var(--primary)" }}>
                 {generating ? <Loader2 className="size-3 animate-spin" /> : <Sparkles className="size-3" />}
-                {generating ? "Generating…" : "Generate via DeepSeek"}
+                {generating ? "Generating…" : "Generate with AI assistance"}
               </Button>
             </div>
             <RichTranslatableField label="Bio" value={bio} onChange={setBio} />

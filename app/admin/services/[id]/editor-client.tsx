@@ -383,7 +383,7 @@ export function ServiceEditorClient({ service }: Props) {
     }
   }
 
-  // Generate all content via DeepSeek (EN + translations to EL & DE)
+  // Generate all content with AI assistance (EN + translations to EL & DE)
   async function handleGenerateContent() {
     setGeneratingContent(true)
     try {
@@ -521,7 +521,7 @@ export function ServiceEditorClient({ service }: Props) {
                 disabled={generatingContent || !title?.en}
                 className="h-7 text-[10px] gap-1.5"
                 style={{ borderColor: "var(--secondary)", color: "var(--secondary)" }}
-                title={!title?.en ? "Add an English title first" : "Generate full description in EN + EL + DE via DeepSeek"}
+                title={!title?.en ? "Add an English title first" : "Generate the full description in EN, EL and DE with AI assistance"}
               >
                 {generatingContent ? (
                   <Loader2 className="size-3 animate-spin" />

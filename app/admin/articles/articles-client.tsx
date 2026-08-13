@@ -370,7 +370,7 @@ export function ArticlesClient({ initialData }: Props) {
             {/* Translate title */}
             <Button variant="outline" onClick={handleTranslateTitle} disabled={translatingTitle || !newTitleEn} className="w-full h-7 text-xs gap-1.5" style={{ borderColor: "var(--primary)", color: "var(--primary)" }}>
               <Globe className="size-3" />
-              {translatingTitle ? "Translating..." : "Translate Title via DeepSeek"}
+              {translatingTitle ? "Translating..." : "Translate title with AI assistance"}
             </Button>
 
             {/* Title EL + DE */}
@@ -406,7 +406,7 @@ export function ArticlesClient({ initialData }: Props) {
             {/* Translate category */}
             <Button variant="outline" onClick={handleTranslateCategory} disabled={translatingCategory || !newCategoryEn} className="w-full h-7 text-xs gap-1.5" style={{ borderColor: "var(--primary)", color: "var(--primary)" }}>
               <Globe className="size-3" />
-              {translatingCategory ? "Translating..." : "Translate Category via DeepSeek"}
+              {translatingCategory ? "Translating..." : "Translate category with AI assistance"}
             </Button>
 
             {/* Category EL + DE */}

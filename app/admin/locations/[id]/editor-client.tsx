@@ -313,7 +313,7 @@ export function LocationEditorClient({ location }: Props) {
             style={{ borderColor: "var(--primary)", color: "var(--primary)", borderRadius: "var(--radius-xs)" }}
           >
             {generating ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
-            {generating ? "Generating travel content…" : "Generate Content via DeepSeek"}
+            {generating ? "Generating travel content…" : "Generate content with AI assistance"}
           </Button>
 
           {/* Short description */}

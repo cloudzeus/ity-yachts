@@ -465,7 +465,7 @@ export function LocationsClient({ initialData, mapsKey }: Props) {
             </div>
 
             <Button variant="outline" onClick={handleTranslateName} disabled={translatingName || !newName} className="w-full h-7 text-xs" style={{ borderColor: "var(--primary)", color: "var(--primary)" }}>
-              {translatingName ? "Translating…" : "Translate via DeepSeek"}
+              {translatingName ? "Translating…" : "Translate with AI assistance"}
             </Button>
 
             {/* City + Municipality */}

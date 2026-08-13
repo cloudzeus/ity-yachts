@@ -51,7 +51,7 @@ export function TranslationsPanel({ translations, onTranslationsChange }: Transl
           onClick={handleTranslate}
           disabled={translating || !translations.en}
         >
-          {translating ? "Translating…" : "Translate via DeepSeek"}
+          {translating ? "Translating…" : "Translate with AI assistance"}
         </Button>
       </div>
       <div className="flex gap-2">

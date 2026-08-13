@@ -645,7 +645,7 @@ export function PagesClient({ initialData }: Props) {
               className="w-full h-7 text-xs"
               style={{ borderColor: "var(--primary)", color: "var(--primary)" }}
             >
-              {translatingName ? "Translating…" : "Translate via DeepSeek"}
+              {translatingName ? "Translating…" : "Translate with AI assistance"}
             </Button>
 
             <div className="flex flex-col gap-1">
