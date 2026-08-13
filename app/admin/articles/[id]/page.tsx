@@ -13,16 +13,23 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 export default async function ArticleEditorPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const article = await db.article.findUnique({ where: { id } })
+  const article = await db.article.findUnique({
+    where: { id },
+    include: { tags: { select: { tagId: true } } },
+  })
 
   if (!article) notFound()
+
+  const { tags, ...rest } = article
 
   return (
     <ArticleEditorClient
       article={{
-        ...article,
+        ...rest,
         title: article.title as Record<string, string>,
         category: article.category as Record<string, string>,
+        tagIds: tags.map((t) => t.tagId),
+        publishedAt: article.publishedAt?.toISOString() ?? null,
         shortDesc: article.shortDesc as Record<string, string>,
         description: article.description as Record<string, string>,
         media: article.media as string[],

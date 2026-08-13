@@ -12,6 +12,8 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { MediaPicker, type PickedMedia } from "@/components/admin/media-picker"
+import { ArticleTaxonomyFields } from "@/components/admin/articles/article-taxonomy-fields"
+import { ArticleWriter } from "@/components/admin/articles/article-writer"
 
 type ArticleData = {
   id: string
@@ -20,6 +22,10 @@ type ArticleData = {
   status: string
   date: string
   category: Record<string, string>
+  categoryId: string | null
+  tagIds: string[]
+  publishedAt: string | null
+  readMinutes: number | null
   author: string
   shortDesc: Record<string, string>
   description: Record<string, string>
@@ -105,6 +111,10 @@ export function ArticleEditorClient({ article }: Props) {
   const [status, setStatus] = useState(article.status)
   const [date, setDate] = useState(article.date.slice(0, 10))
   const [category, setCategory] = useState(article.category)
+  const [categoryId, setCategoryId] = useState(article.categoryId ?? "")
+  const [tagIds, setTagIds] = useState<string[]>(article.tagIds ?? [])
+  const [publishedAt, setPublishedAt] = useState(article.publishedAt ? article.publishedAt.slice(0, 10) : "")
+  const [readMinutes, setReadMinutes] = useState<number | null>(article.readMinutes)
   const [author, setAuthor] = useState(article.author)
   const [shortDesc, setShortDesc] = useState(article.shortDesc)
   const [description, setDescription] = useState(article.description)
@@ -147,6 +157,10 @@ export function ArticleEditorClient({ article }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title, slug, status, date, category, author,
+          categoryId: categoryId || null,
+          tagIds,
+          publishedAt: publishedAt || null,
+          readMinutes,
           shortDesc, description,
           defaultMedia: defaultMedia || null,
           defaultMediaType: defaultMediaType || null,
@@ -159,7 +173,7 @@ export function ArticleEditorClient({ article }: Props) {
     } finally {
       setSaving(false)
     }
-  }, [article.id, title, slug, status, date, category, author, shortDesc, description, defaultMedia, defaultMediaType, media, metaTitle, metaDesc])
+  }, [article.id, title, slug, status, date, category, categoryId, tagIds, publishedAt, readMinutes, author, shortDesc, description, defaultMedia, defaultMediaType, media, metaTitle, metaDesc])
 
   // Auto-save debounce (1.5s)
   useEffect(() => {
@@ -191,10 +205,27 @@ export function ArticleEditorClient({ article }: Props) {
             </p>
           </div>
         </div>
-        <Button size="sm" onClick={save} disabled={saving} className="h-8 gap-2 text-xs text-white" style={{ background: "var(--gradient-ocean)", borderRadius: "var(--radius-xs)" }}>
-          <Save className="size-3.5" />
-          {saving ? "Saving..." : "Save"}
-        </Button>
+        <div className="flex items-center gap-2">
+          <ArticleWriter
+            categoryId={categoryId}
+            tagIds={tagIds}
+            hasContent={Boolean(title.en || title.el || description.en || description.el)}
+            onDraft={(d) => {
+              /* Replaces the written fields only — media, slug, category and
+                 tags are the editor's own choices and stay put. */
+              setTitle(d.title)
+              setShortDesc(d.shortDesc)
+              setDescription(d.description)
+              if (d.metaTitle) setMetaTitle(d.metaTitle)
+              if (d.metaDesc) setMetaDesc(d.metaDesc)
+              setReadMinutes(d.readMinutes)
+            }}
+          />
+          <Button size="sm" onClick={save} disabled={saving} className="h-8 gap-2 text-xs text-white" style={{ background: "var(--gradient-ocean)", borderRadius: "var(--radius-xs)" }}>
+            <Save className="size-3.5" />
+            {saving ? "Saving..." : "Save"}
+          </Button>
+        </div>
       </div>
 
       {/* Content grid: 2/3 main + 1/3 sidebar */}
@@ -215,8 +246,15 @@ export function ArticleEditorClient({ article }: Props) {
             />
           </div>
 
-          {/* Category */}
-          <TranslatableField label="Category" value={category} onChange={setCategory} />
+          {/* Category and tags, from the managed taxonomy. The old free-text
+              category field is gone — it produced a new category for every
+              spelling and could not be renamed once used. */}
+          <ArticleTaxonomyFields
+            categoryId={categoryId}
+            onCategoryChange={setCategoryId}
+            tagIds={tagIds}
+            onTagsChange={setTagIds}
+          />
 
           {/* Short Description */}
           <TranslatableField label="Short Description" value={shortDesc} onChange={setShortDesc} multiline />
@@ -239,6 +277,29 @@ export function ArticleEditorClient({ article }: Props) {
                 <SelectItem value="published">Published</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          {/* When it goes live. Left empty, publishing stamps the moment it
+              went out; set a future date to hold it back. */}
+          <div className="flex flex-col gap-1">
+            <Label className="text-xs font-medium" style={{ color: "var(--on-surface)" }}>Publish date</Label>
+            <Input
+              value={publishedAt}
+              onChange={(e) => setPublishedAt(e.target.value)}
+              type="date"
+              className="h-7 text-xs"
+              style={{ background: "var(--surface-container-lowest)", borderColor: "var(--outline-variant)" }}
+            />
+            <p className="text-[10px]" style={{ color: "var(--on-surface-variant)" }}>
+              {publishedAt
+                ? new Date(publishedAt) > new Date()
+                  ? "Scheduled — it will not show before this date"
+                  : "Live since this date"
+                : status === "published"
+                ? "Stamped when you save"
+                : "Set on publishing"}
+              {readMinutes ? ` · ${readMinutes} min read` : ""}
+            </p>
           </div>
 
           {/* Author */}
