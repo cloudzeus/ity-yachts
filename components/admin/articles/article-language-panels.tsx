@@ -5,7 +5,7 @@ import { ChevronRight, Globe, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import { RichTextEditor } from "@/components/admin/rich-text-editor"
 
 const LANGS = ["en", "el", "de"] as const
 type Lang = (typeof LANGS)[number]
@@ -151,26 +151,23 @@ export function ArticleLanguagePanels({
                 </Field>
 
                 <Field label="Short description" hint="One or two sentences, for listing cards">
-                  <Textarea
+                  <RichTextEditor
                     value={shortDesc[l] ?? ""}
-                    onChange={(e) => onShortDesc({ ...shortDesc, [l]: e.target.value })}
-                    rows={3}
+                    onChange={(html) => onShortDesc({ ...shortDesc, [l]: html })}
+                    compact
+                    minHeight={64}
                     lang={l}
-                    spellCheck
-                    className="resize-y text-sm leading-relaxed"
-                    style={{ background: "var(--surface-container-lowest)", borderColor: "var(--outline-variant)", minHeight: 76 }}
+                    placeholder="What the reader gets, in a sentence or two"
                   />
                 </Field>
 
-                <Field label="Full description" hint="The article body — simple HTML">
-                  <Textarea
+                <Field label="Full description" hint="The article body">
+                  <RichTextEditor
                     value={description[l] ?? ""}
-                    onChange={(e) => onDescription({ ...description, [l]: e.target.value })}
-                    rows={16}
+                    onChange={(html) => onDescription({ ...description, [l]: html })}
+                    minHeight={320}
                     lang={l}
-                    spellCheck
-                    className="resize-y font-mono text-[13px] leading-relaxed"
-                    style={{ background: "var(--surface-container-lowest)", borderColor: "var(--outline-variant)", minHeight: 320 }}
+                    placeholder="Write the article here"
                   />
                 </Field>
               </div>
