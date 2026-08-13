@@ -506,81 +506,76 @@ export function TranslationsClient({ initialData }: { initialData: SiteTranslati
         className="flex-1 min-h-0 overflow-auto rounded-lg border"
         style={{ borderColor: "var(--outline-variant)", background: "var(--surface-container-lowest)" }}
       >
-        <table className="w-full text-sm" style={{ tableLayout: "fixed" }}>
-          <colgroup>
-            <col style={{ width: "220px" }} />
-            {/* 80px could not hold `catalogue.equipmentCategory`, and the badge
-                had nothing to clip it, so the namespace ran straight over the
-                English column. */}
-            <col style={{ width: "170px" }} />
-            <col />
-            <col />
-            <col />
-            <col style={{ width: "80px" }} />
-          </colgroup>
-          <thead className="sticky top-0 z-10" style={{ background: "var(--surface-container-low)" }}>
-            <tr style={{ borderBottom: "1px solid var(--outline-variant)" }}>
-              {[
-                { key: "key", label: "Key" },
-                { key: "namespace", label: "NS" },
-                { key: "en", label: "🇬🇧 English" },
-                { key: "el", label: "🇬🇷 Greek" },
-                { key: "de", label: "🇩🇪 German" },
-              ].map(({ key, label }) => (
-                <th
-                  key={key}
-                  className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider cursor-pointer select-none hover:bg-black/[0.03]"
-                  style={{ color: "var(--on-surface-variant)" }}
-                  onClick={() => handleSort(key)}
-                >
-                  {label}
-                  {sortCol === key && (
-                    <span className="ml-1 text-[10px]">{sortDir === "asc" ? "▲" : "▼"}</span>
-                  )}
-                </th>
-              ))}
-              <th className="px-2 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider" style={{ color: "var(--on-surface-variant)" }}>
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {paged.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="px-4 py-12 text-center text-sm" style={{ color: "var(--on-surface-variant)" }}>
-                  No translations found
-                </td>
-              </tr>
-            ) : (
-              paged.map((item, i) => (
-                <tr
-                  key={item.id}
-                  className="group transition-colors hover:bg-black/[0.02]"
-                  style={{ borderBottom: i < paged.length - 1 ? "1px solid var(--outline-variant)" : undefined }}
-                >
-                  {/* Key */}
-                  <td className="px-3 py-2">
-                    <code className="text-xs font-mono break-all" style={{ color: "var(--primary)" }}>{item.key}</code>
-                  </td>
+        <ul className="flex flex-col">
+          {paged.length === 0 ? (
+            <li className="px-4 py-14 text-center text-sm" style={{ color: "var(--on-surface-variant)" }}>
+              No translations found
+            </li>
+          ) : (
+            paged.map((item, i) => (
+              <li
+                key={item.id}
+                className="group px-4 py-3 transition-colors hover:bg-black/[0.015]"
+                style={{ borderTop: i ? "1px solid var(--outline-variant)" : undefined }}
+              >
+                {/* Key line */}
+                <div className="mb-2 flex items-start gap-2">
+                  <code
+                    className="min-w-0 flex-1 break-all font-mono text-[11px] leading-tight"
+                    style={{ color: "var(--primary)" }}
+                  >
+                    {item.key}
+                  </code>
+                  <span
+                    title={item.namespace}
+                    className="flex-shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium"
+                    style={{ background: "var(--surface-container)", color: "var(--on-surface-variant)" }}
+                  >
+                    {item.namespace}
+                  </span>
+                  <button
+                    onClick={() => handleRowTranslate(item)}
+                    disabled={translatingRowId === item.id || !item.en}
+                    className="flex-shrink-0 rounded p-1 transition hover:bg-black/[0.06] disabled:opacity-30"
+                    title="Fill the missing languages from the English"
+                  >
+                    {translatingRowId === item.id ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" style={{ color: "var(--secondary)" }} />
+                    ) : (
+                      <Sparkles className="h-3.5 w-3.5" style={{ color: "var(--secondary-light)" }} />
+                    )}
+                  </button>
+                  <button
+                    onClick={() => handleDelete(item.id)}
+                    className="flex-shrink-0 rounded p-1 opacity-0 transition hover:bg-red-50 group-hover:opacity-100"
+                    title="Delete"
+                  >
+                    <Trash2 className="h-3.5 w-3.5 text-red-400" />
+                  </button>
+                </div>
 
-                  {/* Namespace */}
-                  <td className="px-3 py-2">
-                    <span
-                      title={item.namespace}
-                      className="block max-w-full truncate rounded px-1.5 py-0.5 text-[10px] font-medium"
-                      style={{ background: "var(--surface-container)", color: "var(--on-surface-variant)" }}
-                    >
-                      {item.namespace}
-                    </span>
-                  </td>
-
-                  {/* EN / EL / DE — inline editable */}
+                {/* The three languages. A fixed table could not hold them —
+                    three columns behind 470px of key, namespace and actions
+                    left about 95px each, and they printed over one another.
+                    Side by side when there is room, stacked when there is not. */}
+                <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
                   {(["en", "el", "de"] as const).map((lang) => {
                     const isEditing = editingCell?.id === item.id && editingCell?.lang === lang
                     const value = item[lang]
+                    const missing = !value?.trim()
 
                     return (
-                      <td key={lang} className="px-3 py-1.5">
+                      <div key={lang} className="min-w-0">
+                        <div className="mb-1 flex items-center gap-1.5">
+                          <span aria-hidden="true" className="text-[11px]">{LANG_FLAGS[lang]}</span>
+                          <span
+                            className="text-[9px] font-semibold uppercase tracking-wider"
+                            style={{ color: missing && lang !== "en" ? "#C1782A" : "var(--on-surface-variant)" }}
+                          >
+                            {lang}
+                          </span>
+                        </div>
+
                         {isEditing ? (
                           <div className="flex flex-col gap-1">
                             <textarea
@@ -588,8 +583,8 @@ export function TranslationsClient({ initialData }: { initialData: SiteTranslati
                               value={editingValue}
                               onChange={(e) => setEditingValue(e.target.value)}
                               onKeyDown={handleEditKeyDown}
-                              rows={2}
-                              className="w-full resize-none rounded border px-2 py-1.5 text-xs outline-none focus:ring-2"
+                              rows={3}
+                              className="w-full resize-y rounded border px-2 py-1.5 text-xs outline-none"
                               style={{
                                 borderColor: "var(--primary)",
                                 color: "var(--on-surface)",
@@ -611,58 +606,39 @@ export function TranslationsClient({ initialData }: { initialData: SiteTranslati
                                 className="flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-medium transition"
                                 style={{ color: "var(--on-surface-variant)", background: "var(--surface-container)" }}
                               >
-                                <X className="h-3 w-3" />
-                                Cancel
+                                <X className="h-3 w-3" /> Cancel
                               </button>
+                              <span className="ml-1 text-[9px]" style={{ color: "var(--on-surface-variant)" }}>
+                                ⌘↵ to save · Esc to cancel
+                              </span>
                             </div>
                           </div>
                         ) : (
                           <button
                             onClick={() => startEdit(item, lang)}
-                            className="block w-full text-left rounded px-1.5 py-1 text-xs transition hover:bg-black/[0.04] cursor-text min-h-[28px]"
-                            style={{ color: value ? "var(--on-surface)" : "var(--outline)" }}
+                            className="block min-h-[38px] w-full cursor-text rounded border px-2 py-1.5 text-left text-xs leading-snug transition hover:border-[var(--primary)]"
+                            style={{
+                              borderColor: missing && lang !== "en" ? "rgba(193,120,42,.45)" : "var(--outline-variant)",
+                              background: missing ? "transparent" : "var(--surface-container-lowest)",
+                              color: value ? "var(--on-surface)" : "var(--outline)",
+                            }}
                             title="Click to edit"
                           >
                             {value || (
-                              <span className="italic opacity-50" style={{ color: lang !== "en" ? "#C1782A" : undefined }}>
-                                {lang === "en" ? "empty — click to add" : "⚠ missing — click to add"}
+                              <span className="italic" style={{ color: lang === "en" ? "var(--outline)" : "#C1782A" }}>
+                                {lang === "en" ? "empty" : "missing — click to add"}
                               </span>
                             )}
                           </button>
                         )}
-                      </td>
+                      </div>
                     )
                   })}
-
-                  {/* Actions */}
-                  <td className="px-2 py-2 text-center">
-                    <div className="flex items-center justify-center gap-0.5">
-                      <button
-                        onClick={() => handleRowTranslate(item)}
-                        disabled={translatingRowId === item.id || !item.en}
-                        className="rounded p-1 transition hover:bg-black/[0.06] disabled:opacity-30"
-                        title="AI Translate"
-                      >
-                        {translatingRowId === item.id ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" style={{ color: "var(--secondary)" }} />
-                        ) : (
-                          <Sparkles className="h-3.5 w-3.5" style={{ color: "var(--secondary-light)" }} />
-                        )}
-                      </button>
-                      <button
-                        onClick={() => handleDelete(item.id)}
-                        className="rounded p-1 transition hover:bg-red-50 opacity-0 group-hover:opacity-100"
-                        title="Delete"
-                      >
-                        <Trash2 className="h-3.5 w-3.5 text-red-400" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+                </div>
+              </li>
+            ))
+          )}
+        </ul>
       </div>
 
       {/* Pagination — fixed at bottom */}
