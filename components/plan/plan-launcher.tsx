@@ -26,24 +26,37 @@ export function PlanLauncher() {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const [everOpened, setEverOpened] = useState(false)
+  /* Bumped once an enquiry has gone out, which remounts the agent — otherwise
+     reopening the panel lands back on a stale confirmation card. */
+  const [session, setSession] = useState(0)
   const panelRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
 
   // Built on first open, then kept: a visitor who never touches it pays for
   // nothing, and one who closes it mid-conversation comes back to the thread.
-  useEffect(() => {
-    if (open) setEverOpened(true)
-  }, [open])
+  const openPanel = useCallback(() => {
+    setEverOpened(true)
+    setOpen(true)
+  }, [])
 
   useEffect(() => {
-    const onOpen = () => setOpen(true)
-    window.addEventListener(OPEN_PLANNER, onOpen)
-    return () => window.removeEventListener(OPEN_PLANNER, onOpen)
-  }, [])
+    window.addEventListener(OPEN_PLANNER, openPanel)
+    return () => window.removeEventListener(OPEN_PLANNER, openPanel)
+  }, [openPanel])
 
   const close = useCallback(() => {
     setOpen(false)
     buttonRef.current?.focus()
+  }, [])
+
+  /* The conversation is over once the enquiry is sent, so the panel should not
+     sit there. Long enough to read the confirmation, then it lets go — and the
+     next open starts a new conversation rather than resuming a finished one. */
+  const onSent = useCallback(() => {
+    window.setTimeout(() => {
+      setOpen(false)
+      setSession((n) => n + 1)
+    }, 6000)
   }, [])
 
   useEffect(() => {
@@ -93,7 +106,9 @@ export function PlanLauncher() {
           }}
         >
           <PlanAgent
+            key={session}
             variant="panel"
+            onSent={onSent}
             headerAction={
               <button
                 onClick={close}
@@ -112,7 +127,7 @@ export function PlanLauncher() {
       {/* The launcher itself */}
       <button
         ref={buttonRef}
-        onClick={() => (open ? close() : setOpen(true))}
+        onClick={() => (open ? close() : openPanel())}
         aria-expanded={open}
         aria-label={open ? t("plan.close", "Close") : t("header.startPlanning", "Start planning")}
         className="fixed z-[96] flex items-center gap-2.5 rounded-full pl-4 pr-5 py-3.5 text-sm font-semibold shadow-lg transition-transform hover:scale-[1.03] active:scale-[0.98]"

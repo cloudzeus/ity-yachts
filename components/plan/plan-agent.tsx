@@ -25,10 +25,13 @@ type Phase = "talking" | "sending" | "sent" | "error"
 export function PlanAgent({
   variant = "standalone",
   headerAction,
+  onSent,
 }: {
   /** "panel" fills its docked container; "standalone" sizes itself. */
   variant?: "standalone" | "panel"
   headerAction?: React.ReactNode
+  /** Fired once the enquiry has actually gone out. */
+  onSent?: () => void
 } = {}) {
   const { t, locale } = useTranslations()
   const [messages, setMessages] = useState<Msg[]>([])
@@ -84,7 +87,9 @@ export function PlanAgent({
         body: JSON.stringify(final),
       })
       const data = await res.json()
-      setPhase(res.ok && data.ok ? "sent" : "error")
+      const ok = res.ok && data.ok
+      setPhase(ok ? "sent" : "error")
+      if (ok) onSent?.()
     } catch {
       setPhase("error")
     }
@@ -124,53 +129,60 @@ export function PlanAgent({
     turn([], {})
   }
 
+  const shell = {
+    background: "var(--surface-card)",
+    border: "1px solid var(--border-hairline)",
+    boxShadow: variant === "panel" ? "none" : "var(--shadow-md)",
+    borderRadius: variant === "panel" ? 20 : undefined,
+    height: variant === "panel" ? "100%" : "min(72vh, 680px)",
+  } as const
+
+  /* Who you are talking to. Rendered in the sent state too — it carries the
+     close button, and dropping it left the docked panel with no way out. */
+  const header = (
+    <div className="flex items-center gap-3 px-6 py-4" style={{ borderBottom: "1px solid var(--border-hairline)", background: "linear-gradient(158deg, var(--iyc-ionian-700), var(--iyc-ionian-900))" }}>
+      <span className="relative h-8 w-20 flex-shrink-0">
+        <Image src="/brand/iyc-logo-navy.svg" alt="IYC" fill className="object-contain brightness-0 invert" unoptimized />
+      </span>
+      <div className="min-w-0">
+        <div className="text-sm font-semibold text-white">{t("plan.agent.name", "Planning assistant")}</div>
+        <div className="text-[11px]" style={{ color: "rgba(255,255,255,0.66)" }}>
+          {t("plan.agent.role", "Lefkada · answers in a minute")}
+        </div>
+      </div>
+      {headerAction && <div className="ml-auto">{headerAction}</div>}
+    </div>
+  )
+
   if (phase === "sent") {
     return (
-      <div className="rounded-3xl p-10 text-center" style={{ background: "var(--surface-card)", border: "1px solid var(--border-hairline)", boxShadow: "var(--shadow-md)" }}>
-        <span className="mx-auto mb-5 grid h-14 w-14 place-items-center rounded-full" style={{ background: "var(--iyc-ionian-50)", color: "var(--iyc-ionian-600)" }}>
-          <Check size={26} strokeWidth={1.5} />
-        </span>
-        <h2 className="mb-3 text-2xl md:text-3xl" style={{ fontFamily: "var(--font-display)", color: "var(--text-heading)" }}>
-          {t("plan.sent.title", "Your plan is on its way")}
-        </h2>
-        <p className="mx-auto mb-7 max-w-[46ch] text-base leading-relaxed" style={{ color: "var(--text-muted)" }}>
-          {t("plan.sent.body", "We have sent you a copy of everything you told us. Maria or Thomas will write to you personally, usually within a day.")}
-        </p>
-        <Link
-          href="/fleet"
-          className="inline-flex items-center gap-2 rounded-[var(--iyc-radius-sm)] px-7 py-3.5 text-sm font-semibold"
-          style={{ background: "var(--action-accent)", color: "#ffffff", fontFamily: "var(--font-display)" }}
-        >
-          {t("plan.sent.cta", "Look at the fleet meanwhile")}
-        </Link>
+      <div className="flex flex-col overflow-hidden rounded-3xl" style={shell}>
+        {variant === "panel" && header}
+        <div className="flex flex-1 flex-col items-center justify-center px-8 py-10 text-center">
+          <span className="mb-5 grid h-14 w-14 place-items-center rounded-full" style={{ background: "var(--iyc-ionian-50)", color: "var(--iyc-ionian-600)" }}>
+            <Check size={26} strokeWidth={1.5} />
+          </span>
+          <h2 className="mb-3 text-2xl md:text-3xl" style={{ fontFamily: "var(--font-display)", color: "var(--text-heading)" }}>
+            {t("plan.sent.title", "Your plan is on its way")}
+          </h2>
+          <p className="mb-7 max-w-[46ch] text-base leading-relaxed" style={{ color: "var(--text-muted)" }}>
+            {t("plan.sent.body", "We have sent you a copy of everything you told us. Maria or Thomas will write to you personally, usually within a day.")}
+          </p>
+          <Link
+            href="/fleet"
+            className="inline-flex items-center gap-2 rounded-[var(--iyc-radius-sm)] px-7 py-3.5 text-sm font-semibold"
+            style={{ background: "var(--action-accent)", color: "#ffffff", fontFamily: "var(--font-display)" }}
+          >
+            {t("plan.sent.cta", "Look at the fleet meanwhile")}
+          </Link>
+        </div>
       </div>
     )
   }
 
   return (
-    <div
-      className="flex flex-col overflow-hidden rounded-3xl"
-      style={{
-        background: "var(--surface-card)",
-        border: "1px solid var(--border-hairline)",
-        boxShadow: variant === "panel" ? "none" : "var(--shadow-md)",
-        borderRadius: variant === "panel" ? 20 : undefined,
-        height: variant === "panel" ? "100%" : "min(72vh, 680px)",
-      }}
-    >
-      {/* Who you are talking to */}
-      <div className="flex items-center gap-3 px-6 py-4" style={{ borderBottom: "1px solid var(--border-hairline)", background: "linear-gradient(158deg, var(--iyc-ionian-700), var(--iyc-ionian-900))" }}>
-        <span className="relative h-8 w-20 flex-shrink-0">
-          <Image src="/brand/iyc-logo-navy.svg" alt="IYC" fill className="object-contain brightness-0 invert" unoptimized />
-        </span>
-        <div className="min-w-0">
-          <div className="text-sm font-semibold text-white">{t("plan.agent.name", "Planning assistant")}</div>
-          <div className="text-[11px]" style={{ color: "rgba(255,255,255,0.66)" }}>
-            {t("plan.agent.role", "Lefkada · answers in a minute")}
-          </div>
-        </div>
-        {headerAction && <div className="ml-auto">{headerAction}</div>}
-      </div>
+    <div className="flex flex-col overflow-hidden rounded-3xl" style={shell}>
+      {header}
 
       {/* Conversation */}
       <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto px-5 py-6 md:px-7">
