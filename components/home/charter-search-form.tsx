@@ -259,10 +259,7 @@ export function CharterSearchForm({ ranges }: { ranges: FleetRanges }) {
   /* Built from the fleet, not from a fixed list, so the options can never
      offer a boat we do not have. Recomputed only when the ranges change. */
   const bottomFields: SearchField[] = useMemo(() => {
-    /* Two "any" options, not one: Greek agrees with the noun, so the guests
-       filter needs «Όλοι» where the cabins filter needs «Όλες». */
-    const anyGuests = { value: "", label: t("search.anyGuests", "Any") }
-    const anyCabins = { value: "", label: t("search.any", "Any") }
+    const any = { value: "", label: t("search.any", "All options") }
     const m = t("search.metresShort", "m")
 
     return [
@@ -270,13 +267,13 @@ export function CharterSearchForm({ ranges }: { ranges: FleetRanges }) {
         icon: Users,
         label: t("search.berths", "Guests"),
         key: "guests",
-        options: [anyGuests, ...buckets(ranges.maxBerths, 4).map((b) => ({ value: b.value, label: b.label }))],
+        options: [any, ...buckets(ranges.maxBerths, 4).map((b) => ({ value: b.value, label: b.label }))],
       },
       {
         icon: DoorOpen,
         label: t("search.cabins", "Cabins"),
         key: "cabins",
-        options: [anyCabins, ...buckets(ranges.maxCabins, 2).map((b) => ({ value: b.value, label: b.label }))],
+        options: [any, ...buckets(ranges.maxCabins, 2).map((b) => ({ value: b.value, label: b.label }))],
       },
       {
         icon: Ruler,
