@@ -54,7 +54,9 @@ export function RichTextEditor({
     content: value || "",
     editorProps: {
       attributes: {
-        class: "iyc-prose focus:outline-none",
+        /* `--plain` suppresses the drop cap: this is an editing surface, and a
+           three-line initial in a form field is not what the author typed. */
+        class: "iyc-prose iyc-prose--plain focus:outline-none",
         style: `min-height:${minHeight}px`,
         ...(lang ? { lang } : {}),
       },

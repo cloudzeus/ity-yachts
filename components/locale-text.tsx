@@ -12,6 +12,7 @@ export function LocaleText({
   tKey,
   fallback = "",
   html = false,
+  plain = false,
   uppercase = false,
   className,
   style,
@@ -22,13 +23,21 @@ export function LocaleText({
   fallback?: string
   /** Render as dangerouslySetInnerHTML for rich text content */
   html?: boolean
+  /**
+   * Strip HTML tags. For fields written in the rich editor but shown in a
+   * summary slot — a clamped card line wants text, not markup.
+   */
+  plain?: boolean
   /** Strip Greek accents for CSS uppercase contexts */
   uppercase?: boolean
   className?: string
   style?: React.CSSProperties
 }) {
   const { locale, t } = useTranslations()
-  const strip = (s: string) => (uppercase ? removeGreekTonos(s) : s)
+  const strip = (s: string) => {
+    const stripped = plain ? s.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim() : s
+    return uppercase ? removeGreekTonos(stripped) : stripped
+  }
   if (tKey) {
     const text = strip(t(tKey, fallback))
     if (html) {

@@ -8,9 +8,9 @@ import { icons } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { MediaPicker, type PickedMedia } from "@/components/admin/media-picker"
+import { RichTextEditor } from "@/components/admin/rich-text-editor"
 
 type ServiceData = {
   id: string
@@ -440,6 +440,11 @@ export function ServiceEditorClient({ service }: Props) {
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
       setter((prev) => ({ ...prev, [activeLang]: e.target.value }))
 
+  /* The rich editor hands back a string rather than an event. */
+  const updateValue = (setter: React.Dispatch<React.SetStateAction<Record<string, string>>>) =>
+    (value: string) =>
+      setter((prev) => ({ ...prev, [activeLang]: value }))
+
   return (
     <div className="flex flex-col gap-4">
       {/* Header */}
@@ -479,8 +484,10 @@ export function ServiceEditorClient({ service }: Props) {
         <div className="lg:col-span-2 flex flex-col gap-0">
 
           {/* Language tab bar + translate all */}
+          {/* Wraps rather than overflowing: on a narrow column the two action
+              buttons were pushed off the right edge and could not be reached. */}
           <div
-            className="flex items-center justify-between rounded-t-lg px-4 py-0"
+            className="flex flex-wrap items-center justify-between gap-y-2 rounded-t-lg px-4 py-0"
             style={{ background: "var(--surface-container-lowest)", border: "1px solid var(--outline-variant)", borderBottom: "none" }}
           >
             <div className="flex items-center gap-0">
@@ -513,7 +520,7 @@ export function ServiceEditorClient({ service }: Props) {
               })}
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 py-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -605,15 +612,16 @@ export function ServiceEditorClient({ service }: Props) {
               <Label className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: "var(--on-surface-variant)" }}>
                 Short Description
               </Label>
-              <Textarea
+              {/* Compact mode: a card summary wants emphasis and a link at most,
+                  not headings and images. */}
+              <RichTextEditor
+                compact
                 value={shortDesc?.[activeLang] || ""}
-                onChange={updateField(setShortDesc)}
+                onChange={updateValue(setShortDesc)}
                 placeholder={`Short description in ${LANG_LABELS[activeLang]}…`}
-                className="text-sm min-h-24"
-                style={{ background: "var(--surface-container)", borderColor: "var(--outline-variant)" }}
               />
               <span className="text-[10px]" style={{ color: "var(--on-surface-variant)" }}>
-                Displayed on the homepage card
+                Displayed on the homepage card and the services list
               </span>
             </div>
 
@@ -622,12 +630,10 @@ export function ServiceEditorClient({ service }: Props) {
               <Label className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: "var(--on-surface-variant)" }}>
                 Full Description
               </Label>
-              <Textarea
+              <RichTextEditor
                 value={description?.[activeLang] || ""}
-                onChange={updateField(setDescription)}
+                onChange={updateValue(setDescription)}
                 placeholder={`Full description in ${LANG_LABELS[activeLang]}…`}
-                className="text-sm min-h-40"
-                style={{ background: "var(--surface-container)", borderColor: "var(--outline-variant)" }}
               />
               <span className="text-[10px]" style={{ color: "var(--on-surface-variant)" }}>
                 Detailed description shown on the service page
