@@ -120,6 +120,31 @@ export function validate(a: Partial<PlanAnswers>): string | null {
   return null
 }
 
+/**
+ * English labels for the stored codes, for the admin.
+ *
+ * The emails carry their own table because they need Greek and German as well;
+ * this one exists so the admin does not have to import a server-only module to
+ * render "no-licence" as something a person can read.
+ */
+export const LABEL_EN: Record<string, string> = {
+  exact: "Fixed dates", window: "Anywhere in a span", months: "Certain months", unsure: "Not decided",
+  week: "One week", tendays: "Ten days", twoweeks: "Two weeks", longer: "Longer than two weeks",
+  bareboat: "Bareboat", skippered: "With a skipper", crewed: "Fully crewed", advise: "Wants advice",
+  "licensed-experienced": "Licensed, sails regularly", "licensed-rusty": "Licensed, out of practice",
+  "no-licence": "No licence", "never-sailed": "Never sailed",
+  monohull: "Sailing yacht", catamaran: "Catamaran", either: "No preference",
+  family: "Family holiday", friends: "Friends", couple: "Couple", corporate: "Company trip", other: "Other",
+  comfort: "Comfort", recent: "A recent boat", "easy-handling": "Easy to handle", space: "Space aboard",
+  watertoys: "Water toys", aircon: "Air conditioning", budget: "Keeping cost down",
+  provisioning: "Provisioning", transfer: "Airport transfer", skipper: "Skipper",
+  instructor: "Sailing instructor", hostess: "Hostess", weathersms: "Weather by SMS",
+  sup: "SUP", outboard: "Outboard", blister: "Blister", accommodation: "Room on land",
+  lefkada: "Lefkada", meganisi: "Meganisi", ithaca: "Ithaca", kefalonia: "Kefalonia",
+  "kalamos-kastos": "Kalamos & Kastos", "paxos-antipaxos": "Paxos & Antipaxos", corfu: "Corfu",
+  email: "Email", phone: "Phone", whatsapp: "WhatsApp",
+}
+
 /** Total people aboard, which is what a berth count has to cover. */
 export function crewSize(a: Pick<PlanAnswers, "adults" | "children">) {
   return (a.adults || 0) + (a.children || 0)

@@ -92,6 +92,7 @@ export async function buildPlanBrief(a: PlanAnswers): Promise<PlanBrief> {
             content:
               "You are a charter broker at Ionische Yacht Charter, a German-Greek family business based in Lefkada since 1979, chartering in the Ionian Sea. " +
               "You are writing an internal brief for the colleague who will answer this enquiry — not a message to the customer. " +
+              "Every charter starts and finishes on our own pontoon in Lefkada harbour. There is no other base: never propose a one-way passage, a different starting port, or anywhere outside the Ionian. Islands are places they sail to during the week, out of Lefkada and back. " +
               "Be concrete and short. Never invent a yacht: recommend only from the fleet list given to you, and only boats whose berths cover the whole crew. " +
               "Never invent prices, availability or dates. If something important is missing from the answers, put it in `asks`. " +
               'Reply as JSON: {"summary": string, "shortlist": [{"yacht": string, "why": string}], "suggests": [string], "asks": [string]}. ' +

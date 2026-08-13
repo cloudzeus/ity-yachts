@@ -14,6 +14,7 @@ import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from "@/components/ui/tooltip"
 import Link from "next/link"
+import { LABEL_EN } from "@/lib/plan-wizard"
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -121,17 +122,43 @@ export function EnquiryEditorClient({ enquiry }: Props) {
   const [assignedStaffId, setAssignedStaffId] = useState(enquiry.assignedStaffId ?? "")
   const [notes, setNotes] = useState(enquiry.notes ?? "")
 
-  /* The wizard answers, flattened for display. Rendered from whatever is in
-     the column rather than a fixed list, so a question added to the
-     conversation later shows up here without another change. */
+  /* The wizard answers, flattened for display. Read from whatever is in the
+     column rather than a fixed list, so a question added to the conversation
+     later appears here with no further change — but codes and ISO dates are
+     turned into something readable on the way out. */
   const wizardRows: [string, string][] = (() => {
     const w = enquiry.wizard
     if (!w || typeof w !== "object") return []
+
+    // Contact details already have their own card; repeating them is noise.
+    const SKIP = new Set(["firstName", "lastName", "email", "phone", "notes"])
+
+    const isDate = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s)
+    const isMonth = (s: string) => /^\d{4}-\d{2}$/.test(s)
+    const pretty = (v: unknown): string => {
+      if (typeof v === "boolean") return v ? "Yes" : "No"
+      if (Array.isArray(v)) return v.map(pretty).join(", ")
+      const s = String(v)
+      if (isDate(s)) {
+        return new Date(s + "T00:00:00Z").toLocaleDateString("en-GB", {
+          day: "numeric", month: "short", year: "numeric", timeZone: "UTC",
+        })
+      }
+      if (isMonth(s)) {
+        const [y, m] = s.split("-")
+        return new Date(Date.UTC(+y, +m - 1, 1)).toLocaleDateString("en-GB", {
+          month: "long", year: "numeric", timeZone: "UTC",
+        })
+      }
+      return LABEL_EN[s] ?? s
+    }
+
     return Object.entries(w as Record<string, unknown>)
-      .filter(([, v]) => v !== null && v !== undefined && v !== "" && !(Array.isArray(v) && !v.length))
+      .filter(([k, v]) =>
+        !SKIP.has(k) && v !== null && v !== undefined && v !== "" && !(Array.isArray(v) && !v.length))
       .map(([k, v]) => [
         k.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase()),
-        Array.isArray(v) ? v.join(", ") : typeof v === "boolean" ? (v ? "Yes" : "No") : String(v),
+        pretty(v),
       ])
   })()
 
@@ -254,9 +281,51 @@ export function EnquiryEditorClient({ enquiry }: Props) {
           </Button>
         </div>
 
-        <div className="grid grid-cols-3 gap-6">
-          {/* Main content - 2/3 */}
-          <div className="col-span-2 flex flex-col gap-4">
+        {/* Three columns only when there is room for three. Fixed at
+            grid-cols-3, the sidebar cards were drawn over the main column on
+            anything narrower than a wide desktop. */}
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+          {/* Main content — two thirds of the width when the layout splits */}
+          <div className="flex flex-col gap-4 xl:col-span-2">
+            {/* What the planning conversation collected. Read-only — a record
+                of what the customer said, not something to edit — and first,
+                because it is what the person picking this up needs to read.
+                It was in the sidebar, where a paragraph had a third of the
+                width and ran off the bottom of the page. */}
+            {enquiry.aiBrief && (
+              <SectionCard title="Brief">
+                <p
+                  className="whitespace-pre-wrap text-[13px] leading-relaxed"
+                  style={{ color: "var(--on-surface)" }}
+                >
+                  {enquiry.aiBrief}
+                </p>
+              </SectionCard>
+            )}
+
+            {wizardRows.length > 0 && (
+              <SectionCard title="Their answers">
+                {/* Label above value, not beside it. Side by side, a fixed
+                    label column left too little for the value and the two
+                    ran into each other. */}
+                <dl className="grid grid-cols-2 gap-x-6 gap-y-3.5 lg:grid-cols-3">
+                  {wizardRows.map(([k, v]) => (
+                    <div key={k} className="min-w-0">
+                      <dt
+                        className="text-[10px] uppercase leading-tight tracking-wider"
+                        style={{ color: "var(--on-surface-variant)", opacity: 0.7 }}
+                      >
+                        {k}
+                      </dt>
+                      <dd className="mt-0.5 text-xs leading-snug" style={{ color: "var(--on-surface)" }}>
+                        {v}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </SectionCard>
+            )}
+
             {/* Charter Requirements */}
             <SectionCard title="Charter Requirements">
               <div className="grid grid-cols-2 gap-3">
@@ -299,10 +368,10 @@ export function EnquiryEditorClient({ enquiry }: Props) {
                   </Select>
                 </FieldLabel>
                 <FieldWithInfo label="Base From" tooltip="Preferred embarkation marina or port">
-                  <Input value={baseFrom} onChange={(e) => setBaseFrom(e.target.value)} placeholder="e.g. Athens" className="h-8 text-xs" style={{ background: "var(--surface-container-lowest)", borderColor: "var(--outline-variant)" }} />
+                  <Input value={baseFrom} onChange={(e) => setBaseFrom(e.target.value)} placeholder="Lefkada" className="h-8 text-xs" style={{ background: "var(--surface-container-lowest)", borderColor: "var(--outline-variant)" }} />
                 </FieldWithInfo>
                 <FieldWithInfo label="Base To" tooltip="Preferred disembarkation marina or port. Same as departure for round trips">
-                  <Input value={baseTo} onChange={(e) => setBaseTo(e.target.value)} placeholder="e.g. Mykonos" className="h-8 text-xs" style={{ background: "var(--surface-container-lowest)", borderColor: "var(--outline-variant)" }} />
+                  <Input value={baseTo} onChange={(e) => setBaseTo(e.target.value)} placeholder="Lefkada" className="h-8 text-xs" style={{ background: "var(--surface-container-lowest)", borderColor: "var(--outline-variant)" }} />
                 </FieldWithInfo>
               </div>
             </SectionCard>
@@ -409,29 +478,6 @@ export function EnquiryEditorClient({ enquiry }: Props) {
                 </SelectContent>
               </Select>
             </SectionCard>
-
-            {/* What the planning conversation collected. Read-only: this is a
-                record of what the customer said, not something to edit. */}
-            {enquiry.aiBrief && (
-              <SectionCard title="Brief">
-                <p className="whitespace-pre-wrap text-xs leading-relaxed" style={{ color: "var(--on-surface-variant)" }}>
-                  {enquiry.aiBrief}
-                </p>
-              </SectionCard>
-            )}
-
-            {wizardRows.length > 0 && (
-              <SectionCard title="Their answers">
-                <dl className="flex flex-col gap-2 text-[11px]">
-                  {wizardRows.map(([k, v]) => (
-                    <div key={k} className="flex gap-3">
-                      <dt className="w-28 flex-shrink-0 uppercase tracking-wider" style={{ color: "var(--on-surface-variant)", opacity: 0.7 }}>{k}</dt>
-                      <dd style={{ color: "var(--on-surface)" }}>{v}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </SectionCard>
-            )}
 
             {/* Notes */}
             <SectionCard title="Notes">
