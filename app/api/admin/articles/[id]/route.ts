@@ -32,8 +32,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const { id } = await params
     const body = await req.json()
     const {
-      title, slug, status, category, author, date,
-      shortDesc, description,
+      title, slug, status, category, categoryId, tagIds, author, date, publishedAt,
+      shortDesc, description, readMinutes,
       defaultMedia, defaultMediaType, media,
       metaTitle, metaDesc,
     } = body
@@ -61,8 +61,32 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         ...(media !== undefined && { media }),
         ...(metaTitle !== undefined && { metaTitle }),
         ...(metaDesc !== undefined && { metaDesc }),
+        ...(categoryId !== undefined && { categoryId: categoryId || null }),
+        ...(readMinutes !== undefined && { readMinutes: readMinutes ?? null }),
+        ...(publishedAt !== undefined && {
+          publishedAt: publishedAt ? new Date(publishedAt) : null,
+        }),
       },
     })
+
+    /* Publishing stamps the moment it went live, once — and only when the
+       editor did not set a date itself. Re-saving a published article must
+       not move that date. */
+    if (status === "published" && !article.publishedAt) {
+      await db.article.update({ where: { id }, data: { publishedAt: new Date() } })
+    }
+
+    // Tags arrive as the full set; replacing is simpler than diffing and
+    // cannot leave a link behind.
+    if (Array.isArray(tagIds)) {
+      await db.$transaction([
+        db.articleTagLink.deleteMany({ where: { articleId: id } }),
+        db.articleTagLink.createMany({
+          data: tagIds.map((tagId: string) => ({ articleId: id, tagId })),
+          skipDuplicates: true,
+        }),
+      ])
+    }
 
     return NextResponse.json({ article })
   } catch (error) {

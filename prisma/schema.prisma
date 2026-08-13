@@ -1112,11 +1112,16 @@ model Article {
   title            Json     @default("{}")   // { en, el, de }
   slug             String   @unique
   status           String   @default("draft")
+  publishedAt      DateTime?                 // when it goes live; null while drafting
   date             DateTime @default(now())
-  category         Json     @default("{}")   // { en, el, de }
+  category         Json     @default("{}")   // legacy free text, kept until categoryId is filled everywhere
+  categoryId       String?
+  categoryRef      ArticleCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  tags             ArticleTagLink[]
   author           String   @default("")
   shortDesc        Json     @default("{}")   // { en, el, de }
   description      Json     @default("{}")   // { en, el, de } — rich text
+  readMinutes      Int?                      // estimated from the body
   defaultMedia     String?                   // URL to default image or video
   defaultMediaType String?                   // "image" | "video"
   media            Json     @default("[]")   // array of image/video URLs
@@ -1127,6 +1132,48 @@ model Article {
   updatedAt        DateTime @updatedAt
 
   @@map("articles")
+}
+
+model ArticleCategory {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        Json                           // { en, el, de }
+  description Json?
+  color       String?                        // a token or hex, for the badge
+  sortOrder   Int      @default(0)           // drag and drop
+  status      String   @default("active")
+  articles    Article[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([sortOrder])
+  @@map("article_categories")
+}
+
+model ArticleTag {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  name      Json                             // { en, el, de }
+  sortOrder Int      @default(0)
+  status    String   @default("active")
+  articles  ArticleTagLink[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sortOrder])
+  @@map("article_tags")
+}
+
+/// Explicit join, so the pairing can carry its own ordering later if needed.
+model ArticleTagLink {
+  articleId String
+  tagId     String
+  article   Article    @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  tag       ArticleTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([articleId, tagId])
+  @@index([tagId])
+  @@map("article_tag_links")
 }
 
 // Services (homepage "Curated Experiences" section)

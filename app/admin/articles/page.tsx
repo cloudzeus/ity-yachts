@@ -1,5 +1,6 @@
 import { db } from "@/lib/db"
 import { ArticlesClient } from "./articles-client"
+import { ArticlesTabs } from "./articles-tabs"
 
 export const dynamic = "force-dynamic"
 
@@ -28,6 +29,7 @@ export default async function ArticlesPage() {
         </p>
       </div>
 
+      <ArticlesTabs>
       <ArticlesClient
         initialData={{
           articles: articles.map((a) => ({
@@ -44,6 +46,7 @@ export default async function ArticlesPage() {
           total,
         }}
       />
+      </ArticlesTabs>
     </div>
   )
 }
