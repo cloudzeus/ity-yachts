@@ -61,6 +61,10 @@ export async function generateMetadata(): Promise<Metadata> {
   metadataBase: new URL(site.siteUrl),
   title: {
     default: "Yacht Charter Lefkada, Greece — IYC Ionische Yacht Charter",
+    /* "IYC Yachts" is declared as an alternateName in the Organization
+       schema, so the short suffix is still the same entity. Spelling the
+       full name here would put every inner title at ~78 characters, well
+       past where Google truncates. The homepage title carries it in full. */
     template: "%s | IYC Yachts",
   },
   description:

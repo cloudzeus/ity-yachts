@@ -29,7 +29,7 @@ export async function generateMetadata(): Promise<Metadata> {
   /* Absolute, or the layout template appends the brand a second time. The
      canonical and og:url come from pageMeta, so they follow the real domain
      instead of a build-time guess. */
-  return { ...meta, title: { absolute: "Yacht Charter Lefkada, Greece — Sailing the Ionian | IYC" } }
+  return { ...meta, title: { absolute: "Yacht Charter Lefkada — IYC Ionische Yacht Charter" } }
 }
 
 export default async function Home() {

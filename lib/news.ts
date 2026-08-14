@@ -102,6 +102,8 @@ export async function getArticleBySlug(slug: string) {
       media: true,
       metaTitle: true,
       metaDesc: true,
+      // Freshness is read off dateModified, and only the detail page needs it.
+      updatedAt: true,
     },
   })
 }

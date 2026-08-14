@@ -5,7 +5,7 @@ import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { ServiceDetail } from "./service-detail"
 import { JsonLd } from "@/components/json-ld"
-import { breadcrumbLd, serviceLd } from "@/lib/structured-data"
+import { breadcrumbLd, serviceLd, webPageLd } from "@/lib/structured-data"
 import { en, metaTitle, padDescription, pageMeta } from "@/lib/seo"
 
 export const dynamic = "force-dynamic"
@@ -83,6 +83,12 @@ export default async function ServiceDetailPage({ params }: Props) {
             description: en(service.shortDesc),
             path: `/services/${slug}`,
             image: service.defaultMediaType === "video" ? null : service.defaultMedia,
+          }),
+          webPageLd({
+            name: en(service.title, "Service"),
+            description: en(service.shortDesc),
+            path: `/services/${slug}`,
+            modified: service.updatedAt.toISOString(),
           }),
           breadcrumbLd([
             { name: "Home", path: "/" },

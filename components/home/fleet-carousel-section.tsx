@@ -187,10 +187,11 @@ export function FleetCarouselSection({ yachts: rawYachts }: { yachts: FleetYacht
       <div className="flex justify-center items-center gap-8 mt-16 mb-10">
         <button
           onClick={prev}
+          aria-label={t("fleet.prevYacht", "Previous yacht")}
           className="flex items-center justify-center rounded-full bg-[var(--action-primary)] hover:bg-[var(--action-primary-hover)] transition-all duration-300 hover:scale-105 cursor-pointer"
           style={{ width: "50px", height: "50px" }}
         >
-          <ChevronLeft className="w-5 h-5" style={{ color: "#FFFFFF" }} />
+          <ChevronLeft aria-hidden="true" className="w-5 h-5" style={{ color: "#FFFFFF" }} />
         </button>
         <div className="flex items-center gap-3">
           <span className="text-4xl font-extralight" style={{ fontFamily: "var(--font-display)", color: "var(--text-heading)" }}>{displayIndex}</span>
@@ -199,10 +200,11 @@ export function FleetCarouselSection({ yachts: rawYachts }: { yachts: FleetYacht
         </div>
         <button
           onClick={next}
+          aria-label={t("fleet.nextYacht", "Next yacht")}
           className="flex items-center justify-center rounded-full bg-[var(--action-primary)] hover:bg-[var(--action-primary-hover)] transition-all duration-300 hover:scale-105 cursor-pointer"
           style={{ width: "50px", height: "50px" }}
         >
-          <ChevronRight className="w-5 h-5" style={{ color: "#FFFFFF" }} />
+          <ChevronRight aria-hidden="true" className="w-5 h-5" style={{ color: "#FFFFFF" }} />
         </button>
       </div>
 
@@ -288,6 +290,10 @@ function YachtCarouselCard({ yacht, onClick, isActive }: { yacht: FleetYacht; on
         </span>
         <button
           onClick={(e) => { e.stopPropagation(); setLiked(!liked) }}
+          /* An icon alone is not a name. Thirty of these on the homepage read
+             as thirty unlabelled buttons to anyone not looking at the screen. */
+          aria-label={`${liked ? "Remove" : "Save"} ${yacht.name} ${liked ? "from" : "to"} your shortlist`}
+          aria-pressed={liked}
           className="w-9 h-9 bg-white/10 hover:bg-white/30 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm hover:scale-110"
         >
           <Heart

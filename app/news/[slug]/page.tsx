@@ -56,6 +56,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
             path: `/news/${slug}`,
             image: article.defaultMediaType === "video" ? null : article.defaultMedia,
             published: (article.publishedAt ?? article.date)?.toISOString() ?? null,
+            modified: article.updatedAt.toISOString(),
             author: article.author || undefined,
           }),
           breadcrumbLd([

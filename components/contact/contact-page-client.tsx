@@ -358,7 +358,7 @@ export function ContactPageClient({ staff, content }: ContactPageClientProps) {
                       {/* Name row */}
                       <div data-form-reveal className="grid md:grid-cols-2 gap-4">
                         <div>
-                          <label className="text-xs font-semibold uppercase tracking-wider text-[var(--text-subtle)] mb-2 block">{tUpper("contact.form.firstName", "First Name")} *</label>
+                          <label htmlFor="contact-first-name" className="text-xs font-semibold uppercase tracking-wider text-[var(--text-subtle)] mb-2 block">{tUpper("contact.form.firstName", "First Name")} *</label>
                           <input
                             type="text"
                             required
@@ -366,17 +366,19 @@ export function ContactPageClient({ staff, content }: ContactPageClientProps) {
                             onChange={(e) => setForm((f) => ({ ...f, firstName: e.target.value }))}
                             className="w-full rounded-[var(--iyc-radius-sm)] px-4 py-3 text-sm text-[var(--text-body)] placeholder:text-[var(--text-subtle)] outline-none transition focus:border-[var(--text-link)]"
                             style={{ background: "var(--surface-card)", border: "1px solid var(--border-input)" }}
+                            id="contact-first-name"
                             placeholder="John"
                           />
                         </div>
                         <div>
-                          <label className="text-xs font-semibold uppercase tracking-wider text-[var(--text-subtle)] mb-2 block">{tUpper("contact.form.lastName", "Last Name")}</label>
+                          <label htmlFor="contact-last-name" className="text-xs font-semibold uppercase tracking-wider text-[var(--text-subtle)] mb-2 block">{tUpper("contact.form.lastName", "Last Name")}</label>
                           <input
                             type="text"
                             value={form.lastName}
                             onChange={(e) => setForm((f) => ({ ...f, lastName: e.target.value }))}
                             className="w-full rounded-[var(--iyc-radius-sm)] px-4 py-3 text-sm text-[var(--text-body)] placeholder:text-[var(--text-subtle)] outline-none transition focus:border-[var(--text-link)]"
                             style={{ background: "var(--surface-card)", border: "1px solid var(--border-input)" }}
+                            id="contact-last-name"
                             placeholder="Smith"
                           />
                         </div>
@@ -385,7 +387,7 @@ export function ContactPageClient({ staff, content }: ContactPageClientProps) {
                       {/* Email + Phone */}
                       <div data-form-reveal className="grid md:grid-cols-2 gap-4">
                         <div>
-                          <label className="text-xs font-semibold uppercase tracking-wider text-[var(--text-subtle)] mb-2 block">{tUpper("contact.form.email", "Email")} *</label>
+                          <label htmlFor="contact-email" className="text-xs font-semibold uppercase tracking-wider text-[var(--text-subtle)] mb-2 block">{tUpper("contact.form.email", "Email")} *</label>
                           <input
                             type="email"
                             required
@@ -393,17 +395,19 @@ export function ContactPageClient({ staff, content }: ContactPageClientProps) {
                             onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
                             className="w-full rounded-[var(--iyc-radius-sm)] px-4 py-3 text-sm text-[var(--text-body)] placeholder:text-[var(--text-subtle)] outline-none transition focus:border-[var(--text-link)]"
                             style={{ background: "var(--surface-card)", border: "1px solid var(--border-input)" }}
+                            id="contact-email"
                             placeholder="john@example.com"
                           />
                         </div>
                         <div>
-                          <label className="text-xs font-semibold uppercase tracking-wider text-[var(--text-subtle)] mb-2 block">{tUpper("contact.form.phone", "Phone")}</label>
+                          <label htmlFor="contact-phone" className="text-xs font-semibold uppercase tracking-wider text-[var(--text-subtle)] mb-2 block">{tUpper("contact.form.phone", "Phone")}</label>
                           <input
                             type="tel"
                             value={form.phone}
                             onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
                             className="w-full rounded-[var(--iyc-radius-sm)] px-4 py-3 text-sm text-[var(--text-body)] placeholder:text-[var(--text-subtle)] outline-none transition focus:border-[var(--text-link)]"
                             style={{ background: "var(--surface-card)", border: "1px solid var(--border-input)" }}
+                            id="contact-phone"
                             placeholder="+49 160 ..."
                           />
                         </div>
@@ -411,7 +415,7 @@ export function ContactPageClient({ staff, content }: ContactPageClientProps) {
 
                       {/* Message */}
                       <div data-form-reveal>
-                        <label className="text-xs font-semibold uppercase tracking-wider text-[var(--text-subtle)] mb-2 block">{tUpper("contact.form.message", "Message")} *</label>
+                        <label htmlFor="contact-message" className="text-xs font-semibold uppercase tracking-wider text-[var(--text-subtle)] mb-2 block">{tUpper("contact.form.message", "Message")} *</label>
                         <textarea
                           required
                           rows={5}
@@ -419,7 +423,8 @@ export function ContactPageClient({ staff, content }: ContactPageClientProps) {
                           onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
                           className="w-full resize-none rounded-[var(--iyc-radius-sm)] px-4 py-3 text-sm text-[var(--text-body)] placeholder:text-[var(--text-subtle)] outline-none transition focus:border-[var(--text-link)]"
                           style={{ background: "var(--surface-card)", border: "1px solid var(--border-input)" }}
-                          placeholder={t("contact.form.messagePlaceholder", "Tell us about your dream charter, ask us anything...")}
+                          id="contact-message"
+                            placeholder={t("contact.form.messagePlaceholder", "Tell us about your dream charter, ask us anything...")}
                         />
                       </div>
 

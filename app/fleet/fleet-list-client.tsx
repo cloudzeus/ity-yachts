@@ -328,6 +328,8 @@ export function FleetListClient({
                     value={search}
                     onChange={(e) => handleSearchChange(e.target.value)}
                     placeholder={t("fleet.searchPlaceholder", "Search by name, model, or builder...")}
+                    /* A placeholder disappears the moment you type; it is not a label. */
+                    aria-label={t("fleet.searchLabel", "Search the fleet by name, model or builder")}
                     className="w-full bg-transparent text-sm focus:outline-none placeholder:text-[var(--text-subtle)]"
                     style={{ color: "var(--text-body)" }}
                   />
@@ -573,9 +575,9 @@ export function FleetListClient({
           {!loading && yachts.length === 0 && (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <Sailboat className="w-16 h-16 text-[var(--text-muted)] mb-4" />
-              <h3 className="text-xl font-semibold text-[var(--text-body)] mb-2">
+              <h2 className="text-xl font-semibold text-[var(--text-body)] mb-2">
                 {t("fleet.noResults", "No yachts found")}
-              </h3>
+              </h2>
               <p className="text-[var(--text-subtle)] text-sm mb-6 max-w-md">
                 {t("fleet.noResultsHint", "Try adjusting your filters or search terms to find available yachts.")}
               </p>
@@ -603,6 +605,7 @@ export function FleetListClient({
                   <button
                     onClick={() => fetchYachts(page - 1)}
                     disabled={page <= 1}
+                    aria-label={t("pagination.previous", "Previous page")}
                     className="w-10 h-10 rounded-lg border border-[var(--border-hairline)] flex items-center justify-center hover:bg-[var(--surface-sunken)] transition disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     <ChevronLeft className="w-4 h-4" />
@@ -642,6 +645,7 @@ export function FleetListClient({
                   <button
                     onClick={() => fetchYachts(page + 1)}
                     disabled={page >= totalPages}
+                    aria-label={t("pagination.next", "Next page")}
                     className="w-10 h-10 rounded-lg border border-[var(--border-hairline)] flex items-center justify-center hover:bg-[var(--surface-sunken)] transition disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     <ChevronRight className="w-4 h-4" />
@@ -706,6 +710,8 @@ function YachtGridCard({ yacht }: { yacht: YachtCard }) {
             e.preventDefault()
             setLiked(!liked)
           }}
+          aria-label={`${liked ? "Remove" : "Save"} ${yacht.name} ${liked ? "from" : "to"} your shortlist`}
+          aria-pressed={liked}
           className="absolute top-3 right-3 w-8 h-8 bg-white/15 backdrop-blur-md border border-white/15 rounded-full flex items-center justify-center hover:bg-white/30 transition z-10"
         >
           <Heart
@@ -717,12 +723,12 @@ function YachtGridCard({ yacht }: { yacht: YachtCard }) {
 
         {/* Bottom specs on image */}
         <div className="absolute inset-x-0 bottom-0 p-4 z-10">
-          <h3
+          <h2
             className="text-lg font-bold text-[var(--text-heading)] mb-2 tracking-tight truncate"
             style={{ fontFamily: "var(--font-display)" }}
           >
             {yacht.name}
-          </h3>
+          </h2>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[var(--text-muted)] text-[11px]">
             {yacht.loa > 0 && (
               <div className="flex items-center gap-1 whitespace-nowrap">

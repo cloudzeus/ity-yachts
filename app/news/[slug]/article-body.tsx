@@ -3,6 +3,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import { useTranslations } from "@/lib/use-translations"
+import { Breadcrumbs } from "@/components/breadcrumbs"
 import { removeGreekTonos } from "@/lib/greek-utils"
 
 interface Article {
@@ -101,6 +102,8 @@ export function ArticleBody({ article }: { article: Article }) {
           </div>
         </div>
       </section>
+
+      <Breadcrumbs maxWidth={760} items={[{ label: t("nav.news", "News"), href: "/news" }, { label: title }]} />
 
       <article className="relative mx-auto w-full max-w-[760px] px-6 pb-20">
         {lead && (

@@ -1,7 +1,7 @@
 import { db } from "@/lib/db"
 import { en, metaDescription, metaTitle, pageMeta } from "@/lib/seo"
 import { JsonLd } from "@/components/json-ld"
-import { breadcrumbLd, destinationLd, videoLd } from "@/lib/structured-data"
+import { breadcrumbLd, destinationLd, videoLd, webPageLd } from "@/lib/structured-data"
 import { notFound } from "next/navigation"
 import { Metadata } from "next"
 import { SiteHeader } from "@/components/site-header"
@@ -91,6 +91,12 @@ export default async function LocationPage({ params }: { params: Promise<{ slug:
                 pageUrl: `/locations/${slug}`,
               })]
             : []),
+          webPageLd({
+            name: en(location.nameTranslations, location.name),
+            description: en(location.shortDesc),
+            path: `/locations/${slug}`,
+            modified: location.updatedAt.toISOString(),
+          }),
           breadcrumbLd([
             { name: "Home", path: "/" },
             { name: "Destinations", path: "/locations" },

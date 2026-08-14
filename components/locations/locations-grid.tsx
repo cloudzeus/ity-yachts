@@ -257,12 +257,12 @@ function LocationCard({ location, ratio }: { location: LocationItem; ratio: stri
               </span>
             </div>
           )}
-          <h3
+          <h2
             className="text-2xl font-bold text-[var(--text-heading)] transition-colors duration-300 group-hover:text-[var(--text-link)]"
             style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em" }}
           >
             {name}
-          </h3>
+          </h2>
         </div>
       </div>
 

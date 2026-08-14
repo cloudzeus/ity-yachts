@@ -7,6 +7,7 @@ import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { icons } from "lucide-react"
 import { useTranslations } from "@/lib/use-translations"
+import { Breadcrumbs } from "@/components/breadcrumbs"
 import { removeGreekTonos } from "@/lib/greek-utils"
 
 if (typeof window !== "undefined") {
@@ -217,6 +218,8 @@ export function ServiceDetail({
           </div>
         </div>
       </section>
+
+      <Breadcrumbs gutter="px-6 md:px-10" maxWidth={1280} spacing="pt-10 pb-0 md:pt-12" items={[{ label: t("nav.services", "Services"), href: "/services" }, { label: title }]} />
 
       {/* ── Body + the rail ──────────────────────────────────────────────── */}
       <div className="mx-auto grid w-full max-w-[1280px] grid-cols-1 gap-x-16 px-6 pb-8 pt-14 md:px-10 lg:grid-cols-[minmax(0,1fr)_300px] lg:pt-20">

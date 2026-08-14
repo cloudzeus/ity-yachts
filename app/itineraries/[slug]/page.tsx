@@ -1,7 +1,7 @@
 import { db } from "@/lib/db"
 import { en, metaDescription, metaTitle, pageMeta } from "@/lib/seo"
 import { JsonLd } from "@/components/json-ld"
-import { breadcrumbLd, tripLd } from "@/lib/structured-data"
+import { breadcrumbLd, tripLd, webPageLd } from "@/lib/structured-data"
 import { notFound } from "next/navigation"
 import { Metadata } from "next"
 import { SiteHeader } from "@/components/site-header"
@@ -96,6 +96,12 @@ export default async function ItineraryPage({ params }: { params: Promise<{ slug
             path: `/itineraries/${slug}`,
             image: itinerary.defaultMedia,
             days: itinerary.totalDays,
+          }),
+          webPageLd({
+            name: en(itinerary.name, "Sailing route"),
+            description: en(itinerary.shortDesc),
+            path: `/itineraries/${slug}`,
+            modified: itinerary.updatedAt.toISOString(),
           }),
           breadcrumbLd([
             { name: "Home", path: "/" },

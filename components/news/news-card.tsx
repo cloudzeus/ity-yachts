@@ -99,12 +99,12 @@ export function NewsCard({ article, priority = false }: { article: Card; priorit
           ) : null}
         </div>
 
-        <h3
+        <h2
           className="mb-3 text-xl leading-snug"
           style={{ fontFamily: "var(--font-display)", color: "var(--text-heading)" }}
         >
           {title}
-        </h3>
+        </h2>
 
         {summary && (
           <p className="mb-5 line-clamp-3 text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>

@@ -23,6 +23,7 @@ import {
 } from "lucide-react"
 import { LocationMap } from "./location-map"
 import { useTranslations } from "@/lib/use-translations"
+import { Breadcrumbs } from "@/components/breadcrumbs"
 import { removeGreekTonos } from "@/lib/greek-utils"
 
 if (typeof window !== "undefined") {
@@ -666,6 +667,7 @@ export function LocationDetailClient({ location, mapsKey }: { location: Location
 
       {/* ── Content ─────────────────────────────────────────────────────── */}
       <div ref={contentRef} className="relative">
+        <Breadcrumbs gutter="px-6 md:px-12" spacing="pt-8 pb-0 md:pt-10" items={[{ label: t("nav.destinations", "Destinations"), href: "/locations" }, { label: locName }]} />
         {/* Description section */}
         {locDescription && (
           <section data-reveal-fade className="relative px-6 md:px-12 pt-20 pb-16">

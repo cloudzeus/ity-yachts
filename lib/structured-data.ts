@@ -301,6 +301,37 @@ export function videoLd({
   }
 }
 
+/**
+ * The page itself, carrying when its content last changed.
+ *
+ * Freshness is judged on `dateModified`, and nothing else on these pages
+ * carried one — Service and TouristDestination have no such property, so the
+ * date has to live on the WebPage node. The value is the record's own
+ * updatedAt, so it moves when the content moves and not before.
+ */
+export function webPageLd({
+  name, description, path, published, modified,
+}: {
+  name: string
+  description?: string
+  path: string
+  published?: string | null
+  modified?: string | null
+}): Json {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": `${absolute(path)}#webpage`,
+    name,
+    ...(description ? { description: stripHtml(description) } : {}),
+    url: absolute(path),
+    ...(published ? { datePublished: published } : {}),
+    ...(modified ? { dateModified: modified } : {}),
+    isPartOf: { "@id": SITE_ID },
+    inLanguage: "en",
+  }
+}
+
 /** A yacht in the fleet, as something that can actually be booked. */
 export function yachtLd({
   name, description, path, image, model, year, cabins, berths, loa,

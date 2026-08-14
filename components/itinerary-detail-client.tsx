@@ -30,6 +30,7 @@ import {
 } from "lucide-react"
 import { ItineraryStoryMap, type StoryPoint } from "./itinerary-story-map"
 import { useTranslations } from "@/lib/use-translations"
+import { Breadcrumbs } from "@/components/breadcrumbs"
 import { removeGreekTonos } from "@/lib/greek-utils"
 import { ItineraryDayChart } from "@/components/itinerary-day-chart"
 
@@ -568,6 +569,8 @@ export function ItineraryDetailClient({ itinerary, mapsKey }: { itinerary: Itine
           ═══════════════════════════════════════════════════════════════ */}
 
       {/* ── SECTION 1: Stats ribbon with coordinate HUD ───────────── */}
+      <Breadcrumbs spacing="pt-10 pb-2 md:pt-12" items={[{ label: t("nav.itineraries", "Itineraries"), href: "/itineraries" }, { label: name[locale] || t("itinerary.untitled", "Untitled") }]} />
+
       <section className="relative overflow-hidden" style={{ background: "var(--surface-page)" }}>
         {/* Dot grid bg */}
         <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(rgba(11,96,153,0.07) 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
@@ -907,7 +910,7 @@ export function ItineraryDetailClient({ itinerary, mapsKey }: { itinerary: Itine
                               </span>
                             )}
                             {lName && (
-                              <h4 className="mb-1.5 text-base font-bold md:text-lg" style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.01em", color: "var(--iyc-ionian-800)" }}>{lName}</h4>
+                              <h3 className="mb-1.5 text-base font-bold md:text-lg" style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.01em", color: "var(--iyc-ionian-800)" }}>{lName}</h3>
                             )}
                             {lDesc && (
                               <p className="mb-3 max-w-md text-[13px] leading-[1.75]" style={{ color: "var(--text-muted)" }}>{lDesc}</p>

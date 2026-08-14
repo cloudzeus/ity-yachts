@@ -534,12 +534,14 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
           <>
             <button
               onClick={prevImage}
+              aria-label={t("gallery.previous", "Previous photo")}
               className="absolute left-8 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/20 hover:bg-white/30 transition z-20"
             >
               <ChevronLeft className="w-5 h-5 text-white" />
             </button>
             <button
               onClick={nextImage}
+              aria-label={t("gallery.next", "Next photo")}
               className="absolute right-8 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/20 hover:bg-white/30 transition z-20"
             >
               <ChevronRight className="w-5 h-5 text-white" />
@@ -1374,7 +1376,9 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
 
       {/* Floating phone button */}
       <div className="fixed right-6 bottom-6 z-50">
-        <button className="w-14 h-14 rounded-full flex items-center justify-center text-white shadow-xl hover:scale-105 active:scale-95 transition" style={{ backgroundColor: "var(--text-subtle)" }}>
+        <button
+          aria-label={t("yacht.callUs", "Call us about this yacht")}
+          className="w-14 h-14 rounded-full flex items-center justify-center text-white shadow-xl hover:scale-105 active:scale-95 transition" style={{ backgroundColor: "var(--text-subtle)" }}>
           <Phone className="w-6 h-6" />
         </button>
       </div>

@@ -95,12 +95,12 @@ export function SiteFooterView({
 
             {/* Column 2: Pages */}
             <div>
-              <h4
+              <h2
                 className="mb-4 text-xs font-semibold uppercase tracking-widest text-white/70"
                 style={{ fontFamily: "var(--font-body)" }}
               >
                 {removeGreekTonos(t("footer.company", "Company"))}
-              </h4>
+              </h2>
               <ul className="flex flex-col gap-2.5">
                 {company.map((link) => (
                   <li key={link.href}>
@@ -117,12 +117,12 @@ export function SiteFooterView({
 
             {/* Column 3: Newsletter + Help & Contact */}
             <div>
-              <h4
+              <h2
                 className="mb-3 text-xs font-semibold uppercase tracking-widest text-white/70"
                 style={{ fontFamily: "var(--font-body)" }}
               >
                 {removeGreekTonos(t("footer.stayUpdated", "Stay Updated"))}
-              </h4>
+              </h2>
               <NewsletterForm iconColor={iconColor} />
 
               {/* Help & Support */}
