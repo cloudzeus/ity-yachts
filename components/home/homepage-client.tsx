@@ -344,6 +344,8 @@ export function HomepageClient({ hero, destinations, itineraries, yachts, fleetY
         eyebrowFallback="In short"
         bodyKey="answer.home"
         bodyFallback={"IYC Ionische Yacht Charter is a family business that has sailed out of Lefkada since 1979. We charter our own sailing yachts and catamarans from one base in Lefkada harbour — bareboat or with a skipper — across the Ionian Sea from May to October. A Greek base, a German office, the same family throughout."}
+        container="w-full px-6 md:px-12 lg:px-16"
+        spacing="pt-20 pb-0 md:pt-24"
       />
 
       {/* Fleet Carousel */}

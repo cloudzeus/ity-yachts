@@ -118,6 +118,8 @@ export default async function ItinerariesListPage() {
         eyebrowFallback="In short"
         bodyKey="answer.itineraries"
         bodyFallback={"Each route here starts and finishes on our own pontoon in Lefkada and is built around a week aboard. Most legs run two to four hours, which leaves the rest of the day for swimming rather than sailing. Treat them as drafts: we redraw any of them around your dates, your crew and the wind."}
+        container="mx-auto w-full max-w-6xl px-6"
+        spacing="pt-20 pb-6 md:pt-24"
       />
 
         {/* Routes — two per row, not three. With a handful of itineraries a

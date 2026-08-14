@@ -132,6 +132,8 @@ export function ServicesClient({
         eyebrowFallback="In short"
         bodyKey="answer.services"
         bodyFallback={"The things we arrange around the charter itself — custom routes, concierge, catering, safety, onboard amenities, flexible booking and our skippers school. Each is handled by the same office in Lefkada that hands you the keys, so there is nobody else to chase when something needs changing."}
+        container="mx-auto w-full max-w-[1280px] px-6 md:px-10"
+        spacing="pt-20 pb-6 md:pt-24"
       />
 
       {/* ── The index ────────────────────────────────────────────────────

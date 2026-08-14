@@ -145,6 +145,8 @@ export default async function LocationsListPage() {
         eyebrowFallback="In short"
         bodyKey="answer.locations"
         bodyFallback={"These are the islands and anchorages you can reach from Lefkada within a week's sailing. The Ionian lies parallel to the mainland coast, so hardly a point in it is more than 30 nautical miles from a protected harbour — which is why it forgives beginners and still rewards experienced crews."}
+        container="mx-auto w-full max-w-7xl px-6"
+        spacing="pt-20 pb-8 md:pt-24"
       />
 
         {/* Locations */}
