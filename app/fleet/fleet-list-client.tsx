@@ -782,9 +782,13 @@ function YachtGridCard({ yacht }: { yacht: YachtCard }) {
           )}
           <Link
             href={`/fleet/${yacht.id}`}
+            title={yacht.name}
             className="shrink-0 whitespace-nowrap px-3 py-1.5 rounded-lg text-[11px] font-semibold text-white transition hover:opacity-90"
             style={{ backgroundColor: "var(--iyc-ionian-600)" }}
           >
+            {/* Hidden, so every card's link says which boat rather than a
+                page full of links all reading "Details". */}
+            <span className="sr-only">{yacht.name} — </span>
             {t("fleet.card.details", "Details")}
           </Link>
         </div>

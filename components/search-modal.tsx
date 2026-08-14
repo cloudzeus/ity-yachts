@@ -160,6 +160,9 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            /* A placeholder is not a label: it disappears on the first
+               keystroke and screen readers do not reliably announce it. */
+            aria-label={t("search.placeholder", "Search destinations, yachts, experiences...")}
             placeholder={t("search.placeholder", "Search destinations, yachts, experiences...")}
             className="w-full border-b border-white/20 bg-transparent pb-4 pl-10 text-2xl font-light text-white placeholder:text-white/30 focus:border-white/40 focus:outline-none"
             style={{ fontFamily: "var(--font-display)" }}

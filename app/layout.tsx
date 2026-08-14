@@ -69,10 +69,12 @@ export async function generateMetadata(): Promise<Metadata> {
   authors: [{ name: site.name, url: site.siteUrl }],
   creator: site.name,
   publisher: site.name,
-  alternates: { canonical: site.siteUrl },
   robots: {
     index: true,
     follow: true,
+    "max-image-preview": "large",
+    "max-snippet": -1,
+    "max-video-preview": -1,
     googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 },
   },
   openGraph: {
@@ -85,6 +87,12 @@ export async function generateMetadata(): Promise<Metadata> {
   },
   twitter: { card: "summary_large_image", images: [DEFAULT_OG_IMAGE] },
   formatDetection: { telephone: true, address: true, email: true },
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/brand/apple-touch-icon.png",
+  },
+  alternates: { canonical: site.siteUrl },
   }
 }
 
@@ -98,6 +106,18 @@ export default async function RootLayout({
       lang="en"
       className={`${manrope.variable} ${inter.variable} ${commissioner.variable} ${plexMono.variable} h-full antialiased`}
     >
+      <head>
+        {/* Every photograph and video on the site comes from this one host, so
+            opening the connection early saves a round trip on first paint. */}
+        <link rel="preconnect" href="https://iycweb.b-cdn.net" crossOrigin="" />
+        <link rel="dns-prefetch" href="https://iycweb.b-cdn.net" />
+        <meta name="theme-color" content="#05111F" />
+        {/* Declared here rather than in metadata: a page that sets its own
+            `alternates` replaces the layout's, and the feed would vanish from
+            every page that does. Aggregators and AI crawlers look for this
+            before they look for a sitemap. */}
+        <link rel="alternate" type="application/rss+xml" title={`${site.name} — news`} href="/feed.xml" />
+      </head>
       <body className="min-h-full flex flex-col">
         {/* The business and the site, declared once. Everything else on the
             site points at these two @ids rather than restating them. */}

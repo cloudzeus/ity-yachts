@@ -246,6 +246,7 @@ export function ContactPageClient({ staff, content }: ContactPageClientProps) {
             style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em" }}
           >
             {r(hero.title, t("contact.title", "Let's Plan Your"))}
+            {" "}
             <span className="block mt-1" style={{ color: "var(--iyc-sun-300)" }}>
               {r(hero.titleAccent, t("contact.titleAccent", "Perfect Charter"))}
             </span>

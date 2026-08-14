@@ -336,12 +336,20 @@ function YachtCarouselCard({ yacht, onClick, isActive }: { yacht: FleetYacht; on
               {removeGreekTonos(yacht.baseName || "Ionian Sea")}
             </span>
           </div>
+          {/* Thirty links reading only "Details" tell a crawler and a screen
+              reader nothing. The boat's name goes inside the link as hidden
+              text — an aria-label would fix the screen reader but leave the
+              crawler reading "Details" thirty times. */}
           <Link
             href={`/fleet/${yacht.slug || yacht.id}`}
             onClick={(e) => e.stopPropagation()}
+            title={yacht.name}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-[12px] border border-[var(--border-hairline)] hover:bg-white/20 hover:border-white/30 transition-all duration-300"
           >
-            <span className="text-[11px] text-[var(--text-body)] font-medium">{t("home.fleet.details", "Details")}</span>
+            <span className="text-[11px] text-[var(--text-body)] font-medium">
+              <span className="sr-only">{yacht.name} — </span>
+              {t("home.fleet.details", "Details")}
+            </span>
             <ArrowUpRight className="w-3 h-3 text-[var(--text-muted)]" />
           </Link>
         </div>
