@@ -170,6 +170,19 @@ async function call({
   /* A routed error arrives as HTTP 200 with an error object in the payload. */
   if (body?.error) throw new Error(`${label}: ${String(body.error.message ?? body.error).slice(0, 200)}`)
 
+  /* What the call cost, in the log. DeepSeek bills cached prompt tokens at a
+     fraction of fresh ones, and there was no way to tell from here whether the
+     cache was being hit at all. */
+  const u = body?.usage
+  if (u) {
+    const hit = u.prompt_cache_hit_tokens ?? 0
+    const miss = u.prompt_cache_miss_tokens ?? u.prompt_tokens ?? 0
+    const pct = hit + miss > 0 ? Math.round((hit / (hit + miss)) * 100) : 0
+    console.log(
+      `[ai] ${label}/${model} in ${u.prompt_tokens ?? "?"} (cached ${hit}, ${pct}%) out ${u.completion_tokens ?? "?"}`
+    )
+  }
+
   const text = body?.choices?.[0]?.message?.content
   if (typeof text !== "string" || !text.trim())
     throw new Error(`${label} (${model}) returned no text — finish_reason=${body?.choices?.[0]?.finish_reason}`)
