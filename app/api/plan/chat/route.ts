@@ -165,6 +165,8 @@ export async function POST(req: NextRequest) {
 
     const ask = async (nudge?: string) => {
       const content = await aiChat({
+        /* Measured on a full five-turn conversation, not a single prompt. */
+        prefer: "openrouter",
         /* The reply is parsed as an object, so ask the API for one. Without
            this the model intermittently returned empty content. */
         json: true,
@@ -222,7 +224,14 @@ export async function POST(req: NextRequest) {
        explicit null would erase a field it only meant to leave alone, and the
        old prompt's repetition is no longer there to put it back next turn. */
     const delta = Object.fromEntries(
-      Object.entries(parsed.answers ?? {}).filter(([, v]) => v !== null && v !== undefined)
+      Object.entries(parsed.answers ?? {}).filter(([, v]) => {
+        if (v === null || v === undefined) return false
+        // An empty string is the model declining to answer, not an answer. It
+        // was overwriting fields that were already known — one model returned
+        // experience: "" over a value the previous turn had established.
+        if (typeof v === "string" && !v.trim()) return false
+        return true
+      })
     ) as Partial<PlanAnswers>
     const raw: Partial<PlanAnswers> = { ...(answers ?? {}), ...delta }
 

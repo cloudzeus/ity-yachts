@@ -116,15 +116,30 @@ export async function aiChat({
   maxTokens = 1024,
   temperature,
   json = false,
+  prefer,
 }: {
   messages: AiMessage[]
   maxTokens?: number
   temperature?: number
   /** The caller will JSON.parse the result, so ask for an object and unwrap fences. */
   json?: boolean
+  /**
+   * Try this provider first for this call.
+   *
+   * The two are not interchangeable for every job: DeepSeek's v4 models reason
+   * before answering, which suits writing and costs little on a one-off, but
+   * is paid for on every turn of a conversation. A caller that knows its own
+   * shape can say so; the other provider still catches a failure.
+   */
+  prefer?: AiProviderName
 }): Promise<string> {
-  const list = await endpoints()
-  if (!list.length) throw new AiNotConfiguredError()
+  const all = await endpoints()
+  if (!all.length) throw new AiNotConfiguredError()
+
+  const wanted = prefer === "openrouter" ? "OpenRouter" : prefer === "deepseek" ? "DeepSeek" : null
+  const list = wanted
+    ? [...all.filter((e) => e.label === wanted), ...all.filter((e) => e.label !== wanted)]
+    : all
 
   const failures: string[] = []
   for (const endpoint of list) {
