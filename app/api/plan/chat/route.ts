@@ -101,7 +101,7 @@ function formatPrompt(locale: string) {
 
 {"reply": "what you say next, in ${language}", "answers": {...cumulative...}, "quick": ["tappable answer", ...], "done": false}
 
-"answers" repeats every field you already knew plus anything new — it replaces what came before, so never drop a field you have already filled.
+"answers" holds ONLY what this turn established or changed. Never repeat a field that was already known and is unchanged — the server keeps them. Most turns should carry one or two fields, and a turn that established nothing carries an empty object.
 "quick" holds 2 to 6 short tappable answers in ${language} for the question you just asked. Fill it for EVERY question that has options — cabins, budget bands, extras, areas, experience, all of them. Leave it empty only when asking for a name, an email address or a telephone number. A turn without quick answers is a turn the customer has to type, so treat an empty array as a last resort.`
 }
 
@@ -211,7 +211,14 @@ export async function POST(req: NextRequest) {
     }
 
     // Merge rather than replace: a turn that drops a field must not lose it.
-    const raw: Partial<PlanAnswers> = { ...(answers ?? {}), ...(parsed.answers ?? {}) }
+    /* A delta, merged over what we already hold. Null and undefined are
+       dropped first: with the model no longer repeating the whole object, an
+       explicit null would erase a field it only meant to leave alone, and the
+       old prompt's repetition is no longer there to put it back next turn. */
+    const delta = Object.fromEntries(
+      Object.entries(parsed.answers ?? {}).filter(([, v]) => v !== null && v !== undefined)
+    ) as Partial<PlanAnswers>
+    const raw: Partial<PlanAnswers> = { ...(answers ?? {}), ...delta }
 
     /* Being told today's date does not stop the model resolving "first half of
        July" to a July that has gone. Anything in the past is moved to the next

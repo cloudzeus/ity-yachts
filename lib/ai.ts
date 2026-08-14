@@ -51,6 +51,8 @@ interface Endpoint {
   apiKey: string
   model: string
   label: string
+  /** Provider-specific body fields — not every endpoint understands them. */
+  extra?: Record<string, unknown>
 }
 
 async function getKeys(): Promise<AiKeys> {
@@ -68,6 +70,13 @@ async function endpoints(): Promise<Endpoint[]> {
       apiKey: keys.deepseekKey.trim(),
       model: keys.deepseekModel?.trim() || DEFAULT_DEEPSEEK_MODEL,
       label: "DeepSeek",
+      /* The v4 models reason by default and bill the thinking as output — on a
+         measured planner turn, 92 of 114 output tokens were reasoning that was
+         then thrown away, and on a full conversation it exhausted max_tokens
+         before finishing the JSON, so the call was paid for, truncated, and
+         retried on the backup. None of this work needs deliberation: it is
+         short copy and a small object against a detailed brief. */
+      extra: { thinking: { type: "disabled" } },
     })
   }
   if (keys.openrouterKey?.trim()) {
@@ -139,7 +148,7 @@ function stripFence(text: string): string {
 }
 
 async function call({
-  url, apiKey, model, label, messages, maxTokens, temperature, json,
+  url, apiKey, model, label, extra, messages, maxTokens, temperature, json,
 }: Endpoint & {
   messages: AiMessage[]
   maxTokens: number
@@ -160,6 +169,7 @@ async function call({
       max_tokens: maxTokens,
       ...(json ? { response_format: { type: "json_object" } } : {}),
       ...(temperature != null ? { temperature } : {}),
+      ...(extra ?? {}),
       messages,
     }),
   })
