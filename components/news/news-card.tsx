@@ -1,7 +1,7 @@
 "use client"
 
 import Image from "next/image"
-import Link from "next/link"
+import Link from "@/components/locale-link"
 import { useTranslations } from "@/lib/use-translations"
 import { removeGreekTonos } from "@/lib/greek-utils"
 import type { NewsCard as Card } from "@/lib/news"

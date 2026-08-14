@@ -9,7 +9,8 @@ import { JsonLd } from "@/components/json-ld"
 import { localBusinessLd, organizationLd, webSiteLd } from "@/lib/structured-data"
 import { DEFAULT_OG_IMAGE } from "@/lib/seo"
 import { getSiteSettings } from "@/lib/site-settings"
-import { HtmlLang } from "@/components/html-lang"
+import { getDictionary, getLocale } from "@/lib/translations.server"
+import { HREFLANG } from "@/lib/locale"
 import { ConsentProvider } from "@/components/consent/consent-provider"
 import { CookieBanner } from "@/components/consent/cookie-banner"
 import { GatedScripts } from "@/components/consent/gated-scripts"
@@ -104,10 +105,14 @@ export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const site = await getSiteSettings()
+  /* Resolved from the URL by the proxy, so the markup is in the reader's
+     language before a single byte of JavaScript runs. */
+  const locale = await getLocale()
+  const dictionary = await getDictionary(locale)
 
   return (
     <html
-      lang="en"
+      lang={HREFLANG[locale]}
       className={`${manrope.variable} ${inter.variable} ${commissioner.variable} ${plexMono.variable} h-full antialiased`}
     >
       <head>
@@ -132,10 +137,7 @@ export default async function RootLayout({
         <SmoothScroll />
         <Parallax />
         <RevealFailsafe />
-        <TranslationProvider>
-          {/* Keeps <html lang> honest when the reader switches language. */}
-          <HtmlLang />
-
+        <TranslationProvider locale={locale} dictionary={dictionary}>
           {/* Wraps everything, so any page can ask what the visitor allowed. */}
           <ConsentProvider>
             {children}

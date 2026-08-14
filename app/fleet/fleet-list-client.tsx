@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from "react"
 import { useSearchParams } from "next/navigation"
 import Image from "next/image"
-import Link from "next/link"
+import Link from "@/components/locale-link"
 import type { FleetRanges } from "@/lib/fleet-ranges"
 import {
   Search,

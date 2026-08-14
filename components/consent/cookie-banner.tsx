@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import Link from "next/link"
+import Link from "@/components/locale-link"
 import { X } from "lucide-react"
 import { useTranslations } from "@/lib/use-translations"
 import { DENY_ALL, type Category, type Consent } from "@/lib/consent"

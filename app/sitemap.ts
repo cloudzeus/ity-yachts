@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next"
 import { db } from "@/lib/db"
 import { getSiteUrl } from "@/lib/seo"
+import { DEFAULT_LOCALE, HREFLANG, LOCALES, withLocale } from "@/lib/locale"
 
 export const dynamic = "force-dynamic"
 
@@ -17,12 +18,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date()
   const siteUrl = await getSiteUrl()
 
+  /* One entry per page, listing its own language alternates. A sitemap that
+     names only the English URL leaves the Greek and German versions to be
+     found by luck; the alternates tell a crawler the three are one page. */
   const entry = (
     path: string,
     lastModified: Date,
     changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"],
     priority: number
-  ) => ({ url: `${siteUrl}${path}`, lastModified, changeFrequency, priority })
+  ) => ({
+    url: `${siteUrl}${withLocale(path, DEFAULT_LOCALE)}`,
+    lastModified,
+    changeFrequency,
+    priority,
+    alternates: {
+      languages: Object.fromEntries(
+        LOCALES.map((l) => [HREFLANG[l], `${siteUrl}${withLocale(path, l)}`])
+      ),
+    },
+  })
 
   const [locations, itineraries, services, articles, yachts, pages] = await Promise.all([
     db.location.findMany({ where: { status: "published" }, select: { slug: true, updatedAt: true } }),

@@ -1,11 +1,11 @@
 "use client"
 
-import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from "react"
+import { createContext, useContext, useCallback, type ReactNode } from "react"
+import { usePathname } from "next/navigation"
 import { removeGreekTonos } from "@/lib/greek-utils"
+import { DEFAULT_LOCALE, withLocale, type Locale } from "@/lib/locale"
 
-type Locale = "en" | "el" | "de"
-
-type AllDicts = Record<Locale, Record<string, string>>
+export type { Locale }
 
 interface TranslationContextValue {
   locale: Locale
@@ -17,82 +17,64 @@ interface TranslationContextValue {
 }
 
 const TranslationContext = createContext<TranslationContextValue>({
-  locale: "en",
+  locale: DEFAULT_LOCALE,
   setLocale: () => {},
   t: (_key, fallback) => fallback || "",
   tUpper: (_key, fallback) => fallback || "",
   ready: false,
 })
 
-const EMPTY_DICTS: AllDicts = { en: {}, el: {}, de: {} }
+/**
+ * The language, decided on the server and carried in the URL.
+ *
+ * This used to start as English on every render, restore a saved locale from
+ * localStorage after mount, then fetch the dictionary. Three consequences:
+ * the server always rendered English, so that is what crawlers saw; the page
+ * visibly flipped language after hydration; and all three languages shared one
+ * address, so only one could ever be indexed.
+ *
+ * Now the layout resolves both from the request and passes them in, so the
+ * first paint is already correct, `ready` is true immediately, and changing
+ * language is a navigation to a different URL.
+ */
+export function TranslationProvider({
+  children,
+  locale,
+  dictionary,
+}: {
+  children: ReactNode
+  locale: Locale
+  dictionary: Record<string, string>
+}) {
+  const pathname = usePathname()
 
-export function TranslationProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>("en")
-  const [dicts, setDicts] = useState<AllDicts>(EMPTY_DICTS)
-  const [ready, setReady] = useState(false)
-  const [mounted, setMounted] = useState(false)
-  const dictsRef = useRef<AllDicts>(EMPTY_DICTS)
-  const localeRef = useRef<Locale>("en")
-
-  // Keep refs in sync for stable callback
-  dictsRef.current = dicts
-  localeRef.current = mounted ? locale : "en"
-
-  // On mount: restore saved locale + fetch all translations once
-  useEffect(() => {
-    setMounted(true)
-    const saved = localStorage.getItem("iyc-locale") as Locale | null
-    if (saved && ["en", "el", "de"].includes(saved)) {
-      setLocaleState(saved)
-    }
-
-    fetch("/api/translations")
-      .then((r) => r.json())
-      .then((data) => {
-        if (data && data.en) {
-          setDicts(data)
-          dictsRef.current = data
-        }
-        setReady(true)
-      })
-      .catch(() => {
-        setReady(true)
-      })
-  }, [])
-
-  const setLocale = useCallback((l: Locale) => {
-    setLocaleState(l)
-    localStorage.setItem("iyc-locale", l)
-  }, [])
-
-  const activeLocale = mounted ? locale : "en"
-
-  // t() uses the current locale and dicts — no stale closures
-  const t = useCallback(
-    (key: string, fallback?: string) => {
-      if (!mounted) return fallback || key
-      const dict = dicts[activeLocale] || dicts.en || {}
-      return dict[key] || fallback || key
+  /* A full load, not router.push. The locale and the dictionary are resolved
+     in the root layout, and Next keeps that layout mounted across a client
+     navigation — so pushing /de/fleet changed the address bar and left the
+     page in Greek. Changing language is rare and a reload is honest about
+     what it is: a different document, in a different language.
+     usePathname reports the rewritten path — `/fleet`, never `/el/fleet` —
+     so the prefix is added from the target locale rather than swapped. */
+  const setLocale = useCallback(
+    (next: Locale) => {
+      if (next === locale) return
+      window.location.href = withLocale(pathname || "/", next)
     },
-    [dicts, activeLocale, mounted]
+    [locale, pathname]
   )
 
-  // tUpper() — same as t() but strips Greek accent marks for uppercase text
+  const t = useCallback(
+    (key: string, fallback?: string) => dictionary[key] || fallback || key,
+    [dictionary]
+  )
+
   const tUpper = useCallback(
     (key: string, fallback?: string) => removeGreekTonos(t(key, fallback)),
     [t]
   )
 
   return (
-    <TranslationContext.Provider
-      value={{
-        locale: activeLocale,
-        setLocale,
-        t,
-        tUpper,
-        ready: ready && mounted,
-      }}
-    >
+    <TranslationContext.Provider value={{ locale, setLocale, t, tUpper, ready: true }}>
       {children}
     </TranslationContext.Provider>
   )

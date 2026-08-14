@@ -1,6 +1,6 @@
 "use client"
 
-import Link from "next/link"
+import Link from "@/components/locale-link"
 import { useTranslations } from "@/lib/use-translations"
 import { NewsCard } from "@/components/news/news-card"
 import type { NewsCard as Card } from "@/lib/news"

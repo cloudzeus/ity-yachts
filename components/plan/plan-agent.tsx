@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
-import Link from "next/link"
+import Link from "@/components/locale-link"
 import { Send, Check, RotateCcw, AlertCircle } from "lucide-react"
 import { useTranslations } from "@/lib/use-translations"
 import type { PlanAnswers } from "@/lib/plan-wizard"

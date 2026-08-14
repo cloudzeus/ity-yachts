@@ -2,7 +2,7 @@
 
 import { useRef } from "react"
 import Image from "next/image"
-import Link from "next/link"
+import Link from "@/components/locale-link"
 import { Anchor, Users, DoorOpen, Ruler, ArrowRight } from "lucide-react"
 import { TextReveal, StaggerReveal } from "@/components/motion"
 import { removeGreekTonos } from "@/lib/greek-utils"

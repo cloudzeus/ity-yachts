@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react"
 import Image from "next/image"
-import Link from "next/link"
+import Link from "@/components/locale-link"
 import { Heart, ChevronLeft, ChevronRight, ArrowUpRight, Ruler, BedDouble, Users, Sailboat, Anchor } from "lucide-react"
 import { useTranslations } from "@/lib/use-translations"
 import { removeGreekTonos } from "@/components/locale-text"

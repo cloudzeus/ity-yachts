@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import Link from "next/link"
+import Link from "@/components/locale-link"
 import Image from "next/image"
 import gsap from "gsap"
 import { Menu, X, User, Anchor } from "lucide-react"

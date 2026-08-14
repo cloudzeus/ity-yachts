@@ -1,6 +1,6 @@
 import { db } from "@/lib/db"
 import { pageMeta } from "@/lib/seo"
-import Link from "next/link"
+import Link from "@/components/locale-link"
 import Image from "next/image"
 import { Metadata } from "next"
 import { SiteHeader } from "@/components/site-header"

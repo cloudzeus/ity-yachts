@@ -1,6 +1,6 @@
 "use client"
 
-import Link from "next/link"
+import Link from "@/components/locale-link"
 import { useTranslations } from "@/lib/use-translations"
 import { removeGreekTonos } from "@/lib/greek-utils"
 

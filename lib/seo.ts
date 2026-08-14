@@ -1,3 +1,5 @@
+import { DEFAULT_LOCALE, HREFLANG, LOCALES, withLocale } from "@/lib/locale"
+
 /**
  * The facts about this business that search engines and answer engines need,
  * in one place.
@@ -20,9 +22,10 @@ export async function getSiteUrl(): Promise<string> {
   return (await getSiteSettings()).siteUrl
 }
 
-export const LOCALES = ["en", "el", "de"] as const
-export type Locale = (typeof LOCALES)[number]
-export const DEFAULT_LOCALE: Locale = "en"
+/* These lived here as a second copy. One definition, in lib/locale, now that
+   the proxy and the link wrapper depend on the same list. */
+export { LOCALES, DEFAULT_LOCALE } from "@/lib/locale"
+export type { Locale } from "@/lib/locale"
 
 export const ORG = {
   /** The trading name, used consistently so the entity resolves. */
@@ -56,6 +59,9 @@ export const ORG = {
     phone: "+4916099279870",
   },
 } as const
+
+/** Open Graph wants a territory, not a bare language code. */
+const OG_LOCALE: Record<"en" | "el" | "de", string> = { en: "en_GB", el: "el_GR", de: "de_DE" }
 
 /** A social card that works when a page has no photograph of its own. */
 export const DEFAULT_OG_IMAGE =
@@ -139,13 +145,34 @@ export async function pageMeta({
   publishedTime?: string
 }) {
   const base = await getSiteUrl()
-  const url = /^https?:\/\//i.test(path) ? path : `${base}${path.startsWith("/") ? path : `/${path}`}`
+  const bare = path.startsWith("/") ? path : `/${path}`
+  const absolute = /^https?:\/\//i.test(path)
+
+  /* The canonical has to be this page's own address, prefix and all. Pointing
+     /el/fleet at /fleet would tell Google the Greek page is a duplicate of the
+     English one — the fastest way to have it dropped from the index, which is
+     the opposite of why the prefixes exist. Imported lazily so lib/seo stays
+     importable from a client component. */
+  const { getLocale } = await import("@/lib/translations.server")
+  const locale = await getLocale()
+  const url = absolute ? path : `${base}${withLocale(bare, locale)}`
   const ogImage = image && !/\.(mp4|webm|mov)$/i.test(image) ? image : DEFAULT_OG_IMAGE
+
+  /* The same page in the other two languages. Without these, Google treats
+     /fleet, /el/fleet and /de/fleet as three unrelated pages competing with
+     each other instead of one page in three languages. x-default points at
+     English, which is the version served without a prefix. */
+  const languages: Record<string, string> = absolute
+    ? {}
+    : {
+        ...Object.fromEntries(LOCALES.map((l) => [HREFLANG[l], `${base}${withLocale(bare, l)}`])),
+        "x-default": `${base}${withLocale(bare, DEFAULT_LOCALE)}`,
+      }
 
   return {
     title,
     description,
-    alternates: { canonical: url },
+    alternates: { canonical: url, ...(absolute ? {} : { languages }) },
     openGraph: {
       title,
       description,
@@ -153,9 +180,11 @@ export async function pageMeta({
       siteName: ORG.name,
       /* Repeated on every page on purpose: a page-level openGraph object
          replaces the layout's rather than merging into it, so anything the
-         layout declares once is lost on every page that sets its own. */
-      locale: "en_GB",
-      alternateLocale: ["el_GR", "de_DE"],
+         layout declares once is lost on every page that sets its own.
+         It follows the page's own language now — a Greek page that shared a
+         card announcing itself as en_GB was describing a different page. */
+      locale: OG_LOCALE[locale],
+      alternateLocale: LOCALES.filter((l) => l !== locale).map((l) => OG_LOCALE[l]),
       type,
       images: [{ url: ogImage, width: 1200, height: 630, alt: title }],
       ...(publishedTime ? { publishedTime } : {}),

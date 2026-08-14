@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react"
 import gsap from "gsap"
 import { Search, X, ArrowRight } from "lucide-react"
 import { useTranslations } from "@/lib/use-translations"
+import { withLocale } from "@/lib/locale"
 import { removeGreekTonos } from "@/components/locale-text"
 import { lockScroll, unlockScroll } from "@/lib/scroll-lock"
 
@@ -13,12 +14,14 @@ interface SearchModalProps {
 }
 
 export function SearchModal({ open, onClose }: SearchModalProps) {
-  const { t } = useTranslations()
+  const { t, locale } = useTranslations()
 
   /* These pointed at /destinations/mediterranean, /destinations/caribbean,
      /experiences/day-charter and /experiences/weekly-charter — four routes
      that do not exist, and which a crawler duly found and followed. They also
      offered the Caribbean, which this business does not sail. */
+  /* Plain anchors, so they miss the locale-aware Link entirely — a Greek
+     reader following one landed back in English. */
   const quickLinks = [
     { label: t("search.link.sailingYachts", "Sailing yachts"), href: "/fleet?type=sailing" },
     { label: t("search.link.catamarans", "Catamarans"), href: "/fleet?type=catamaran" },
@@ -181,7 +184,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
             {quickLinks.map((link) => (
               <a
                 key={link.href}
-                href={link.href}
+                href={withLocale(link.href, locale)}
                 onClick={onClose}
                 className="group flex items-center justify-between rounded-sm px-4 py-3 text-white/70 transition-all hover:bg-white/5 hover:text-white"
               >

@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useCallback, useRef } from "react"
 import Image from "next/image"
-import Link from "next/link"
+import Link from "@/components/locale-link"
 import { DayPicker, type DateRange } from "react-day-picker"
 import { format, eachDayOfInterval, isBefore, startOfDay } from "date-fns"
 import "./yacht-calendar.css"
