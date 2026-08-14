@@ -169,8 +169,14 @@ export async function POST(req: NextRequest) {
            this the model intermittently returned empty content. */
         json: true,
         temperature: 0.6,
-        // A ceiling, so a long turn cannot run out mid-object.
-        maxTokens: 1200,
+        /* The ceiling has to clear the model's reasoning as well as the reply,
+           and 1200 did not: on a five-turn conversation the thinking used the
+           whole allowance and the JSON was cut off, so the call was billed,
+           discarded, and retried on the backup — two calls for one turn.
+           Not larger than needed, though: given 6000 the model reasoned for
+           1705 tokens instead of 601. It expands to fill the room, so the
+           ceiling is a cost control, not just a safety limit. */
+        maxTokens: 3000,
         messages: [
           { role: "system", content: systemPrompt(loc, today, bookable) },
           { role: "system", content: `Answers so far: ${JSON.stringify(answers ?? {})}` },

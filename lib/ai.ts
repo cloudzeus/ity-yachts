@@ -70,13 +70,12 @@ async function endpoints(): Promise<Endpoint[]> {
       apiKey: keys.deepseekKey.trim(),
       model: keys.deepseekModel?.trim() || DEFAULT_DEEPSEEK_MODEL,
       label: "DeepSeek",
-      /* The v4 models reason by default and bill the thinking as output — on a
-         measured planner turn, 92 of 114 output tokens were reasoning that was
-         then thrown away, and on a full conversation it exhausted max_tokens
-         before finishing the JSON, so the call was paid for, truncated, and
-         retried on the backup. None of this work needs deliberation: it is
-         short copy and a small object against a detailed brief. */
-      extra: { thinking: { type: "disabled" } },
+      /* Reasoning stays on. Turning it off looked like a large saving and was
+         a trap: on a short prompt it answered fine, but on a real conversation
+         the model returned forty space characters with finish_reason "stop" —
+         not an error, just nothing, on exactly the turns that matter.
+         `reasoning_effort: "none"` did the same. The cost is controlled with
+         the ceiling instead; see maxTokens below. */
     })
   }
   if (keys.openrouterKey?.trim()) {
