@@ -262,7 +262,7 @@ function YachtCarouselCard({ yacht, onClick, isActive }: { yacht: FleetYacht; on
       {yacht.image ? (
         <Image
           src={yacht.image}
-          alt={yacht.name}
+          alt={`${yacht.name}${yacht.category ? `, a ${yacht.category.toLowerCase()}` : ""} for charter from ${yacht.baseName || "Lefkada"}`}
           fill
           className="object-cover transition-transform duration-1000 group-hover:scale-110"
           sizes="600px"

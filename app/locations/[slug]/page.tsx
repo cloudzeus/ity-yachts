@@ -1,7 +1,7 @@
 import { db } from "@/lib/db"
 import { en, metaDescription, metaTitle, pageMeta } from "@/lib/seo"
 import { JsonLd } from "@/components/json-ld"
-import { breadcrumbLd, destinationLd } from "@/lib/structured-data"
+import { breadcrumbLd, destinationLd, videoLd } from "@/lib/structured-data"
 import { notFound } from "next/navigation"
 import { Metadata } from "next"
 import { SiteHeader } from "@/components/site-header"
@@ -79,6 +79,18 @@ export default async function LocationPage({ params }: { params: Promise<{ slug:
             latitude: location.latitude,
             longitude: location.longitude,
           }),
+          /* Only when the hero really is a video, and only with the fields
+             Google requires — partial markup is ineligible either way. */
+          ...(location.defaultMediaType === "video" && location.defaultMedia
+            ? [videoLd({
+                name: `${en(location.nameTranslations, location.name)} from the air`,
+                description: en(location.shortDesc),
+                contentUrl: location.defaultMedia,
+                thumbnailUrl: (Array.isArray(location.images) ? (location.images as string[])[0] : null) ?? null,
+                uploadDate: location.updatedAt.toISOString(),
+                pageUrl: `/locations/${slug}`,
+              })]
+            : []),
           breadcrumbLd([
             { name: "Home", path: "/" },
             { name: "Destinations", path: "/locations" },

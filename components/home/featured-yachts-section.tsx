@@ -170,7 +170,7 @@ function YachtCardInner({ yacht }: { yacht: FeaturedYacht }) {
       {yacht.image ? (
         <Image
           src={yacht.image}
-          alt={yacht.name}
+          alt={`${yacht.name}${yacht.category ? `, a ${yacht.category.toLowerCase()}` : ""} for charter from ${yacht.baseName || "Lefkada"}`}
           fill
           className="object-cover transition-transform duration-700 group-hover:scale-105"
           sizes="(max-width: 768px) 100vw, 50vw"

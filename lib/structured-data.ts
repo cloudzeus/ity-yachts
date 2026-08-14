@@ -269,6 +269,38 @@ export function tripLd({
   }
 }
 
+/**
+ * A video, so it can be found and described rather than ignored.
+ *
+ * `uploadDate` is required by Google and `thumbnailUrl` all but required —
+ * without them the markup is present but ineligible, which is worse than
+ * absent because it reads as done.
+ */
+export function videoLd({
+  name, description, contentUrl, thumbnailUrl, uploadDate, pageUrl,
+}: {
+  name: string
+  description: string
+  contentUrl: string
+  thumbnailUrl?: string | null
+  uploadDate: string
+  pageUrl: string
+}): Json {
+  return {
+    "@context": "https://schema.org",
+    "@type": "VideoObject",
+    name,
+    description: stripHtml(description) || name,
+    contentUrl,
+    ...(thumbnailUrl ? { thumbnailUrl: [thumbnailUrl] } : {}),
+    uploadDate,
+    /* No embedUrl: that field means a player, and the page is a page. The
+       @id ties the video to where it is shown without overstating it. */
+    "@id": `${absolute(pageUrl)}#video`,
+    inLanguage: "en",
+  }
+}
+
 /** A yacht in the fleet, as something that can actually be booked. */
 export function yachtLd({
   name, description, path, image, model, year, cabins, berths, loa,

@@ -66,7 +66,7 @@ export function SiteFooterView({
                 className="mb-8 max-w-xs text-sm leading-relaxed text-white/70"
                 style={{ fontFamily: "var(--font-body)" }}
               >
-                {t("footer.tagline", "Bespoke yacht charters and luxury maritime experiences across the world's most coveted destinations.")}
+                {t("footer.tagline", "IYC Ionische Yacht Charter has sailed out of Lefkada since 1979 — a family business with a Greek base and a German office.")}
               </p>
               <div className="flex flex-col gap-3">
                 <a
