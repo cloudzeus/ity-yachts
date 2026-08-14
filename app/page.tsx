@@ -52,8 +52,10 @@ export default async function Home() {
       orderBy: { updatedAt: "desc" },
       take: 6,
     }),
+    /* The whole fleet, not a slice of ten. The carousel counts what it is
+       given, so a cap here made it announce "1 / 10" for a fleet of
+       eighteen — and eight boats were unreachable from the homepage. */
     db.nausysYacht.findMany({
-      take: 10,
       orderBy: { updatedAt: "desc" },
       include: {
         category: true,

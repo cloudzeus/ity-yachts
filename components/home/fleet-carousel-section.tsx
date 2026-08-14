@@ -72,10 +72,12 @@ export function FleetCarouselSection({ yachts: rawYachts }: { yachts: FleetYacht
     [realCount, centerCard]
   )
 
-  const isMobile = typeof window !== "undefined" && window.innerWidth < 768
-  const step = isMobile ? 1 : 3
-  const prev = () => scrollToIndex(activeIndex - step)
-  const next = () => scrollToIndex(activeIndex + step)
+  /* One card per click. It used to move three on desktop while the counter
+     below reported a single yacht, so the numbers ran 1, 4, 7, 10, 3, 6 — you
+     reached every boat eventually, but it read as a handful repeating at
+     random, and the counter never described what was on screen. */
+  const prev = () => scrollToIndex(activeIndex - 1)
+  const next = () => scrollToIndex(activeIndex + 1)
 
   // Sync activeIndex with scroll position
   useEffect(() => {
