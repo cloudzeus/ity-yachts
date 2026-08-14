@@ -90,6 +90,19 @@ export function organizationLd(s: SiteSettings): Json {
     ],
     ...(s.sameAs.length ? { sameAs: s.sameAs } : {}),
     knowsLanguage: ["en", "el", "de"],
+    /* What the business is actually authoritative on. Answer engines use this
+       to decide whether a source is worth citing on a given subject. */
+    knowsAbout: [
+      "Yacht charter",
+      "Bareboat charter",
+      "Skippered charter",
+      "Catamaran charter",
+      "Sailing in the Ionian Sea",
+      "Lefkada",
+      "Sailing instruction",
+      "Deutscher Segler-Verband certification",
+      "Mediterranean seamanship",
+    ],
   }
 }
 

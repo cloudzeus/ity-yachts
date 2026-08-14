@@ -151,6 +151,11 @@ export async function pageMeta({
       description,
       url,
       siteName: ORG.name,
+      /* Repeated on every page on purpose: a page-level openGraph object
+         replaces the layout's rather than merging into it, so anything the
+         layout declares once is lost on every page that sets its own. */
+      locale: "en_GB",
+      alternateLocale: ["el_GR", "de_DE"],
       type,
       images: [{ url: ogImage, width: 1200, height: 630, alt: title }],
       ...(publishedTime ? { publishedTime } : {}),

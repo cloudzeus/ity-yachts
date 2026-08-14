@@ -117,6 +117,8 @@ export default async function RootLayout({
             every page that does. Aggregators and AI crawlers look for this
             before they look for a sitemap. */}
         <link rel="alternate" type="application/rss+xml" title={`${site.name} — news`} href="/feed.xml" />
+        {/* The plain-text brief for answer engines — see app/llms.txt. */}
+        <link rel="alternate" type="text/plain" href="/llms.txt" title="llms.txt" />
       </head>
       <body className="min-h-full flex flex-col">
         {/* The business and the site, declared once. Everything else on the
