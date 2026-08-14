@@ -1,6 +1,6 @@
 import { getSession } from "@/lib/auth-session"
 import { NextResponse } from "next/server"
-import { AiNotConfiguredError, aiChat, aiProvider } from "@/lib/ai"
+import { AiNotConfiguredError, aiChat, aiModel, aiProvider } from "@/lib/ai"
 
 /**
  * Proves the configured key actually works, by asking for a real translation.
@@ -31,11 +31,15 @@ export async function POST() {
       temperature: 0,
     })
 
+    const ms = Date.now() - started
+    const model = await aiModel()
+    const name = provider === "claude" ? "Claude" : provider === "openrouter" ? "OpenRouter" : "DeepSeek"
     return NextResponse.json({
       ok: true,
       provider,
-      ms: Date.now() - started,
-      message: `${provider === "claude" ? "Claude" : "DeepSeek"} answered in ${Date.now() - started} ms: "${reply.slice(0, 160)}"`,
+      model,
+      ms,
+      message: `${name} (${model}) answered in ${ms} ms: "${reply.slice(0, 160)}"`,
     })
   } catch (err) {
     if (err instanceof AiNotConfiguredError) {

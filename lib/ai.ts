@@ -8,10 +8,15 @@ import { db } from "@/lib/db"
  * shape, so when that account ran out of credit twelve features died at once
  * and there was no single place to change provider. This is that place.
  *
- * Claude is used whenever an Anthropic key is configured; DeepSeek stays as a
- * fallback so nothing breaks for an install that only has the old key. Both
- * keys live in the settings table rather than the environment, so they are
- * editable in /admin like every other credential here.
+ * Provider order, first key that is set wins:
+ *   1. Anthropic — Claude, the primary.
+ *   2. OpenRouter — the backup, pointed at DeepSeek.
+ *   3. DeepSeek direct — the original account.
+ *
+ * OpenRouter speaks the same OpenAI-shaped protocol as DeepSeek direct, so the
+ * two share a code path and differ only in host, model id and attribution
+ * headers. Every key lives in the settings table rather than the environment,
+ * so they stay editable in /admin like the other credentials here.
  */
 
 export type AiRole = "system" | "user" | "assistant"
@@ -23,7 +28,15 @@ export interface AiMessage {
 /** Fast and strong enough for translation and short-form copy; overridable in settings. */
 const DEFAULT_CLAUDE_MODEL = "claude-sonnet-5"
 
+/* `deepseek/deepseek-chat` is refused on this account — OpenRouter has no
+   allowed upstream for it — and the v4 models return their answer in a
+   reasoning field rather than as content. v3.2 answers plainly and honours
+   response_format, so it is the default. */
+const DEFAULT_OPENROUTER_MODEL = "deepseek/deepseek-v3.2"
+
 interface AiKeys {
+  openrouterKey?: string
+  openrouterModel?: string
   anthropicKey?: string
   deepseekKey?: string
   claudeModel?: string
@@ -34,12 +47,24 @@ async function getKeys(): Promise<AiKeys> {
   return ((record?.value ?? {}) as AiKeys) || {}
 }
 
+export type AiProviderName = "openrouter" | "deepseek" | "claude" | "none"
+
 /** Which provider a call will actually use — for the settings screen to report. */
-export async function aiProvider(): Promise<"claude" | "deepseek" | "none"> {
+export async function aiProvider(): Promise<AiProviderName> {
   const keys = await getKeys()
   if (keys.anthropicKey?.trim()) return "claude"
+  if (keys.openrouterKey?.trim()) return "openrouter"
   if (keys.deepseekKey?.trim()) return "deepseek"
   return "none"
+}
+
+/** The model that will actually answer, for the same reason. */
+export async function aiModel(): Promise<string> {
+  const keys = await getKeys()
+  if (keys.anthropicKey?.trim()) return keys.claudeModel?.trim() || DEFAULT_CLAUDE_MODEL
+  if (keys.openrouterKey?.trim()) return keys.openrouterModel?.trim() || DEFAULT_OPENROUTER_MODEL
+  if (keys.deepseekKey?.trim()) return "deepseek-chat"
+  return ""
 }
 
 export class AiNotConfiguredError extends Error {
@@ -65,9 +90,23 @@ export async function aiChat({
 
   const text = keys.anthropicKey?.trim()
     ? await anthropic(keys.anthropicKey.trim(), keys.claudeModel?.trim() || DEFAULT_CLAUDE_MODEL, messages, maxTokens, temperature, json)
-    : keys.deepseekKey?.trim()
-      ? await deepseek(keys.deepseekKey.trim(), messages, maxTokens, temperature, json)
-      : (() => { throw new AiNotConfiguredError() })()
+    : keys.openrouterKey?.trim()
+      ? await openAiShaped({
+          url: "https://openrouter.ai/api/v1/chat/completions",
+          apiKey: keys.openrouterKey.trim(),
+          model: keys.openrouterModel?.trim() || DEFAULT_OPENROUTER_MODEL,
+          label: "OpenRouter",
+          messages, maxTokens, temperature, json,
+        })
+      : keys.deepseekKey?.trim()
+        ? await openAiShaped({
+            url: "https://api.deepseek.com/chat/completions",
+            apiKey: keys.deepseekKey.trim(),
+            model: "deepseek-chat",
+            label: "DeepSeek",
+            messages, maxTokens, temperature, json,
+          })
+        : (() => { throw new AiNotConfiguredError() })()
 
   return json ? stripFence(text) : text
 }
@@ -128,18 +167,30 @@ async function anthropic(
   return text
 }
 
-async function deepseek(
-  apiKey: string,
-  messages: AiMessage[],
-  maxTokens: number,
-  temperature: number | undefined,
+/** OpenRouter and DeepSeek both speak this; only the host and model differ. */
+async function openAiShaped({
+  url, apiKey, model, label, messages, maxTokens, temperature, json,
+}: {
+  url: string
+  apiKey: string
+  model: string
+  label: string
+  messages: AiMessage[]
+  maxTokens: number
+  temperature: number | undefined
   json: boolean
-): Promise<string> {
-  const res = await fetch("https://api.deepseek.com/chat/completions", {
+}): Promise<string> {
+  const res = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+      /* OpenRouter attributes usage to the calling site; harmless elsewhere. */
+      "HTTP-Referer": "https://iyc.de",
+      "X-Title": "IYC Ionische Yacht Charter",
+    },
     body: JSON.stringify({
-      model: "deepseek-chat",
+      model,
       max_tokens: maxTokens,
       ...(json ? { response_format: { type: "json_object" } } : {}),
       ...(temperature != null ? { temperature } : {}),
@@ -147,11 +198,14 @@ async function deepseek(
     }),
   })
 
-  if (!res.ok) throw new Error(`DeepSeek ${res.status}: ${(await res.text()).slice(0, 400)}`)
+  if (!res.ok) throw new Error(`${label} ${res.status}: ${(await res.text()).slice(0, 400)}`)
 
   const body = await res.json()
+  /* A routed error arrives as HTTP 200 with an error object in the payload. */
+  if (body?.error) throw new Error(`${label}: ${String(body.error.message ?? body.error).slice(0, 300)}`)
+
   const text = body?.choices?.[0]?.message?.content
   if (typeof text !== "string" || !text.trim())
-    throw new Error(`DeepSeek returned no text (finish_reason=${body?.choices?.[0]?.finish_reason})`)
+    throw new Error(`${label} (${model}) returned no text — finish_reason=${body?.choices?.[0]?.finish_reason}`)
   return text.trim()
 }
