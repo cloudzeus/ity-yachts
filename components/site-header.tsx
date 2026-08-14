@@ -4,8 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import Link from "@/components/locale-link"
 import Image from "next/image"
 import gsap from "gsap"
-import { Menu, X, User, Anchor } from "lucide-react"
-import { SearchModal } from "@/components/search-modal"
+import { Menu, X, Anchor } from "lucide-react"
 import { LanguageSwitcher } from "@/components/language-switcher"
 import { useTranslations } from "@/lib/use-translations"
 import { useNavigation } from "@/lib/use-navigation"
@@ -15,7 +14,6 @@ export function SiteHeader() {
   const headerRef = useRef<HTMLElement>(null)
   const logoRef = useRef<HTMLImageElement>(null)
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [searchOpen, setSearchOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const mobileMenuRef = useRef<HTMLDivElement>(null)
   const menuItemsRef = useRef<HTMLDivElement>(null)
@@ -164,33 +162,6 @@ export function SiteHeader() {
               <LanguageSwitcher />
             </div>
 
-            <button
-              onClick={() => setSearchOpen(true)}
-              className="flex h-8 w-8 items-center justify-center text-white/70 transition-colors hover:text-white"
-              aria-label="Open search"
-            >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-            </button>
-
-            <Link
-              href="/login"
-              className="flex h-8 w-8 items-center justify-center text-white/70 transition-colors hover:text-white"
-              aria-label="Customer login"
-            >
-              <User className="h-[18px] w-[18px]" strokeWidth={1.5} />
-            </Link>
 
             {/* Mobile menu toggle */}
             <button
@@ -242,8 +213,6 @@ export function SiteHeader() {
           </div>
         </div>
       </header>
-
-      <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
     </>
   )
 }
