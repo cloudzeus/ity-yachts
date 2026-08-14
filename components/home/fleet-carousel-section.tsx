@@ -27,11 +27,17 @@ interface FleetYacht {
 
 export function FleetCarouselSection({ yachts: rawYachts }: { yachts: FleetYacht[] }) {
   const { t } = useTranslations()
-  // Infinite loop: triple the array so we always have cards on both sides
-  const yachts = [...rawYachts, ...rawYachts, ...rawYachts]
   const realCount = rawYachts.length
-  // Start in the middle copy so there are always cards to the left
-  const startIndex = realCount
+
+  /* The loop needs cards beyond both edges, not two extra copies of the whole
+     fleet. Tripling eighteen yachts put fifty-four cards in the DOM — 78% of
+     every node on the homepage and 86% of its inline SVG — to keep four of
+     them visible. A pad of four each side does the same job: no scroll
+     position can reach the end of it before the wrap fires. */
+  const PAD = Math.min(4, realCount)
+  const yachts = [...rawYachts.slice(-PAD), ...rawYachts, ...rawYachts.slice(0, PAD)]
+  // The real set starts after the leading pad.
+  const startIndex = PAD
   const [activeIndex, setActiveIndex] = useState(startIndex)
   const trackRef = useRef<HTMLDivElement>(null)
   const cardRefs = useRef<(HTMLDivElement | null)[]>([])
@@ -59,17 +65,24 @@ export function FleetCarouselSection({ yachts: rawYachts }: { yachts: FleetYacht
     (idx: number) => {
       // Wrap around within the tripled array
       let clamped = idx
-      if (clamped < realCount) {
-        // Jumped past left edge of middle copy — teleport to middle
+      let wrapped = false
+      if (clamped < PAD) {
+        // Ran off the leading pad — jump to the same yacht at the far end.
         clamped = clamped + realCount
-      } else if (clamped >= realCount * 2) {
-        // Jumped past right edge of middle copy — teleport to middle
+        wrapped = true
+      } else if (clamped >= PAD + realCount) {
+        // Ran off the trailing pad — jump back to the same yacht at the start.
         clamped = clamped - realCount
+        wrapped = true
       }
       setActiveIndex(clamped)
-      centerCard(clamped)
+      /* A wrap crosses the whole track, and animating it takes longer than the
+         guard that silences the scroll listener — so the listener woke up
+         mid-flight and snapped the index to whatever card it was passing.
+         After 18 the counter read 12. A wrap is a teleport, not a journey. */
+      centerCard(clamped, !wrapped)
     },
-    [realCount, centerCard]
+    [realCount, PAD, centerCard]
   )
 
   /* One card per click. It used to move three on desktop while the counter
@@ -120,7 +133,9 @@ export function FleetCarouselSection({ yachts: rawYachts }: { yachts: FleetYacht
   }, [])
 
   // The display index (1-based, from real yacht count)
-  const displayIndex = (activeIndex % realCount) + 1
+  /* Which yacht is in the middle, counted from the real set rather than from
+     the padded array — the pad would otherwise offset every number. */
+  const displayIndex = (((activeIndex - PAD) % realCount) + realCount) % realCount + 1
   const headerRef = useRef<HTMLDivElement>(null)
 
   // Animate header on scroll
