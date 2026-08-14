@@ -153,6 +153,9 @@ export async function POST(req: NextRequest) {
 
     const ask = async (nudge?: string) => {
       const content = await aiChat({
+        /* The reply is parsed as an object, so ask the API for one. Without
+           this the model intermittently returned empty content. */
+        json: true,
         temperature: 0.6,
         // A ceiling, so a long turn cannot run out mid-object.
         maxTokens: 1200,
@@ -163,7 +166,12 @@ export async function POST(req: NextRequest) {
           { role: "system" as const, content: formatPrompt(loc) + (nudge ? "\n\n" + nudge : "") },
         ],
       })
-      return extractJson(content)
+      const turn = extractJson(content)
+      /* A well-formed but empty object is a failure too. It parses, so nothing
+         downstream complained — the visitor simply got a blank turn. Throwing
+         puts it through the same retry as unparseable output. */
+      if (!String(turn.reply ?? "").trim()) throw new Error("reply was empty")
+      return turn
     }
 
     let parsed: Turn

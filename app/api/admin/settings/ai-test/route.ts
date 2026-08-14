@@ -33,7 +33,7 @@ export async function POST() {
 
     const ms = Date.now() - started
     const model = await aiModel()
-    const name = provider === "claude" ? "Claude" : provider === "openrouter" ? "OpenRouter" : "DeepSeek"
+    const name = provider === "openrouter" ? "OpenRouter" : "DeepSeek"
     return NextResponse.json({
       ok: true,
       provider,

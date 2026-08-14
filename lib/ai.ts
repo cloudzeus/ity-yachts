@@ -4,19 +4,20 @@ import { db } from "@/lib/db"
 /**
  * One way to ask a model for text.
  *
- * Twelve routes each opened their own fetch to DeepSeek with the same body
- * shape, so when that account ran out of credit twelve features died at once
- * and there was no single place to change provider. This is that place.
+ * Twelve routes each opened their own fetch with the same body shape, so when
+ * the account behind them ran out of credit twelve features died at once and
+ * there was no single place to change anything. This is that place.
  *
- * Provider order, first key that is set wins:
- *   1. Anthropic — Claude, the primary.
- *   2. OpenRouter — the backup, pointed at DeepSeek.
- *   3. DeepSeek direct — the original account.
+ * The model is DeepSeek, reached two ways: the DeepSeek account directly, and
+ * OpenRouter as the backup. Backup means what it says — if the direct call
+ * fails for any reason, credit or outage or a bad key, the same request is
+ * retried through OpenRouter rather than surfacing an error to whoever clicked
+ * the button. Both speak the same OpenAI-shaped protocol, so they share one
+ * function and differ only in host, model id and the attribution headers
+ * OpenRouter asks for.
  *
- * OpenRouter speaks the same OpenAI-shaped protocol as DeepSeek direct, so the
- * two share a code path and differ only in host, model id and attribution
- * headers. Every key lives in the settings table rather than the environment,
- * so they stay editable in /admin like the other credentials here.
+ * Keys live in the settings table rather than the environment, so they stay
+ * editable in /admin like the other credentials here.
  */
 
 export type AiRole = "system" | "user" | "assistant"
@@ -25,21 +26,23 @@ export interface AiMessage {
   content: string
 }
 
-/** Fast and strong enough for translation and short-form copy; overridable in settings. */
-const DEFAULT_CLAUDE_MODEL = "claude-sonnet-5"
-
 /* `deepseek/deepseek-chat` is refused on this account — OpenRouter has no
-   allowed upstream for it — and the v4 models return their answer in a
-   reasoning field rather than as content. v3.2 answers plainly and honours
-   response_format, so it is the default. */
+   allowed upstream for it — and both v4 models return null content, putting
+   their answer somewhere other than the content field. v3.2 answers plainly
+   and honours response_format, so it is the default. */
 const DEFAULT_OPENROUTER_MODEL = "deepseek/deepseek-v3.2"
 
 interface AiKeys {
+  deepseekKey?: string
   openrouterKey?: string
   openrouterModel?: string
-  anthropicKey?: string
-  deepseekKey?: string
-  claudeModel?: string
+}
+
+interface Endpoint {
+  url: string
+  apiKey: string
+  model: string
+  label: string
 }
 
 async function getKeys(): Promise<AiKeys> {
@@ -47,29 +50,47 @@ async function getKeys(): Promise<AiKeys> {
   return ((record?.value ?? {}) as AiKeys) || {}
 }
 
-export type AiProviderName = "openrouter" | "deepseek" | "claude" | "none"
-
-/** Which provider a call will actually use — for the settings screen to report. */
-export async function aiProvider(): Promise<AiProviderName> {
+/** DeepSeek first, OpenRouter behind it — in the order they will be tried. */
+async function endpoints(): Promise<Endpoint[]> {
   const keys = await getKeys()
-  if (keys.anthropicKey?.trim()) return "claude"
-  if (keys.openrouterKey?.trim()) return "openrouter"
-  if (keys.deepseekKey?.trim()) return "deepseek"
-  return "none"
+  const list: Endpoint[] = []
+  if (keys.deepseekKey?.trim()) {
+    list.push({
+      url: "https://api.deepseek.com/chat/completions",
+      apiKey: keys.deepseekKey.trim(),
+      model: "deepseek-chat",
+      label: "DeepSeek",
+    })
+  }
+  if (keys.openrouterKey?.trim()) {
+    list.push({
+      url: "https://openrouter.ai/api/v1/chat/completions",
+      apiKey: keys.openrouterKey.trim(),
+      model: keys.openrouterModel?.trim() || DEFAULT_OPENROUTER_MODEL,
+      label: "OpenRouter",
+    })
+  }
+  return list
 }
 
-/** The model that will actually answer, for the same reason. */
+export type AiProviderName = "deepseek" | "openrouter" | "none"
+
+/** Which route a call will try first — for the settings screen to report. */
+export async function aiProvider(): Promise<AiProviderName> {
+  const list = await endpoints()
+  if (!list.length) return "none"
+  return list[0].label === "DeepSeek" ? "deepseek" : "openrouter"
+}
+
+/** The model that will answer first, for the same reason. */
 export async function aiModel(): Promise<string> {
-  const keys = await getKeys()
-  if (keys.anthropicKey?.trim()) return keys.claudeModel?.trim() || DEFAULT_CLAUDE_MODEL
-  if (keys.openrouterKey?.trim()) return keys.openrouterModel?.trim() || DEFAULT_OPENROUTER_MODEL
-  if (keys.deepseekKey?.trim()) return "deepseek-chat"
-  return ""
+  const list = await endpoints()
+  return list[0]?.model ?? ""
 }
 
 export class AiNotConfiguredError extends Error {
   constructor() {
-    super("No AI provider configured — add an Anthropic or DeepSeek key in Settings → AI")
+    super("No AI provider configured — add a DeepSeek or OpenRouter key in Settings → AI")
     this.name = "AiNotConfiguredError"
   }
 }
@@ -86,29 +107,22 @@ export async function aiChat({
   /** The caller will JSON.parse the result, so ask for an object and unwrap fences. */
   json?: boolean
 }): Promise<string> {
-  const keys = await getKeys()
+  const list = await endpoints()
+  if (!list.length) throw new AiNotConfiguredError()
 
-  const text = keys.anthropicKey?.trim()
-    ? await anthropic(keys.anthropicKey.trim(), keys.claudeModel?.trim() || DEFAULT_CLAUDE_MODEL, messages, maxTokens, temperature, json)
-    : keys.openrouterKey?.trim()
-      ? await openAiShaped({
-          url: "https://openrouter.ai/api/v1/chat/completions",
-          apiKey: keys.openrouterKey.trim(),
-          model: keys.openrouterModel?.trim() || DEFAULT_OPENROUTER_MODEL,
-          label: "OpenRouter",
-          messages, maxTokens, temperature, json,
-        })
-      : keys.deepseekKey?.trim()
-        ? await openAiShaped({
-            url: "https://api.deepseek.com/chat/completions",
-            apiKey: keys.deepseekKey.trim(),
-            model: "deepseek-chat",
-            label: "DeepSeek",
-            messages, maxTokens, temperature, json,
-          })
-        : (() => { throw new AiNotConfiguredError() })()
+  const failures: string[] = []
+  for (const endpoint of list) {
+    try {
+      const text = await call({ ...endpoint, messages, maxTokens, temperature, json })
+      if (failures.length) console.warn(`[ai] ${endpoint.label} answered after: ${failures.join(" | ")}`)
+      return json ? stripFence(text) : text
+    } catch (err) {
+      failures.push(err instanceof Error ? err.message : String(err))
+    }
+  }
 
-  return json ? stripFence(text) : text
+  // Every route failed: report all of them, not just the last.
+  throw new Error(failures.join(" | "))
 }
 
 /** Models wrap JSON in a markdown fence however firmly they are told not to. */
@@ -116,65 +130,9 @@ function stripFence(text: string): string {
   return text.replace(/^```(?:json)?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim()
 }
 
-async function anthropic(
-  apiKey: string,
-  model: string,
-  messages: AiMessage[],
-  maxTokens: number,
-  temperature: number | undefined,
-  json: boolean
-): Promise<string> {
-  /* The Messages API takes one system string and a turn list of user and
-     assistant only. Callers here interleave system messages — a format
-     instruction after the transcript, for instance — so those are gathered in
-     order into the system block rather than dropped. */
-  const parts = messages.filter((m) => m.role === "system").map((m) => m.content)
-  /* Anthropic has no response_format, so the instruction has to be said. */
-  if (json) parts.push("Respond with a single valid JSON object and nothing else. No prose, no markdown fences.")
-  const system = parts.join("\n\n")
-  const turns = messages
-    .filter((m) => m.role !== "system")
-    .map((m) => ({ role: m.role as "user" | "assistant", content: m.content }))
-
-  // A request needs at least one turn, and it has to start with the user.
-  if (!turns.length || turns[0].role !== "user") turns.unshift({ role: "user", content: "Proceed." })
-
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model,
-      max_tokens: maxTokens,
-      ...(system ? { system } : {}),
-      ...(temperature != null ? { temperature } : {}),
-      messages: turns,
-    }),
-  })
-
-  if (!res.ok) throw new Error(`Anthropic ${res.status}: ${(await res.text()).slice(0, 400)}`)
-
-  const body = await res.json()
-  const text = (body.content ?? [])
-    .filter((b: { type: string }) => b.type === "text")
-    .map((b: { text: string }) => b.text)
-    .join("")
-    .trim()
-  if (!text) throw new Error(`Anthropic returned no text (stop_reason=${body.stop_reason})`)
-  return text
-}
-
-/** OpenRouter and DeepSeek both speak this; only the host and model differ. */
-async function openAiShaped({
+async function call({
   url, apiKey, model, label, messages, maxTokens, temperature, json,
-}: {
-  url: string
-  apiKey: string
-  model: string
-  label: string
+}: Endpoint & {
   messages: AiMessage[]
   maxTokens: number
   temperature: number | undefined
@@ -198,11 +156,11 @@ async function openAiShaped({
     }),
   })
 
-  if (!res.ok) throw new Error(`${label} ${res.status}: ${(await res.text()).slice(0, 400)}`)
+  if (!res.ok) throw new Error(`${label} ${res.status}: ${(await res.text()).slice(0, 200)}`)
 
   const body = await res.json()
   /* A routed error arrives as HTTP 200 with an error object in the payload. */
-  if (body?.error) throw new Error(`${label}: ${String(body.error.message ?? body.error).slice(0, 300)}`)
+  if (body?.error) throw new Error(`${label}: ${String(body.error.message ?? body.error).slice(0, 200)}`)
 
   const text = body?.choices?.[0]?.message?.content
   if (typeof text !== "string" || !text.trim())

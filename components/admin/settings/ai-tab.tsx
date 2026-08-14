@@ -8,17 +8,15 @@ import { Button } from "@/components/ui/button"
 
 interface AIData {
   openaiKey: string
+  deepseekKey: string
   openrouterKey: string
   openrouterModel: string
-  anthropicKey: string
-  claudeModel: string
-  deepseekKey: string
   geocodeKey: string
   googleMapsKey: string
   weatherApiKey: string
 }
 
-const defaults: AIData = { openaiKey: "", openrouterKey: "", openrouterModel: "", anthropicKey: "", claudeModel: "", deepseekKey: "", geocodeKey: "", googleMapsKey: "", weatherApiKey: "" }
+const defaults: AIData = { openaiKey: "", deepseekKey: "", openrouterKey: "", openrouterModel: "", geocodeKey: "", googleMapsKey: "", weatherApiKey: "" }
 
 function MaskedField({ label, description, value, onChange, placeholder }: {
   label: string
@@ -128,46 +126,31 @@ export function AITab({ initialData }: { initialData?: Partial<AIData> }) {
         >
           Active provider:{" "}
           <strong style={{ color: "var(--primary)" }}>
-            {data.anthropicKey
-              ? `Claude · ${data.claudeModel || "claude-sonnet-5"}`
+            {data.deepseekKey
+              ? "DeepSeek"
               : data.openrouterKey
                 ? `OpenRouter · ${data.openrouterModel || "deepseek/deepseek-v3.2"}`
-                : data.deepseekKey
-                  ? "DeepSeek"
-                  : "none configured"}
+                : "none configured"}
           </strong>
-          {!data.anthropicKey && data.openrouterKey
-            ? " — Claude has no key, so the OpenRouter backup is answering."
+          {data.deepseekKey && data.openrouterKey
+            ? " — if a call fails, the same request is retried through OpenRouter."
             : ""}
         </div>
 
         <div>
           <MaskedField
-            label="Claude API key (Anthropic)"
-            description="The primary provider. Used for every AI feature here whenever it is set."
-            value={data.anthropicKey}
-            onChange={(v) => setData((p) => ({ ...p, anthropicKey: v }))}
-            placeholder="sk-ant-..."
+            label="DeepSeek API key"
+            description="The primary route. Powers translation, article drafting, SEO meta and the planning assistant."
+            value={data.deepseekKey}
+            onChange={(v) => setData((p) => ({ ...p, deepseekKey: v }))}
+            placeholder="sk-..."
           />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <Label className="text-xs" style={{ color: "var(--on-surface-variant)" }}>Claude model</Label>
-          <Input
-            value={data.claudeModel}
-            onChange={(e) => setData((p) => ({ ...p, claudeModel: e.target.value }))}
-            placeholder="claude-sonnet-5"
-            className="font-mono text-xs"
-          />
-          <p className="text-[11px]" style={{ color: "var(--on-surface-variant)" }}>
-            Leave blank for claude-sonnet-5. Use claude-opus-5 for the strongest writing.
-          </p>
         </div>
 
         <div style={{ borderTop: "1px solid var(--outline-variant)", paddingTop: "1rem" }}>
           <MaskedField
             label="OpenRouter API key (backup)"
-            description="Steps in when Claude has no key. Pointed at DeepSeek."
+            description="Reaches the same DeepSeek model by another road. Used automatically whenever a direct call fails — out of credit, an outage, a rejected key."
             value={data.openrouterKey}
             onChange={(v) => setData((p) => ({ ...p, openrouterKey: v }))}
             placeholder="sk-or-v1-..."
@@ -186,16 +169,6 @@ export function AITab({ initialData }: { initialData?: Partial<AIData> }) {
             Leave blank for deepseek/deepseek-v3.2. deepseek/deepseek-chat is refused on this account
             and the v4 models return nothing usable, so change this only after testing.
           </p>
-        </div>
-
-        <div style={{ borderTop: "1px solid var(--outline-variant)", paddingTop: "1rem" }}>
-          <MaskedField
-            label="DeepSeek API key (direct, last resort)"
-            description="Only used when neither of the above has a key. Kept so the original account still works."
-            value={data.deepseekKey}
-            onChange={(v) => setData((p) => ({ ...p, deepseekKey: v }))}
-            placeholder="sk-..."
-          />
         </div>
 
         <div style={{ borderTop: "1px solid var(--outline-variant)", paddingTop: "1rem" }}>
