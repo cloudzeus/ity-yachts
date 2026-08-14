@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { aiChat } from "@/lib/ai"
+import { bookableMonths, normalisePlanDates, todayIso } from "@/lib/plan-dates"
 import { validate, type PlanAnswers } from "@/lib/plan-wizard"
 
 export const dynamic = "force-dynamic"
@@ -54,7 +55,7 @@ contactPreference "email" | "phone" | "whatsapp"
 notes             anything else they told you, in their own words
 `.trim()
 
-function systemPrompt(locale: string, today: string) {
+function systemPrompt(locale: string, today: string, bookable: string[]) {
   const language =
     locale === "el" ? "Greek" : locale === "de" ? "German" : "English"
 
@@ -66,6 +67,9 @@ YOUR JOB
 Have a short conversation and come away with everything a colleague needs to propose the right boat. Ask about ONE thing per turn. Two related things are fine if they are naturally one question (for example how many adults and how many children). Never present a list of every remaining question.
 
 Acknowledge what they just said in a few words before asking the next thing. Keep each reply under about 45 words.
+
+WHEN THEY CAN SAIL
+The season runs May to October. Today is ${today}, so the months still open are ${bookable.join(", ")} — in that order, nearest first. Never offer, suggest or record a date that has already gone. If they name a month or a period that has passed this year they mean next year, so record next year's. Your tappable answers for that question must come from those months, written the way a person says them — "this September", "May next year" — never as a code and never with the yyyy-mm in brackets. The codes are for the answers object only.
 
 Start by asking when they would like to sail. Most people answer with a span rather than two exact dates — "the second half of June", "any week between the 6th and the 27th". Take that as it is, record it as a window, and do not push them towards exact dates; a wide window is what lets us find them the right boat.
  Leave the contact details for the very end — ask for the name and email only once everything else is settled, and say why you need them.
@@ -84,6 +88,13 @@ Set "done" to true only after you have firstName, email, and enough of the rest 
 /* The output contract goes in its own message, sent last. Buried at the end of
    a long system prompt the model would sometimes ignore it and answer in prose,
    which took the turn down. Immediately before generation it holds. */
+/** Shown when no provider answers, so the visitor is not left with a blank. */
+const OUTAGE_REPLY: Record<string, string> = {
+  en: "Sorry — I cannot reach the planner just now. Please try again in a moment, or write to bookings@iyc.de and a person will pick it up.",
+  el: "Συγγνώμη — δεν μπορώ να συνδεθώ με τον βοηθό αυτή τη στιγμή. Δοκιμάστε ξανά σε λίγο ή γράψτε μας στο bookings@iyc.de και θα σας απαντήσει άνθρωπος.",
+  de: "Entschuldigung — der Planer ist gerade nicht erreichbar. Bitte versuchen Sie es gleich noch einmal, oder schreiben Sie an bookings@iyc.de; dann meldet sich jemand persönlich.",
+}
+
 function formatPrompt(locale: string) {
   const language = locale === "el" ? "Greek" : locale === "de" ? "German" : "English"
   return `Reply with a JSON object and nothing else. No prose, no code fence.
@@ -144,7 +155,8 @@ export async function POST(req: NextRequest) {
     }
 
     const loc = locale === "el" || locale === "de" ? locale : "en"
-    const today = new Date().toISOString().slice(0, 10)
+    const today = todayIso()
+    const bookable = bookableMonths(today)
 
     /* Only the recent turns go to the model. The full state travels in the
        `answers` system message, so trimming the transcript costs nothing and
@@ -160,7 +172,7 @@ export async function POST(req: NextRequest) {
         // A ceiling, so a long turn cannot run out mid-object.
         maxTokens: 1200,
         messages: [
-          { role: "system", content: systemPrompt(loc, today) },
+          { role: "system", content: systemPrompt(loc, today, bookable) },
           { role: "system", content: `Answers so far: ${JSON.stringify(answers ?? {})}` },
           ...recent.map((m) => ({ role: m.role, content: m.content })),
           { role: "system" as const, content: formatPrompt(loc) + (nudge ? "\n\n" + nudge : "") },
@@ -187,12 +199,24 @@ export async function POST(req: NextRequest) {
            conversation must never dead-end on a formatting slip. */
         console.warn("[plan/chat] degrading:", (second as Error).message)
         parsed = { reply: (second as Error & { prose?: string }).prose ?? "", answers: {}, quick: [], done: false }
-        if (!parsed.reply) throw second
+        /* Nothing usable at all — both providers down, or out of credit. The
+           conversation used to end here on a 502, which the visitor sees as a
+           blank turn and reads as the site being broken. Say what happened and
+           give them a way through instead. */
+        if (!parsed.reply) {
+          console.error("[plan/chat] no provider answered:", (second as Error).message)
+          parsed = { reply: OUTAGE_REPLY[loc], answers: {}, quick: [], done: false }
+        }
       }
     }
 
     // Merge rather than replace: a turn that drops a field must not lose it.
-    const merged: Partial<PlanAnswers> = { ...(answers ?? {}), ...(parsed.answers ?? {}) }
+    const raw: Partial<PlanAnswers> = { ...(answers ?? {}), ...(parsed.answers ?? {}) }
+
+    /* Being told today's date does not stop the model resolving "first half of
+       July" to a July that has gone. Anything in the past is moved to the next
+       time it comes round, in pairs so a window cannot end before it starts. */
+    const merged = normalisePlanDates(raw, today)
 
     // The model decides when it is finished; the schema decides whether it is.
     const done = Boolean(parsed.done) && validate(merged) === null
