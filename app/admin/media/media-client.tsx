@@ -33,6 +33,10 @@ interface MediaFile {
   size: number
   width: number | null
   height: number | null
+  /** Null on a video means the background transcode has not finished. */
+  optimizedAt?: string | null
+  /** What it weighed before transcoding, when it was re-encoded. */
+  originalSize?: number | null
   lastChanged: string
 }
 
@@ -533,7 +537,30 @@ function GridView({ files, folders, selected, onToggle, onSelectAll, onFolderCli
             <div className="p-2 flex items-center justify-between gap-2">
               <div className="flex-1 min-w-0">
                 <p className="text-[10px] font-medium truncate" style={{ color: "var(--primary)" }}>{file.name}</p>
-                <p className="text-[9px]" style={{ color: "var(--on-surface-variant)" }}>{formatBytes(file.size)}</p>
+                <p className="text-[9px] flex items-center gap-1.5" style={{ color: "var(--on-surface-variant)" }}>
+                  {formatBytes(file.size)}
+                  {/* Video is uploaded as it arrives and re-encoded behind the
+                      response, so say which state a file is in rather than
+                      leaving a heavy upload looking finished. */}
+                  {file.mimeType.startsWith("video/") && !file.optimizedAt && (
+                    <span
+                      className="px-1 rounded text-[8px] font-semibold uppercase tracking-wide"
+                      style={{ background: "#F7EBD9", color: "#8A5410" }}
+                      title="Uploaded at full size — being re-encoded for the web. Refresh in a minute."
+                    >
+                      optimising
+                    </span>
+                  )}
+                  {file.originalSize && file.originalSize > file.size && (
+                    <span
+                      className="px-1 rounded text-[8px] font-semibold"
+                      style={{ background: "#E1EEE7", color: "#1F6048" }}
+                      title={`Was ${formatBytes(file.originalSize)} before optimising`}
+                    >
+                      −{Math.round(100 - (file.size / file.originalSize) * 100)}%
+                    </span>
+                  )}
+                </p>
               </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

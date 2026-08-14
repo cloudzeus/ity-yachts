@@ -75,6 +75,9 @@ export async function GET(req: NextRequest) {
         url,
         mimeType: db?.mimeType ?? guessMimeType(f.ObjectName),
         size: db?.size ?? f.Length,
+        // Null on a video means the background transcode has not finished.
+        optimizedAt: db?.optimizedAt ?? null,
+        originalSize: db?.originalSize ?? null,
         width: db?.width ?? null,
         height: db?.height ?? null,
         // Where the photograph was taken, when its EXIF carried a fix.

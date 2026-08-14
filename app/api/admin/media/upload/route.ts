@@ -2,7 +2,9 @@ import { db } from "@/lib/db"
 import { getSession } from "@/lib/auth-session"
 import { uploadToBunnyCDN, createFolder } from "@/lib/bunny-cdn"
 import { processImage, isImage, isSvg, isVideo, slugify, readGeotag, type Geotag } from "@/lib/media-processor"
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest, NextResponse, after } from "next/server"
+import { purgeCDNCache } from "@/lib/bunny-cdn"
+import { hasFfmpeg, transcodeVideo } from "@/lib/video-processor"
 
 export const maxDuration = 300
 
@@ -60,7 +62,10 @@ export async function POST(req: NextRequest) {
       height = processed.height
       fileName = `${Date.now()}-${slugify(baseName)}.webp`
     } else if (isVideo(originalMime)) {
-      // Upload video as-is — server-side transcoding is slow and requires ffmpeg
+      /* Uploaded as it arrives so the admin is not left waiting, then
+         re-encoded in the background and swapped in — see the `after()` block
+         below. Storing video untouched is how a 33 MB drone clip ended up as
+         a decorative background on the homepage. */
       fileName = `${Date.now()}-${slugify(baseName)}.${ext}`
     } else {
       // PDFs, documents, and other files — upload as-is
@@ -89,6 +94,8 @@ export async function POST(req: NextRequest) {
         url: result.url,
         mimeType,
         size: buffer.length,
+        // Images are converted inline; a video is stamped once ffmpeg is done.
+        optimizedAt: isVideo(originalMime) ? null : new Date(),
         width,
         height,
         latitude: geotag?.latitude ?? null,
@@ -99,6 +106,8 @@ export async function POST(req: NextRequest) {
         url: result.url,
         mimeType,
         size: buffer.length,
+        optimizedAt: isVideo(originalMime) ? null : new Date(),
+        originalSize: null,
         width,
         height,
         latitude: geotag?.latitude ?? null,
@@ -108,6 +117,59 @@ export async function POST(req: NextRequest) {
     })
 
     console.log("[POST /api/admin/media/upload] Saved to DB:", { path: storagePath, url: result.url, folder })
+
+    /* Transcode after the response has gone out, so the upload feels instant.
+       The re-encoded file overwrites the original at the same path, which
+       means every URL already saved against this media stays valid — then the
+       CDN edge is purged so the small file is what gets served. */
+    if (isVideo(originalMime)) {
+      const original = buffer
+      after(async () => {
+        try {
+          if (!(await hasFfmpeg())) {
+            console.warn("[media] ffmpeg unavailable — video stored unoptimised:", storagePath)
+            return
+          }
+
+          const out = await transcodeVideo(original, ext)
+
+          // Never make a file bigger: an already-web-sized upload is left alone.
+          if (out.buffer.length >= original.length) {
+            await db.media.update({
+              where: { path: storagePath },
+              data: { optimizedAt: new Date(), width: out.width || undefined, height: out.height || undefined },
+            })
+            console.log("[media] already web-sized, kept as uploaded:", storagePath)
+            return
+          }
+
+          const swapped = await uploadToBunnyCDN({ storageZone: zone, fileName: storagePath, file: out.buffer })
+          if (!swapped.success) {
+            console.error("[media] transcoded upload failed, original left in place:", storagePath)
+            return
+          }
+
+          await purgeCDNCache(result.url!)
+          await db.media.update({
+            where: { path: storagePath },
+            data: {
+              size: out.buffer.length,
+              originalSize: original.length,
+              optimizedAt: new Date(),
+              width: out.width || undefined,
+              height: out.height || undefined,
+            },
+          })
+
+          const mb = (n: number) => (n / 1048576).toFixed(2)
+          console.log(`[media] transcoded ${storagePath}: ${mb(original.length)} MB -> ${mb(out.buffer.length)} MB`)
+        } catch (error) {
+          // The original is already live and usable; this is not fatal.
+          console.error("[media] transcode failed, original left in place:", storagePath, error)
+        }
+      })
+    }
+
     return NextResponse.json({ file: media, success: true })
   } catch (error) {
     console.error("[POST /api/admin/media/upload] Error:", error)

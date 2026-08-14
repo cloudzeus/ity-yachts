@@ -74,6 +74,12 @@ model Media {
   url       String
   mimeType  String
   size      Int
+  /// What the file weighed before transcoding, so the saving is visible.
+  originalSize Int?
+  /// Set when a video has been re-encoded for the web. Null on a video means
+  /// the background job has not run (or failed); images are optimised inline
+  /// and are stamped on upload.
+  optimizedAt  DateTime?
   width     Int?
   height    Int?
   // Lifted from the original EXIF at upload. The published file has none — the
