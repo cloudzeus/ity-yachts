@@ -73,21 +73,33 @@ async function getKeys(): Promise<AiKeys> {
 }
 
 /**
- * DeepSeek, and only DeepSeek while it has a key.
+ * v3.2 answers, DeepSeek catches failures.
  *
- * The v4 models reason before answering and bill the thinking as output, and
- * every ceiling in this codebase was written for a model that does not — a
- * 50-word translation spent its whole 1024 allowance thinking and returned
- * nothing. That is fixed by REASONING_HEADROOM below rather than by editing
- * fourteen call sites, each of which still says what it means.
+ * Chosen on measurement, on the same work rather than on sample prompts:
  *
- * OpenRouter is only reached when DeepSeek has no key at all. It is a way in
- * for an install that has not been set up, not a fallback — so a DeepSeek
- * outage now surfaces as an error instead of being quietly paid around.
+ *   planner, five turns   v3.2   478 output tokens   v4-flash  5021
+ *   translation           v3.2   157                 v4-flash  4188
+ *
+ * Same result, ten to twenty-five times the output, and four times the wait.
+ * The v4 models reason before answering and bill the thinking, which is worth
+ * paying for when writing something once and is not worth paying for on work
+ * this shape.
+ *
+ * DeepSeek stays behind it as a real fallback, because losing both providers
+ * at once has already happened here and the visitor saw a blank screen. When
+ * it is reached, REASONING_HEADROOM gives it the room it needs.
  */
 async function endpoints(): Promise<Endpoint[]> {
   const keys = await getKeys()
   const list: Endpoint[] = []
+  if (keys.openrouterKey?.trim()) {
+    list.push({
+      url: "https://openrouter.ai/api/v1/chat/completions",
+      apiKey: keys.openrouterKey.trim(),
+      model: keys.openrouterModel?.trim() || DEFAULT_OPENROUTER_MODEL,
+      label: "OpenRouter",
+    })
+  }
   if (keys.deepseekKey?.trim()) {
     list.push({
       url: "https://api.deepseek.com/chat/completions",
@@ -100,15 +112,6 @@ async function endpoints(): Promise<Endpoint[]> {
          not an error, just nothing, on exactly the turns that matter.
          `reasoning_effort: "none"` did the same. The cost is controlled with
          the ceiling instead; see maxTokens below. */
-    })
-  }
-  // Only when there is no DeepSeek key at all.
-  if (!list.length && keys.openrouterKey?.trim()) {
-    list.push({
-      url: "https://openrouter.ai/api/v1/chat/completions",
-      apiKey: keys.openrouterKey.trim(),
-      model: keys.openrouterModel?.trim() || DEFAULT_OPENROUTER_MODEL,
-      label: "OpenRouter",
     })
   }
   return list
