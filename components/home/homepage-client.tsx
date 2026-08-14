@@ -16,7 +16,9 @@ import { ServicesSection } from "./services-section"
 import { FamilySection, type FamilyMember } from "./family-section"
 import type { FleetRanges } from "@/lib/fleet-ranges"
 import { NewsSection } from "./news-section"
+import { FaqSection } from "./faq-section"
 import type { NewsCard } from "@/lib/news"
+import type { FaqEntry } from "@/lib/faqs"
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger)
@@ -95,6 +97,7 @@ interface HomepageProps {
   staff: FamilyMember[]
   fleetRanges: FleetRanges
   news: NewsCard[]
+  faqs: FaqEntry[]
 }
 
 function r(field: string | T | undefined, locale: string): string {
@@ -103,7 +106,7 @@ function r(field: string | T | undefined, locale: string): string {
   return field[locale] || field.en || ""
 }
 
-export function HomepageClient({ hero, destinations, itineraries, yachts, fleetYachts, reviews, staff, fleetRanges, news }: HomepageProps) {
+export function HomepageClient({ hero, destinations, itineraries, yachts, fleetYachts, reviews, staff, fleetRanges, news, faqs }: HomepageProps) {
   const { locale, t } = useTranslations()
   const heroVideoRef = useRef<HTMLVideoElement>(null)
 
@@ -351,6 +354,9 @@ export function HomepageClient({ hero, destinations, itineraries, yachts, fleetY
 
       {/* Testimonials */}
       <TestimonialsSection reviews={reviewResolved} />
+
+      {/* The questions people ask before booking, answered on the page. */}
+      <FaqSection faqs={faqs} />
 
       {/* The three most recent pieces */}
       <NewsSection articles={news} />

@@ -58,6 +58,7 @@ ${line("Sailing routes", "/itineraries", "Week-long routes out of Lefkada, day b
 ${line("Services", "/services", "Skipper, provisioning, transfers and the paperwork")}
 ${line("Our story", "/about-us", `The family behind the business, in Lefkada since ${site.founded}`)}
 ${line("News", "/news", "Notes on winds, anchorages and boats, written at the base")}
+${line("Questions answered", "/faq", "Licences, getting here, when to sail, what a charter costs")}
 ${line("Contact", "/contact", "How to reach the base and the German office")}
 
 ## Services

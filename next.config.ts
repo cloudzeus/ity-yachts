@@ -39,12 +39,17 @@ const nextConfig: NextConfig = {
    * being framed, or to stop guessing at content types.
    */
   async headers() {
+    /* React's development build uses eval() to reconstruct call stacks, so a
+       strict script-src makes `next dev` unusable. It is never granted in a
+       production build — React does not use eval() there. */
+    const dev = process.env.NODE_ENV !== "production"
+
     const csp = [
       "default-src 'self'",
       /* Next hydration inlines its payload, and the consent-gated tags are
          injected at runtime — both need 'unsafe-inline'. 'unsafe-eval' is not
          granted. */
-      "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://connect.facebook.net https://maps.googleapis.com",
+      `script-src 'self' 'unsafe-inline'${dev ? " 'unsafe-eval'" : ""} https://www.googletagmanager.com https://connect.facebook.net https://maps.googleapis.com`,
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https:",
       "media-src 'self' https:",

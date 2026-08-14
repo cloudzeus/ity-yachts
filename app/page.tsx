@@ -3,13 +3,14 @@ import { db } from "@/lib/db"
 import { yachtThumb } from "@/lib/yacht-images"
 import { JsonLd } from "@/components/json-ld"
 import { faqLd } from "@/lib/structured-data"
-import { pageMeta } from "@/lib/seo"
+import { en, pageMeta } from "@/lib/seo"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { HomepageClient } from "@/components/home/homepage-client"
 import { getMottoRaw } from "@/lib/mottos"
 import { getFleetRanges } from "@/lib/fleet-ranges.server"
 import { getLatestNews } from "@/lib/news"
+import { getHomepageFaqs } from "@/lib/faqs"
 
 export const dynamic = "force-dynamic"
 
@@ -31,42 +32,9 @@ export async function generateMetadata(): Promise<Metadata> {
   return { ...meta, title: { absolute: "Yacht Charter Lefkada, Greece — Sailing the Ionian | IYC" } }
 }
 
-/**
- * Questions a reader actually asks before booking, answered in the 40–60 words
- * an answer engine will lift. These are facts about how this business works,
- * not marketing copy — that is the difference between being cited and ignored.
- */
-const FAQ = [
-  {
-    question: "Where does an IYC charter start?",
-    answer:
-      "Every charter starts from our base in Lefkada, on the Ionian coast of Greece. Lefkada is reached by road from Preveza (Aktion) airport, about 30 minutes away, with no ferry crossing needed.",
-  },
-  {
-    question: "Do I need a licence to charter a yacht in Greece?",
-    answer:
-      "For a bareboat charter Greek law requires a recognised sailing licence and a second crew member with basic experience. If you do not hold one, we can provide a skipper, and our Skippers School runs courses to Deutscher Segler-Verband standards.",
-  },
-  {
-    question: "When is the best time to sail the Ionian?",
-    answer:
-      "From May to October. The prevailing north-westerly Maistros gets up around eleven, holds through the afternoon at 3 to 5 Beaufort and drops with the sun, which makes the Ionian a forgiving sea to learn in.",
-  },
-  {
-    question: "Which islands can you reach from Lefkada?",
-    answer:
-      "Ithaca, Kefalonia, Meganisi, Kalamos, Kastos, Paxos and Zakynthos are all within reach, most of them only a few hours' sailing apart, with sheltered bays and small harbours throughout.",
-  },
-  {
-    question: "Can I charter a yacht without a skipper?",
-    answer:
-      "Yes. Bareboat charter is available to holders of a recognised licence. We also offer skippered charter, and can arrange a hostess, provisioning and transfers before you arrive.",
-  },
-]
-
 export default async function Home() {
   // Fetch all homepage data in parallel
-  const [homePage, locations, itineraries, yachts, reviews, staff, motto, fleetRanges, latestNews] = await Promise.all([
+  const [homePage, locations, itineraries, yachts, reviews, staff, motto, fleetRanges, latestNews, faqs] = await Promise.all([
     db.page.findFirst({
       where: { isHomePage: true },
       select: { heroSection: true },
@@ -103,6 +71,7 @@ export default async function Home() {
     getMottoRaw("hero-greek-soul-german-precision"),
     getFleetRanges(),
     getLatestNews(3),
+    getHomepageFaqs(),
   ])
 
   // Extract hero data from admin-configured page
@@ -200,8 +169,12 @@ export default async function Home() {
 
   return (
     <main>
-      {/* What people ask before booking, in a form answer engines can lift. */}
-      <JsonLd data={faqLd(FAQ)} />
+      {/* Describes the section rendered further down the page. Structured data
+          for content a reader cannot see is against Google's guidelines — and
+          an answer engine will not cite what is missing from the body either. */}
+      {faqs.length > 0 && (
+        <JsonLd data={faqLd(faqs.map((f) => ({ question: en(f.question), answer: en(f.answer) })))} />
+      )}
 
       {/* Page content — clip-path lets the fixed footer reveal beneath */}
       <div
@@ -222,6 +195,7 @@ export default async function Home() {
           staff={staffData}
           fleetRanges={fleetRanges}
           news={latestNews}
+          faqs={faqs}
         />
       </div>
 

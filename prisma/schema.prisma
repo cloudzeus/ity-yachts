@@ -1268,3 +1268,24 @@ model NewsletterSubscriber {
   @@index([status])
   @@map("newsletter_subscribers")
 }
+
+/// Questions people actually ask before booking, with answers written to be
+/// quoted. Visible on the page as well as in FAQPage schema — structured data
+/// describing content a reader cannot see is against Google's guidelines, and
+/// an answer engine will not cite what it cannot find in the body either.
+model Faq {
+  id             String   @id @default(cuid())
+  question       Json                       // { en, el, de }
+  answer         Json                       // { en, el, de }
+  /// general | licence | getting-here | season | booking | onboard
+  topic          String   @default("general")
+  status         String   @default("published")
+  showOnHomepage Boolean  @default(false)
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([status])
+  @@index([sortOrder])
+  @@map("faqs")
+}
