@@ -44,7 +44,7 @@ const ENTRIES = [
   {
     key: "answer.services",
     en: "The things we arrange around the charter itself — custom routes, concierge, catering, safety, onboard amenities, flexible booking and our skippers school. Each is handled by the same office in Lefkada that hands you the keys, so there is nobody else to chase when something needs changing.",
-    el: "Όσα οργανώνουμε γύρω από την ίδια τη ναύλωση — προσαρμοσμένες διαδρομές, concierge, catering, ασφάλεια, παροχές επί του σκάφους, ευέλικτη κράτηση και η σχολή κυβερνητών μας. Όλα τα χειρίζεται το ίδιο γραφείο στη Λευκάδα που σας δίνει τα κλειδιά, οπότε δεν έχετε να κυνηγήσετε κανέναν άλλον όταν κάτι χρειαστεί να αλλάξει.",
+    el: "Όσα οργανώνουμε γύρω από την ίδια τη ναύλωση — προσαρμοσμένες διαδρομές, concierge, catering, ασφάλεια, παροχές επί του σκάφους, ευέλικτη κράτηση και η σχολή κυβερνητών μας. Όλα τα χειρίζεται το ίδιο γραφείο στη Λευκάδα που σας δίνει τα κλειδιά, οπότε δεν έχετε να απευθυνθείτε σε κανέναν άλλον όταν κάτι χρειαστεί να αλλάξει.",
     de: "Was wir rund um die Charter selbst organisieren — maßgeschneiderte Routen, Concierge, Catering, Sicherheit, Bordausstattung, flexible Buchung und unsere Skipperschule. Alles davon betreut dasselbe Büro in Lefkada, das Ihnen die Schlüssel übergibt — es gibt also niemanden sonst hinterherzulaufen, wenn sich etwas ändern soll.",
   },
 
