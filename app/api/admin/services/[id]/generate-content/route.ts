@@ -1,37 +1,17 @@
 import { db } from "@/lib/db"
 import { getSession } from "@/lib/auth-session"
 import { NextRequest, NextResponse } from "next/server"
+import { aiChat } from "@/lib/ai"
 
-async function getDeepSeekKey(): Promise<string> {
-  const record = await db.setting.findUnique({ where: { key: "ai_keys" } })
-  if (!record) throw new Error("AI keys not configured")
-  const keys = record.value as Record<string, string>
-  if (!keys.deepseekKey) throw new Error("DeepSeek API key not configured")
-  return keys.deepseekKey
-}
-
-async function callDeepSeek(apiKey: string, system: string, user: string): Promise<string> {
-  const res = await fetch("https://api.deepseek.com/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: "deepseek-chat",
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: user },
-      ],
-      temperature: 0.65,
-    }),
+async function callModel(system: string, user: string): Promise<string> {
+  const raw = await aiChat({
+    messages: [
+      { role: "system", content: system },
+      { role: "user", content: user },
+    ],
+    temperature: 0.65,
+    maxTokens: 3000,
   })
-  if (!res.ok) {
-    const err = await res.text()
-    throw new Error(`DeepSeek error ${res.status}: ${err}`)
-  }
-  const json = await res.json()
-  const raw: string = json.choices[0].message.content.trim()
   return raw.replace(/^```(?:json)?\s*/m, "").replace(/\s*```$/m, "")
 }
 
@@ -68,8 +48,6 @@ export async function POST(
       )
     }
 
-    const apiKey = await getDeepSeekKey()
-
     // ── Step 1: Generate English full description ─────────────────────────────
     const serviceContext = [
       `Service title: ${titleEn}`,
@@ -99,7 +77,7 @@ Return ONLY the plain text of the full description — no JSON, no markdown, no 
 
     const userEn = `Write the full description for this IYC Yachts service:\n\n${serviceContext}`
 
-    const descriptionEn = await callDeepSeek(apiKey, systemEn, userEn)
+    const descriptionEn = await callModel(systemEn, userEn)
 
     // ── Step 2: Translate to Greek and German in parallel ─────────────────────
     const systemEl = `You are a professional Greek copywriter and translator specialising in luxury travel. You translate premium English marketing content into Modern Greek for IYC Yachts — a luxury yacht charter brand in the Ionian Islands.
@@ -131,8 +109,8 @@ TRANSLATION RULES — mandatory, no exceptions:
 Return ONLY the translated plain text. No JSON, no markdown, no headings.`
 
     const [descriptionEl, descriptionDe] = await Promise.all([
-      callDeepSeek(apiKey, systemEl, `Translate this luxury yacht charter service description to Greek:\n\n${descriptionEn}`),
-      callDeepSeek(apiKey, systemDe, `Translate this luxury yacht charter service description to German:\n\n${descriptionEn}`),
+      callModel(systemEl, `Translate this luxury yacht charter service description to Greek:\n\n${descriptionEn}`),
+      callModel(systemDe, `Translate this luxury yacht charter service description to German:\n\n${descriptionEn}`),
     ])
 
     return NextResponse.json({

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getDeepSeekKey } from "@/lib/ai-keys"
+import { aiChat } from "@/lib/ai"
 import { validate, type PlanAnswers } from "@/lib/plan-wizard"
 
 export const dynamic = "force-dynamic"
@@ -143,7 +143,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "conversation too long" }, { status: 400 })
     }
 
-    const apiKey = await getDeepSeekKey()
     const loc = locale === "el" || locale === "de" ? locale : "en"
     const today = new Date().toISOString().slice(0, 10)
 
@@ -153,28 +152,17 @@ export async function POST(req: NextRequest) {
     const recent = messages.slice(-16)
 
     const ask = async (nudge?: string) => {
-      const res = await fetch("https://api.deepseek.com/chat/completions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({
-          model: "deepseek-chat",
-          temperature: 0.6,
-          // A ceiling, so a long turn cannot run out mid-object.
-          max_tokens: 1200,
-          messages: [
-            { role: "system", content: systemPrompt(loc, today) },
-            { role: "system", content: `Answers so far: ${JSON.stringify(answers ?? {})}` },
-            ...recent.map((m) => ({ role: m.role, content: m.content })),
-            { role: "system" as const, content: formatPrompt(loc) + (nudge ? "\n\n" + nudge : "") },
-          ],
-        }),
+      const content = await aiChat({
+        temperature: 0.6,
+        // A ceiling, so a long turn cannot run out mid-object.
+        maxTokens: 1200,
+        messages: [
+          { role: "system", content: systemPrompt(loc, today) },
+          { role: "system", content: `Answers so far: ${JSON.stringify(answers ?? {})}` },
+          ...recent.map((m) => ({ role: m.role, content: m.content })),
+          { role: "system" as const, content: formatPrompt(loc) + (nudge ? "\n\n" + nudge : "") },
+        ],
       })
-      if (!res.ok) throw new Error(`DeepSeek ${res.status}`)
-      const json = await res.json()
-      const content = json?.choices?.[0]?.message?.content
-      if (typeof content !== "string" || !content.trim()) {
-        throw new Error(`empty content (finish_reason=${json?.choices?.[0]?.finish_reason})`)
-      }
       return extractJson(content)
     }
 

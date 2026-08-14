@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSession } from "@/lib/auth-session"
-import { getDeepSeekKey } from "@/lib/ai-keys"
+import { aiChat } from "@/lib/ai"
 
 export const dynamic = "force-dynamic"
 
@@ -33,14 +33,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Nothing to work from" }, { status: 400 })
     }
 
-    const apiKey = await getDeepSeekKey()
-    const res = await fetch("https://api.deepseek.com/chat/completions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({
-        model: "deepseek-chat",
+    let raw: string
+    try {
+      raw = await aiChat({
         temperature: 0.5,
-        max_tokens: 400,
+        maxTokens: 400,
         messages: [
           {
             role: "system",
@@ -53,18 +50,10 @@ Reply with a JSON object and nothing else:
           },
           { role: "user", content: source },
         ],
-      }),
-    })
-
-    if (!res.ok) {
-      console.error("[articles/generate-meta]", res.status, (await res.text()).slice(0, 200))
+      })
+    } catch (err) {
+      console.error("[articles/generate-meta]", err)
       return NextResponse.json({ error: "It did not come back" }, { status: 502 })
-    }
-
-    const json = await res.json()
-    const raw = json?.choices?.[0]?.message?.content
-    if (typeof raw !== "string" || !raw.trim()) {
-      return NextResponse.json({ error: "It returned nothing" }, { status: 502 })
     }
 
     const text = raw.trim().replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "").trim()

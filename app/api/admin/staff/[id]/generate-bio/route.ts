@@ -2,14 +2,7 @@ import { db } from "@/lib/db"
 import { getSession } from "@/lib/auth-session"
 import { translate } from "@/lib/translate"
 import { NextRequest, NextResponse } from "next/server"
-
-async function getDeepSeekKey(): Promise<string> {
-  const record = await db.setting.findUnique({ where: { key: "ai_keys" } })
-  if (!record) throw new Error("API keys not configured")
-  const keys = record.value as Record<string, string>
-  if (!keys.deepseekKey) throw new Error("DeepSeek API key not configured")
-  return keys.deepseekKey
-}
+import { aiChat } from "@/lib/ai"
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -27,29 +20,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const dept = body.department?.en || (member.department as Record<string, string>)?.en || ""
     const pos = body.position?.en || (member.position as Record<string, string>)?.en || ""
 
-    const deepseekKey = await getDeepSeekKey()
 
     const prompt = `Write a professional bio (2-3 sentences) in English for a person named "${name}"${pos ? ` who works as ${pos}` : ""}${dept ? ` in the ${dept} department` : ""} at IYC Yachts, a luxury yacht charter company in Greece. Write in third person, professional and warm tone, as if for a travel industry company profile.`
 
-    const res = await fetch("https://api.deepseek.com/chat/completions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${deepseekKey}` },
-      body: JSON.stringify({
-        model: "deepseek-chat",
-        messages: [{ role: "user", content: prompt }],
-        max_tokens: 300,
-      }),
-    })
-
-    if (!res.ok) {
-      return NextResponse.json({ error: "DeepSeek API error" }, { status: 502 })
-    }
-
-    const json = await res.json()
-    const bioEn = json.choices?.[0]?.message?.content?.trim() || ""
-
-    if (!bioEn) {
-      return NextResponse.json({ error: "Empty response from DeepSeek" }, { status: 502 })
+    let bioEn = ""
+    try {
+      bioEn = await aiChat({ messages: [{ role: "user", content: prompt }], maxTokens: 300 })
+    } catch (err) {
+      console.error("[generate-bio]", err)
+      return NextResponse.json({ error: "AI request failed" }, { status: 502 })
     }
 
     // Translate to EL and DE

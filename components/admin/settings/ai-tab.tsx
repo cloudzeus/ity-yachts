@@ -9,13 +9,14 @@ import { Button } from "@/components/ui/button"
 interface AIData {
   openaiKey: string
   anthropicKey: string
+  claudeModel: string
   deepseekKey: string
   geocodeKey: string
   googleMapsKey: string
   weatherApiKey: string
 }
 
-const defaults: AIData = { openaiKey: "", anthropicKey: "", deepseekKey: "", geocodeKey: "", googleMapsKey: "", weatherApiKey: "" }
+const defaults: AIData = { openaiKey: "", anthropicKey: "", claudeModel: "", deepseekKey: "", geocodeKey: "", googleMapsKey: "", weatherApiKey: "" }
 
 function MaskedField({ label, description, value, onChange, placeholder }: {
   label: string
@@ -59,6 +60,8 @@ export function AITab({ initialData }: { initialData?: Partial<AIData> }) {
   const [data, setData] = useState<AIData>({ ...defaults, ...initialData })
   const [saving, setSaving] = useState(false)
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle")
+  const [testing, setTesting] = useState(false)
+  const [test, setTest] = useState<{ ok: boolean; message: string } | null>(null)
 
   async function handleSave() {
     setSaving(true)
@@ -75,6 +78,22 @@ export function AITab({ initialData }: { initialData?: Partial<AIData> }) {
     } finally {
       setSaving(false)
       setTimeout(() => setStatus("idle"), 3000)
+    }
+  }
+
+  /* A saved key that turns out to be wrong is otherwise only discovered when
+     someone clicks Translate and gets an error. */
+  async function handleTest() {
+    setTesting(true)
+    setTest(null)
+    try {
+      const res = await fetch("/api/admin/settings/ai-test", { method: "POST" })
+      const json = await res.json()
+      setTest({ ok: Boolean(json.ok), message: json.message ?? "No answer" })
+    } catch {
+      setTest({ ok: false, message: "Could not reach the server" })
+    } finally {
+      setTesting(false)
     }
   }
 
@@ -99,16 +118,47 @@ export function AITab({ initialData }: { initialData?: Partial<AIData> }) {
           </div>
         </div>
 
-        {/* The OpenAI and Anthropic fields that used to sit here were read by
-            no code at all — two empty boxes that did nothing. With the third
-            no longer naming its provider they made the working one impossible
-            to identify, so they are gone. The stored values are untouched. */}
+        {/* Which key is set decides which provider answers, so the screen
+            says so rather than leaving it to be guessed. */}
+        <div
+          className="rounded-md px-3 py-2 text-[11px]"
+          style={{ background: "var(--surface-container)", color: "var(--on-surface-variant)", borderRadius: "var(--radius-xs)" }}
+        >
+          Active provider:{" "}
+          <strong style={{ color: "var(--primary)" }}>
+            {data.anthropicKey ? "Claude" : data.deepseekKey ? "DeepSeek" : "none configured"}
+          </strong>
+          {data.anthropicKey && data.deepseekKey ? " — the DeepSeek key is kept as a fallback and is not being used." : ""}
+        </div>
+
         <div>
-          {/* Provider-neutral on screen by request. The field still writes to
-              `deepseekKey` and the endpoint is unchanged — only the label. */}
           <MaskedField
-            label="AI API key"
-            description="Powers the translation and content-writing buttons across the admin."
+            label="Claude API key (Anthropic)"
+            description="Powers every AI feature here — translation, article drafting, SEO meta and the planning assistant. Used whenever it is set."
+            value={data.anthropicKey}
+            onChange={(v) => setData((p) => ({ ...p, anthropicKey: v }))}
+            placeholder="sk-ant-..."
+          />
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <Label className="text-xs" style={{ color: "var(--on-surface-variant)" }}>Claude model</Label>
+          <Input
+            value={data.claudeModel}
+            onChange={(e) => setData((p) => ({ ...p, claudeModel: e.target.value }))}
+            placeholder="claude-sonnet-5"
+            className="font-mono text-xs"
+          />
+          <p className="text-[11px]" style={{ color: "var(--on-surface-variant)" }}>
+            Leave blank for claude-sonnet-5, which is the right balance for translation and short copy.
+            Use claude-opus-5 if you want the strongest writing and do not mind the cost.
+          </p>
+        </div>
+
+        <div style={{ borderTop: "1px solid var(--outline-variant)", paddingTop: "1rem" }}>
+          <MaskedField
+            label="DeepSeek API key (fallback)"
+            description="Only used when no Claude key is set. Kept so an install with the old key keeps working."
             value={data.deepseekKey}
             onChange={(v) => setData((p) => ({ ...p, deepseekKey: v }))}
             placeholder="sk-..."
@@ -150,9 +200,22 @@ export function AITab({ initialData }: { initialData?: Partial<AIData> }) {
         <Button onClick={handleSave} disabled={saving} size="sm" className="h-9 gap-2 text-xs text-white" style={{ background: "var(--gradient-ocean)", borderRadius: "var(--radius-xs)" }}>
           {saving ? "Saving…" : "Save Changes"}
         </Button>
+        <Button onClick={handleTest} disabled={testing} size="sm" variant="outline" className="h-9 gap-2 text-xs">
+          {testing ? "Testing…" : "Test AI key"}
+        </Button>
         {status === "success" && <span className="text-xs font-medium text-green-600">✓ Saved successfully</span>}
         {status === "error" && <span className="text-xs font-medium" style={{ color: "var(--error)" }}>Failed to save</span>}
       </div>
+
+      {test && (
+        <p
+          className="text-xs leading-relaxed"
+          style={{ color: test.ok ? "var(--success, #16a34a)" : "var(--error)" }}
+        >
+          {test.ok ? "✓ " : "✗ "}
+          {test.message}
+        </p>
+      )}
     </div>
   )
 }

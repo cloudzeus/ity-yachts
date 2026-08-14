@@ -1,46 +1,27 @@
+import { aiChat } from "@/lib/ai"
+
 export const SUPPORTED_LOCALES = ["en", "el", "de"] as const
 export type Locale = (typeof SUPPORTED_LOCALES)[number]
 
-// Moved to lib/ai-keys so the planning brief can read the same key.
-export { getDeepSeekKey } from "@/lib/ai-keys"
-import { getDeepSeekKey } from "@/lib/ai-keys"
+const SYSTEM = (sourceLang: string, targetLang: string, numbered: boolean) =>
+  `You are a professional translator and an expert skipper, yacht specialist, and naval expert working for a luxury yacht charter website. You have deep knowledge of maritime terminology, sailing equipment, navigation instruments, yacht services, and charter industry vocabulary. The website supports three languages: English (en), Greek (el), and German (de). Translate ${
+    numbered ? "each numbered item" : "the following text"
+  } from ${sourceLang} to ${targetLang}. Use the correct industry-standard maritime/nautical terminology in the target language. Use formal, professional language appropriate for a high-end yacht charter brand. If a term has no established translation in the target language (e.g. brand names, universal technical terms), keep the original English. ${
+    numbered
+      ? "Return the same numbered list with only the translated text. Do not add explanations."
+      : "Return only the translated text with no explanation or extra commentary."
+  }`
 
-export async function translate(
-  text: string,
-  targetLang: string,
-  sourceLang = "en"
-): Promise<string> {
-  const apiKey = await getDeepSeekKey()
-
-  const res = await fetch("https://api.deepseek.com/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: "deepseek-chat",
-      messages: [
-        {
-          role: "system",
-          content: `You are a professional translator and an expert skipper, yacht specialist, and naval expert working for a luxury yacht charter website. You have deep knowledge of maritime terminology, sailing equipment, navigation instruments, yacht services, and charter industry vocabulary. The website supports three languages: English (en), Greek (el), and German (de). Translate the following text from ${sourceLang} to ${targetLang}. Use the correct industry-standard maritime/nautical terminology in the target language. Use formal, professional language appropriate for a high-end yacht charter brand. If a term has no established translation in the target language (e.g. brand names, universal technical terms), keep the original English. Return only the translated text with no explanation or extra commentary.`,
-        },
-        {
-          role: "user",
-          content: text,
-        },
-      ],
-      temperature: 0.3,
-    }),
+export async function translate(text: string, targetLang: string, sourceLang = "en"): Promise<string> {
+  return aiChat({
+    messages: [
+      { role: "system", content: SYSTEM(sourceLang, targetLang, false) },
+      { role: "user", content: text },
+    ],
+    // Translations run longer than their source in German especially.
+    maxTokens: Math.max(1024, Math.ceil(text.length / 2)),
+    temperature: 0.3,
   })
-
-  if (!res.ok) {
-    const err = await res.text()
-    throw new Error(`DeepSeek error ${res.status}: ${err}`)
-  }
-
-  const json = await res.json()
-  return json.choices[0].message.content.trim()
 }
 
 export async function translateBatch(
@@ -48,39 +29,16 @@ export async function translateBatch(
   targetLang: string,
   sourceLang = "en"
 ): Promise<string[]> {
-  const apiKey = await getDeepSeekKey()
-
   const numbered = texts.map((t, i) => `${i + 1}. ${t}`).join("\n")
 
-  const res = await fetch("https://api.deepseek.com/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: "deepseek-chat",
-      messages: [
-        {
-          role: "system",
-          content: `You are a professional translator and an expert skipper, yacht specialist, and naval expert working for a luxury yacht charter website. You have deep knowledge of maritime terminology, sailing equipment, navigation instruments, yacht services, and charter industry vocabulary. The website supports three languages: English (en), Greek (el), and German (de). Translate each numbered item from ${sourceLang} to ${targetLang}. Use the correct industry-standard maritime/nautical terminology in the target language. Use formal, professional language appropriate for a high-end yacht charter brand. If a term has no established translation in the target language (e.g. brand names, universal technical terms), keep the original English. Return the same numbered list with only the translated text. Do not add explanations.`,
-        },
-        {
-          role: "user",
-          content: numbered,
-        },
-      ],
-      temperature: 0.3,
-    }),
+  const raw = await aiChat({
+    messages: [
+      { role: "system", content: SYSTEM(sourceLang, targetLang, true) },
+      { role: "user", content: numbered },
+    ],
+    maxTokens: Math.max(1024, Math.ceil(numbered.length / 2)),
+    temperature: 0.3,
   })
-
-  if (!res.ok) {
-    const err = await res.text()
-    throw new Error(`DeepSeek error ${res.status}: ${err}`)
-  }
-
-  const json = await res.json()
-  const raw: string = json.choices[0].message.content.trim()
 
   return raw
     .split("\n")

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getSession } from "@/lib/auth-session"
-import { getDeepSeekKey } from "@/lib/ai-keys"
+import { aiChat } from "@/lib/ai"
 import { primaryName } from "@/lib/taxonomy"
 
 export const dynamic = "force-dynamic"
@@ -44,14 +44,11 @@ export async function POST(req: NextRequest) {
 
     const words = length === "short" ? "350–500" : length === "long" ? "1100–1500" : "700–900"
 
-    const apiKey = await getDeepSeekKey()
-    const res = await fetch("https://api.deepseek.com/chat/completions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({
-        model: "deepseek-chat",
+    let raw: string
+    try {
+      raw = await aiChat({
         temperature: 0.75,
-        max_tokens: 6000,
+        maxTokens: 6000,
         messages: [
           {
             role: "system",
@@ -86,19 +83,10 @@ Reply with a JSON object and nothing else:
             }),
           },
         ],
-      }),
-    })
-
-    if (!res.ok) {
-      const detail = await res.text()
-      console.error("[articles/generate] DeepSeek", res.status, detail.slice(0, 300))
+      })
+    } catch (err) {
+      console.error("[articles/generate]", err)
       return NextResponse.json({ error: "The writer did not answer" }, { status: 502 })
-    }
-
-    const json = await res.json()
-    const raw = json?.choices?.[0]?.message?.content
-    if (typeof raw !== "string" || !raw.trim()) {
-      return NextResponse.json({ error: "The writer returned nothing" }, { status: 502 })
     }
 
     return NextResponse.json({ draft: parseDraft(raw) })

@@ -1,12 +1,5 @@
 import { db } from "@/lib/db"
-
-async function getDeepSeekKey(): Promise<string> {
-  const record = await db.setting.findUnique({ where: { key: "ai_keys" } })
-  if (!record) throw new Error("AI keys not configured")
-  const keys = record.value as Record<string, string>
-  if (!keys.deepseekKey) throw new Error("DeepSeek API key not configured")
-  return keys.deepseekKey
-}
+import { aiChat } from "@/lib/ai"
 
 /**
  * Generates SEO meta title and description for a location and saves them
@@ -21,8 +14,6 @@ export async function generateLocationSeo(locationId: string) {
     // Skip if already has SEO meta
     if (location.metaTitle && location.metaDesc) return
 
-    const apiKey = await getDeepSeekKey()
-
     const context = [
       `Location: ${location.name}`,
       location.city && `City: ${location.city}`,
@@ -30,18 +21,9 @@ export async function generateLocationSeo(locationId: string) {
       location.latitude && location.longitude && `Coordinates: ${location.latitude}, ${location.longitude}`,
     ].filter(Boolean).join("\n")
 
-    const res = await fetch("https://api.deepseek.com/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: "deepseek-chat",
-        messages: [
-          {
-            role: "system",
-            content: `You are an SEO specialist for a luxury yacht charter company in Greece. Generate optimized SEO metadata for a location page.
+    const cleaned = await aiChat({
+      messages: [
+        { role: "system", content: `You are an SEO specialist for a luxury yacht charter company in Greece. Generate optimized SEO metadata for a location page.
 
 Return ONLY a valid JSON object with these fields:
 {
@@ -49,22 +31,13 @@ Return ONLY a valid JSON object with these fields:
   "metaDesc": "Meta description (150-160 characters). Compelling summary with location name, yacht charter keyword, and call to action. Must entice clicks from search results."
 }
 
-No markdown, no code fences, just JSON.`,
-          },
-          {
-            role: "user",
-            content: `Generate SEO metadata for this Greek yacht charter destination:\n\n${context}`,
-          },
-        ],
-        temperature: 0.5,
-      }),
+No markdown, no code fences, just JSON.` },
+        { role: "user", content: `Generate SEO metadata for this Greek yacht charter destination:\n\n${context}` },
+      ],
+      temperature: 0.5,
+      maxTokens: 600,
+      json: true,
     })
-
-    if (!res.ok) return
-
-    const json = await res.json()
-    const raw: string = json.choices[0].message.content.trim()
-    const cleaned = raw.replace(/^```(?:json)?\s*/, "").replace(/\s*```$/, "")
     const seo = JSON.parse(cleaned)
 
     await db.location.update({

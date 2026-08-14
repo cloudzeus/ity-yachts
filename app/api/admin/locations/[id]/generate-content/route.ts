@@ -1,38 +1,18 @@
 import { db } from "@/lib/db"
 import { getSession } from "@/lib/auth-session"
 import { NextRequest, NextResponse } from "next/server"
+import { aiChat } from "@/lib/ai"
 
-async function getDeepSeekKey(): Promise<string> {
-  const record = await db.setting.findUnique({ where: { key: "ai_keys" } })
-  if (!record) throw new Error("AI keys not configured")
-  const keys = record.value as Record<string, string>
-  if (!keys.deepseekKey) throw new Error("DeepSeek API key not configured")
-  return keys.deepseekKey
-}
-
-async function callDeepSeek(apiKey: string, system: string, user: string) {
-  const res = await fetch("https://api.deepseek.com/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: "deepseek-chat",
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: user },
-      ],
-      temperature: 0.7,
-    }),
+async function callModel(system: string, user: string): Promise<string> {
+  const raw = await aiChat({
+    messages: [
+      { role: "system", content: system },
+      { role: "user", content: user },
+    ],
+    temperature: 0.7,
+    maxTokens: 3000,
   })
-  if (!res.ok) {
-    const err = await res.text()
-    throw new Error(`DeepSeek error ${res.status}: ${err}`)
-  }
-  const json = await res.json()
-  const raw: string = json.choices[0].message.content.trim()
-  return raw.replace(/^```(?:json)?\s*/, "").replace(/\s*```$/, "")
+  return raw.replace(/^```(?:json)?\s*/m, "").replace(/\s*```$/m, "")
 }
 
 export async function POST(
@@ -51,8 +31,6 @@ export async function POST(
       return NextResponse.json({ error: "Location not found" }, { status: 404 })
     }
 
-    const apiKey = await getDeepSeekKey()
-
     const locationContext = [
       `Location: ${location.name}`,
       location.city && `City: ${location.city}`,
@@ -61,9 +39,7 @@ export async function POST(
     ].filter(Boolean).join("\n")
 
     // Generate content + SEO in one call
-    const raw = await callDeepSeek(
-      apiKey,
-      `You are a world-class travel content creator working for Lonely Planet, specializing in luxury yacht charter destinations in Greece. You write compelling, vivid, and informative travel content that inspires affluent travelers to visit these destinations by sea.
+    const raw = await callModel(`You are a world-class travel content creator working for Lonely Planet, specializing in luxury yacht charter destinations in Greece. You write compelling, vivid, and informative travel content that inspires affluent travelers to visit these destinations by sea.
 
 Your writing style is:
 - Evocative and sensory — paint a picture with words

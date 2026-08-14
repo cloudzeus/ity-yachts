@@ -1,41 +1,19 @@
 import { db } from "@/lib/db"
 import { getSession } from "@/lib/auth-session"
 import { NextRequest, NextResponse } from "next/server"
+import { aiChat } from "@/lib/ai"
 
-async function getDeepSeekKey(): Promise<string> {
-  const record = await db.setting.findUnique({ where: { key: "ai_keys" } })
-  if (!record) throw new Error("AI keys not configured")
-  const keys = record.value as Record<string, string>
-  if (!keys.deepseekKey) throw new Error("DeepSeek API key not configured")
-  return keys.deepseekKey
-}
-
-async function askDeepSeek(system: string, user: string): Promise<string> {
-  const apiKey = await getDeepSeekKey()
-  const res = await fetch("https://api.deepseek.com/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: "deepseek-chat",
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: user },
-      ],
-      temperature: 0.3,
-    }),
+async function ask(system: string, user: string): Promise<string> {
+  const content = await aiChat({
+    messages: [
+      { role: "system", content: system },
+      { role: "user", content: user },
+    ],
+    temperature: 0.3,
+    maxTokens: 2000,
   })
-  if (!res.ok) {
-    const err = await res.text()
-    throw new Error(`DeepSeek error ${res.status}: ${err}`)
-  }
-  const json = await res.json()
-  let content = json.choices[0].message.content.trim()
-  // Strip markdown code fences if present
-  content = content.replace(/^```(?:json)?\s*\n?/i, "").replace(/\n?```\s*$/i, "")
-  return content.trim()
+  // Models like to wrap JSON in a fence even when told not to.
+  return content.replace(/^```(?:json)?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim()
 }
 
 export async function POST(req: NextRequest) {
@@ -53,7 +31,7 @@ export async function POST(req: NextRequest) {
 
     if (type === "icon") {
       // Suggest react-icons for a yacht category
-      const result = await askDeepSeek(
+      const result = await ask(
         `You are a UI/UX expert for a luxury yacht charter website. You know the react-icons library thoroughly, especially the Font Awesome (Fa), Material Design (Md), and Game Icons (Gi) sets. Given a yacht category name, suggest the 5 best matching icon names from react-icons. Return ONLY a JSON array of strings with icon names, no explanation. Example: ["FaSailboat","FaShip","GiSailboat","MdDirectionsBoat","FaAnchor"]`,
         `Yacht category: "${name}"`
       )
@@ -63,7 +41,7 @@ export async function POST(req: NextRequest) {
 
     if (type === "logo") {
       // Find the official logo/website for a yacht or engine builder
-      const result = await askDeepSeek(
+      const result = await ask(
         `You are a maritime industry expert. Given the name of a yacht manufacturer or marine engine manufacturer, provide information to help find their official logo. Return ONLY a JSON object with these fields:
 - "officialName": the full official company name
 - "website": the official website URL (best guess based on your knowledge)

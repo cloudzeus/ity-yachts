@@ -1,14 +1,7 @@
 import { db } from "@/lib/db"
 import { getSession } from "@/lib/auth-session"
 import { NextRequest, NextResponse } from "next/server"
-
-async function getDeepSeekKey(): Promise<string> {
-  const record = await db.setting.findUnique({ where: { key: "ai_keys" } })
-  if (!record) throw new Error("AI keys not configured")
-  const keys = record.value as Record<string, string>
-  if (!keys.deepseekKey) throw new Error("DeepSeek API key not configured")
-  return keys.deepseekKey
-}
+import { aiChat } from "@/lib/ai"
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -56,16 +49,9 @@ Respond in EXACTLY this format (no markdown, no extra text):
 TITLE: <your title here>
 DESCRIPTION: <your description here>`
 
-    const apiKey = await getDeepSeekKey()
-
-    const res = await fetch("https://api.deepseek.com/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: "deepseek-chat",
+    let content = ""
+    try {
+      content = await aiChat({
         messages: [
           {
             role: "system",
@@ -74,18 +60,12 @@ DESCRIPTION: <your description here>`
           { role: "user", content: prompt },
         ],
         temperature: 0.7,
-        max_tokens: 500,
-      }),
-    })
-
-    if (!res.ok) {
-      const err = await res.text()
-      console.error("[DeepSeek error]", err)
-      return NextResponse.json({ error: "DeepSeek API error" }, { status: 502 })
+        maxTokens: 500,
+      })
+    } catch (err) {
+      console.error("[generate-story]", err)
+      return NextResponse.json({ error: "AI request failed" }, { status: 502 })
     }
-
-    const json = await res.json()
-    const content = json.choices?.[0]?.message?.content?.trim() || ""
 
     // Parse TITLE: and DESCRIPTION: from response
     const titleMatch = content.match(/TITLE:\s*(.+)/i)
