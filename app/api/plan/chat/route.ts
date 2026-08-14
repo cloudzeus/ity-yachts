@@ -165,8 +165,6 @@ export async function POST(req: NextRequest) {
 
     const ask = async (nudge?: string) => {
       const content = await aiChat({
-        /* Measured on a full five-turn conversation, not a single prompt. */
-        prefer: "openrouter",
         /* The reply is parsed as an object, so ask the API for one. Without
            this the model intermittently returned empty content. */
         json: true,

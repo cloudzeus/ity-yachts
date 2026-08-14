@@ -60,10 +60,31 @@ async function getKeys(): Promise<AiKeys> {
   return ((record?.value ?? {}) as AiKeys) || {}
 }
 
-/** DeepSeek first, OpenRouter behind it — in the order they will be tried. */
+/**
+ * OpenRouter first, DeepSeek behind it.
+ *
+ * Measured on real work, not sample prompts. DeepSeek's v4 models reason
+ * before answering and bill the thinking as output, and every ceiling in this
+ * codebase was sized for a model that does not: a 50-word translation spent
+ * its whole 1024 allowance thinking and returned nothing, and a meta-tag call
+ * did the same with 400. Both were billed and both fell through to the backup.
+ *
+ * v3.2 does the same jobs in 157 and 67 tokens with the answer actually in it.
+ * DeepSeek stays as the fallback — it is not broken, it is a deliberating
+ * model being asked to work in a space too small to deliberate in, and raising
+ * every ceiling to suit it costs more than it saves.
+ */
 async function endpoints(): Promise<Endpoint[]> {
   const keys = await getKeys()
   const list: Endpoint[] = []
+  if (keys.openrouterKey?.trim()) {
+    list.push({
+      url: "https://openrouter.ai/api/v1/chat/completions",
+      apiKey: keys.openrouterKey.trim(),
+      model: keys.openrouterModel?.trim() || DEFAULT_OPENROUTER_MODEL,
+      label: "OpenRouter",
+    })
+  }
   if (keys.deepseekKey?.trim()) {
     list.push({
       url: "https://api.deepseek.com/chat/completions",
@@ -76,14 +97,6 @@ async function endpoints(): Promise<Endpoint[]> {
          not an error, just nothing, on exactly the turns that matter.
          `reasoning_effort: "none"` did the same. The cost is controlled with
          the ceiling instead; see maxTokens below. */
-    })
-  }
-  if (keys.openrouterKey?.trim()) {
-    list.push({
-      url: "https://openrouter.ai/api/v1/chat/completions",
-      apiKey: keys.openrouterKey.trim(),
-      model: keys.openrouterModel?.trim() || DEFAULT_OPENROUTER_MODEL,
-      label: "OpenRouter",
     })
   }
   return list
