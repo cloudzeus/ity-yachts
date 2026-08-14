@@ -8,7 +8,7 @@ import { PlanLauncher } from "@/components/plan/plan-launcher"
 import { JsonLd } from "@/components/json-ld"
 import { localBusinessLd, organizationLd, webSiteLd } from "@/lib/structured-data"
 import { DEFAULT_OG_IMAGE } from "@/lib/seo"
-import { getSiteSettings } from "@/lib/site-settings"
+import { getSiteSettings, isCanonicalHost } from "@/lib/site-settings"
 import { getDictionary, getLocale } from "@/lib/translations.server"
 import { HREFLANG } from "@/lib/locale"
 import { ConsentProvider } from "@/components/consent/consent-provider"
@@ -58,6 +58,7 @@ const plexMono = IBM_Plex_Mono({
  */
 export async function generateMetadata(): Promise<Metadata> {
   const site = await getSiteSettings()
+  const canonical = await isCanonicalHost()
   return {
   metadataBase: new URL(site.siteUrl),
   title: {
@@ -74,14 +75,21 @@ export async function generateMetadata(): Promise<Metadata> {
   authors: [{ name: site.name, url: site.siteUrl }],
   creator: site.name,
   publisher: site.name,
-  robots: {
-    index: true,
-    follow: true,
-    "max-image-preview": "large",
-    "max-snippet": -1,
-    "max-video-preview": -1,
-    googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 },
-  },
+  /* Only the declared domain is allowed into the index. A staging copy
+     answering "index, follow" is how the wrong host becomes the entity a
+     search engine learns, and unpicking that afterwards is far harder than
+     preventing it. With no domain configured nothing is indexable, which
+     fails safe. */
+  robots: canonical
+    ? {
+        index: true,
+        follow: true,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+        "max-video-preview": -1,
+        googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 },
+      }
+    : { index: false, follow: false, googleBot: { index: false, follow: false } },
   openGraph: {
     type: "website",
     siteName: site.name,

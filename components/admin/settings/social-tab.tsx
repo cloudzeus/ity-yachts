@@ -7,6 +7,12 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 
 interface SocialData {
+  /* Review platforms live here with the social profiles because they are the
+     same thing to a search engine: a profile elsewhere that proves this
+     business is real. Every URL saved on this screen is published as a sameAs
+     on the Organization schema. */
+  google: string
+  tripadvisor: string
   facebook: string
   instagram: string
   twitter: string
@@ -16,9 +22,11 @@ interface SocialData {
   whatsapp: string
 }
 
-const defaults: SocialData = { facebook: "", instagram: "", twitter: "", youtube: "", linkedin: "", tiktok: "", whatsapp: "" }
+const defaults: SocialData = { google: "", tripadvisor: "", facebook: "", instagram: "", twitter: "", youtube: "", linkedin: "", tiktok: "", whatsapp: "" }
 
 const PLATFORMS = [
+  { key: "google",      label: "Google Business Profile", placeholder: "https://g.page/r/... or your Maps listing", color: "#4285F4" },
+  { key: "tripadvisor", label: "Tripadvisor",             placeholder: "https://tripadvisor.com/...",               color: "#00AF87" },
   { key: "facebook",  label: "Facebook",    placeholder: "https://facebook.com/yourpage",       color: "#1877F2" },
   { key: "instagram", label: "Instagram",   placeholder: "https://instagram.com/yourhandle",    color: "#E1306C" },
   { key: "twitter",   label: "X / Twitter", placeholder: "https://x.com/yourhandle",            color: "#000000" },

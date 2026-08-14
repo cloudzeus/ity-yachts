@@ -306,7 +306,7 @@ export function ServicesSection() {
               {tUpper("home.services.theOdyssey", "The Odyssey")}
             </h3>
             <p className="mb-5 text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.88)" }}>
-              {t("home.services.odysseyDescription", "Since 2015, we've been crafting mythic voyages through the Ionian Isles. Every journey honors the spirit of exploration.")}
+              {t("home.services.odysseyDescription", "We have chartered out of Lefkada since 1979 — the same family, the same pontoon, and a sea we have not run out of reasons to sail.")}
             </p>
             <div className="mt-auto flex gap-6">
               <div className="text-center">

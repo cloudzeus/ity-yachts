@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next"
 import { db } from "@/lib/db"
 import { getSiteUrl } from "@/lib/seo"
+import { isCanonicalHost } from "@/lib/site-settings"
 import { DEFAULT_LOCALE, HREFLANG, LOCALES, withLocale } from "@/lib/locale"
 
 export const dynamic = "force-dynamic"
@@ -17,6 +18,9 @@ export const dynamic = "force-dynamic"
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date()
   const siteUrl = await getSiteUrl()
+
+  // Nothing to submit from a host that is not the site.
+  if (!(await isCanonicalHost())) return []
 
   /* One entry per page, listing its own language alternates. A sitemap that
      names only the English URL leaves the Greek and German versions to be

@@ -78,6 +78,29 @@ const num = (value: string | undefined, fallback: number) => {
  * setting is blank, follow the host rather than a build-time guess: a
  * misconfigured deploy then describes itself instead of somebody else.
  */
+/**
+ * Whether this request is being served from the address the business has
+ * declared as its own.
+ *
+ * Staging was answering `index, follow` and publishing a sitemap pointing at
+ * itself, so the domain Google was learning as IYC was iyc.wwa.gr. Anything
+ * that is not the configured domain is now kept out of the index — and with
+ * nothing configured at all, nothing is indexable, which fails safe and makes
+ * setting the domain a step you cannot skip before launch.
+ */
+export async function isCanonicalHost(): Promise<boolean> {
+  const { db } = await import("@/lib/db")
+  const row = await db.setting.findUnique({ where: { key: "company" } })
+  const configured = ((row?.value as Record<string, string> | null)?.siteUrl ?? "").trim()
+  if (!configured) return false
+
+  const here = await hostFromRequest()
+  if (!here) return false
+
+  const host = (url: string) => url.replace(/^https?:\/\//i, "").replace(/^www\./i, "").replace(/\/.*$/, "").toLowerCase()
+  return host(configured) === host(here)
+}
+
 async function hostFromRequest(): Promise<string | null> {
   try {
     const { headers } = await import("next/headers")

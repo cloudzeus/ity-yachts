@@ -149,7 +149,6 @@ export default async function Home() {
       baseNameT: locT || null,
       priceFrom: 0,
       year: y.buildYear || undefined,
-      rating: 4.8,
     }
   })
 

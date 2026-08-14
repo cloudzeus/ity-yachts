@@ -14,6 +14,7 @@ import type { SocialLink } from "@/lib/use-social-links"
 export async function SiteFooter() {
   let legalPages: LegalLink[] = []
   let socialLinks: SocialLink[] = []
+  let reviewLinks: { label: string; url: string }[] = []
 
   /* The footer is on every page; a settings read that fails must not be able
      to take one down. */
@@ -27,6 +28,16 @@ export async function SiteFooter() {
       .filter((p) => p.slug && Object.values(p.content ?? {}).some((v) => v?.trim()))
       .map((p) => ({ slug: p.slug, title: p.title }))
 
+    const socialValue = (socialRow?.value ?? {}) as Record<string, string>
+    /* Review platforms are kept out of the icon row: they are a sentence a
+       reader acts on ("read what people wrote"), not a logo they recognise. */
+    reviewLinks = ([
+      ["google", "Google"],
+      ["tripadvisor", "Tripadvisor"],
+    ] as const)
+      .map(([key, label]) => ({ label, url: (socialValue[key] ?? "").trim() }))
+      .filter((r) => /^https?:\/\//i.test(r.url))
+
     socialLinks = Object.entries((socialRow?.value ?? {}) as Record<string, string>)
       .filter(([, url]) => typeof url === "string" && /^https?:\/\//i.test(url.trim()))
       .map(([network, url]) => ({ network, url: url.trim() }))
@@ -34,5 +45,5 @@ export async function SiteFooter() {
     console.error("[SiteFooter]", error)
   }
 
-  return <SiteFooterView legalPages={legalPages} socialLinks={socialLinks} />
+  return <SiteFooterView legalPages={legalPages} socialLinks={socialLinks} reviewLinks={reviewLinks} />
 }

@@ -26,9 +26,11 @@ const SOCIAL_ICONS: Record<string, { label: string; filled?: boolean; path: Reac
 export function SiteFooterView({
   legalPages,
   socialLinks,
+  reviewLinks = [],
 }: {
   legalPages: LegalLink[]
   socialLinks: SocialLink[]
+  reviewLinks?: { label: string; url: string }[]
 }) {
   const { t, locale } = useTranslations()
   const { items: navItems } = useNavigation()
@@ -164,6 +166,31 @@ export function SiteFooterView({
               </div>
             </div>
           </div>
+
+          {/* What other people say, on a platform we do not control. Rendered
+              only when a URL has actually been saved — an empty "reviews"
+              heading is worse than none, and inventing a rating to fill it
+              would be worse still. The same URLs are published as sameAs on
+              the Organization schema. */}
+          {reviewLinks.length > 0 && (
+            <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 border-t border-white/8 pt-8 text-xs md:justify-start">
+              <span className="text-white/50" style={{ fontFamily: "var(--font-body)" }}>
+                {t("footer.reviews", "What our guests say")}
+              </span>
+              {reviewLinks.map((r) => (
+                <a
+                  key={r.url}
+                  href={r.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white underline decoration-white/30 underline-offset-4 transition-opacity hover:opacity-70"
+                  style={{ fontFamily: "var(--font-body)" }}
+                >
+                  {r.label}
+                </a>
+              ))}
+            </div>
+          )}
 
           {/* Legal. The privacy policy had been written and translated but
               had nowhere to link from, so nobody could reach it. */}
