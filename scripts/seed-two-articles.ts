@@ -21,8 +21,9 @@ const ARTICLES = [
     author: "Maria Ramisch",
     readMinutes: 5,
     publishedAt: new Date("2026-08-12T09:00:00Z"),
-    defaultMedia: `${CDN}/1786615800834-luxury-boats-at-gidaki-beach-on-the-island-of-itha-2026-03-16-02-13-30-utc.webp`,
+    defaultMedia: `${CDN}/1786615783893-frikes-fishing-village-port-on-ithaki-or-ithaca-is-2026-03-16-02-08-43-utc.webp`,
     media: [
+      `${CDN}/1786615800834-luxury-boats-at-gidaki-beach-on-the-island-of-itha-2026-03-16-02-13-30-utc.webp`,
       `${CDN}/1786615794199-summer-sea-view-of-assos-village-greece-kefaloni-2026-03-25-23-45-42-utc.webp`,
       `${CDN}/1786615793645-azure-water-of-fteri-beach-cephalonia-kefalonia-2026-03-09-08-58-23-utc.webp`,
       `${CDN}/1786615801662-lefkada-greece-ionian-sea-2026-03-10-22-31-26-utc.webp`,
@@ -137,8 +138,9 @@ const ARTICLES = [
     author: "Thomas Ramisch",
     readMinutes: 5,
     publishedAt: new Date("2026-08-13T09:00:00Z"),
-    defaultMedia: `${CDN}/1786615801662-lefkada-greece-ionian-sea-2026-03-10-22-31-26-utc.webp`,
+    defaultMedia: "https://iycweb.b-cdn.net/general/1786528737649-sailing-on-calm-waters-with-city-view-2026-03-09-08-43-03-utc.webp",
     media: [
+      `${CDN}/1786615801662-lefkada-greece-ionian-sea-2026-03-10-22-31-26-utc.webp`,
       `${CDN}/1786615802375-yacht-boat-at-sarakiniko-beach-in-aegean-sea-milo-2026-03-09-22-09-03-utc.webp`,
       `${CDN}/1786615795120-azure-hidden-bay-on-greek-island-crystal-clear-wa-2026-03-09-22-08-24-utc.webp`,
     ],
