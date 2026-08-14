@@ -39,6 +39,18 @@ const DEFAULT_OPENROUTER_MODEL = "deepseek/deepseek-v3.2"
    deciding to change it. */
 const DEFAULT_DEEPSEEK_MODEL = "deepseek-v4-flash"
 
+/**
+ * Room for the model to think before it writes.
+ *
+ * max_tokens covers reasoning and answer together, so a ceiling that fits only
+ * the answer produces no answer at all: 400 was enough for a meta tag and the
+ * model spent all 400 deliberating and returned an empty string. Not larger
+ * than needed, though — given 6000 it reasoned for 1705 tokens where 3000 drew
+ * 601 out of it. It expands to fill the room, so this is a cost control as
+ * much as a floor.
+ */
+const REASONING_HEADROOM = 3000
+
 interface AiKeys {
   deepseekKey?: string
   deepseekModel?: string
@@ -61,30 +73,21 @@ async function getKeys(): Promise<AiKeys> {
 }
 
 /**
- * OpenRouter first, DeepSeek behind it.
+ * DeepSeek, and only DeepSeek while it has a key.
  *
- * Measured on real work, not sample prompts. DeepSeek's v4 models reason
- * before answering and bill the thinking as output, and every ceiling in this
- * codebase was sized for a model that does not: a 50-word translation spent
- * its whole 1024 allowance thinking and returned nothing, and a meta-tag call
- * did the same with 400. Both were billed and both fell through to the backup.
+ * The v4 models reason before answering and bill the thinking as output, and
+ * every ceiling in this codebase was written for a model that does not — a
+ * 50-word translation spent its whole 1024 allowance thinking and returned
+ * nothing. That is fixed by REASONING_HEADROOM below rather than by editing
+ * fourteen call sites, each of which still says what it means.
  *
- * v3.2 does the same jobs in 157 and 67 tokens with the answer actually in it.
- * DeepSeek stays as the fallback — it is not broken, it is a deliberating
- * model being asked to work in a space too small to deliberate in, and raising
- * every ceiling to suit it costs more than it saves.
+ * OpenRouter is only reached when DeepSeek has no key at all. It is a way in
+ * for an install that has not been set up, not a fallback — so a DeepSeek
+ * outage now surfaces as an error instead of being quietly paid around.
  */
 async function endpoints(): Promise<Endpoint[]> {
   const keys = await getKeys()
   const list: Endpoint[] = []
-  if (keys.openrouterKey?.trim()) {
-    list.push({
-      url: "https://openrouter.ai/api/v1/chat/completions",
-      apiKey: keys.openrouterKey.trim(),
-      model: keys.openrouterModel?.trim() || DEFAULT_OPENROUTER_MODEL,
-      label: "OpenRouter",
-    })
-  }
   if (keys.deepseekKey?.trim()) {
     list.push({
       url: "https://api.deepseek.com/chat/completions",
@@ -97,6 +100,15 @@ async function endpoints(): Promise<Endpoint[]> {
          not an error, just nothing, on exactly the turns that matter.
          `reasoning_effort: "none"` did the same. The cost is controlled with
          the ceiling instead; see maxTokens below. */
+    })
+  }
+  // Only when there is no DeepSeek key at all.
+  if (!list.length && keys.openrouterKey?.trim()) {
+    list.push({
+      url: "https://openrouter.ai/api/v1/chat/completions",
+      apiKey: keys.openrouterKey.trim(),
+      model: keys.openrouterModel?.trim() || DEFAULT_OPENROUTER_MODEL,
+      label: "OpenRouter",
     })
   }
   return list
@@ -157,7 +169,14 @@ export async function aiChat({
   const failures: string[] = []
   for (const endpoint of list) {
     try {
-      const text = await call({ ...endpoint, messages, maxTokens, temperature, json })
+      const text = await call({
+        ...endpoint,
+        messages,
+        // The caller sizes the answer; this makes room for the thinking too.
+        maxTokens: endpoint.label === "DeepSeek" ? Math.max(maxTokens, REASONING_HEADROOM) : maxTokens,
+        temperature,
+        json,
+      })
       if (failures.length) console.warn(`[ai] ${endpoint.label} answered after: ${failures.join(" | ")}`)
       return json ? stripFence(text) : text
     } catch (err) {
