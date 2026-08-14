@@ -542,7 +542,18 @@ h1, h2, h3, h4,
   padding: 0.06em 0.12em 0 0;
   color: var(--iyc-ionian-600);
 }
-.iyc-prose a { color: var(--text-link); text-underline-offset: 3px; }
+.iyc-prose a {
+  color: var(--text-link);
+  /* Underlined, not merely coloured. A link a reader can only find by hue is
+     invisible to anyone who cannot separate that hue from the body text
+     (WCAG 1.4.1). The offset keeps it off the descenders. */
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-color: color-mix(in srgb, var(--text-link) 45%, transparent);
+  text-underline-offset: 3px;
+  transition: text-decoration-color 0.2s ease;
+}
+.iyc-prose a:hover { text-decoration-color: var(--text-link); }
 .iyc-prose strong { color: var(--text-heading); font-weight: 600; }
 
 /* The rich editor also emits headings, lists, quotes and images. Without these
