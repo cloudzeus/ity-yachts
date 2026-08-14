@@ -1,4 +1,5 @@
 import { db } from "@/lib/db"
+import { metaStrings } from "@/lib/meta.server"
 import { pageMeta } from "@/lib/seo"
 import Link from "@/components/locale-link"
 import Image from "next/image"
@@ -13,12 +14,12 @@ import { RouteCardsMotion } from "@/components/itineraries/route-cards-motion"
 export const dynamic = "force-dynamic"
 
 export async function generateMetadata(): Promise<Metadata> {
+  const { m } = await metaStrings()
   return pageMeta({
-  title: "Ionian Sailing Routes from Lefkada",
-  description:
-    "Week-long sailing routes out of Lefkada, day by day: distances, anchorages and harbours through Meganisi, Ithaca, Kefalonia and the Inland Sea.",
+  title: m("meta.itineraries.title", "Ionian Sailing Routes from Lefkada"),
+  description: m("meta.itineraries.description", "Week-long sailing routes out of Lefkada, day by day: distances, anchorages and harbours through Meganisi, Ithaca, Kefalonia and the Inland Sea."),
   path: "/itineraries",
-  })
+})
 }
 
 export default async function ItinerariesListPage() {

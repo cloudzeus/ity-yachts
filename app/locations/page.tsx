@@ -1,4 +1,5 @@
 import { db } from "@/lib/db"
+import { metaStrings } from "@/lib/meta.server"
 import { pageMeta } from "@/lib/seo"
 import { Metadata } from "next"
 import { SiteHeader } from "@/components/site-header"
@@ -12,12 +13,12 @@ import { LocaleText } from "@/components/locale-text"
 export const dynamic = "force-dynamic"
 
 export async function generateMetadata(): Promise<Metadata> {
+  const { m } = await metaStrings()
   return pageMeta({
-  title: "Ionian Sailing Destinations from Lefkada",
-  description:
-    "Where to sail from Lefkada: Ithaca, Kefalonia, Meganisi, Kalamos, Kastos and Paxos. Anchorages, harbours and bays across the Ionian, with the coordinates for each.",
+  title: m("meta.locations.title", "Ionian Sailing Destinations from Lefkada"),
+  description: m("meta.locations.description", "Where to sail from Lefkada: Ithaca, Kefalonia, Meganisi, Kalamos, Kastos and Paxos. Anchorages, harbours and bays across the Ionian, with the coordinates for each."),
   path: "/locations",
-  })
+})
 }
 
 export default async function LocationsListPage() {

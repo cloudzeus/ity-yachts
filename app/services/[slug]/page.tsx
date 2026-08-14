@@ -6,6 +6,7 @@ import { SiteFooter } from "@/components/site-footer"
 import { ServiceDetail } from "./service-detail"
 import { JsonLd } from "@/components/json-ld"
 import { breadcrumbLd, serviceLd, webPageLd } from "@/lib/structured-data"
+import { localized, metaStrings } from "@/lib/meta.server"
 import { en, metaTitle, padDescription, pageMeta } from "@/lib/seo"
 
 export const dynamic = "force-dynamic"
@@ -29,14 +30,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   })
   if (!service) return {}
 
-  const t = service.title as Record<string, string>
-  const d = plain((service.shortDesc as Record<string, string>)?.en ?? "")
+  const { locale, m } = await metaStrings()
+  const name = localized(service.title, locale, "Service")
+  const d = plain(localized(service.shortDesc, locale))
 
   return pageMeta({
-    title: metaTitle(`${t.en ?? "Service"} — Charter Services, Lefkada`),
+    title: metaTitle(`${name} ${m("meta.service.suffix", "— Charter Services, Lefkada")}`),
     description: padDescription(
-      d || `${t.en ?? "Service"} for your charter from Lefkada.`,
-      "Arranged before you arrive, by the family who have run this base since 1979."
+      d || `${name} ${m("meta.service.descFallback", "for your charter from Lefkada.")}`,
+      m("meta.service.descPad", "Arranged before you arrive, by the family who have run this base since 1979.")
     ),
     path: `/services/${slug}`,
     image: service.defaultMediaType === "video" ? null : service.defaultMedia,

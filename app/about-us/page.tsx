@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { metaStrings } from "@/lib/meta.server"
 import { notFound } from "next/navigation"
 import { db } from "@/lib/db"
 import { SiteHeader } from "@/components/site-header"
@@ -40,11 +41,15 @@ async function loadStory() {
 export async function generateMetadata(): Promise<Metadata> {
   const data = await loadStory()
   if (!data) return {}
+  const { m } = await metaStrings()
   return pageMeta({
-    title: data.page.metaTitle || "Our Story — Family-run Yacht Charter in Lefkada since 1979",
+    title: data.page.metaTitle || m("meta.about.title", "Our Story — Yacht Charter in Lefkada since 1979"),
     description:
       data.page.metaDesc ||
-      "Two countries, one family, and the Ionian since 1979. How Ionische Yacht Charter came to be, told from our base in Lefkada.",
+      m(
+        "meta.about.description",
+        "Two countries, one family, and the Ionian since 1979. How Ionische Yacht Charter came to be, told from our base in Lefkada."
+      ),
     path: "/about-us",
   })
 }

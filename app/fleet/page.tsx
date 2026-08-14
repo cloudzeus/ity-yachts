@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { metaStrings } from "@/lib/meta.server"
 import { db } from "@/lib/db"
 import { pageMeta } from "@/lib/seo"
 import { yachtThumb } from "@/lib/yacht-images"
@@ -12,12 +13,12 @@ export const dynamic = "force-dynamic"
 /* The old title and description named neither the place nor what is on offer,
    so the page competed for "our fleet" and nothing else. */
 export async function generateMetadata(): Promise<Metadata> {
+  const { m } = await metaStrings()
   return pageMeta({
-  title: "Charter Fleet Lefkada — Yachts & Catamarans",
-  description:
-    "Our charter fleet in Lefkada: sailing yachts and catamarans, 2 to 6 cabins, bareboat or skippered. Live availability and prices for the Ionian.",
+  title: m("meta.fleet.title", "Charter Fleet Lefkada — Yachts & Catamarans"),
+  description: m("meta.fleet.description", "Our charter fleet in Lefkada: sailing yachts and catamarans, 2 to 6 cabins, bareboat or skippered. Live availability and prices for the Ionian."),
   path: "/fleet",
-  })
+})
 }
 
 export default async function FleetPage() {

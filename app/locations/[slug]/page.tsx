@@ -1,5 +1,6 @@
 import { db } from "@/lib/db"
 import { en, metaDescription, metaTitle, pageMeta } from "@/lib/seo"
+import { localized, metaStrings } from "@/lib/meta.server"
 import { JsonLd } from "@/components/json-ld"
 import { breadcrumbLd, destinationLd, videoLd, webPageLd } from "@/lib/structured-data"
 import { notFound } from "next/navigation"
@@ -22,18 +23,19 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   })
   if (!location) return { title: "Location not found" }
 
-  const name = en(location.nameTranslations, location.name)
-  const region = en(location.prefecture, "Ionian Islands")
+  const { locale, m } = await metaStrings()
+  const name = localized(location.nameTranslations, locale, location.name)
+  const region = localized(location.prefecture, locale, "Ionian Islands")
 
   const description = metaDescription(
-    location.metaDesc ||
-      `${en(location.shortDesc)} Sailing to ${name} in the ${region} — what to expect, where to anchor, and how far it is from our base in Lefkada.`.trim()
+    (locale === "en" && location.metaDesc) ||
+      `${localized(location.shortDesc, locale)} ${name}, ${region}. ${m("meta.location.descTail", "What to expect, where to anchor, and how far it is from our base in Lefkada.")}`.trim()
   )
 
   return pageMeta({
     // The place name alone competes with the whole travel industry; naming the
     // sea and the activity is what this business can actually win.
-    title: location.metaTitle || metaTitle(`${name} — Sailing the Ionian`),
+    title: (locale === "en" && location.metaTitle) || metaTitle(`${name} ${m("meta.location.suffix", "— Sailing the Ionian")}`),
     description,
     path: `/locations/${slug}`,
     image: location.defaultMedia,

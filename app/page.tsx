@@ -4,6 +4,7 @@ import { yachtThumb } from "@/lib/yacht-images"
 import { JsonLd } from "@/components/json-ld"
 import { faqLd } from "@/lib/structured-data"
 import { en, pageMeta } from "@/lib/seo"
+import { metaStrings } from "@/lib/meta.server"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { HomepageClient } from "@/components/home/homepage-client"
@@ -19,17 +20,19 @@ export const dynamic = "force-dynamic"
  * and told search engines this was a "Maritime enterprise management platform".
  */
 export async function generateMetadata(): Promise<Metadata> {
+  const { m } = await metaStrings()
   const meta = await pageMeta({
-    title: "Yacht Charter Lefkada, Greece — Sailing the Ionian",
-    // 158 characters. It was 163, which an audit flagged as over the limit.
-    description:
-      "Family-run yacht charter from Lefkada since 1979. Sailing yachts and catamarans in the Ionian, bareboat or with a skipper — Greek warmth, German order.",
+    title: m("meta.home.title", "Yacht Charter Lefkada — IYC Ionische Yacht Charter"),
+    description: m(
+      "meta.home.description",
+      "Family-run yacht charter from Lefkada since 1979. Sailing yachts and catamarans in the Ionian, bareboat or with a skipper — Greek warmth, German order."
+    ),
     path: "/",
   })
   /* Absolute, or the layout template appends the brand a second time. The
      canonical and og:url come from pageMeta, so they follow the real domain
      instead of a build-time guess. */
-  return { ...meta, title: { absolute: "Yacht Charter Lefkada — IYC Ionische Yacht Charter" } }
+  return { ...meta, title: { absolute: m("meta.home.title", "Yacht Charter Lefkada — IYC Ionische Yacht Charter") } }
 }
 
 export default async function Home() {

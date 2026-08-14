@@ -1,4 +1,5 @@
 import { db } from "@/lib/db"
+import { metaStrings } from "@/lib/meta.server"
 import { Metadata } from "next"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
@@ -8,12 +9,12 @@ import { pageMeta } from "@/lib/seo"
 export const dynamic = "force-dynamic"
 
 export async function generateMetadata(): Promise<Metadata> {
+  const { m } = await metaStrings()
   return pageMeta({
-  title: "Charter Services in Lefkada",
-  description:
-    "Everything around the boat: a skipper or hostess, provisioning, tailored routes, transfers and the paperwork. What we arrange before you reach Lefkada.",
+  title: m("meta.services.title", "Charter Services in Lefkada"),
+  description: m("meta.services.description", "Everything around the boat: a skipper or hostess, provisioning, tailored routes, transfers and the paperwork. What we arrange before you reach Lefkada."),
   path: "/services",
-  })
+})
 }
 
 export default async function ServicesPage() {

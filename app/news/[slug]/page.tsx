@@ -3,6 +3,7 @@ import { notFound } from "next/navigation"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { getArticleBySlug, getRelatedNews } from "@/lib/news"
+import { localized, metaStrings } from "@/lib/meta.server"
 import { JsonLd } from "@/components/json-ld"
 import { articleLd, breadcrumbLd } from "@/lib/structured-data"
 import { en, metaTitle, padDescription, pageMeta } from "@/lib/seo"
@@ -20,17 +21,21 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params
   const article = await getArticleBySlug(slug)
-  if (!article) return { title: "Not found — IYC Yachts" }
+  if (!article) return { title: "Not found" }
 
-  const title = (article.title as Record<string, string>)?.en || "Article"
-  const short = plain((article.shortDesc as Record<string, string>)?.en ?? "")
+  const { locale, m } = await metaStrings()
+  const title = localized(article.title, locale, "Article")
+  const short = plain(localized(article.shortDesc, locale))
 
   return pageMeta({
-    title: article.metaTitle || metaTitle(title),
+    /* metaTitle and metaDesc are single English strings on the record, so
+       they are only right for the English page. On the other two the
+       translated title beats a hand-tuned English one. */
+    title: (locale === "en" && article.metaTitle) || metaTitle(title),
     // A 90-character summary leaves half the snippet to Google's own guess.
     description: padDescription(
-      article.metaDesc || short,
-      "Written from our charter base in Lefkada, in the Ionian."
+      (locale === "en" && article.metaDesc) || short,
+      m("meta.news.descPad", "Written from our charter base in Lefkada, in the Ionian.")
     ),
     path: `/news/${slug}`,
     image: article.defaultMediaType === "video" ? null : article.defaultMedia,

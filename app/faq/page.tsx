@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { metaStrings } from "@/lib/meta.server"
 import Image from "next/image"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
@@ -15,10 +16,10 @@ const HERO =
   "https://iycweb.b-cdn.net/general/1786528738613-hand-of-man-captain-stands-at-the-helm-and-control-2026-03-20-02-05-13-utc.webp"
 
 export async function generateMetadata(): Promise<Metadata> {
+  const { m } = await metaStrings()
   return pageMeta({
-    title: "Chartering in Lefkada — Your Questions Answered",
-    description:
-      "Licences, getting to Lefkada, when to sail, what a charter includes, one-way trips and the floating bridge — answered plainly by the people who run the base.",
+    title: m("meta.faq.title", "Chartering in Lefkada — Your Questions Answered"),
+    description: m("meta.faq.description", "Licences, getting to Lefkada, when to sail, what a charter includes, one-way trips and the floating bridge — answered plainly by the people who run the base."),
     path: "/faq",
   })
 }

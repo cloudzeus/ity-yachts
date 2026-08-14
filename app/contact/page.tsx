@@ -1,4 +1,5 @@
 import { db } from "@/lib/db"
+import { metaStrings } from "@/lib/meta.server"
 import { pageMeta } from "@/lib/seo"
 import { Metadata } from "next"
 import { SiteHeader } from "@/components/site-header"
@@ -8,12 +9,12 @@ import { ContactPageClient } from "@/components/contact/contact-page-client"
 export const dynamic = "force-dynamic"
 
 export async function generateMetadata(): Promise<Metadata> {
+  const { m } = await metaStrings()
   return pageMeta({
-  title: "Contact — Our Base in Lefkada",
-  description:
-    "Talk to the people who run the base. Our office is at Filippa Panagou 22, Lefkada 31100, Greece, with a second in Munich. We answer in Greek, German and English.",
+  title: m("meta.contact.title", "Contact — Our Base in Lefkada"),
+  description: m("meta.contact.description", "Talk to the people who run the base. Our office is at Filippa Panagou 22, Lefkada 31100, Greece, with a second in Munich. We answer in Greek, German and English."),
   path: "/contact",
-  })
+})
 }
 
 export default async function ContactPage() {

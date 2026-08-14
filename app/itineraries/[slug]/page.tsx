@@ -2,6 +2,7 @@ import { db } from "@/lib/db"
 import { en, metaDescription, metaTitle, pageMeta } from "@/lib/seo"
 import { JsonLd } from "@/components/json-ld"
 import { breadcrumbLd, tripLd, webPageLd } from "@/lib/structured-data"
+import { localized, metaStrings } from "@/lib/meta.server"
 import { notFound } from "next/navigation"
 import { Metadata } from "next"
 import { SiteHeader } from "@/components/site-header"
@@ -22,23 +23,25 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   })
   if (!itinerary) return { title: "Itinerary not found" }
 
-  const name = en(itinerary.name, "Itinerary")
+  const { locale, m } = await metaStrings()
+  const name = localized(itinerary.name, locale, "Itinerary")
 
   /* metaDesc is optional and mostly empty, and the old code passed `undefined`
      straight through — so these pages shipped with no description at all.
      Build one from the route's own facts instead. */
   const facts = [
-    itinerary.totalDays ? `${itinerary.totalDays} days` : null,
-    itinerary.totalMiles ? `${itinerary.totalMiles} nautical miles` : null,
-    itinerary.startFrom ? `from ${itinerary.startFrom}` : "from Lefkada",
+    itinerary.totalDays ? `${itinerary.totalDays} ${m("meta.itinerary.days", "days")}` : null,
+    itinerary.totalMiles ? `${itinerary.totalMiles} ${m("meta.itinerary.miles", "nautical miles")}` : null,
+    `${m("meta.itinerary.from", "from")} ${itinerary.startFrom || "Lefkada"}`,
   ].filter(Boolean).join(", ")
 
   const description = metaDescription(
-    itinerary.metaDesc || `${en(itinerary.shortDesc)} ${name}: ${facts}. Day by day, with the anchorages and harbours along the way.`.trim()
+    (locale === "en" && itinerary.metaDesc) ||
+      `${localized(itinerary.shortDesc, locale)} ${name}: ${facts}. ${m("meta.itinerary.descTail", "Day by day, with the anchorages and harbours along the way.")}`.trim()
   )
 
   return pageMeta({
-    title: itinerary.metaTitle || metaTitle(`${name} — Ionian Route`),
+    title: (locale === "en" && itinerary.metaTitle) || metaTitle(`${name} ${m("meta.itinerary.suffix", "— Ionian Route")}`),
     description,
     path: `/itineraries/${slug}`,
     image: itinerary.defaultMedia,

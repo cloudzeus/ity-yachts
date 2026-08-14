@@ -1,4 +1,5 @@
 import { Metadata } from "next"
+import { metaStrings } from "@/lib/meta.server"
 import Image from "next/image"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
@@ -11,12 +12,12 @@ import { pageMeta } from "@/lib/seo"
 export const dynamic = "force-dynamic"
 
 export async function generateMetadata(): Promise<Metadata> {
+  const { m } = await metaStrings()
   return pageMeta({
-  title: "Sailing the Ionian — Notes from Lefkada",
-  description:
-    "Winds, anchorages, boats and what a week aboard is actually like, written by the people who run the base in Lefkada and sail these islands every season.",
+  title: m("meta.news.title", "Sailing the Ionian — Notes from Lefkada"),
+  description: m("meta.news.description", "Winds, anchorages, boats and what a week aboard is actually like, written by the people who run the base in Lefkada and sail these islands every season."),
   path: "/news",
-  })
+})
 }
 
 const HERO =
