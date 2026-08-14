@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 interface AIData {
   openaiKey: string
   deepseekKey: string
+  deepseekModel: string
   openrouterKey: string
   openrouterModel: string
   geocodeKey: string
@@ -16,7 +17,7 @@ interface AIData {
   weatherApiKey: string
 }
 
-const defaults: AIData = { openaiKey: "", deepseekKey: "", openrouterKey: "", openrouterModel: "", geocodeKey: "", googleMapsKey: "", weatherApiKey: "" }
+const defaults: AIData = { openaiKey: "", deepseekKey: "", deepseekModel: "", openrouterKey: "", openrouterModel: "", geocodeKey: "", googleMapsKey: "", weatherApiKey: "" }
 
 function MaskedField({ label, description, value, onChange, placeholder }: {
   label: string
@@ -145,6 +146,20 @@ export function AITab({ initialData }: { initialData?: Partial<AIData> }) {
             onChange={(v) => setData((p) => ({ ...p, deepseekKey: v }))}
             placeholder="sk-..."
           />
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <Label className="text-xs" style={{ color: "var(--on-surface-variant)" }}>DeepSeek model</Label>
+          <Input
+            value={data.deepseekModel}
+            onChange={(e) => setData((p) => ({ ...p, deepseekModel: e.target.value }))}
+            placeholder="deepseek-v4-flash"
+            className="font-mono text-xs"
+          />
+          <p className="text-[11px]" style={{ color: "var(--on-surface-variant)" }}>
+            Leave blank for deepseek-v4-flash. Do not use &quot;deepseek-chat&quot;: it is an alias that
+            follows whatever DeepSeek ships next, and v4-pro costs many times more for the same work.
+          </p>
         </div>
 
         <div style={{ borderTop: "1px solid var(--outline-variant)", paddingTop: "1rem" }}>

@@ -32,8 +32,16 @@ export interface AiMessage {
    and honours response_format, so it is the default. */
 const DEFAULT_OPENROUTER_MODEL = "deepseek/deepseek-v3.2"
 
+/* Pinned, not aliased. "deepseek-chat" is a moving pointer — today it resolves
+   to v4-flash, and DeepSeek can repoint it at v4-pro whenever they ship, which
+   on their own price list is the difference between cents and pounds for the
+   same traffic. A name we chose cannot change under us without someone
+   deciding to change it. */
+const DEFAULT_DEEPSEEK_MODEL = "deepseek-v4-flash"
+
 interface AiKeys {
   deepseekKey?: string
+  deepseekModel?: string
   openrouterKey?: string
   openrouterModel?: string
 }
@@ -58,7 +66,7 @@ async function endpoints(): Promise<Endpoint[]> {
     list.push({
       url: "https://api.deepseek.com/chat/completions",
       apiKey: keys.deepseekKey.trim(),
-      model: "deepseek-chat",
+      model: keys.deepseekModel?.trim() || DEFAULT_DEEPSEEK_MODEL,
       label: "DeepSeek",
     })
   }
