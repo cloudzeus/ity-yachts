@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useMemo } from "react"
+import { useEffect, useMemo } from "react"
 import Link from "@/components/locale-link"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
@@ -109,7 +109,6 @@ function r(field: string | T | undefined, locale: string): string {
 
 export function HomepageClient({ hero, destinations, itineraries, yachts, fleetYachts, reviews, staff, fleetRanges, news, faqs }: HomepageProps) {
   const { locale, t } = useTranslations()
-  const heroVideoRef = useRef<HTMLVideoElement>(null)
 
   // Resolve all translation objects to current locale strings
   const heroResolved = useMemo(() => ({
@@ -147,17 +146,6 @@ export function HomepageClient({ hero, destinations, itineraries, yachts, fleetY
     ...rv,
     content: r(rv.contentT, locale) || rv.content,
   })), [reviews, locale])
-
-  useEffect(() => {
-    // Ensure hero video plays and loops
-    const video = heroVideoRef.current
-    if (video) {
-      video.muted = true
-      video.loop = true
-      video.playsInline = true
-      video.play().catch(() => {})
-    }
-  }, [])
 
   useEffect(() => {
     // Hero text animation. Both lines come from the CMS and may be absent —
@@ -212,22 +200,6 @@ export function HomepageClient({ hero, destinations, itineraries, yachts, fleetY
               alt=""
               aria-hidden="true"
               className="absolute inset-0 h-full w-full object-cover"
-            />
-            {/* preload="auto" pulled the whole file down before anything else
-                on the page could load. The poster carries the first paint and
-                the clip arrives after. NOTE: this URL currently returns 404 —
-                the poster is all that renders until it is replaced. */}
-            <video
-              ref={heroVideoRef}
-              src="https://iycweb.b-cdn.net/1774760973356-lonely-sailboat-sailing-on-blue-water-aerial-view-2026-01-21-13-48-12-utc.mp4"
-              poster="/brand/hero-aerial.webp"
-              autoPlay
-              muted
-              loop
-              playsInline
-              preload="none"
-              className="absolute inset-0 h-full w-full object-cover"
-              suppressHydrationWarning
             />
           </div>
 
