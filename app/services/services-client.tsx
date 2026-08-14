@@ -7,6 +7,7 @@ import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { icons } from "lucide-react"
 import { useTranslations } from "@/lib/use-translations"
+import { AnswerBlock } from "@/components/answer-block"
 import { removeGreekTonos } from "@/lib/greek-utils"
 
 if (typeof window !== "undefined") {
@@ -125,6 +126,13 @@ export function ServicesClient({
           </p>
         </div>
       </section>
+
+      <AnswerBlock
+        eyebrowKey="answer.eyebrow"
+        eyebrowFallback="In short"
+        bodyKey="answer.services"
+        bodyFallback={"The things we arrange around the charter itself — custom routes, concierge, catering, safety, onboard amenities, flexible booking and our skippers school. Each is handled by the same office in Lefkada that hands you the keys, so there is nobody else to chase when something needs changing."}
+      />
 
       {/* ── The index ────────────────────────────────────────────────────
           Seven services is too many to scroll blind, so the page opens with

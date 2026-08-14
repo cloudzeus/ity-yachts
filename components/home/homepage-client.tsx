@@ -17,6 +17,7 @@ import { FamilySection, type FamilyMember } from "./family-section"
 import type { FleetRanges } from "@/lib/fleet-ranges"
 import { NewsSection } from "./news-section"
 import { FaqSection } from "./faq-section"
+import { AnswerBlock } from "@/components/answer-block"
 import type { NewsCard } from "@/lib/news"
 import type { FaqEntry } from "@/lib/faqs"
 
@@ -337,6 +338,13 @@ export function HomepageClient({ hero, destinations, itineraries, yachts, fleetY
           </div>
         </div>
       </section>
+
+      <AnswerBlock
+        eyebrowKey="answer.eyebrow"
+        eyebrowFallback="In short"
+        bodyKey="answer.home"
+        bodyFallback={"IYC Ionische Yacht Charter is a family business that has sailed out of Lefkada since 1979. We charter our own sailing yachts and catamarans from one base in Lefkada harbour — bareboat or with a skipper — across the Ionian Sea from May to October. A Greek base, a German office, the same family throughout."}
+      />
 
       {/* Fleet Carousel */}
       {fleetResolved && fleetResolved.length > 0 && (

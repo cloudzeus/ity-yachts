@@ -3,6 +3,7 @@ import { pageMeta } from "@/lib/seo"
 import { Metadata } from "next"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
+import { AnswerBlock } from "@/components/answer-block"
 import { LocationsGrid } from "@/components/locations/locations-grid"
 import Image from "next/image"
 import { MapPin } from "lucide-react"
@@ -138,6 +139,13 @@ export default async function LocationsListPage() {
             </div>
           </div>
         </section>
+
+      <AnswerBlock
+        eyebrowKey="answer.eyebrow"
+        eyebrowFallback="In short"
+        bodyKey="answer.locations"
+        bodyFallback={"These are the islands and anchorages you can reach from Lefkada within a week's sailing. The Ionian lies parallel to the mainland coast, so hardly a point in it is more than 30 nautical miles from a protected harbour — which is why it forgives beginners and still rewards experienced crews."}
+      />
 
         {/* Locations */}
         <section className="pb-28 px-6">

@@ -5,6 +5,7 @@ import Image from "next/image"
 import { Metadata } from "next"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
+import { AnswerBlock } from "@/components/answer-block"
 import { LocaleText } from "@/components/locale-text"
 import { getMottoRaw } from "@/lib/mottos"
 import { RouteCardsMotion } from "@/components/itineraries/route-cards-motion"
@@ -111,6 +112,13 @@ export default async function ItinerariesListPage() {
             </p>
           </div>
         </section>
+
+      <AnswerBlock
+        eyebrowKey="answer.eyebrow"
+        eyebrowFallback="In short"
+        bodyKey="answer.itineraries"
+        bodyFallback={"Each route here starts and finishes on our own pontoon in Lefkada and is built around a week aboard. Most legs run two to four hours, which leaves the rest of the day for swimming rather than sailing. Treat them as drafts: we redraw any of them around your dates, your crew and the wind."}
+      />
 
         {/* Routes — two per row, not three. With a handful of itineraries a
             three-column grid leaves a ragged empty cell and shrinks each card
