@@ -923,7 +923,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                   {checkIn && checkOut && checkIn !== checkOut ? t("yacht.requestBooking", "Request This Booking") : t("yacht.selectDatesToContinue", "Select dates to continue")}
                 </button>
 
-                <p className="text-center text-[10px] text-[var(--text-subtle)]">You won&apos;t be charged &middot; Free cancellation</p>
+                <p className="text-center text-[10px] text-[var(--text-subtle)]">{t("yacht.noCharge", "You won't be charged · Free cancellation")}</p>
 
                 {/* Staff advisor */}
                 {yacht.staffRep && (
@@ -1344,7 +1344,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                     </div>
                     <div>
                       <label className="block text-[9px] uppercase font-bold text-[var(--text-subtle)] mb-1 tracking-wide">{tUpper("yacht.specialRequests", "Special Requests")}</label>
-                      <textarea value={bookingForm.notes} onChange={(e) => setBookingForm({ ...bookingForm, notes: e.target.value })} placeholder="Celebrations, dietary needs, preferred destinations..." rows={3} className="w-full border border-[var(--border-input)] rounded-[var(--iyc-radius-sm)] px-3 py-2.5 text-xs bg-transparent placeholder:text-[var(--text-subtle)] focus:outline-none focus:border-[var(--text-link)] transition resize-none" style={{ color: "var(--text-body)" }} />
+                      <textarea value={bookingForm.notes} onChange={(e) => setBookingForm({ ...bookingForm, notes: e.target.value })} placeholder={t("yacht.enquiry.notesPlaceholder", "Celebrations, dietary needs, preferred destinations...")} rows={3} className="w-full border border-[var(--border-input)] rounded-[var(--iyc-radius-sm)] px-3 py-2.5 text-xs bg-transparent placeholder:text-[var(--text-subtle)] focus:outline-none focus:border-[var(--text-link)] transition resize-none" style={{ color: "var(--text-body)" }} />
                     </div>
                   </div>
 
@@ -1366,7 +1366,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                       </>
                     )}
                   </button>
-                  <p className="text-center text-[10px] text-[var(--text-subtle)] mt-2.5">No payment required &middot; Free cancellation</p>
+                  <p className="text-center text-[10px] text-[var(--text-subtle)] mt-2.5">{t("yacht.noPayment", "No payment required · Free cancellation")}</p>
                 </div>
               </>
             )}
@@ -1459,7 +1459,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                           <CalendarDays className="w-3 h-3 text-[var(--text-link)]" />
                         </div>
                         <div>
-                          <p className="text-xs font-semibold text-[var(--text-body)]">Tailored proposal within 24h</p>
+                          <p className="text-xs font-semibold text-[var(--text-body)]">{t("yacht.proposal24h", "Tailored proposal within 24h")}</p>
                           <p className="text-[10px] text-[var(--text-subtle)]">
                             {selectedMonths.length > 0
                               ? `Availability & pricing for ${selectedMonths.map((m) => { const [y, mo] = m.split("-"); return `${MONTH_NAMES[parseInt(mo) - 1]} ${y}` }).join(", ")}`
@@ -1564,7 +1564,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                         ))
                       })()}
                       {availableMonths.length === 0 && (
-                        <p className="text-[10px] text-[var(--text-subtle)] italic">No availability data yet</p>
+                        <p className="text-[10px] text-[var(--text-subtle)] italic">{t("yacht.noAvailability", "No availability data yet")}</p>
                       )}
 
                       {/* Guests inline */}
@@ -1642,7 +1642,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                       <textarea
                         value={enquiryForm.notes}
                         onChange={(e) => setEnquiryForm({ ...enquiryForm, notes: e.target.value })}
-                        placeholder="Celebrations, dietary needs, preferred destinations..."
+                        placeholder={t("yacht.enquiry.notesPlaceholder", "Celebrations, dietary needs, preferred destinations...")}
                         rows={3}
                         className="w-full border border-[var(--border-input)] rounded-[var(--iyc-radius-sm)] px-3 py-2.5 text-xs bg-transparent placeholder:text-[var(--text-subtle)] focus:outline-none focus:border-[var(--text-link)] transition resize-none"
                         style={{ color: "var(--text-body)" }}
@@ -1669,7 +1669,7 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                     )}
                   </button>
                   <p className="text-center text-[10px] text-[var(--text-subtle)] mt-2.5">
-                    No commitment &middot; Free personalized proposal
+                    {t("yacht.noCommitment", "No commitment · Free personalized proposal")}
                   </p>
                 </div>
               </>

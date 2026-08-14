@@ -15,7 +15,7 @@ import type { FaqEntry } from "@/lib/faqs"
  * several answer engines weight visible text over hidden.
  */
 export function FaqList({ faqs }: { faqs: FaqEntry[] }) {
-  const { locale } = useTranslations()
+  const { locale, t } = useTranslations()
   const r = (v: Record<string, string> | undefined) => v?.[locale]?.trim() || v?.en?.trim() || ""
 
   // Grouped in the order the topics first appear, so the sort order still leads.
@@ -60,15 +60,14 @@ export function FaqList({ faqs }: { faqs: FaqEntry[] }) {
         style={{ background: "var(--surface-sunken)", border: "1px solid var(--border-hairline)" }}
       >
         <p className="mb-5 text-[1.05rem] leading-relaxed" style={{ color: "var(--text-body)" }}>
-          Something we have not answered here? Write to us — it reaches the people who run the base,
-          not a call centre.
+          {t("faq.contact.body", "Something we have not answered here? Write to us — it reaches the people who run the base, not a call centre.")}
         </p>
         <Link
           href="/contact"
           className="inline-flex items-center gap-2 rounded-[var(--iyc-radius-sm)] px-7 py-3.5 text-sm font-semibold"
           style={{ background: "var(--action-accent)", color: "#ffffff", fontFamily: "var(--font-display)" }}
         >
-          Ask us
+          {t("faq.contact.cta", "Ask us")}
           <span aria-hidden="true">→</span>
         </Link>
       </div>

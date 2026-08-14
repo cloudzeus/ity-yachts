@@ -6,6 +6,7 @@ import { JsonLd } from "@/components/json-ld"
 import { breadcrumbLd, faqLd } from "@/lib/structured-data"
 import { pageMeta, en } from "@/lib/seo"
 import { getAllFaqs } from "@/lib/faqs"
+import { FaqHeroCopy } from "./faq-hero-copy"
 import { FaqList } from "./faq-list"
 
 export const dynamic = "force-dynamic"
@@ -54,16 +55,7 @@ export default async function FaqPage() {
             }}
           />
           <div className="relative mx-auto flex max-w-[880px] flex-col items-center px-6 pb-32 pt-32 text-center md:pb-36 md:pt-40">
-            <h1
-              className="text-[clamp(2.1rem,4.4vw,3.25rem)] font-light leading-[1.08] text-white"
-              style={{ fontFamily: "var(--font-display)", letterSpacing: "0.01em", textWrap: "balance" }}
-            >
-              Chartering in Lefkada, answered
-            </h1>
-            <p className="mt-6 max-w-[52ch] text-[1.05rem] leading-relaxed" style={{ color: "rgba(255,255,255,0.92)" }}>
-              What people ask us before they book — licences, getting here, when to sail, and what a
-              week actually costs.
-            </p>
+            <FaqHeroCopy />
           </div>
         </section>
 

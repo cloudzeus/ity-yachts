@@ -7,6 +7,7 @@ import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { MapPin, ArrowRight } from "lucide-react"
 import { TextReveal } from "@/components/motion"
+import { useTranslations } from "@/lib/use-translations"
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger)
@@ -22,6 +23,7 @@ interface Destination {
 }
 
 export function DestinationsSection({ destinations }: { destinations: Destination[] }) {
+  const { t } = useTranslations()
   const sectionRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const trackRef = useRef<HTMLDivElement>(null)
@@ -76,7 +78,7 @@ export function DestinationsSection({ destinations }: { destinations: Destinatio
               className="text-4xl md:text-6xl font-bold text-white max-w-2xl"
               style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em" }}
             >
-              Explore Our Charter Destinations
+              {t("home.destinations.heading", "Explore Our Charter Destinations")}
             </h2>
           </TextReveal>
         </div>
