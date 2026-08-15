@@ -165,6 +165,15 @@ export async function POST(req: NextRequest) {
 
     const ask = async (nudge?: string) => {
       const content = await aiChat({
+        /* The planner runs on DeepSeek directly, for the prompt cache.
+           Its system prompt is ~1,400 tokens and identical on every turn of
+           every conversation, which is 92% of what a turn costs; served from
+           cache that input is billed at a fiftieth of the fresh rate. The
+           route through OpenRouter caches nothing — measured at 0% across
+           three identical calls — so the same prompt is paid for in full each
+           time. DeepSeek's model reasons before it answers and so produces
+           more output, which is the trade being made deliberately here. */
+        prefer: "deepseek",
         /* The reply is parsed as an object, so ask the API for one. Without
            this the model intermittently returned empty content. */
         json: true,
