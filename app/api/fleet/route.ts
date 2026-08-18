@@ -21,7 +21,10 @@ export async function GET(req: NextRequest) {
     const loaMax = searchParams.get("loaMax")
     const guestsMin = searchParams.get("guestsMin")
     const charterType = searchParams.get("charterType")
-    const sortBy = searchParams.get("sortBy") ?? "name"
+    /* Length, not the alphabet. A charter fleet is browsed by size — how many
+       it sleeps, how it handles — and a list running Aiolos, Anemos, Asteri
+       tells a visitor nothing about which boat suits them. */
+    const sortBy = searchParams.get("sortBy") ?? "loa_desc"
 
     const where: Prisma.NausysYachtWhereInput = {}
 
@@ -73,14 +76,20 @@ export async function GET(req: NextRequest) {
     }
     if (charterType) where.charterType = charterType
 
-    // Sort
-    let orderBy: Prisma.NausysYachtOrderByWithRelationInput = { name: "asc" }
-    if (sortBy === "loa_desc") orderBy = { loa: "desc" }
-    else if (sortBy === "loa_asc") orderBy = { loa: "asc" }
-    else if (sortBy === "year_desc") orderBy = { buildYear: "desc" }
-    else if (sortBy === "year_asc") orderBy = { buildYear: "asc" }
-    else if (sortBy === "cabins_desc") orderBy = { cabins: "desc" }
-    else if (sortBy === "newest") orderBy = { updatedAt: "desc" }
+    /* Every sort carries the name as a tiebreaker. Four boats share 9.99 m and
+       three other lengths are duplicated, so without it their order is
+       whatever the database returns and can differ between two identical
+       requests — the same page, reshuffled, on a reload. */
+    const SORTS: Record<string, Prisma.NausysYachtOrderByWithRelationInput[]> = {
+      loa_desc: [{ loa: "desc" }, { name: "asc" }],
+      loa_asc: [{ loa: "asc" }, { name: "asc" }],
+      year_desc: [{ buildYear: "desc" }, { name: "asc" }],
+      year_asc: [{ buildYear: "asc" }, { name: "asc" }],
+      cabins_desc: [{ cabins: "desc" }, { loa: "desc" }, { name: "asc" }],
+      newest: [{ updatedAt: "desc" }, { name: "asc" }],
+      name: [{ name: "asc" }],
+    }
+    const orderBy = SORTS[sortBy] ?? SORTS.loa_desc
 
     const [yachts, total] = await Promise.all([
       db.nausysYacht.findMany({

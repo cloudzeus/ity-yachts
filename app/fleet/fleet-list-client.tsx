@@ -122,7 +122,7 @@ export function FleetListClient({
   const [loaMax, setLoaMax] = useState(() => rangeEnd("length"))
   const [yearMin, setYearMin] = useState("")
   const [charterType, setCharterType] = useState("")
-  const [sortBy, setSortBy] = useState("name")
+  const [sortBy, setSortBy] = useState("loa_desc")
 
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
   /* Normally the first render is skipped, because the server already sent the
@@ -217,7 +217,7 @@ export function FleetListClient({
     setLoaMax("")
     setYearMin("")
     setCharterType("")
-    setSortBy("name")
+    setSortBy("loa_desc")
   }
 
   const hasActiveFilters =

@@ -56,7 +56,11 @@ export default async function Home() {
        given, so a cap here made it announce "1 / 10" for a fleet of
        eighteen — and eight boats were unreachable from the homepage. */
     db.nausysYacht.findMany({
-      orderBy: { updatedAt: "desc" },
+      /* Longest first, matching /fleet. It was ordered by updatedAt, which is
+         a record's own history and means nothing to a visitor — the carousel
+         reshuffled itself whenever a boat was edited. The name is the
+         tiebreaker because four boats share 9.99 m. */
+      orderBy: [{ loa: "desc" }, { name: "asc" }],
       include: {
         category: true,
         model: true,
