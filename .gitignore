@@ -44,3 +44,6 @@ next-env.d.ts
 
 # Tooling checkpoint, not project code
 .planning/
+
+# Mirrored 360 tours — 1.5GB of tiles, served from the CDN in production
+public/360

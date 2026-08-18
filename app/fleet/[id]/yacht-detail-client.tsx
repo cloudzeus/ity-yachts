@@ -36,6 +36,7 @@ import {
   CalendarDays,
 } from "lucide-react"
 import { useTranslations } from "@/lib/use-translations"
+import { Tour360Viewer } from "@/components/yacht/tour-360"
 import { removeGreekTonos } from "@/lib/greek-utils"
 import { lockScroll, unlockScroll } from "@/lib/scroll-lock"
 
@@ -54,6 +55,7 @@ interface YachtData {
   categoryTranslations?: TranslatedField
   images: string[]
   plans?: { url: string; caption?: string }[]
+  tour360?: unknown
   location: string
   locationTranslations?: TranslatedField
   loa: number | null
@@ -641,6 +643,10 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                 </div>
               </div>
             )}
+
+            {/* The 360 walkthrough sits beside the layout, both being ways of
+                seeing the boat that a photograph cannot show. */}
+            <Tour360Viewer tour={yacht.tour360} yachtName={yacht.name} />
 
             {/* Avatar-style circular thumbnails */}
             <button

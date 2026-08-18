@@ -662,6 +662,9 @@ model NausysYacht {
   // Website custom media (managed by admin, separate from NAUSYS sync)
   websiteImages         Json     @default("[]") // [{ url, caption?, sortOrder }]
   websiteVideos         Json     @default("[]") // [{ url, type: "youtube"|"vimeo"|"upload", caption?, sortOrder }]
+  /// Self-hosted 360 tour: { base, scenes: [{ folder, title{en,el,de}, tilesize, levels }] }.
+  /// The panoramas were exported by Panotour, which no longer exists — see lib/tour360.ts.
+  websiteTour360        Json?
 
   // Website area associations (regions/locations this yacht operates in)
   websiteAreas          NausysYachtArea[]

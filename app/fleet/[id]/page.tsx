@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     where: { id: yachtId },
     select: {
       name: true, buildYear: true, cabins: true, berthsTotal: true, maxPersons: true, loa: true,
-      websiteImages: true, mainPictureUrl: true, picturesUrl: true,
+      websiteImages: true, mainPictureUrl: true, picturesUrl: true, websiteTour360: true,
       model: { select: { name: true } },
       category: { select: { name: true } },
       base: { select: { location: { select: { name: true } } } },
@@ -176,6 +176,9 @@ export default async function YachtDetailPage({ params }: { params: Promise<{ id
     categoryTranslations: catNames || null,
     images: allImages,
     plans: planImages,
+    /* The archived Panotour walkthrough, passed through as stored and read by
+       the viewer — see lib/tour360.ts for why it survives at all. */
+    tour360: yacht.websiteTour360 ?? null,
     location: locationName,
     locationTranslations: locNames || null,
     loa: yacht.loa,
