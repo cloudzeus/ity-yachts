@@ -37,8 +37,10 @@ export async function getFleetRanges(): Promise<FleetRanges> {
       maxCabins: Math.ceil(n(r.maxCabins, FLEET_RANGES_FALLBACK.maxCabins)),
       maxBerths: Math.ceil(n(r.maxBerths, FLEET_RANGES_FALLBACK.maxBerths)),
       minLoa: Math.floor(n(r.minLoa, FLEET_RANGES_FALLBACK.minLoa)),
-      // A 15.59 m boat has to stay reachable, so the ceiling rounds up.
-      maxLoa: Math.ceil(n(r.maxLoa, FLEET_RANGES_FALLBACK.maxLoa)),
+      /* Whole metres to read, the real figure to search on. Rounding up used
+         to advertise a 16 m boat we have never owned. */
+      maxLoa: Math.floor(n(r.maxLoa, FLEET_RANGES_FALLBACK.maxLoa)),
+      maxLoaExact: n(r.maxLoa, FLEET_RANGES_FALLBACK.maxLoaExact),
     }
   } catch {
     return FLEET_RANGES_FALLBACK

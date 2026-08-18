@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { aiChat } from "@/lib/ai"
 import { bookableMonths, normalisePlanDates, todayIso } from "@/lib/plan-dates"
 import { validate, type PlanAnswers } from "@/lib/plan-wizard"
+import { getFleetRanges } from "@/lib/fleet-ranges.server"
+import type { FleetRanges } from "@/lib/fleet-ranges"
 
 export const dynamic = "force-dynamic"
 
@@ -36,7 +38,7 @@ occasion          "family" | "friends" | "couple" | "corporate" | "other"
 crewMode          "bareboat" | "skippered" | "crewed" | "advise"
 experience        "licensed-experienced" | "licensed-rusty" | "no-licence" | "never-sailed"
 boatKind          "monohull" | "catamaran" | "either"
-cabins            number, optional
+cabins            number, optional — never more than the fleet has
 priorities        any of: comfort, recent, easy-handling, space, watertoys, aircon, budget
 regions           any of: lefkada, meganisi, ithaca, kefalonia, kalamos-kastos, paxos-antipaxos, corfu, advise
                   These are waters to sail to, not a choice of base.
@@ -55,7 +57,12 @@ contactPreference "email" | "phone" | "whatsapp"
 notes             anything else they told you, in their own words
 `.trim()
 
-function systemPrompt(locale: string, today: string, bookable: string[]) {
+function systemPrompt(
+  locale: string,
+  today: string,
+  bookable: string[],
+  fleet: FleetRanges
+) {
   const language =
     locale === "el" ? "Greek" : locale === "de" ? "German" : "English"
 
@@ -73,6 +80,16 @@ The season runs May to October. Today is ${today}, so the months still open are 
 
 Start by asking when they would like to sail. Most people answer with a span rather than two exact dates — "the second half of June", "any week between the 6th and the 27th". Take that as it is, record it as a window, and do not push them towards exact dates; a wide window is what lets us find them the right boat.
  Leave the contact details for the very end — ask for the name and email only once everything else is settled, and say why you need them.
+
+THE BOATS WE HAVE
+Measured from the fleet itself, so this is what can actually be offered: the
+largest yacht is about ${fleet.maxLoa} metres, the smallest about ${fleet.minLoa};
+no boat has more than ${fleet.maxCabins} cabins or sleeps more than
+${fleet.maxBerths}. Never offer, imply or record more than that. If someone asks
+for eight cabins or a twenty-metre yacht, say plainly what our largest boat
+holds and ask whether that works, or whether they would like two boats — never
+promise something we would then have to withdraw. Tappable answers about cabins
+or party size must stay inside these numbers.
 
 WHERE WE SAIL FROM
 Every IYC charter starts and finishes on our own pontoon in Lefkada harbour, in Greece. There is no other base and no other country. Never ask which port they would like to leave from, never offer Croatia, Turkey, Spain or anywhere outside the Ionian, and never suggest a one-way charter. Islands and bays are places they sail to during the week, always out of Lefkada and back.
@@ -157,6 +174,10 @@ export async function POST(req: NextRequest) {
     const loc = locale === "el" || locale === "de" ? locale : "en"
     const today = todayIso()
     const bookable = bookableMonths(today)
+    /* The planner used to talk about the fleet without knowing it, and offered
+       cabin counts we do not have. Measured per request; it is one indexed
+       aggregate and the answer changes only when a boat joins or leaves. */
+    const fleet = await getFleetRanges()
 
     /* Only the recent turns go to the model. The full state travels in the
        `answers` system message, so trimming the transcript costs nothing and
@@ -187,7 +208,7 @@ export async function POST(req: NextRequest) {
            ceiling is a cost control, not just a safety limit. */
         maxTokens: 3000,
         messages: [
-          { role: "system", content: systemPrompt(loc, today, bookable) },
+          { role: "system", content: systemPrompt(loc, today, bookable, fleet) },
           { role: "system", content: `Answers so far: ${JSON.stringify(answers ?? {})}` },
           ...recent.map((m) => ({ role: m.role, content: m.content })),
           { role: "system" as const, content: formatPrompt(loc) + (nudge ? "\n\n" + nudge : "") },

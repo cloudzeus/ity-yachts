@@ -16,7 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const { m } = await metaStrings()
   return pageMeta({
   title: m("meta.fleet.title", "Charter Fleet Lefkada — Yachts & Catamarans"),
-  description: m("meta.fleet.description", "Our charter fleet in Lefkada: sailing yachts and catamarans, 2 to 6 cabins, bareboat or skippered. Live availability and prices for the Ionian."),
+  description: m("meta.fleet.description", "Our charter fleet in Lefkada: sailing yachts and catamarans, 2 to 5 cabins, bareboat or skippered. Live availability and prices for the Ionian."),
   path: "/fleet",
 })
 }

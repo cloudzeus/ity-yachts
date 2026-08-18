@@ -37,7 +37,7 @@ const BUDGET_RANGES = [
 
 /* Berth, cabin and length options are no longer written down here. They used
    to offer 30m+, 7+ cabins and 13+ berths against a fleet that tops out at
-   16m / 5 cabins / 12 berths, so those options could only ever return nothing.
+   15m / 5 cabins / 12 berths, so those options could only ever return nothing.
    They are now built from the fleet the server measured — see lib/fleet-ranges. */
 
 const MONTHS = [
@@ -281,7 +281,7 @@ export function CharterSearchForm({ ranges }: { ranges: FleetRanges }) {
         key: "length",
         options: [
           { value: "", label: t("search.anyLength", "Any length") },
-          ...lengthBands(ranges.minLoa, ranges.maxLoa).map((b) => ({
+          ...lengthBands(ranges.minLoa, ranges.maxLoa, ranges.maxLoaExact).map((b) => ({
             value: b.value,
             label:
               b.kind === "under"

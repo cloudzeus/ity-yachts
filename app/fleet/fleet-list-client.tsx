@@ -142,7 +142,16 @@ export function FleetListClient({
       if (cabinsMin) params.set("cabinsMin", cabinsMin)
       if (guestsMin) params.set("guestsMin", guestsMin)
       if (loaMin) params.set("loaMin", loaMin)
-      if (loaMax) params.set("loaMax", loaMax)
+      /* The form says the fleet tops out at whole metres, so someone asking
+         for "up to 15" means the longest boat we have — which measures 15.59
+         and would otherwise fall outside her own limit. */
+      if (loaMax) {
+        const asked = Number(loaMax)
+        params.set(
+          "loaMax",
+          Number.isFinite(asked) && asked >= ranges.maxLoa ? String(ranges.maxLoaExact) : loaMax
+        )
+      }
       if (yearMin) params.set("yearMin", yearMin)
       if (charterType) params.set("charterType", charterType)
       if (sortBy) params.set("sortBy", sortBy)
@@ -185,7 +194,7 @@ export function FleetListClient({
         setLoading(false)
       }
     },
-    [debouncedSearch, categoryId, builderId, cabinsMin, guestsMin, loaMin, loaMax, yearMin, charterType, sortBy, locale]
+    [debouncedSearch, categoryId, builderId, cabinsMin, guestsMin, loaMin, loaMax, yearMin, charterType, sortBy, locale, ranges]
   )
 
   // Refetch when filters change (skip initial render)
