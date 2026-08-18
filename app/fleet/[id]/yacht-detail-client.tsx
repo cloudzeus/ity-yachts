@@ -144,6 +144,60 @@ function getAmenityIcon(_name: string) {
   return <Anchor className="w-4 h-4 text-[var(--text-subtle)]" />
 }
 
+/**
+ * One layout drawing, as a tile in the hero.
+ *
+ * Deck plans are drawn portrait, bow at the top. Left upright in a landscape
+ * tile a whole yacht became a sliver with nothing legible in it, so a tall
+ * drawing is turned on its side here exactly as it is when opened — the tile
+ * then previews what the click will show.
+ */
+function PlanTile({
+  plan,
+  label,
+  onOpen,
+}: {
+  plan: { url: string; caption?: string }
+  label: string
+  onOpen: () => void
+}) {
+  const [portrait, setPortrait] = useState(false)
+  return (
+    <button
+      onClick={onOpen}
+      title={plan.caption || label}
+      aria-label={plan.caption || label}
+      className="relative w-28 h-20 rounded-xl overflow-hidden border-2 border-white/80 bg-white/90 shadow-lg transition-all duration-500 ease-out hover:scale-105 hover:border-white flex items-center justify-center"
+    >
+      <img
+        src={plan.url}
+        alt={plan.caption || label}
+        loading="lazy"
+        /* onLoad alone is not enough: a drawing already in the cache is
+           complete before React attaches the handler, so the event never
+           fires and the tile stayed upright on every revisit. */
+        ref={(node) => {
+          if (node?.complete && node.naturalWidth) {
+            setPortrait(node.naturalHeight > node.naturalWidth * 1.15)
+          }
+        }}
+        onLoad={(e) => {
+          const img = e.currentTarget
+          setPortrait(img.naturalHeight > img.naturalWidth * 1.15)
+        }}
+        className="object-contain"
+        /* Rotated, the drawing's own height becomes its width on screen, so
+           the two limits swap over with it. */
+        style={
+          portrait
+            ? { transform: "rotate(90deg)", maxHeight: "6.5rem", maxWidth: "4.5rem" }
+            : { maxHeight: "100%", maxWidth: "100%" }
+        }
+      />
+    </button>
+  )
+}
+
 export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
   const { locale, t, tUpper } = useTranslations()
   const yachtCategory = resolveT(yacht.categoryTranslations, locale, yacht.category)
@@ -173,6 +227,11 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
   const [enquiryGuestCount, setEnquiryGuestCount] = useState(2)
 
   const [galleryOpen, setGalleryOpen] = useState(false)
+  /* Which layout drawing is open full screen, and whether it is a tall one.
+     Portrait drawings are turned on their side so they use the width of the
+     screen rather than a narrow strip down the middle of it. */
+  const [planIndex, setPlanIndex] = useState<number | null>(null)
+  const [planPortrait, setPlanPortrait] = useState(false)
   const [galleryIndex, setGalleryIndex] = useState(0)
   const [galleryTransition, setGalleryTransition] = useState(false)
   const [galleryDirection, setGalleryDirection] = useState<"left" | "right">("right")
@@ -554,11 +613,40 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
         <div className="absolute bottom-8 left-12 right-12 z-20 flex items-end justify-between max-w-[1400px] mx-auto">
           <h1 className="text-2xl text-white font-semibold" style={{ fontFamily: "var(--font-display)" }}>{yacht.name}</h1>
 
-          {/* Avatar-style circular thumbnails */}
-          <button
-            onClick={() => openGallery(0)}
-            className="group/gallery flex flex-col items-end gap-2 cursor-pointer"
-          >
+          <div className="flex flex-col items-end gap-3">
+            {/* Layout drawings, in the hero directly above the gallery.
+
+                They sit here rather than in a band of their own because that
+                band came before the hero, and the header is transparent by
+                design and sits over the dark photograph — a white panel first
+                left the logo and the navigation floating on white, unreadable.
+                Thumbnails only: shown full size a line drawing dominated the
+                page and told nobody anything they could read. The tile is pale
+                because the drawings are black on white and disappear against
+                the photograph behind them. */}
+            {(yacht.plans?.length ?? 0) > 0 && (
+              <div className="flex flex-col items-end gap-2">
+                <span className="text-white text-sm font-bold tracking-wide drop-shadow">
+                  {t("yacht.plans", "Layout")}
+                </span>
+                <div className="flex items-center gap-2">
+                  {yacht.plans!.slice(0, 3).map((plan, i) => (
+                    <PlanTile
+                      key={plan.url}
+                      plan={plan}
+                      label={t("yacht.plans", "Layout")}
+                      onOpen={() => setPlanIndex(i)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Avatar-style circular thumbnails */}
+            <button
+              onClick={() => openGallery(0)}
+              className="group/gallery flex flex-col items-end gap-2 cursor-pointer"
+            >
             <div className="flex items-center gap-2">
               <span className="text-white text-sm font-bold tracking-wide">{t("yacht.gallery", "Gallery")}</span>
               <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-gradient-to-r from-[var(--iyc-ionian-600)] to-[var(--iyc-ionian-400)] text-white shadow-lg shadow-blue-500/25">
@@ -590,8 +678,9 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                   +{images.length - 5}
                 </div>
               )}
-            </div>
-          </button>
+              </div>
+            </button>
+          </div>
         </div>
       </section>
 
@@ -1091,51 +1180,73 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
         </section>
       )}
 
-      {/* Layout drawings. Their own block rather than folded into the photo
-          carousel: a line drawing between two photographs of the sea reads as
-          a mistake, and someone looking for the cabin layout is asking a
-          different question from someone browsing pictures. */}
-      {(yacht.plans?.length ?? 0) > 0 && (
-        <section
-          className="w-full bg-white py-12 px-6 md:px-10 relative z-[1] border-t border-[var(--border-hairline)]"
-          style={{ color: "var(--text-heading)" }}
+      {/* A drawing, full screen. Rotated when it is portrait: a deck plan is
+          long and thin, and upright it occupies a sliver of the screen while
+          the rest goes black. */}
+      {planIndex !== null && yacht.plans?.[planIndex] && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={yacht.plans[planIndex].caption || t("yacht.plans", "Layout")}
+          onClick={() => setPlanIndex(null)}
+          className="fixed inset-0 z-[200] flex flex-col items-center justify-center p-4 md:p-10"
+          style={{ background: "rgba(4,13,25,0.92)", backdropFilter: "blur(6px)" }}
         >
-          <div className="max-w-[1400px] mx-auto">
-            <h2
-              className="mb-8 text-lg font-bold"
-              style={{ fontFamily: "var(--font-display)", color: "var(--text-heading)" }}
-            >
-              {t("yacht.plans", "Layout")}
-            </h2>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {yacht.plans!.map((plan) => (
-                <figure key={plan.url} className="flex flex-col">
-                  {/* Drawings are line art on white, so they are shown whole
-                      rather than cropped to a tile like the photographs. */}
-                  <div
-                    className="flex items-center justify-center rounded-[var(--iyc-radius-sm)] p-4"
-                    style={{ background: "var(--surface-sunken)", border: "1px solid var(--border-hairline)" }}
-                  >
-                    <img
-                      src={plan.url}
-                      alt={plan.caption || `${yacht.name} layout plan`}
-                      loading="lazy"
-                      className="h-auto w-full object-contain"
-                    />
-                  </div>
-                  {plan.caption && (
-                    <figcaption
-                      className="mt-2 text-center text-xs"
-                      style={{ color: "var(--text-muted)" }}
-                    >
-                      {plan.caption}
-                    </figcaption>
-                  )}
-                </figure>
-              ))}
-            </div>
+          <button
+            type="button"
+            onClick={() => setPlanIndex(null)}
+            aria-label={t("gallery.close", "Close")}
+            className="absolute right-4 top-4 flex w-10 h-10 items-center justify-center rounded-full text-white transition hover:bg-white/10"
+          >
+            <X className="w-5 h-5" />
+          </button>
+
+          {/* A click on the drawing itself should not close the dialog. */}
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className={`flex w-full max-w-[1400px] flex-col items-center ${planPortrait ? "justify-center" : ""}`}
+            style={planPortrait ? { minHeight: "82vh" } : undefined}
+          >
+            <img
+              src={yacht.plans[planIndex].url}
+              alt={yacht.plans[planIndex].caption || `${yacht.name} layout plan`}
+              /* Same cached-image caveat as the tile. */
+              ref={(node) => {
+                if (node?.complete && node.naturalWidth) {
+                  setPlanPortrait(node.naturalHeight > node.naturalWidth * 1.15)
+                }
+              }}
+              onLoad={(e) => {
+                const img = e.currentTarget
+                setPlanPortrait(img.naturalHeight > img.naturalWidth * 1.15)
+              }}
+              className="rounded-[var(--iyc-radius-sm)] object-contain"
+              style={
+                planPortrait
+                  ? { background: "#fff", transform: "rotate(90deg)", maxHeight: "92vw", maxWidth: "82vh" }
+                  : { background: "#fff", maxHeight: "82vh", maxWidth: "100%" }
+              }
+            />
+            {yacht.plans[planIndex].caption && (
+              <p className="mt-3 text-center text-sm text-white/80">{yacht.plans[planIndex].caption}</p>
+            )}
+            {yacht.plans.length > 1 && (
+              <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                {yacht.plans.map((other, i) => (
+                  <button
+                    key={other.url}
+                    type="button"
+                    onClick={() => setPlanIndex(i)}
+                    aria-label={other.caption || `${t("yacht.plans", "Layout")} ${i + 1}`}
+                    aria-current={i === planIndex}
+                    className="h-1.5 w-6 rounded-full transition"
+                    style={{ background: i === planIndex ? "#fff" : "rgba(255,255,255,0.35)" }}
+                  />
+                ))}
+              </div>
+            )}
           </div>
-        </section>
+        </div>
       )}
 
       {/* Equipment & Features Tabs */}
