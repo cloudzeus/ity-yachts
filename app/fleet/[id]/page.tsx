@@ -96,14 +96,18 @@ export default async function YachtDetailPage({ params }: { params: Promise<{ id
 
   if (!yacht) notFound()
 
-  // Pick a random active staff member for the enquire card
-  const allStaff = await db.staff.findMany({
-    where: { status: "active" },
+  /* Who is shown as the person handling this enquiry.
+     Only colleagues the admin has marked for it — it used to be any active
+     employee, which put people who never deal with customers on the page.
+     And the pick is by yacht id rather than at random: the page is dynamic,
+     so a random choice handed a different face to the same visitor on every
+     refresh, and to two people looking at the same boat together. */
+  const advisors = await db.staff.findMany({
+    where: { status: "active", showAsAdvisor: true },
     select: { name: true, position: true, image: true },
+    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
   })
-  const staffRep = allStaff.length > 0
-    ? allStaff[Math.floor(Math.random() * allStaff.length)]
-    : null
+  const staffRep = advisors.length > 0 ? advisors[yachtId % advisors.length] : null
 
   // Transform for client
   const catNames = yacht.category?.name as Record<string, string> | undefined

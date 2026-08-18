@@ -31,7 +31,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const body = await req.json()
     const {
       userId, name, email, phone, mobile, address,
-      city, latitude, longitude, department, position, bio, image, status, sortOrder,
+      city, latitude, longitude, department, position, bio, image, status, sortOrder, showAsAdvisor,
     } = body
 
     const member = await db.staff.update({
@@ -52,6 +52,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(image !== undefined && { image }),
         ...(status !== undefined && { status }),
         ...(sortOrder !== undefined && { sortOrder }),
+        ...(showAsAdvisor !== undefined && { showAsAdvisor: !!showAsAdvisor }),
       },
     })
 

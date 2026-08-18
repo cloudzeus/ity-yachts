@@ -37,6 +37,7 @@ type StaffData = {
   longitude: number | null
   sortOrder: number
   status: string
+  showAsAdvisor: boolean
   createdAt: string
   updatedAt: string
 }
@@ -254,6 +255,7 @@ export function StaffEditorClient({ member, users, existingDepartments }: Props)
   const [userId, setUserId] = useState(member.userId ?? "")
   const [status, setStatus] = useState(member.status)
   const [sortOrder, setSortOrder] = useState(member.sortOrder)
+  const [showAsAdvisor, setShowAsAdvisor] = useState(!!member.showAsAdvisor)
   const [image, setImage] = useState(member.image ?? "")
 
   // Address with geocode autocomplete
@@ -387,7 +389,7 @@ export function StaffEditorClient({ member, users, existingDepartments }: Props)
           address, latitude, longitude,
           city, department, position, bio,
           image: image || null,
-          status, sortOrder,
+          status, sortOrder, showAsAdvisor,
         }),
       })
       if (res.ok) setLastSaved(new Date())
@@ -475,6 +477,31 @@ export function StaffEditorClient({ member, users, existingDepartments }: Props)
               <Input type="number" value={sortOrder} onChange={(e) => setSortOrder(parseInt(e.target.value) || 0)} className="h-8 text-xs w-24" style={{ background: "var(--surface-container-lowest)", borderColor: "var(--outline-variant)" }} />
             </div>
           </div>
+
+          {/* Who may appear on a yacht page as the person to talk to. Being
+              active is about employment; this is about facing the public, and
+              until now every active colleague was fair game — the enquiry card
+              picked one of them at random. */}
+          <label
+            className="flex items-start gap-3 rounded-lg border p-3 cursor-pointer"
+            style={{ background: "var(--surface-container-low)", borderColor: "var(--outline-variant)" }}
+          >
+            <input
+              type="checkbox"
+              checked={showAsAdvisor}
+              onChange={(e) => setShowAsAdvisor(e.target.checked)}
+              className="mt-0.5 size-4 shrink-0 cursor-pointer"
+            />
+            <span className="flex flex-col gap-0.5">
+              <span className="text-xs font-semibold" style={{ color: "var(--on-surface)" }}>
+                Show as charter advisor
+              </span>
+              <span className="text-[11px]" style={{ color: "var(--on-surface-variant)" }}>
+                Their name and photograph may appear on yacht pages as the person handling the
+                enquiry. Leave off for colleagues who do not deal with customers.
+              </span>
+            </span>
+          </label>
 
           {/* Address + Role side by side */}
           <div className="grid grid-cols-2 gap-4">

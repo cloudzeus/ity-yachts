@@ -293,6 +293,9 @@ model Staff {
   image        String?
   sortOrder    Int      @default(0)
   status       String   @default("active")
+  /// Whether this person may be shown as the charter advisor on a yacht page.
+  /// Being active is about employment; this is about facing the public.
+  showAsAdvisor Boolean @default(false)
   enquiries    Enquiry[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
