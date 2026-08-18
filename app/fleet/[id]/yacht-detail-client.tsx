@@ -53,6 +53,7 @@ interface YachtData {
   category: string
   categoryTranslations?: TranslatedField
   images: string[]
+  plans?: { url: string; caption?: string }[]
   location: string
   locationTranslations?: TranslatedField
   loa: number | null
@@ -1085,6 +1086,53 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
                   </button>
                 </div>
               </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Layout drawings. Their own block rather than folded into the photo
+          carousel: a line drawing between two photographs of the sea reads as
+          a mistake, and someone looking for the cabin layout is asking a
+          different question from someone browsing pictures. */}
+      {(yacht.plans?.length ?? 0) > 0 && (
+        <section
+          className="w-full bg-white py-12 px-6 md:px-10 relative z-[1] border-t border-[var(--border-hairline)]"
+          style={{ color: "var(--text-heading)" }}
+        >
+          <div className="max-w-[1400px] mx-auto">
+            <h2
+              className="mb-8 text-lg font-bold"
+              style={{ fontFamily: "var(--font-display)", color: "var(--text-heading)" }}
+            >
+              {t("yacht.plans", "Layout")}
+            </h2>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {yacht.plans!.map((plan) => (
+                <figure key={plan.url} className="flex flex-col">
+                  {/* Drawings are line art on white, so they are shown whole
+                      rather than cropped to a tile like the photographs. */}
+                  <div
+                    className="flex items-center justify-center rounded-[var(--iyc-radius-sm)] p-4"
+                    style={{ background: "var(--surface-sunken)", border: "1px solid var(--border-hairline)" }}
+                  >
+                    <img
+                      src={plan.url}
+                      alt={plan.caption || `${yacht.name} layout plan`}
+                      loading="lazy"
+                      className="h-auto w-full object-contain"
+                    />
+                  </div>
+                  {plan.caption && (
+                    <figcaption
+                      className="mt-2 text-center text-xs"
+                      style={{ color: "var(--text-muted)" }}
+                    >
+                      {plan.caption}
+                    </figcaption>
+                  )}
+                </figure>
+              ))}
             </div>
           </div>
         </section>

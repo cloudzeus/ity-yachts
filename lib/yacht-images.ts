@@ -10,7 +10,13 @@
  * yachts that have not been through the image sync yet.
  */
 
-export type WebsiteImage = { url: string; caption?: string }
+/**
+ * `isPlan` marks a deck or accommodation layout drawing rather than a
+ * photograph. It lives in the same array so the admin keeps one list to
+ * manage and one order to drag, but the two are never mixed on the public
+ * page: a line drawing in the middle of a photo carousel reads as a mistake.
+ */
+export type WebsiteImage = { url: string; caption?: string; isPlan?: boolean }
 
 type YachtImageFields = {
   websiteImages?: unknown
@@ -31,9 +37,9 @@ function asUrlList(value: unknown): string[] {
   return value.filter((v): v is string => typeof v === "string" && v.length > 0)
 }
 
-/** The card / thumbnail image. */
+/** The card / thumbnail image. Never a layout drawing. */
 export function yachtThumb(yacht: YachtImageFields): string {
-  const cdn = asWebsiteImages(yacht.websiteImages)
+  const cdn = asWebsiteImages(yacht.websiteImages).filter((i) => !i.isPlan)
   if (cdn.length) return cdn[0].url
   return yacht.mainPictureUrl || asUrlList(yacht.picturesUrl)[0] || ""
 }
@@ -45,9 +51,13 @@ export function yachtThumb(yacht: YachtImageFields): string {
  * originals as well — which is what the detail page used to do — served every
  * photograph twice: once from the CDN and again, unoptimised and behind a
  * redirect, from NAUSYS.
+ *
+ * Layout drawings are excluded; see yachtPlans.
  */
 export function yachtGallery(yacht: YachtImageFields): string[] {
-  const cdn = asWebsiteImages(yacht.websiteImages)
+  const all = asWebsiteImages(yacht.websiteImages)
+  const cdn = all.filter((img) => !img.isPlan)
+  // A yacht with nothing but plans still falls through to NAUSYS below.
   if (cdn.length) return cdn.map((img) => img.url)
 
   const out: string[] = []
@@ -56,4 +66,15 @@ export function yachtGallery(yacht: YachtImageFields): string[] {
     if (!out.includes(url)) out.push(url)
   }
   return out
+}
+
+/**
+ * The layout drawings, in the order the admin arranged them.
+ *
+ * Separate from the gallery on purpose: these answer "where do we sleep and
+ * who gets the forward cabin", which is a different question from "what does
+ * she look like", and they deserve their own place on the page.
+ */
+export function yachtPlans(yacht: YachtImageFields): WebsiteImage[] {
+  return asWebsiteImages(yacht.websiteImages).filter((img) => img.isPlan)
 }

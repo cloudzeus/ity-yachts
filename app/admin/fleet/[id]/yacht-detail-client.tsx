@@ -3,9 +3,10 @@
 import { useState, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { MediaPicker, type PickedMedia } from "@/components/admin/media-picker"
 import {
   ArrowLeft, Save, Loader2, Plus, Trash2, Users, Globe,
-  Ship, Image, DollarSign, Wrench, Languages, GripVertical, Star,
+  Ship, Image, DollarSign, Wrench, Languages, GripVertical, Star, Ruler, ImagePlus,
 } from "lucide-react"
 import {
   DndContext,
@@ -140,18 +141,20 @@ type TabKey = (typeof TABS)[number]["key"]
    card image everywhere. Until now the only control was delete, so changing
    the featured shot meant deleting and re-uploading in order.               */
 
-type WebsiteImage = { url: string; caption?: string }
+type WebsiteImage = { url: string; caption?: string; isPlan?: boolean }
 
 function SortableWebsiteImage({
   img,
   index,
   onDelete,
   onMakeMain,
+  onTogglePlan,
 }: {
   img: WebsiteImage
   index: number
   onDelete: () => void
   onMakeMain: () => void
+  onTogglePlan: () => void
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: img.url })
@@ -163,7 +166,7 @@ function SortableWebsiteImage({
     zIndex: isDragging ? 10 : undefined,
   }
 
-  const isMain = index === 0
+  const isMain = index === 0 && !img.isPlan
 
   return (
     <div ref={setNodeRef} style={style} className="relative group">
@@ -196,7 +199,7 @@ function SortableWebsiteImage({
         >
           Featured
         </span>
-      ) : (
+      ) : img.isPlan ? null : (
         <button
           type="button"
           onClick={onMakeMain}
@@ -208,6 +211,27 @@ function SortableWebsiteImage({
           <Star className="w-3 h-3" />
         </button>
       )}
+
+      {/* Marking a drawing keeps it out of the photo carousel and puts it in
+          the plans block instead. Always visible when set, so the state is
+          readable without hovering every tile. */}
+      <button
+        type="button"
+        onClick={onTogglePlan}
+        title={img.isPlan ? "Not a layout plan" : "Mark as yacht plan"}
+        aria-label={img.isPlan ? "Unmark as yacht plan" : "Mark as yacht plan"}
+        aria-pressed={!!img.isPlan}
+        className={`absolute bottom-1.5 right-1.5 h-6 rounded-full flex items-center gap-1 px-2 transition-opacity ${
+          img.isPlan ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+        }`}
+        style={{
+          background: img.isPlan ? "var(--secondary)" : "rgba(0,0,0,0.6)",
+          color: "#fff",
+        }}
+      >
+        <Ruler className="w-3 h-3" />
+        {img.isPlan && <span className="text-[9px] font-bold uppercase">Plan</span>}
+      </button>
 
       <button
         type="button"
@@ -236,6 +260,7 @@ export function YachtDetailClient({ yacht: initial, lookups }: { yacht: any; loo
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
   const [translatingAll, setTranslatingAll] = useState(false)
   const [mediaUploading, setMediaUploading] = useState(false)
+  const [libraryOpen, setLibraryOpen] = useState(false)
 
   // Our own bookings plus the periods mirrored from NAUSYS. A charter we sold
   // ourselves shows up in both, so NAUSYS rows covering a range we already
@@ -727,6 +752,7 @@ export function YachtDetailClient({ yacht: initial, lookups }: { yacht: any; loo
           <SectionCard
             title="Website Images (CDN)"
             action={
+              <div className="flex items-center gap-2">
               <label className="cursor-pointer">
                 <input
                   type="file"
@@ -766,6 +792,18 @@ export function YachtDetailClient({ yacht: initial, lookups }: { yacht: any; loo
                   {mediaUploading ? "Uploading..." : "Upload Images / Videos"}
                 </span>
               </label>
+              {/* Uploading was the only way in, so a drawing already in the
+                  library had to be downloaded and re-uploaded to attach it. */}
+              <button
+                type="button"
+                onClick={() => setLibraryOpen(true)}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-semibold rounded-md transition hover:opacity-80"
+                style={{ background: "var(--surface-container-high)", color: "var(--on-surface)" }}
+              >
+                <ImagePlus className="w-3 h-3" />
+                Choose from library
+              </button>
+              </div>
             }
           >
             {(() => {
@@ -798,12 +836,19 @@ export function YachtDetailClient({ yacht: initial, lookups }: { yacht: any; loo
                           index={i}
                           onMakeMain={() => commit([img, ...wsImages.filter((_, j) => j !== i)])}
                           onDelete={() => commit(wsImages.filter((_, j) => j !== i))}
+                          onTogglePlan={() =>
+                            commit(
+                              wsImages.map((im, j) => (j === i ? { ...im, isPlan: !im.isPlan } : im))
+                            )
+                          }
                         />
                       ))}
                     </div>
                   </SortableContext>
                   <p className="mt-2 text-[10px]" style={{ color: "var(--on-surface-variant)" }}>
-                    Drag to reorder · the first image is what the website shows. Changes save with the yacht.
+                    Drag to reorder · the first photograph is what the website shows. Images marked
+                    <span className="font-semibold"> Plan </span> are kept out of the photo gallery and
+                    shown as layout drawings instead. Changes save with the yacht.
                   </p>
                 </DndContext>
               ) : (
@@ -1096,6 +1141,28 @@ export function YachtDetailClient({ yacht: initial, lookups }: { yacht: any; loo
           </div>
         </div>
       )}
+
+      {/* Attach images already in the library. Multiple, because a set of deck
+          plans is normally added together, and duplicates are dropped so
+          picking the same drawing twice cannot put it in the list twice. */}
+      <MediaPicker
+        open={libraryOpen}
+        onClose={() => setLibraryOpen(false)}
+        accept="image"
+        multiple
+        onSelect={(picked) => {
+          const chosen = (Array.isArray(picked) ? picked : [picked]) as PickedMedia[]
+          setYacht((y: typeof yacht) => {
+            const current = (y.websiteImages || []) as WebsiteImage[]
+            const have = new Set(current.map((im) => im.url))
+            const added = chosen
+              .filter((m) => m.url && !have.has(m.url))
+              .map((m) => ({ url: m.url, caption: m.name.replace(/\.[^.]+$/, "") }))
+            return { ...y, websiteImages: [...current, ...added] }
+          })
+          setLibraryOpen(false)
+        }}
+      />
     </>
   )
 }

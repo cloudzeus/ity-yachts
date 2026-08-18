@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import { db } from "@/lib/db"
-import { yachtGallery, yachtThumb } from "@/lib/yacht-images"
+import { yachtGallery, yachtThumb, yachtPlans } from "@/lib/yacht-images"
 import { JsonLd } from "@/components/json-ld"
 import { breadcrumbLd, yachtLd } from "@/lib/structured-data"
 import { localized, metaStrings } from "@/lib/meta.server"
@@ -112,6 +112,8 @@ export default async function YachtDetailPage({ params }: { params: Promise<{ id
   // CDN only when it exists — this used to append the NAUSYS originals on top,
   // shipping every photograph twice.
   const allImages = yachtGallery(yacht)
+  // Layout drawings, kept out of the photo carousel and given their own block.
+  const planImages = yachtPlans(yacht)
 
   const locNames = yacht.base?.location?.name as Record<string, string> | undefined
   const locationName = locNames?.en || ""
@@ -169,6 +171,7 @@ export default async function YachtDetailPage({ params }: { params: Promise<{ id
     category: categoryName,
     categoryTranslations: catNames || null,
     images: allImages,
+    plans: planImages,
     location: locationName,
     locationTranslations: locNames || null,
     loa: yacht.loa,
