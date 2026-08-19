@@ -194,7 +194,7 @@ export async function POST(req: NextRequest) {
            three identical calls — so the same prompt is paid for in full each
            time. DeepSeek's model reasons before it answers and so produces
            more output, which is the trade being made deliberately here. */
-        prefer: "deepseek",
+
         /* The reply is parsed as an object, so ask the API for one. Without
            this the model intermittently returned empty content. */
         json: true,

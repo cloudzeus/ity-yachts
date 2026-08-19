@@ -8,13 +8,17 @@ import { db } from "@/lib/db"
  * the account behind them ran out of credit twelve features died at once and
  * there was no single place to change anything. This is that place.
  *
- * The model is DeepSeek, reached two ways: the DeepSeek account directly, and
- * OpenRouter as the backup. Backup means what it says — if the direct call
- * fails for any reason, credit or outage or a bad key, the same request is
- * retried through OpenRouter rather than surfacing an error to whoever clicked
- * the button. Both speak the same OpenAI-shaped protocol, so they share one
- * function and differ only in host, model id and the attribution headers
- * OpenRouter asks for.
+ * Requests go to OpenRouter first, which is asked to run the model wherever it
+ * is cheapest, and fall back to the DeepSeek account directly if OpenRouter
+ * cannot serve them at all. Both speak the same OpenAI-shaped protocol, so
+ * they share one function and differ only in host, model id and the
+ * attribution headers OpenRouter asks for.
+ *
+ * Going through OpenRouter costs something that is not on any price list:
+ * DeepSeek bills a cached prompt token at a tenth of a fresh one, and the
+ * planner sends the same long system prompt on every turn. OpenRouter does not
+ * pass that discount through, so the cache is lost. It was measured at roughly
+ * 90% of the planner's input, and input is most of its bill.
  *
  * Keys live in the settings table rather than the environment, so they stay
  * editable in /admin like the other credentials here.
@@ -50,6 +54,25 @@ const DEFAULT_DEEPSEEK_MODEL = "deepseek-v4-flash"
  * much as a floor.
  */
 const REASONING_HEADROOM = 3000
+
+/**
+ * Where to go if the chosen model cannot be served.
+ *
+ * Ordered by what a conversation costs, not by the price per token, because
+ * for this work the two disagree. On OpenRouter's own catalogue today
+ * v4-flash is a third of v3.2's price per token — and it reasons before it
+ * answers, spending 5021 output tokens on a five-turn plan where v3.2 spent
+ * 478. Ten times the output at a third of the price is not a saving.
+ *
+ * The list is short on purpose. The genuinely cheapest models on the
+ * catalogue cost a fiftieth of these and cannot hold a three-language
+ * conversation that has to come back as valid JSON; buying that with a
+ * planner that mangles a booking is not economy.
+ */
+const FALLBACK_MODELS = [
+  "deepseek/deepseek-v3.2",
+  "deepseek/deepseek-v4-flash",
+]
 
 interface AiKeys {
   deepseekKey?: string
@@ -98,6 +121,18 @@ async function endpoints(): Promise<Endpoint[]> {
       apiKey: keys.openrouterKey.trim(),
       model: keys.openrouterModel?.trim() || DEFAULT_OPENROUTER_MODEL,
       label: "OpenRouter",
+      extra: {
+        /* Let OpenRouter find the cheapest way to run the model rather than
+           whichever host it would otherwise pick. The same weights are served
+           by several providers at different prices; this sorts them by cost
+           and takes the lowest. */
+        provider: { sort: "price" },
+        /* If that model is unavailable anywhere, fall through this list in
+           order rather than failing the request. Ordered by what a planner
+           conversation actually costs, which is not the order of the price
+           list — see FALLBACK_MODELS. */
+        models: FALLBACK_MODELS,
+      },
     })
   }
   if (keys.deepseekKey?.trim()) {
