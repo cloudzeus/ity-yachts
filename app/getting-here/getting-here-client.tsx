@@ -35,6 +35,13 @@ function boardDate(isoDate: string, weekday: number): string {
   return `${DAYS[weekday - 1]?.short.toUpperCase() ?? ""} ${d} ${MONTHS[Number(m) - 1] ?? ""} ${y}`
 }
 
+/** The same date in a card: "Sat 22 Aug 2026", sentence case rather than shouted. */
+function cardDate(isoDate: string, weekday: number, dayLabel: string): string {
+  const [y, m, d] = isoDate.split("-")
+  const month = MONTHS[Number(m) - 1] ?? ""
+  return `${dayLabel} ${d} ${month.charAt(0)}${month.slice(1).toLowerCase()} ${y}`
+}
+
 const TRANSFER_ICON = { preveza: Car, igoumenitsa: Ship, athens: Bus } as const
 
 /**
@@ -202,20 +209,31 @@ export function GettingHereClient({ countries }: { countries: CountryFlights[] }
                             {a.routes.map((r) => (
                               <li
                                 key={`${r.flightIata}-${r.weekday}`}
-                                className="flex items-baseline justify-between gap-3 text-xs"
+                                className="flex items-start justify-between gap-3 text-xs"
                               >
-                                <span className="truncate capitalize" style={{ color: "var(--text-body)" }}>
+                                <span
+                                  className="truncate capitalize pt-px"
+                                  style={{ color: "var(--text-body)" }}
+                                >
                                   {airlineName(r.airlineName)}
                                 </span>
-                                <span
-                                  className="shrink-0 tabular-nums"
-                                  style={{ color: "var(--text-muted)" }}
-                                >
-                                  {t(
-                                    `gettingHere.day.${DAYS[r.weekday - 1]?.key ?? "mon"}`,
-                                    DAYS[r.weekday - 1]?.short ?? ""
-                                  )}{" "}
-                                  {r.depTime}–{r.arrTime}
+                                {/* Date over times: the next day it actually
+                                    flies is the useful half, and stacking keeps
+                                    both readable in a narrow card. */}
+                                <span className="shrink-0 text-right tabular-nums">
+                                  <span className="block" style={{ color: "var(--text-body)" }}>
+                                    {cardDate(
+                                      r.nextDate,
+                                      r.weekday,
+                                      t(
+                                        `gettingHere.day.${DAYS[r.weekday - 1]?.key ?? "mon"}`,
+                                        DAYS[r.weekday - 1]?.short ?? ""
+                                      )
+                                    )}
+                                  </span>
+                                  <span className="block" style={{ color: "var(--text-subtle)" }}>
+                                    {r.depTime}–{r.arrTime}
+                                  </span>
                                 </span>
                               </li>
                             ))}
