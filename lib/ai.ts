@@ -30,11 +30,18 @@ export interface AiMessage {
   content: string
 }
 
-/* `deepseek/deepseek-chat` is refused on this account — OpenRouter has no
-   allowed upstream for it — and both v4 models return null content, putting
-   their answer somewhere other than the content field. v3.2 answers plainly
-   and honours response_format, so it is the default. */
-const DEFAULT_OPENROUTER_MODEL = "deepseek/deepseek-v3.2"
+/* OpenRouter chooses. `openrouter/auto` puts the prompt through a meta-model
+   that routes it to one of dozens, so the decision is not ours and does not go
+   stale — a model named here would have to be revisited every time the
+   catalogue moves, which it does constantly.
+
+   What answered is logged per call rather than assumed, because the router
+   reports its choice and there is otherwise no way to know what the bill is
+   for. `openrouter/free` also exists and costs nothing at all; it is not the
+   default because the planner collects names, telephone numbers and email
+   addresses, and free models come with data policies that permit training on
+   what is sent to them. */
+const DEFAULT_OPENROUTER_MODEL = "openrouter/auto"
 
 /* Pinned, not aliased. "deepseek-chat" is a moving pointer — today it resolves
    to v4-flash, and DeepSeek can repoint it at v4-pro whenever they ship, which
@@ -55,24 +62,6 @@ const DEFAULT_DEEPSEEK_MODEL = "deepseek-v4-flash"
  */
 const REASONING_HEADROOM = 3000
 
-/**
- * Where to go if the chosen model cannot be served.
- *
- * Ordered by what a conversation costs, not by the price per token, because
- * for this work the two disagree. On OpenRouter's own catalogue today
- * v4-flash is a third of v3.2's price per token — and it reasons before it
- * answers, spending 5021 output tokens on a five-turn plan where v3.2 spent
- * 478. Ten times the output at a third of the price is not a saving.
- *
- * The list is short on purpose. The genuinely cheapest models on the
- * catalogue cost a fiftieth of these and cannot hold a three-language
- * conversation that has to come back as valid JSON; buying that with a
- * planner that mangles a booking is not economy.
- */
-const FALLBACK_MODELS = [
-  "deepseek/deepseek-v3.2",
-  "deepseek/deepseek-v4-flash",
-]
 
 interface AiKeys {
   deepseekKey?: string
@@ -122,16 +111,9 @@ async function endpoints(): Promise<Endpoint[]> {
       model: keys.openrouterModel?.trim() || DEFAULT_OPENROUTER_MODEL,
       label: "OpenRouter",
       extra: {
-        /* Let OpenRouter find the cheapest way to run the model rather than
-           whichever host it would otherwise pick. The same weights are served
-           by several providers at different prices; this sorts them by cost
-           and takes the lowest. */
+        /* Once the router has picked a model, run it wherever it is cheapest:
+           the same weights are served by several hosts at different prices. */
         provider: { sort: "price" },
-        /* If that model is unavailable anywhere, fall through this list in
-           order rather than failing the request. Ordered by what a planner
-           conversation actually costs, which is not the order of the price
-           list — see FALLBACK_MODELS. */
-        models: FALLBACK_MODELS,
       },
     })
   }
@@ -272,8 +254,12 @@ async function call({
     const hit = u.prompt_cache_hit_tokens ?? 0
     const miss = u.prompt_cache_miss_tokens ?? u.prompt_tokens ?? 0
     const pct = hit + miss > 0 ? Math.round((hit / (hit + miss)) * 100) : 0
+    /* The model the router chose, which is the point of asking it to choose —
+       `model` here is only what we requested, and with openrouter/auto that
+       is the router itself rather than anything that ran. */
+    const ran = typeof body?.model === "string" && body.model !== model ? body.model : model
     console.log(
-      `[ai] ${label}/${model} in ${u.prompt_tokens ?? "?"} (cached ${hit}, ${pct}%) out ${u.completion_tokens ?? "?"}`
+      `[ai] ${label}/${ran} in ${u.prompt_tokens ?? "?"} (cached ${hit}, ${pct}%) out ${u.completion_tokens ?? "?"}`
     )
   }
 
