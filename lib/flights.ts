@@ -232,6 +232,68 @@ export function nextOccurrence(weekday: number, from = new Date()): Date {
   return d
 }
 
+/** Preveza keeps Greek time; every arrival here is read against it. */
+const ARRIVAL_TZ = "Europe/Athens"
+
+/** How far a zone is from UTC at a given instant, daylight saving included. */
+function offsetMinutes(tz: string, at: Date): number {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: tz,
+      hour12: false,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+      .formatToParts(at)
+      .map((p) => [p.type, p.value])
+  ) as Record<string, string>
+  const asUtc = Date.UTC(
+    Number(parts.year),
+    Number(parts.month) - 1,
+    Number(parts.day),
+    Number(parts.hour),
+    Number(parts.minute)
+  )
+  return (asUtc - at.getTime()) / 60_000
+}
+
+/**
+ * Time in the air, in minutes.
+ *
+ * Both times are local to their own airport, and subtracting them is wrong:
+ * Preveza is an hour ahead of central Europe, so Düsseldorf 05:50 → 09:40
+ * looks like three hours fifty and is two hours fifty. The first version of
+ * this shipped that number with a comment explaining why it was fine, which
+ * it was not — an arrival board can afford to be decorative, a flight time a
+ * reader plans around cannot.
+ *
+ * Null when the departure airport's zone is unknown: no figure is better
+ * than a confident wrong one.
+ */
+export function blockMinutes(
+  depTime: string,
+  arrTime: string,
+  depTz: string | null,
+  onDate: string
+): number | null {
+  if (!depTz) return null
+  const mins = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5))
+  try {
+    const noon = new Date(`${onDate}T12:00:00Z`)
+    const depOffset = offsetMinutes(depTz, noon)
+    const arrOffset = offsetMinutes(ARRIVAL_TZ, noon)
+    // Both brought back to UTC before they are compared.
+    const total = mins(arrTime) - arrOffset - (mins(depTime) - depOffset)
+    const wrapped = ((total % 1440) + 1440) % 1440
+    return wrapped > 0 ? wrapped : null
+  } catch {
+    return null
+  }
+}
+
 export interface CountryFlights {
   country: string
   iso2: string
@@ -246,6 +308,8 @@ export interface CountryFlights {
       arrTime: string
       /** yyyy-mm-dd of the next time it flies. */
       nextDate: string
+      /** Time in the air, or null when the departure zone is unknown. */
+      blockMinutes: number | null
     }[]
   }[]
 }
@@ -290,13 +354,15 @@ export async function flightsByCountry(): Promise<CountryFlights[]> {
       entry = { iata: airport.iata, name: airport.name, routes: [] }
       country.airports.push(entry)
     }
+    const nextDate = nextOccurrence(r.weekday).toISOString().slice(0, 10)
     entry.routes.push({
       weekday: r.weekday,
       airlineName: r.airlineName,
       flightIata: r.flightIata,
       depTime: r.depTime,
       arrTime: r.arrTime,
-      nextDate: nextOccurrence(r.weekday).toISOString().slice(0, 10),
+      nextDate,
+      blockMinutes: blockMinutes(r.depTime, r.arrTime, airport.timezone, nextDate),
     })
   }
 

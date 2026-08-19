@@ -42,6 +42,22 @@ function cardDate(isoDate: string, weekday: number, dayLabel: string): string {
   return `${dayLabel} ${d} ${month.charAt(0)}${month.slice(1).toLowerCase()} ${y}`
 }
 
+/**
+ * Time in the air, as words.
+ *
+ * The figure itself is worked out on the server, where the departure
+ * airport's time zone is known — subtracting two local clocks here gave
+ * Düsseldorf 05:50 → 09:40 as three hours fifty when it is two hours fifty,
+ * because Preveza is an hour ahead. Null means we do not know the zone, and
+ * nothing is shown rather than a confident wrong number.
+ */
+function durationLabel(minutes: number | null): string | null {
+  if (!minutes) return null
+  const h = Math.floor(minutes / 60)
+  const m = minutes % 60
+  return m ? `${h}h ${m}m` : `${h}h`
+}
+
 const TRANSFER_ICON = { preveza: Car, igoumenitsa: Ship, athens: Bus } as const
 
 /**
@@ -183,66 +199,160 @@ export function GettingHereClient({ countries }: { countries: CountryFlights[] }
                 ))}
               </div>
 
-              <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                {shown.map((c) => (
-                  <article
-                    key={c.country}
-                    className="flex flex-col rounded-[var(--iyc-radius-md)] p-5"
-                    style={{
-                      background: "var(--surface-raised)",
-                      border: "1px solid var(--border-hairline)",
-                    }}
-                  >
-                    <header className="mb-4 flex items-center gap-2">
-                      <Plane className="h-4 w-4 shrink-0" style={{ color: "var(--text-link)" }} />
-                      <h3 className="text-sm font-bold">{c.country}</h3>
-                    </header>
+              {/* Bento rather than a uniform grid: the country with the most
+                  connections earns the wide tile. A reader scanning for their
+                  own flag finds the busy ones first, and the page stops
+                  reading like a spreadsheet. */}
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 auto-rows-auto">
+                {shown.map((c, i) => {
+                  const services = c.airports.reduce((n, a) => n + a.routes.length, 0)
+                  const wide = country === null && i === 0
+                  return (
+                    <article
+                      key={c.country}
+                      className={`group relative flex flex-col overflow-hidden rounded-[var(--iyc-radius-md)] p-6 transition-all duration-300 ease-out hover:-translate-y-1 ${
+                        wide ? "md:col-span-2" : ""
+                      }`}
+                      style={{
+                        background: "var(--surface-raised)",
+                        border: "1px solid var(--border-hairline)",
+                        boxShadow: "0 1px 2px rgba(4,13,25,0.04)",
+                      }}
+                    >
+                      {/* A hairline of Ionian sunset that draws itself across
+                          the top on hover — the only decoration, and it earns
+                          its place by marking which tile you are reading. */}
+                      <span
+                        aria-hidden="true"
+                        className="absolute inset-x-0 top-0 h-[2px] origin-left scale-x-0 transition-transform duration-300 ease-out group-hover:scale-x-100 motion-reduce:transition-none"
+                        style={{ background: "var(--iyc-sun-500)" }}
+                      />
 
-                    <div className="flex flex-col gap-4">
-                      {c.airports.map((a) => (
-                        <div key={a.iata}>
-                          <p className="mb-2 text-xs font-semibold" style={{ color: "var(--text-body)" }}>
-                            {a.name}{" "}
-                            <span style={{ color: "var(--text-subtle)" }}>({a.iata})</span>
+                      <header className="mb-6 flex items-start justify-between gap-4">
+                        <div className="min-w-0">
+                          <h3
+                            className="truncate text-xl md:text-2xl font-semibold leading-tight"
+                            style={{ fontFamily: "var(--font-display)", color: "var(--text-heading)" }}
+                          >
+                            {c.country}
+                          </h3>
+                          <p
+                            className="mt-1 font-mono text-[10px] uppercase tracking-[0.2em]"
+                            style={{ color: "var(--text-subtle)" }}
+                          >
+                            {c.iso2} · {c.airports.length}{" "}
+                            {c.airports.length === 1
+                              ? t("gettingHere.airport", "airport")
+                              : t("gettingHere.airports", "airports")}
                           </p>
-                          <ul className="flex flex-col gap-1">
-                            {a.routes.map((r) => (
-                              <li
-                                key={`${r.flightIata}-${r.weekday}`}
-                                className="flex items-start justify-between gap-3 text-xs"
+                        </div>
+                        {/* The count, set large. It is the fact the tile
+                            exists to convey. */}
+                        <div className="shrink-0 text-right">
+                          <span
+                            className="block text-3xl md:text-4xl font-semibold leading-none tabular-nums"
+                            style={{ fontFamily: "var(--font-display)", color: "var(--iyc-sun-500)" }}
+                          >
+                            {services}
+                          </span>
+                          <span
+                            className="mt-1 block text-[10px] uppercase tracking-[0.16em]"
+                            style={{ color: "var(--text-subtle)" }}
+                          >
+                            {t("gettingHere.weekly", "weekly")}
+                          </span>
+                        </div>
+                      </header>
+
+                      <div className={`flex flex-col gap-6 ${wide ? "md:grid md:grid-cols-2 md:gap-x-10" : ""}`}>
+                        {c.airports.map((a) => (
+                          <div key={a.iata}>
+                            {/* The leg, drawn. Three letters and a rule say
+                                "somewhere to Preveza" faster than a sentence. */}
+                            <div className="mb-3 flex items-center gap-2">
+                              <span
+                                className="font-mono text-xs font-semibold tracking-wider"
+                                style={{ color: "var(--text-heading)" }}
                               >
-                                <span
-                                  className="truncate capitalize pt-px"
-                                  style={{ color: "var(--text-body)" }}
+                                {a.iata}
+                              </span>
+                              <span
+                                aria-hidden="true"
+                                className="h-px flex-1"
+                                style={{ background: "var(--border-hairline)" }}
+                              />
+                              <Plane
+                                aria-hidden="true"
+                                className="h-3 w-3 shrink-0 rotate-90"
+                                style={{ color: "var(--iyc-sun-500)" }}
+                              />
+                              <span
+                                className="font-mono text-xs font-semibold tracking-wider"
+                                style={{ color: "var(--text-muted)" }}
+                              >
+                                PVK
+                              </span>
+                            </div>
+                            <p
+                              className="mb-2 truncate text-xs"
+                              style={{ color: "var(--text-subtle)" }}
+                            >
+                              {a.name}
+                            </p>
+
+                            <ul className="flex flex-col">
+                              {a.routes.map((r) => (
+                                <li
+                                  key={`${r.flightIata}-${r.weekday}`}
+                                  className="flex items-baseline justify-between gap-3 border-t py-2 text-xs first:border-t-0"
+                                  style={{ borderColor: "var(--border-hairline)" }}
                                 >
-                                  {airlineName(r.airlineName)}
-                                </span>
-                                {/* Date over times: the next day it actually
-                                    flies is the useful half, and stacking keeps
-                                    both readable in a narrow card. */}
-                                <span className="shrink-0 text-right tabular-nums">
-                                  <span className="block" style={{ color: "var(--text-body)" }}>
-                                    {cardDate(
-                                      r.nextDate,
-                                      r.weekday,
-                                      t(
-                                        `gettingHere.day.${DAYS[r.weekday - 1]?.key ?? "mon"}`,
-                                        DAYS[r.weekday - 1]?.short ?? ""
-                                      )
+                                  <span className="min-w-0">
+                                    <span
+                                      className="block truncate capitalize font-medium"
+                                      style={{ color: "var(--text-heading)" }}
+                                    >
+                                      {airlineName(r.airlineName)}
+                                    </span>
+                                    <span
+                                      className="block tabular-nums"
+                                      style={{ color: "var(--text-subtle)" }}
+                                    >
+                                      {cardDate(
+                                        r.nextDate,
+                                        r.weekday,
+                                        t(
+                                          `gettingHere.day.${DAYS[r.weekday - 1]?.key ?? "mon"}`,
+                                          DAYS[r.weekday - 1]?.short ?? ""
+                                        )
+                                      )}
+                                    </span>
+                                  </span>
+                                  <span className="shrink-0 text-right tabular-nums">
+                                    <span
+                                      className="block font-medium"
+                                      style={{ color: "var(--text-body)" }}
+                                    >
+                                      {r.depTime}–{r.arrTime}
+                                    </span>
+                                    {durationLabel(r.blockMinutes) && (
+                                      <span
+                                        className="block"
+                                        style={{ color: "var(--iyc-sun-600)" }}
+                                      >
+                                        {durationLabel(r.blockMinutes)}
+                                      </span>
                                     )}
                                   </span>
-                                  <span className="block" style={{ color: "var(--text-subtle)" }}>
-                                    {r.depTime}–{r.arrTime}
-                                  </span>
-                                </span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      ))}
-                    </div>
-                  </article>
-                ))}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ))}
+                      </div>
+                    </article>
+                  )
+                })}
               </div>
 
               <p className="mt-5 text-xs" style={{ color: "var(--text-subtle)" }}>
