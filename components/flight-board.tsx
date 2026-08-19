@@ -39,14 +39,34 @@ export interface BoardRow {
   code?: string
 }
 
+/** Which lines the board shows. Fewer, and it fits a tile. */
+export type BoardLine = "from" | "airline" | "date" | "when"
+const ALL_LINES: BoardLine[] = ["from", "airline", "date", "when"]
+
+const LINE_TONE: Record<BoardLine, "bright" | "dim" | "accent"> = {
+  from: "bright",
+  airline: "dim",
+  date: "dim",
+  when: "accent",
+}
+
 export function FlightBoard({
   rows,
   intervalMs = 4200,
   className,
+  lines = ALL_LINES,
+  width = 18,
+  compact = false,
 }: {
   rows: BoardRow[]
   intervalMs?: number
   className?: string
+  /** Omit lines to shrink the board into a card without changing its voice. */
+  lines?: BoardLine[]
+  /** Characters per line. Narrower cards need fewer. */
+  width?: number
+  /** Drops the header row and tightens the padding. */
+  compact?: boolean
 }) {
   const [index, setIndex] = useState(0)
 
@@ -74,10 +94,11 @@ export function FlightBoard({
           "linear-gradient(180deg, var(--surface-inverse-raised) 0%, var(--surface-inverse) 100%)",
         border: "1px solid color-mix(in srgb, var(--iyc-sand-50) 10%, transparent)",
         borderRadius: "var(--iyc-radius-md)",
-        padding: "1.25rem 1.25rem 1rem",
+        padding: compact ? "0.9rem" : "1.25rem 1.25rem 1rem",
         boxShadow: "inset 0 1px 0 color-mix(in srgb, var(--iyc-sand-50) 6%, transparent)",
       }}
     >
+      {!compact && (
       <div className="flex items-center justify-between gap-3 pb-3">
         <span
           className="text-[10px] font-semibold uppercase tracking-[0.25em]"
@@ -94,12 +115,12 @@ export function FlightBoard({
           </span>
         )}
       </div>
+      )}
 
       <div className="flex flex-col gap-2">
-        <Flaps text={row.from} width={18} tone="bright" />
-        <Flaps text={row.airline} width={18} tone="dim" />
-        <Flaps text={row.date} width={18} tone="dim" />
-        <Flaps text={row.when} width={18} tone="accent" />
+        {lines.map((line) => (
+          <Flaps key={line} text={row[line]} width={width} tone={LINE_TONE[line]} />
+        ))}
       </div>
     </div>
   )

@@ -2,12 +2,13 @@
 
 import Image from "next/image"
 import Link from "@/components/locale-link"
+import { FlightTile } from "@/components/flight-tile"
 
 import { useState, useRef, useEffect } from "react"
 import { gsap } from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 import {
-  Mail, Phone, MapPin, Send, Clock, Anchor, PlaneLanding,
+  Mail, Phone, MapPin, Send, Clock, Anchor,
   Globe, ArrowRight, CheckCircle2, Loader2,
   MessageSquare, Users, Ship, ChevronDown,
 } from "lucide-react"
@@ -262,29 +263,6 @@ export function ContactPageClient({ staff, content }: ContactPageClientProps) {
           >
             {r(hero.subtitle, t("contact.subtitle", "Whether you have a question, want to book a yacht, or just want to say hello — our family team is here for you since 1979."))}
           </p>
-
-          {/* The question that comes before every other one. It sits above the
-              stats because somebody on this page is usually working out
-              whether they can get here at all. */}
-          <div className="mb-12 flex justify-center">
-            <Link
-              href="/getting-here"
-              className="group inline-flex items-center gap-3 rounded-full px-5 py-3 text-sm font-semibold transition-all duration-300"
-              style={{
-                background: "color-mix(in srgb, var(--iyc-sand-50) 12%, transparent)",
-                border: "1px solid color-mix(in srgb, var(--iyc-sand-50) 25%, transparent)",
-                color: "#fff",
-                backdropFilter: "blur(6px)",
-              }}
-            >
-              <PlaneLanding className="h-4 w-4 shrink-0" aria-hidden="true" />
-              {t("contact.gettingHere", "Flights to Preveza & transfers")}
-              <ArrowRight
-                className="h-4 w-4 shrink-0 transition-transform duration-300 group-hover:translate-x-1"
-                aria-hidden="true"
-              />
-            </Link>
-          </div>
 
           {/* Stats row */}
           <div className="flex flex-wrap justify-center gap-8 md:gap-16">
@@ -683,6 +661,29 @@ export function ContactPageClient({ staff, content }: ContactPageClientProps) {
           </div>
         </section>
       )}
+
+      {/* ─── GETTING HERE ─── */}
+      <section className="px-6 pb-16">
+        <div className="mx-auto grid max-w-4xl gap-6 md:grid-cols-2">
+          <div className="flex flex-col justify-center">
+            <h2
+              className="text-2xl font-semibold leading-tight"
+              style={{ fontFamily: "var(--font-display)", color: "var(--text-heading)" }}
+            >
+              {t("contact.gettingHere.title", "Planning the journey?")}
+            </h2>
+            <p className="mt-3 text-sm leading-relaxed" style={{ color: "var(--text-body)" }}>
+              {t(
+                "contact.gettingHere.body",
+                "Preveza is the airport for Lefkada, twenty minutes from our pontoon. See who flies there from your country, on which days, and what the transfer costs."
+              )}
+            </p>
+          </div>
+          {/* The same tile as the homepage: two lines of the departure board
+              and a way through to the whole timetable. */}
+          <FlightTile className="min-h-[260px]" />
+        </div>
+      </section>
 
       {/* ─── CTA BANNER ─── */}
       <section className="px-6 pb-24">

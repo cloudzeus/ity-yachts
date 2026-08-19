@@ -1,12 +1,12 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { FlightTile } from "@/components/flight-tile"
 import Image from "next/image"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 import {
   FileCheck,
-  CarTaxiFront,
   ShoppingBasket,
   CloudSun,
   Compass,
@@ -40,12 +40,6 @@ const SERVICES: { key: string; icon: LucideIcon; title: string; body: string }[]
     icon: FileCheck,
     title: "We handle the paperwork",
     body: "Your officially approved charter contract is ready when you arrive. Greece's full EU membership means no clearing in and out of ports.",
-  },
-  {
-    key: "taxi",
-    icon: CarTaxiFront,
-    title: "Taxi from the airport",
-    body: "Your taxi waits at Preveza with your name on a board and brings you to the boat in twenty minutes.",
   },
   {
     key: "provisioning",
@@ -287,6 +281,12 @@ export function ServicesSection() {
           </div>
 
           {SERVICES.map(serviceTile)}
+
+          {/* Flights, in the same grid and the same proportions as the rest.
+              It holds two lines of the departure board rather than the four
+              the full page carries: the tile is not the answer, it is the
+              reason to go and read it. */}
+          <FlightTile className="svc-tile min-h-[212px]" />
 
           {/* The IYC panel — a single cell like the rest. It used to run 2×2 and
               simply overpowered the section. */}
