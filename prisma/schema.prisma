@@ -1295,3 +1295,46 @@ model Faq {
   @@index([sortOrder])
   @@map("faqs")
 }
+
+/// An airport we have seen flying into Preveza.
+///
+/// AviationStack's schedule rows carry only an IATA code, and the page groups
+/// by country — so each code is resolved once against the airports endpoint
+/// and kept. Resolving costs a request against a small monthly quota, so it
+/// happens once per airport and never again.
+model Airport {
+  iata        String   @id @db.VarChar(3)
+  name        String
+  cityIata    String?  @db.VarChar(3)
+  countryName String
+  countryIso2 String   @db.VarChar(2)
+  timezone    String?
+  updatedAt   DateTime @updatedAt
+
+  @@map("airports")
+}
+
+/// One weekly scheduled arrival at Preveza, as the airlines have filed it.
+///
+/// The flights are seasonal and weekly, not daily, so the useful shape is a
+/// weekday pattern rather than a list of dates. `lastSeenOn` is what tells a
+/// route apart from one that has quietly stopped running.
+model FlightRoute {
+  id          Int      @id @default(autoincrement())
+  /// 1 = Monday … 7 = Sunday, as AviationStack reports it.
+  weekday     Int      @db.TinyInt
+  airlineName String
+  airlineIata String?  @db.VarChar(3)
+  flightIata  String   @db.VarChar(10)
+  depIata     String   @db.VarChar(3)
+  /// Local times, HH:MM — the airline's own, not converted.
+  depTime     String   @db.VarChar(5)
+  arrTime     String   @db.VarChar(5)
+  aircraft    String?  @db.VarChar(96)
+  firstSeenOn DateTime @db.Date
+  lastSeenOn  DateTime @db.Date
+
+  @@unique([weekday, flightIata, depIata], map: "uq_route")
+  @@index([depIata], map: "idx_dep")
+  @@map("flight_routes")
+}

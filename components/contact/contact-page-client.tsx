@@ -1,12 +1,13 @@
 "use client"
 
 import Image from "next/image"
+import Link from "@/components/locale-link"
 
 import { useState, useRef, useEffect } from "react"
 import { gsap } from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 import {
-  Mail, Phone, MapPin, Send, Clock, Anchor,
+  Mail, Phone, MapPin, Send, Clock, Anchor, PlaneLanding,
   Globe, ArrowRight, CheckCircle2, Loader2,
   MessageSquare, Users, Ship, ChevronDown,
 } from "lucide-react"
@@ -261,6 +262,29 @@ export function ContactPageClient({ staff, content }: ContactPageClientProps) {
           >
             {r(hero.subtitle, t("contact.subtitle", "Whether you have a question, want to book a yacht, or just want to say hello — our family team is here for you since 1979."))}
           </p>
+
+          {/* The question that comes before every other one. It sits above the
+              stats because somebody on this page is usually working out
+              whether they can get here at all. */}
+          <div className="mb-12 flex justify-center">
+            <Link
+              href="/getting-here"
+              className="group inline-flex items-center gap-3 rounded-full px-5 py-3 text-sm font-semibold transition-all duration-300"
+              style={{
+                background: "color-mix(in srgb, var(--iyc-sand-50) 12%, transparent)",
+                border: "1px solid color-mix(in srgb, var(--iyc-sand-50) 25%, transparent)",
+                color: "#fff",
+                backdropFilter: "blur(6px)",
+              }}
+            >
+              <PlaneLanding className="h-4 w-4 shrink-0" aria-hidden="true" />
+              {t("contact.gettingHere", "Flights to Preveza & transfers")}
+              <ArrowRight
+                className="h-4 w-4 shrink-0 transition-transform duration-300 group-hover:translate-x-1"
+                aria-hidden="true"
+              />
+            </Link>
+          </div>
 
           {/* Stats row */}
           <div className="flex flex-wrap justify-center gap-8 md:gap-16">

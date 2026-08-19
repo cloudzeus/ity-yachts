@@ -41,6 +41,13 @@ export function SiteFooterView({
       label: item.translations?.[locale] || item.translations?.en || item.label,
       href: item.href,
     }))
+
+  /* Appended in code rather than left to the navigation table. Getting here is
+     the question every guest asks before they book, and it should not be able
+     to fall out of the footer because somebody reordered a menu. */
+  if (!company.some((c) => c.href === "/getting-here")) {
+    company.push({ label: t("nav.gettingHere", "Getting here"), href: "/getting-here" })
+  }
   return (
     <div
       className="relative h-[600px]"
