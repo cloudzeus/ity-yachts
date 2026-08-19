@@ -21,16 +21,31 @@ COPY . .
 # here or the build throws on `new URL(undefined)`. NEXT_PUBLIC_* values are
 # inlined into the client bundle at build time and cannot be supplied later.
 # These stay in the builder stage; none of them reach the published image.
-ARG DATABASE_URL
+#
+# DATABASE_URL carries a placeholder default on purpose. Nothing here connects
+# to a database — `prisma generate` only writes types, and the pool in lib/db.ts
+# is constructed but never dialled — they just need a string that parses. With
+# no default the build died before it started, on prisma.config.ts:
+#   PrismaConfigEnvError: Cannot resolve environment variable: DATABASE_URL
+# and the alternative, passing the real URL as a build argument, writes the
+# database password into an image layer where `docker history` can read it.
+# The runtime value comes from the environment and overrides this.
+ARG DATABASE_URL="mysql://build:build@127.0.0.1:3306/build"
 ARG NEXTAUTH_URL
 ARG NEXTAUTH_SECRET
 ARG NEXT_PUBLIC_APP_URL
 ARG NEXT_PUBLIC_BUNNY_CDN_URL
+# Where the 360° panorama tiles are served from. NEXT_PUBLIC_*, so it is written
+# into the client bundle now and cannot be changed after the image is built —
+# left unset, the viewer falls back to iyc.de, the server these were rescued
+# from, and every tour goes dark when it is switched off.
+ARG NEXT_PUBLIC_TOUR360_BASE
 ENV DATABASE_URL=$DATABASE_URL \
     NEXTAUTH_URL=$NEXTAUTH_URL \
     NEXTAUTH_SECRET=$NEXTAUTH_SECRET \
     NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL \
-    NEXT_PUBLIC_BUNNY_CDN_URL=$NEXT_PUBLIC_BUNNY_CDN_URL
+    NEXT_PUBLIC_BUNNY_CDN_URL=$NEXT_PUBLIC_BUNNY_CDN_URL \
+    NEXT_PUBLIC_TOUR360_BASE=$NEXT_PUBLIC_TOUR360_BASE
 
 RUN npx prisma generate
 RUN npm run build

@@ -44,6 +44,29 @@ const nextConfig: NextConfig = {
        production build — React does not use eval() there. */
     const dev = process.env.NODE_ENV !== "production"
 
+    /* Photo Sphere Viewer fetches its panorama tiles with fetch(), not <img>,
+       so the CDN has to be allowed by connect-src as well. img-src already
+       permits any https host, which is why the tour thumbnails appeared while
+       every tile was refused and the sphere stayed empty — the page looked
+       fine and the feature was dead.
+
+       Read from the same variables that point at the CDN rather than written
+       out again, so moving a pull zone cannot leave this behind. A relative
+       base (the local mirror) has no origin and drops out. */
+    const cdnOrigins = [
+      ...new Set(
+        [process.env.NEXT_PUBLIC_BUNNY_CDN_URL, process.env.NEXT_PUBLIC_TOUR360_BASE]
+          .map((url) => {
+            try {
+              return url ? new URL(url).origin : null
+            } catch {
+              return null
+            }
+          })
+          .filter((o): o is string => !!o)
+      ),
+    ]
+
     const csp = [
       "default-src 'self'",
       /* Next hydration inlines its payload, and the consent-gated tags are
@@ -54,7 +77,7 @@ const nextConfig: NextConfig = {
       "img-src 'self' data: blob: https:",
       "media-src 'self' https:",
       "font-src 'self' data:",
-      "connect-src 'self' https://www.google-analytics.com https://analytics.google.com https://connect.facebook.net https://maps.googleapis.com",
+      ["connect-src 'self'", ...cdnOrigins, "https://www.google-analytics.com", "https://analytics.google.com", "https://connect.facebook.net", "https://maps.googleapis.com"].join(" "),
       "frame-src 'self' https://www.google.com https://www.youtube.com https://www.youtube-nocookie.com",
       "frame-ancestors 'none'",
       "base-uri 'self'",
