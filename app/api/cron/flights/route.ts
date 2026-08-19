@@ -2,17 +2,26 @@ import { NextRequest, NextResponse } from "next/server"
 import { syncFlights } from "@/lib/flights"
 
 /**
- * One day's flight schedule, once a day.
+ * The week's flight schedule, once a week.
  *
  * Meant for a scheduler — Coolify, cron, anything that can call a URL:
  *
  *   curl -H "Authorization: Bearer $CRON_SECRET" https://iyc.de/api/cron/flights
  *
- * Calling it more often is not useful and is actively harmful: the quota is
- * monthly and small, and the API rate-limits bursts outright. Two requests
- * per run at most, so a daily schedule sits near sixty a month.
+ * Weekly, because a weekly timetable is what it reads: an airline that flies
+ * on Tuesdays flies on Tuesdays all season, and asking again tomorrow returns
+ * what we already hold. The dates the site shows are worked out from the
+ * weekday at render time, so they stay current between runs.
+ *
+ * Around eleven requests, spaced twenty seconds apart — roughly forty-five a
+ * month against a small monthly quota. Running it more often is not useful
+ * and is actively harmful.
+ *
+ * It takes some minutes by design. A scheduler that times out before the run
+ * finishes will still leave the days that completed stored.
  */
 export const dynamic = "force-dynamic"
+export const maxDuration = 300
 
 export async function GET(req: NextRequest) {
   /* An open endpoint here would let anyone drain a month of quota in a
@@ -29,12 +38,16 @@ export async function GET(req: NextRequest) {
 
   try {
     const result = await syncFlights()
+    const stored = result.days.reduce((n, d) => n + d.stored, 0)
     console.log(
-      `[flights] ${result.date}: ${result.stored}/${result.seen} routes, ` +
-        `${result.requests} requests, learned ${result.learned ?? "nothing"}, ` +
-        `${result.unresolved.length} airports still unnamed, dropped ${result.dropped}`
+      `[flights] ${result.days.length}/7 days, ${stored} services, ` +
+        `${result.requests} requests, learned ${result.learned.join(",") || "nothing"}, ` +
+        `${result.unresolved.length} airports still unnamed, dropped ${result.dropped}` +
+        (result.failed.length ? ` — failed: ${result.failed.map((f) => f.date).join(",")}` : "")
     )
-    return NextResponse.json(result)
+    /* A run where nothing came back is a failure worth a non-2xx, so a
+       scheduler that alerts on status says something. */
+    return NextResponse.json(result, { status: result.days.length ? 200 : 502 })
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     console.error(`[flights] ${message}`)

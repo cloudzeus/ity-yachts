@@ -14,9 +14,17 @@ import { db } from "@/lib/db"
  * site reads what it stored.
  *
  * One request returns one date, and these flights are weekly — a Saturday
- * request says nothing about Tuesdays. So the job walks the next seven days,
- * one per run, and after a week the whole weekly pattern is known and starts
- * refreshing itself in a rolling window.
+ * request says nothing about Tuesdays. So a run walks the next seven days and
+ * comes away with the whole pattern.
+ *
+ * Weekly, not daily, because the thing being read is a weekly timetable: an
+ * airline that flies on Tuesdays flies on Tuesdays all season, and asking
+ * again tomorrow returns what we already hold. The dates the site shows stay
+ * current regardless — they are worked out from the weekday when the page
+ * renders, not stored.
+ *
+ * The seven calls are spaced. Six of them inside a few seconds was enough to
+ * be rate-limited outright, and a burst that trips the limit costs the run.
  */
 
 const BASE = "https://api.aviationstack.com/v1"
@@ -24,20 +32,34 @@ const BASE = "https://api.aviationstack.com/v1"
 /** Every guest flies into Preveza; Aktion, 20 minutes from the pontoon. */
 export const ARRIVAL_AIRPORT = "PVK"
 
-/** How many days ahead the rolling window reaches. */
+/** Days a run covers — one week, which is the period the timetable repeats on. */
 const WINDOW_DAYS = 7
 
 /**
  * A schedule row is dropped after this long without being seen again.
  *
- * Longer than the window so a route is not forgotten between two passes over
- * the same weekday, and short enough that a service withdrawn for the season
+ * Several runs long, so a week that half failed does not erase a route that
+ * is still flying, and short enough that a service withdrawn for the season
  * stops being advertised within a month.
  */
 const FORGET_AFTER_DAYS = 30
 
-/** At most one unknown airport is resolved per run — see the quota note above. */
-const AIRPORT_LOOKUPS_PER_RUN = 1
+/** Unknown airports resolved per run. Weekly, so a handful is affordable. */
+const AIRPORT_LOOKUPS_PER_RUN = 4
+
+/**
+ * Between calls.
+ *
+ * Measured rather than guessed, and the plan is stricter than it looks: six
+ * calls inside a few seconds was refused outright, and the refusal persisted
+ * for minutes afterwards. A weekly run has all the time in the world.
+ */
+const SPACING_MS = 45_000
+
+/** After a rate limit, wait this long once before giving that day up. */
+const BACKOFF_MS = 90_000
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
 interface FutureFlight {
   weekday?: string
@@ -78,17 +100,24 @@ function hhmm(value: string | undefined): string | null {
 const iso = (d: Date) => d.toISOString().slice(0, 10)
 
 /**
- * Which date this run should ask about.
+ * How far ahead the schedules endpoint will answer at all.
  *
- * Derived from the date itself rather than from a stored cursor: the run on
- * any given day always takes the same slot in the window, so a missed day
- * costs that one day's refresh instead of shifting the rotation permanently.
+ * Asking about tomorrow returns `date must be above <today + 7>` — the
+ * endpoint only serves filed schedules from eight days out. The first run
+ * asked for tomorrow through the week ahead and every one of the seven was
+ * refused, which cost the requests and returned nothing.
  */
-export function targetDate(today = new Date()): Date {
-  const offset = (Math.floor(today.getTime() / 86_400_000) % WINDOW_DAYS) + 1
-  const d = new Date(today)
-  d.setUTCDate(d.getUTCDate() + offset)
-  return d
+const EARLIEST_DAYS_AHEAD = 8
+
+/** The seven dates a run covers, all of them far enough ahead to be served. */
+export function weekAhead(today = new Date()): Date[] {
+  return Array.from({ length: WINDOW_DAYS }, (_, i) => {
+    const d = new Date(
+      Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate())
+    )
+    d.setUTCDate(d.getUTCDate() + EARLIEST_DAYS_AHEAD + i)
+    return d
+  })
 }
 
 /**
@@ -123,27 +152,23 @@ async function learnAirport(iata: string): Promise<boolean> {
 }
 
 export interface SyncResult {
-  date: string
+  /** Dates that answered, and how many services each brought. */
+  days: { date: string; stored: number }[]
+  failed: { date: string; reason: string }[]
   requests: number
-  seen: number
-  stored: number
-  learned: string | null
+  learned: string[]
   unresolved: string[]
   dropped: number
 }
 
-/** One day's schedule, folded into the weekly pattern. Two requests at most. */
-export async function syncFlights(today = new Date()): Promise<SyncResult> {
-  const when = targetDate(today)
+/** One date's schedule, folded into the weekly pattern. */
+async function syncDay(when: Date): Promise<{ stored: number; codes: Set<string> }> {
   const date = iso(when)
-  let requests = 0
-
   const body = await call<{ data?: FutureFlight[] }>("flightsFuture", {
     iataCode: ARRIVAL_AIRPORT,
     type: "arrival",
     date,
   })
-  requests++
 
   const rows = body.data ?? []
   /* The API reports the weekday of the date asked for; trusting our own
@@ -179,39 +204,92 @@ export async function syncFlights(today = new Date()): Promise<SyncResult> {
     })
     stored++
   }
+  return { stored, codes }
+}
 
-  /* Airports we cannot name a country for yet. One is resolved now; the rest
-     wait for later runs rather than spending the month's quota at once. */
+/**
+ * A week's timetable, in one run.
+ *
+ * Every day is attempted and a day that fails is recorded rather than
+ * thrown: a rate limit on Thursday should not cost the six days that
+ * answered, and the ones that did are already stored by the time it happens.
+ */
+export async function syncFlights(today = new Date()): Promise<SyncResult> {
+  const days: SyncResult["days"] = []
+  const failed: SyncResult["failed"] = []
+  const codes = new Set<string>()
+  let requests = 0
+
+  const dates = weekAhead(today)
+  for (let i = 0; i < dates.length; i++) {
+    if (i > 0) await sleep(SPACING_MS)
+    const when = dates[i]
+    try {
+      requests++
+      const day = await syncDay(when)
+      day.codes.forEach((c) => codes.add(c))
+      days.push({ date: iso(when), stored: day.stored })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      /* One more try after a longer wait, but only for the limit — a bad key
+         or a bad date will fail again just as fast. */
+      if (message.includes("rate_limit")) {
+        await sleep(BACKOFF_MS)
+        try {
+          requests++
+          const day = await syncDay(when)
+          day.codes.forEach((c) => codes.add(c))
+          days.push({ date: iso(when), stored: day.stored })
+          continue
+        } catch (retry) {
+          failed.push({
+            date: iso(when),
+            reason: retry instanceof Error ? retry.message : String(retry),
+          })
+          continue
+        }
+      }
+      failed.push({ date: iso(when), reason: message })
+    }
+  }
+
+  /* Airports we cannot name a country for yet. A few are resolved now; the
+     rest wait for next week rather than spending the month at once. */
   const known = new Set(
     (await db.airport.findMany({ where: { iata: { in: [...codes] } }, select: { iata: true } })).map(
       (a) => a.iata
     )
   )
   const unknown = [...codes].filter((c) => !known.has(c)).sort()
-  let learned: string | null = null
+  const learned: string[] = []
   for (const iata of unknown.slice(0, AIRPORT_LOOKUPS_PER_RUN)) {
+    await sleep(SPACING_MS)
     try {
-      if (await learnAirport(iata)) learned = iata
       requests++
+      if (await learnAirport(iata)) learned.push(iata)
     } catch {
-      // A failed lookup is not worth failing the run for; it retries tomorrow.
+      // A failed lookup is not worth failing the run for; it retries next week.
     }
   }
 
-  /* Routes nobody has filed for a month are gone, not merely unobserved. */
-  const cutoff = new Date(today)
-  cutoff.setUTCDate(cutoff.getUTCDate() - FORGET_AFTER_DAYS)
-  const { count: dropped } = await db.flightRoute.deleteMany({
-    where: { lastSeenOn: { lt: cutoff } },
-  })
+  /* Routes nobody has filed for a month are gone, not merely unobserved.
+     Only when the week actually came back: a run that failed throughout
+     would otherwise delete the timetable it could not refresh. */
+  let dropped = 0
+  if (days.length >= 4) {
+    const cutoff = new Date(today)
+    cutoff.setUTCDate(cutoff.getUTCDate() - FORGET_AFTER_DAYS)
+    ;({ count: dropped } = await db.flightRoute.deleteMany({
+      where: { lastSeenOn: { lt: cutoff } },
+    }))
+  }
 
   return {
-    date,
+    days,
+    failed,
     requests,
-    seen: rows.length,
-    stored,
     learned,
-    unresolved: unknown.filter((c) => c !== learned),
+    unresolved: unknown.filter((c) => !learned.includes(c)),
     dropped,
   }
 }
