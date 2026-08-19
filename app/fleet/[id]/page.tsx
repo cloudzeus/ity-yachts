@@ -5,7 +5,10 @@ import { JsonLd } from "@/components/json-ld"
 import { breadcrumbLd, yachtLd } from "@/lib/structured-data"
 import { localized, metaStrings } from "@/lib/meta.server"
 import { en, metaDescription, metaTitle, pageMeta } from "@/lib/seo"
-import { notFound } from "next/navigation"
+import { notFound, permanentRedirect } from "next/navigation"
+import { getLocale } from "@/lib/translations.server"
+import { withLocale } from "@/lib/locale"
+import { yachtIdFromParam, yachtPath } from "@/lib/yacht-slug"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { YachtDetailClient } from "./yacht-detail-client"
@@ -19,8 +22,8 @@ export const dynamic = "force-dynamic"
  */
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params
-  const yachtId = parseInt(id)
-  if (isNaN(yachtId)) return { title: "Not found" }
+  const yachtId = yachtIdFromParam(id)
+  if (yachtId === null) return { title: "Not found" }
 
   const yacht = await db.nausysYacht.findUnique({
     where: { id: yachtId },
@@ -58,15 +61,17 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   return pageMeta({
     title: metaTitle(`${name}${model && model !== name ? ` ${model}` : ""} — ${m("meta.yacht.charterIn", "Charter")} ${place}`),
     description,
-    path: `/fleet/${yachtId}`,
+    /* The canonical is the slug form, whatever spelling was asked for — the
+       stale and the bare-id addresses must not each claim to be the page. */
+    path: yachtPath({ id: yachtId, name: yacht.name, model: yacht.model }),
     image: yachtThumb(yacht),
   })
 }
 
 export default async function YachtDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const yachtId = parseInt(id)
-  if (isNaN(yachtId)) notFound()
+  const yachtId = yachtIdFromParam(id)
+  if (yachtId === null) notFound()
 
   const yacht = await db.nausysYacht.findUnique({
     where: { id: yachtId },
@@ -95,6 +100,19 @@ export default async function YachtDetailPage({ params }: { params: Promise<{ id
   })
 
   if (!yacht) notFound()
+
+  /* One address per boat. A bare id, or the spelling from before a rename in
+     NAUSYS, still finds her — and is then sent to the current one, so the
+     search engines and the links people already hold converge on a single
+     page instead of splitting its standing between several.
+
+     The locale prefix has to be put back by hand: the proxy rewrites /el/…
+     to /fleet/… before this runs, so a redirect written as-is would drop a
+     Greek visitor into the English page. */
+  const canonical = yachtPath(yacht)
+  if (`/fleet/${id}` !== canonical) {
+    permanentRedirect(withLocale(canonical, await getLocale()))
+  }
 
   /* Who is shown as the person handling this enquiry.
      Only colleagues the admin has marked for it — it used to be any active
@@ -234,7 +252,7 @@ export default async function YachtDetailPage({ params }: { params: Promise<{ id
           yachtLd({
             name: yachtData.name,
             description: description || note || `${categoryName} for charter from ${locationName || "Lefkada"}, Greece.`,
-            path: `/fleet/${yacht.id}`,
+            path: canonical,
             image: allImages[0] ?? null,
             model: yacht.model?.name ?? null,
             year: yacht.buildYear,
@@ -245,7 +263,7 @@ export default async function YachtDetailPage({ params }: { params: Promise<{ id
           breadcrumbLd([
             { name: "Home", path: "/" },
             { name: "Fleet", path: "/fleet" },
-            { name: yachtData.name, path: `/fleet/${yacht.id}` },
+            { name: yachtData.name, path: canonical },
           ]),
         ]}
       />

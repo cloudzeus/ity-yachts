@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next"
 import { db } from "@/lib/db"
 import { getSiteUrl } from "@/lib/seo"
+import { yachtPath } from "@/lib/yacht-slug"
 import { isCanonicalHost } from "@/lib/site-settings"
 import { DEFAULT_LOCALE, HREFLANG, LOCALES, withLocale } from "@/lib/locale"
 
@@ -50,7 +51,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       where: { status: "published", OR: [{ publishedAt: null }, { publishedAt: { lte: now } }] },
       select: { slug: true, updatedAt: true },
     }),
-    db.nausysYacht.findMany({ select: { id: true, updatedAt: true } }),
+    db.nausysYacht.findMany({
+      // The model name is part of the address; see lib/yacht-slug.ts.
+      select: { id: true, name: true, updatedAt: true, model: { select: { name: true } } },
+    }),
     /* Page-builder pages that are not one of the routes below — the legal
        pages and anything added later. */
     db.page.findMany({
@@ -79,7 +83,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     entry("/contact", now, "monthly", 0.6),
 
     // A yacht that can be booked matters more than an article about one.
-    ...yachts.map((y) => entry(`/fleet/${y.id}`, y.updatedAt, "weekly", 0.8)),
+    ...yachts.map((y) => entry(yachtPath(y), y.updatedAt, "weekly", 0.8)),
     ...locations.map((l) => entry(`/locations/${l.slug}`, l.updatedAt, "monthly", 0.7)),
     ...itineraries.map((i) => entry(`/itineraries/${i.slug}`, i.updatedAt, "monthly", 0.7)),
     ...services.map((s) => entry(`/services/${s.slug}`, s.updatedAt, "monthly", 0.6)),

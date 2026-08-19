@@ -21,12 +21,15 @@ import {
   Loader2,
 } from "lucide-react"
 import { useTranslations } from "@/lib/use-translations"
+import { yachtPath } from "@/lib/yacht-slug"
 import { yachtThumb } from "@/lib/yacht-images"
 import { removeGreekTonos } from "@/lib/greek-utils"
 
 interface YachtCard {
   id: number
   name: string
+  /** The canonical path, slug and all — see lib/yacht-slug.ts. */
+  href: string
   image: string
   category: string
   categoryTranslations?: Record<string, string> | null
@@ -169,6 +172,9 @@ export function FleetListClient({
           return {
             id: y.id,
             name: y.name || y.model?.name || "Yacht",
+            /* Built here, where the model name is still in hand — the card
+               shape does not carry it, and the link needs it. */
+            href: yachtPath(y),
             image,
             category: catName?.en || "Yacht",
             categoryTranslations: catName || null,
@@ -680,7 +686,7 @@ function YachtGridCard({ yacht }: { yacht: YachtCard }) {
     <div className="group relative rounded-2xl overflow-hidden bg-white border border-[var(--border-hairline)] shadow-sm hover:shadow-xl transition-shadow duration-300">
       {/* Image */}
       <Link
-        href={`/fleet/${yacht.id}`}
+        href={yacht.href}
         className="relative block aspect-[16/10] overflow-hidden"
       >
         {yacht.image ? (
@@ -796,7 +802,7 @@ function YachtGridCard({ yacht }: { yacht: YachtCard }) {
             <span />
           )}
           <Link
-            href={`/fleet/${yacht.id}`}
+            href={yacht.href}
             title={yacht.name}
             className="shrink-0 whitespace-nowrap px-3 py-1.5 rounded-lg text-[11px] font-semibold text-white transition hover:opacity-90"
             style={{ backgroundColor: "var(--iyc-ionian-600)" }}

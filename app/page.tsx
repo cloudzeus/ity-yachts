@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { db } from "@/lib/db"
+import { yachtSlug } from "@/lib/yacht-slug"
 import { yachtThumb } from "@/lib/yacht-images"
 import { JsonLd } from "@/components/json-ld"
 import { faqLd } from "@/lib/structured-data"
@@ -142,7 +143,7 @@ export default async function Home() {
     return {
       id: y.id,
       name: y.name || y.model?.name || "Yacht",
-      slug: String(y.id),
+      slug: yachtSlug(y),
       image,
       category: catT?.en || "Yacht",
       categoryT: catT || null,

@@ -7,6 +7,7 @@ import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { FleetListClient } from "./fleet-list-client"
 import { getFleetRanges } from "@/lib/fleet-ranges.server"
+import { yachtPath } from "@/lib/yacht-slug"
 
 export const dynamic = "force-dynamic"
 
@@ -105,6 +106,7 @@ export function transformYacht(y: any) {
   return {
     id: y.id,
     name: y.name || y.model?.name || "Yacht",
+    href: yachtPath(y),
     image,
     category: categoryName,
     categoryTranslations: catNames || null,
