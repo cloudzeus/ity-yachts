@@ -58,6 +58,25 @@ function durationLabel(minutes: number | null): string | null {
   return m ? `${h}h ${m}m` : `${h}h`
 }
 
+/**
+ * The country, in the reader's own language.
+ *
+ * AviationStack names them in English and only in English, so a German
+ * visitor met "Germany" on a page that was otherwise entirely German. The
+ * ISO code is stored beside the name and the browser already knows every
+ * translation of it — no dictionary to keep, and no country left out.
+ *
+ * Falls back to the English the API gave us if the code is missing or the
+ * runtime has no display names, which is better than a bare "DE".
+ */
+function countryName(iso2: string, english: string, locale: string): string {
+  try {
+    return new Intl.DisplayNames([locale], { type: "region" }).of(iso2.toUpperCase()) || english
+  } catch {
+    return english
+  }
+}
+
 const TRANSFER_ICON = { preveza: Car, igoumenitsa: Ship, athens: Bus } as const
 
 /**
@@ -200,7 +219,7 @@ export function GettingHereClient({
                     active={country === c.country}
                     onClick={() => setCountry(country === c.country ? null : c.country)}
                   >
-                    {c.country}
+                    {countryName(c.iso2, c.country, locale)}
                   </Chip>
                 ))}
               </div>
@@ -240,7 +259,7 @@ export function GettingHereClient({
                             className="truncate text-xl md:text-2xl font-semibold leading-tight"
                             style={{ fontFamily: "var(--font-display)", color: "var(--text-heading)" }}
                           >
-                            {c.country}
+                            {countryName(c.iso2, c.country, locale)}
                           </h3>
                           <p
                             className="mt-1 font-mono text-[10px] uppercase tracking-[0.2em]"
