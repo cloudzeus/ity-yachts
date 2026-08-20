@@ -1,6 +1,10 @@
 /**
  * The last leg, which no flight API knows about.
  *
+ * These are the defaults. What the site shows comes from the `transfers`
+ * setting, edited in /admin — taxi fares and coach prices move, and a price
+ * that can only be corrected by a developer is a price that stays wrong.
+ *
  * These figures come from the office's own transfer sheet. They are the part
  * of the journey a visitor cannot look up anywhere and the reason the page is
  * worth having at all: knowing a plane lands at Preveza is not the same as
@@ -24,7 +28,7 @@ export interface Transfer {
   link?: { label: string; href: string }
 }
 
-export const TRANSFERS: Transfer[] = [
+export const DEFAULT_TRANSFERS: Transfer[] = [
   {
     fromKey: "preveza",
     from: { en: "Preveza (Aktion) airport", el: "Αεροδρόμιο Πρέβεζας (Άκτιο)", de: "Flughafen Preveza (Aktion)" },
@@ -65,5 +69,19 @@ export const TRANSFERS: Transfer[] = [
   },
 ]
 
-/** When the transfer figures were last confirmed by the office. */
-export const TRANSFERS_UPDATED = "2026-01-01"
+/** When the defaults were taken off the office's own sheet. */
+export const DEFAULT_TRANSFERS_UPDATED = "2026-01-01"
+
+/** What the `transfers` setting holds. */
+export interface TransfersSetting {
+  items: Transfer[]
+  /** The date shown beside the prices, so it is the office's claim, not ours. */
+  updated: string
+}
+
+/** Read the stored shape, falling back to the defaults field by field. */
+export function asTransfers(value: unknown): TransfersSetting {
+  const v = (value ?? {}) as Partial<TransfersSetting>
+  const items = Array.isArray(v.items) && v.items.length ? v.items : DEFAULT_TRANSFERS
+  return { items, updated: (v.updated ?? DEFAULT_TRANSFERS_UPDATED).trim() || DEFAULT_TRANSFERS_UPDATED }
+}

@@ -4,6 +4,8 @@ import { pageMeta } from "@/lib/seo"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { flightsByCountry } from "@/lib/flights"
+import { db } from "@/lib/db"
+import { asTransfers } from "@/lib/transfers"
 import { GettingHereClient } from "./getting-here-client"
 
 /**
@@ -34,11 +36,15 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function GettingHerePage() {
-  const countries = await flightsByCountry()
+  const [countries, row] = await Promise.all([
+    flightsByCountry(),
+    db.setting.findUnique({ where: { key: "transfers" } }),
+  ])
+  const transfers = asTransfers(row?.value)
   return (
     <>
       <SiteHeader />
-      <GettingHereClient countries={countries} />
+      <GettingHereClient countries={countries} transfers={transfers} />
       <SiteFooter />
     </>
   )

@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react"
 import { Plane, Ship, Bus, Car, ExternalLink, MapPin } from "lucide-react"
 import { useTranslations } from "@/lib/use-translations"
-import { TRANSFERS, TRANSFERS_UPDATED } from "@/lib/transfers"
+import type { TransfersSetting } from "@/lib/transfers"
 import type { CountryFlights } from "@/lib/flights"
 import { FlightBoard, type BoardRow } from "@/components/flight-board"
 
@@ -70,7 +70,13 @@ function airlineName(raw: string): string {
   return raw.replace(/\s*\(.*$/, "").trim() || raw
 }
 
-export function GettingHereClient({ countries }: { countries: CountryFlights[] }) {
+export function GettingHereClient({
+  countries,
+  transfers,
+}: {
+  countries: CountryFlights[]
+  transfers: TransfersSetting
+}) {
   const { t, locale } = useTranslations()
   const [country, setCountry] = useState<string | null>(null)
 
@@ -380,7 +386,7 @@ export function GettingHereClient({ countries }: { countries: CountryFlights[] }
           </p>
 
           <div className="grid gap-4 md:grid-cols-3">
-            {TRANSFERS.map((tr) => {
+            {transfers.items.map((tr) => {
               const Icon = TRANSFER_ICON[tr.fromKey as keyof typeof TRANSFER_ICON] ?? MapPin
               const primary = tr.emphasis === "primary"
               return (
@@ -428,7 +434,7 @@ export function GettingHereClient({ countries }: { countries: CountryFlights[] }
           </div>
 
           <p className="mt-5 text-xs" style={{ color: "var(--text-subtle)" }}>
-            {t("gettingHere.transfersNote", "Indicative prices, confirmed")} {TRANSFERS_UPDATED}.{" "}
+            {t("gettingHere.transfersNote", "Indicative prices, confirmed")} {transfers.updated}.{" "}
             {t(
               "gettingHere.transfersHelp",
               "Tell us your flight and we will have someone waiting."
