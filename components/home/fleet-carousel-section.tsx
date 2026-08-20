@@ -271,10 +271,26 @@ function YachtCarouselCard({ yacht, onClick, isActive }: { yacht: FleetYacht; on
   const { t } = useTranslations()
   const [liked, setLiked] = useState(false)
 
+  /* The whole card goes to the boat, not just a pill in the corner — a
+     photograph of a yacht that does nothing when clicked is a broken promise.
+
+     Except when the card is off to the side: there the first click brings it
+     to the middle, which is what a carousel is for and what someone reaching
+     for a half-visible card means. The second click, now that it is the card
+     being looked at, opens it. */
+  const open = (e: React.MouseEvent) => {
+    if (!isActive) {
+      e.preventDefault()
+      onClick()
+    }
+  }
+
   return (
-    <div
-      onClick={onClick}
-      className="relative w-full rounded-2xl overflow-hidden group cursor-pointer border border-[var(--border-hairline)] aspect-square md:aspect-[16/10]"
+    <Link
+      href={`/fleet/${yacht.slug || yacht.id}`}
+      onClick={open}
+      aria-label={yacht.name}
+      className="relative block w-full rounded-2xl overflow-hidden group cursor-pointer border border-[var(--border-hairline)] aspect-square md:aspect-[16/10]"
       style={{ boxShadow: isActive ? "var(--shadow-lg)" : "var(--shadow-md)", background: "var(--surface-card)" }}
     >
       {/* Background Image */}
@@ -306,7 +322,7 @@ function YachtCarouselCard({ yacht, onClick, isActive }: { yacht: FleetYacht; on
           {removeGreekTonos(yacht.category)}
         </span>
         <button
-          onClick={(e) => { e.stopPropagation(); setLiked(!liked) }}
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setLiked(!liked) }}
           /* An icon alone is not a name. Thirty of these on the homepage read
              as thirty unlabelled buttons to anyone not looking at the screen. */
           aria-label={`${liked ? "Remove" : "Save"} ${yacht.name} ${liked ? "from" : "to"} your shortlist`}
@@ -359,24 +375,20 @@ function YachtCarouselCard({ yacht, onClick, isActive }: { yacht: FleetYacht; on
               {removeGreekTonos(yacht.baseName || "Ionian Sea")}
             </span>
           </div>
-          {/* Thirty links reading only "Details" tell a crawler and a screen
-              reader nothing. The boat's name goes inside the link as hidden
-              text — an aria-label would fix the screen reader but leave the
-              crawler reading "Details" thirty times. */}
-          <Link
-            href={`/fleet/${yacht.slug || yacht.id}`}
-            onClick={(e) => e.stopPropagation()}
-            title={yacht.name}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-[12px] border border-[var(--border-hairline)] hover:bg-white/20 hover:border-white/30 transition-all duration-300"
+          {/* No longer a link of its own — the card is the link, and an anchor
+              inside an anchor is not valid markup. It stays as the visible
+              affordance, which is all it ever really was. */}
+          <span
+            aria-hidden="true"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-[12px] border border-[var(--border-hairline)] group-hover:bg-white/20 group-hover:border-white/30 transition-all duration-300"
           >
             <span className="text-[11px] text-[var(--text-body)] font-medium">
-              <span className="sr-only">{yacht.name} — </span>
               {t("home.fleet.details", "Details")}
             </span>
             <ArrowUpRight className="w-3 h-3 text-[var(--text-muted)]" />
-          </Link>
+          </span>
         </div>
       </div>
-    </div>
+    </Link>
   )
 }

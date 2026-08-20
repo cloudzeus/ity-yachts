@@ -50,39 +50,75 @@ export function LocationsSection({ destinations }: { destinations: Location[] })
   const secondary = featured[1]
   const tertiary = featured[2]
 
+  /**
+   * The reveal, and why it used to flicker.
+   *
+   * Two causes, both of them ours. The cards carried `style={{opacity: 0}}`
+   * in the markup, so every re-render — changing the filter is one — wrote
+   * that zero back over the opacity GSAP had animated to 1, and the cards
+   * blinked out. The hidden state is a class now: GSAP writes an inline
+   * opacity, which outranks it, and React has nothing to overwrite.
+   *
+   * And the triggers had no `once`, so scrolling back up re-armed them and
+   * the whole section faded from nothing again on the way down.
+   */
   useEffect(() => {
     const el = sectionRef.current
     if (!el) return
 
     const ctx = gsap.context(() => {
-      // Badge
       gsap.fromTo(
         ".loc-badge",
         { opacity: 0, y: 20 },
-        { opacity: 1, y: 0, duration: 0.7, ease: "power3.out", scrollTrigger: { trigger: el, start: "top 80%" } }
+        {
+          opacity: 1, y: 0, duration: 0.7, ease: "power3.out",
+          scrollTrigger: { trigger: el, start: "top 80%", once: true },
+        }
       )
-      // Filter pills
       gsap.fromTo(
         ".loc-filters",
         { opacity: 0, y: 20 },
-        { opacity: 1, y: 0, duration: 0.7, delay: 0.5, ease: "power3.out", scrollTrigger: { trigger: el, start: "top 80%" } }
+        {
+          opacity: 1, y: 0, duration: 0.7, delay: 0.5, ease: "power3.out",
+          scrollTrigger: { trigger: el, start: "top 80%", once: true },
+        }
       )
-      // Cards stagger
-      gsap.fromTo(
-        ".loc-card",
-        { opacity: 0, y: 60 },
-        { opacity: 1, y: 0, duration: 0.8, stagger: 0.15, ease: "power3.out", scrollTrigger: { trigger: ".loc-grid", start: "top 85%" } }
-      )
-      // CTA
       gsap.fromTo(
         ".loc-cta",
         { opacity: 0, y: 30 },
-        { opacity: 1, y: 0, duration: 0.7, delay: 0.3, ease: "power3.out", scrollTrigger: { trigger: ".loc-cta", start: "top 90%" } }
+        {
+          opacity: 1, y: 0, duration: 0.7, delay: 0.3, ease: "power3.out",
+          scrollTrigger: { trigger: ".loc-cta", start: "top 90%", once: true },
+        }
       )
     }, el)
 
     return () => ctx.revert()
   }, [])
+
+  /**
+   * The cards separately, because changing the filter builds new ones.
+   *
+   * They arrive hidden and nothing was animating them: the original effect
+   * ran once on mount and never saw them.
+   */
+  useEffect(() => {
+    const el = sectionRef.current
+    if (!el) return
+
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        ".loc-card",
+        { opacity: 0, y: 60 },
+        {
+          opacity: 1, y: 0, duration: 0.8, stagger: 0.15, ease: "power3.out",
+          scrollTrigger: { trigger: ".loc-grid", start: "top 85%", once: true },
+        }
+      )
+    }, el)
+
+    return () => ctx.revert()
+  }, [activeFilter])
 
   if (featured.length < 3) return null
 
@@ -169,7 +205,7 @@ export function LocationsSection({ destinations }: { destinations: Location[] })
           </div>
 
           <div className="max-w-3xl">
-            <div className="loc-badge flex items-center gap-3 mb-5" style={{ opacity: 0 }}>
+            <div className="loc-badge flex items-center gap-3 mb-5 opacity-0">
               <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "rgba(132,119,110,0.15)" }}>
                 <Compass className="w-5 h-5" style={{ color: "var(--text-subtle)" }} />
               </div>
@@ -195,9 +231,8 @@ export function LocationsSection({ destinations }: { destinations: Location[] })
 
           {/* Filter pills */}
           <div
-            className="loc-filters flex flex-wrap gap-2 p-1.5 rounded-full z-10"
+            className="loc-filters flex flex-wrap gap-2 p-1.5 rounded-full z-10 opacity-0"
             style={{
-              opacity: 0,
               background: "rgba(255,255,255,0.03)",
               backdropFilter: "blur(12px)",
               WebkitBackdropFilter: "blur(12px)",
@@ -244,7 +279,7 @@ export function LocationsSection({ destinations }: { destinations: Location[] })
           </div>
 
           {/* Primary card - tall left */}
-          <div className="loc-card md:col-span-5" style={{ opacity: 0 }}>
+          <div className="loc-card md:col-span-5 opacity-0">
             <PrimaryCard location={primary} />
           </div>
 
@@ -259,17 +294,17 @@ export function LocationsSection({ destinations }: { destinations: Location[] })
               </svg>
             </div>
 
-            <div className="loc-card" style={{ opacity: 0 }}>
+            <div className="loc-card opacity-0">
               <HorizontalCard location={secondary} icon={<Anchor className="w-5 h-5" />} />
             </div>
-            <div className="loc-card" style={{ opacity: 0 }}>
+            <div className="loc-card opacity-0">
               <HorizontalCard location={tertiary} icon={<Shield className="w-5 h-5" />} />
             </div>
           </div>
         </div>
 
         {/* CTA */}
-        <div className="loc-cta mt-16 text-center" style={{ opacity: 0 }}>
+        <div className="loc-cta mt-16 text-center opacity-0">
           <Link
             href="/locations"
             className="group inline-flex items-center gap-3 text-lg px-6 py-3 rounded-full transition-all duration-300 border hover:bg-[rgba(132,119,110,0.1)]"
