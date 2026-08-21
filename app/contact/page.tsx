@@ -5,6 +5,7 @@ import { Metadata } from "next"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { ContactPageClient } from "@/components/contact/contact-page-client"
+import { asTransfers } from "@/lib/transfers"
 
 export const dynamic = "force-dynamic"
 
@@ -18,7 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function ContactPage() {
-  const [staff, contactComponent] = await Promise.all([
+  const [staff, contactComponent, transfersRow] = await Promise.all([
     db.staff.findMany({
       where: { status: "active" },
       select: {
@@ -40,7 +41,12 @@ export default async function ContactPage() {
       where: { page: { slug: "contact" }, type: "contact-content", status: "active" },
       select: { props: true },
     }),
+    db.setting.findUnique({ where: { key: "transfers" } }),
   ])
+
+  /* Only the brochure is needed here; the rest of the setting belongs to
+     the Getting Here page. */
+  const brochure = asTransfers(transfersRow?.value).brochure
 
   // Pass raw JSON fields — TeamGrid resolves language internally
   const staffData = staff.map((s) => ({
@@ -62,7 +68,7 @@ export default async function ContactPage() {
         style={{ background: "var(--surface-page)", clipPath: "polygon(0% 0, 100% 0%, 100% 100%, 0 100%)" }}
       >
         <SiteHeader />
-        <ContactPageClient staff={staffData} content={content} />
+        <ContactPageClient staff={staffData} content={content} brochure={brochure} />
       </div>
       <SiteFooter />
     </main>

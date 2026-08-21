@@ -72,16 +72,67 @@ export const DEFAULT_TRANSFERS: Transfer[] = [
 /** When the defaults were taken off the office's own sheet. */
 export const DEFAULT_TRANSFERS_UPDATED = "2026-01-01"
 
+/**
+ * The office's own flight sheet, as a file.
+ *
+ * The live timetable on the page is built from what the airlines have filed
+ * and is always current, which is the right thing on screen and the wrong
+ * thing in a bag. People planning a journey print it, forward it to whoever
+ * is booking, or open it on a phone with no signal — and for that they want
+ * one document, dated, that does not change under them.
+ *
+ * So this is a file the office uploads, not something generated. It is their
+ * artefact: their layout, their wording, their choice of what to include.
+ */
+export interface Brochure {
+  /** Where the file lives, on the media CDN. */
+  url: string
+  /** The name it is saved under when downloaded. */
+  name: string
+  /** What the link says, per language. */
+  label: { en: string; el: string; de: string }
+  /** Bytes, so the page can warn before a large download on mobile. */
+  size?: number
+  /** When the office last replaced it. */
+  updated?: string
+}
+
 /** What the `transfers` setting holds. */
 export interface TransfersSetting {
   items: Transfer[]
   /** The date shown beside the prices, so it is the office's claim, not ours. */
   updated: string
+  /** Absent until the office uploads one; the page simply omits the card. */
+  brochure?: Brochure | null
 }
 
 /** Read the stored shape, falling back to the defaults field by field. */
 export function asTransfers(value: unknown): TransfersSetting {
   const v = (value ?? {}) as Partial<TransfersSetting>
   const items = Array.isArray(v.items) && v.items.length ? v.items : DEFAULT_TRANSFERS
-  return { items, updated: (v.updated ?? DEFAULT_TRANSFERS_UPDATED).trim() || DEFAULT_TRANSFERS_UPDATED }
+  /* A brochure without a URL is not a brochure — better no card than a link
+     to nowhere. */
+  const b = v.brochure
+  const brochure: Brochure | null =
+    b && typeof b.url === "string" && b.url.trim()
+      ? {
+          url: b.url.trim(),
+          name: (b.name ?? "flights.pdf").trim(),
+          label: { en: b.label?.en ?? "", el: b.label?.el ?? "", de: b.label?.de ?? "" },
+          size: b.size,
+          updated: b.updated,
+        }
+      : null
+  return {
+    items,
+    updated: (v.updated ?? DEFAULT_TRANSFERS_UPDATED).trim() || DEFAULT_TRANSFERS_UPDATED,
+    brochure,
+  }
+}
+
+/** A size a person can read, or nothing when we were not told. */
+export function readableSize(bytes?: number): string | null {
+  if (!bytes || bytes <= 0) return null
+  const mb = bytes / 1_048_576
+  return mb >= 1 ? `${mb.toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`
 }

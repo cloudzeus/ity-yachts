@@ -1,10 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { PlaneLanding, Loader2, Plus, Trash2, Languages } from "lucide-react"
+import { PlaneLanding, Loader2, Plus, Trash2, Languages, FileText, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { MediaPicker, type PickedMedia } from "@/components/admin/media-picker"
 import {
   asTransfers,
+  readableSize,
   type Transfer,
   type TransfersSetting,
 } from "@/lib/transfers"
@@ -41,6 +43,7 @@ export function TransfersTab({ initialData }: { initialData: unknown }) {
   const [saving, setSaving] = useState(false)
   const [translating, setTranslating] = useState(false)
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle")
+  const [pickerOpen, setPickerOpen] = useState(false)
 
   const setItem = (i: number, patch: Partial<Transfer>) =>
     setData((d) => ({ ...d, items: d.items.map((t, n) => (n === i ? { ...t, ...patch } : t)) }))
@@ -244,6 +247,79 @@ export function TransfersTab({ initialData }: { initialData: unknown }) {
           </div>
         </div>
 
+        {/* ── The printable sheet ──────────────────────────────────────── */}
+        <div className="flex flex-col gap-3 pt-4" style={{ borderTop: "1px solid var(--outline-variant)" }}>
+          <div>
+            <p className="text-sm font-semibold" style={{ color: "var(--primary)", fontFamily: "var(--font-display)" }}>
+              Flight overview (PDF)
+            </p>
+            <p className="text-xs" style={{ color: "var(--on-surface-variant)" }}>
+              Your own sheet, offered as a download on the Getting Here page and on Contact. The
+              timetable on the page is always current; this is the version people print, forward
+              and open without a signal. Leave it empty and no download is shown.
+            </p>
+          </div>
+
+          {data.brochure ? (
+            <div
+              className="flex items-center gap-3 rounded-md p-3"
+              style={{ border: "1px solid var(--outline-variant)" }}
+            >
+              <FileText className="size-5 shrink-0" style={{ color: "var(--primary)" }} />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-xs font-medium" style={{ color: "var(--on-surface)" }}>
+                  {data.brochure.name}
+                </p>
+                <p className="text-xs" style={{ color: "var(--on-surface-variant)" }}>
+                  {readableSize(data.brochure.size) ?? "—"}
+                  {data.brochure.updated ? ` · updated ${data.brochure.updated}` : ""}
+                </p>
+              </div>
+              <Button type="button" variant="outline" size="sm" onClick={() => setPickerOpen(true)}>
+                Replace
+              </Button>
+              <button
+                type="button"
+                onClick={() => setData((d) => ({ ...d, brochure: null }))}
+                aria-label="Remove the PDF"
+                className="p-1.5 rounded transition-colors hover:bg-[var(--surface-container)]"
+              >
+                <X className="size-3.5" style={{ color: "var(--error)" }} />
+              </button>
+            </div>
+          ) : (
+            <Button type="button" variant="outline" size="sm" onClick={() => setPickerOpen(true)}>
+              <FileText className="size-3.5" />
+              Choose or upload a PDF
+            </Button>
+          )}
+
+          {data.brochure && (
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium" style={{ color: "var(--on-surface-variant)" }}>
+                What the link says ({LOCALES.find((l) => l.key === locale)?.label})
+              </label>
+              <input
+                value={data.brochure.label[locale] ?? ""}
+                onChange={(e) =>
+                  setData((d) =>
+                    d.brochure
+                      ? { ...d, brochure: { ...d.brochure, label: { ...d.brochure.label, [locale]: e.target.value } } }
+                      : d
+                  )
+                }
+                placeholder={locale === "en" ? "Flight overview 2027" : ""}
+                className="h-9 px-3 rounded text-sm"
+                style={{
+                  background: "var(--surface-container-lowest)",
+                  border: "1px solid var(--outline-variant)",
+                  color: "var(--on-surface)",
+                }}
+              />
+            </div>
+          )}
+        </div>
+
         <div className="flex items-center gap-3 pt-2" style={{ borderTop: "1px solid var(--outline-variant)" }}>
           <Button onClick={save} disabled={saving}>
             {saving && <Loader2 className="size-3.5 animate-spin" />}
@@ -257,6 +333,28 @@ export function TransfersTab({ initialData }: { initialData: unknown }) {
           )}
         </div>
       </div>
+
+      <MediaPicker
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        accept="document"
+        onSelect={(picked) => {
+          const file = (Array.isArray(picked) ? picked[0] : picked) as PickedMedia | undefined
+          if (!file) return
+          setData((d) => ({
+            ...d,
+            brochure: {
+              url: file.url,
+              name: file.name,
+              size: file.size,
+              /* Kept if the office has already worded it; only the file changed. */
+              label: d.brochure?.label ?? { en: "", el: "", de: "" },
+              updated: new Date().toISOString().slice(0, 10),
+            },
+          }))
+          setPickerOpen(false)
+        }}
+      />
     </div>
   )
 }

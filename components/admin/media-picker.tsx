@@ -12,6 +12,8 @@ export interface PickedMedia {
   path: string
   name: string
   mimeType: string
+  /** Bytes — a document link is fairer when it says how heavy it is. */
+  size?: number
   width?: number | null
   height?: number | null
 }
@@ -20,7 +22,7 @@ interface MediaPickerProps {
   open: boolean
   onClose: () => void
   onSelect: (media: PickedMedia | PickedMedia[]) => void
-  accept?: "image" | "video" | "all"
+  accept?: "image" | "video" | "document" | "all"
   multiple?: boolean
 }
 
@@ -48,6 +50,12 @@ export function MediaPicker({ open, onClose, onSelect, accept = "all", multiple 
         let allFiles: MediaFile[] = data.files ?? []
         if (accept === "image") allFiles = allFiles.filter((f) => f.mimeType.startsWith("image/"))
         if (accept === "video") allFiles = allFiles.filter((f) => f.mimeType.startsWith("video/"))
+        /* PDFs and the office documents beside them — the media library already
+           accepts these on upload, it simply had no way to ask for them. */
+        if (accept === "document")
+          allFiles = allFiles.filter(
+            (f) => f.mimeType === "application/pdf" || f.mimeType.startsWith("application/")
+          )
         setFiles(allFiles)
         setFolders(data.folders ?? [])
       }
@@ -85,7 +93,7 @@ export function MediaPicker({ open, onClose, onSelect, accept = "all", multiple 
 
   function toggleSelect(file: MediaFile) {
     if (!multiple) {
-      onSelect({ url: file.url, path: file.path, name: file.name, mimeType: file.mimeType, width: file.width, height: file.height })
+      onSelect({ url: file.url, path: file.path, name: file.name, mimeType: file.mimeType, size: file.size, width: file.width, height: file.height })
       onClose()
       return
     }
@@ -98,7 +106,7 @@ export function MediaPicker({ open, onClose, onSelect, accept = "all", multiple 
 
   function handleConfirm() {
     const picked = files.filter((f) => selected.has(f.path)).map((f) => ({
-      url: f.url, path: f.path, name: f.name, mimeType: f.mimeType, width: f.width, height: f.height,
+      url: f.url, path: f.path, name: f.name, mimeType: f.mimeType, size: f.size, width: f.width, height: f.height,
     }))
     onSelect(picked)
     onClose()

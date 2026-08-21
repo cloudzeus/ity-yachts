@@ -1,9 +1,9 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { Plane, Ship, Bus, Car, ExternalLink, MapPin } from "lucide-react"
+import { Plane, Ship, Bus, Car, ExternalLink, MapPin, FileText, Download } from "lucide-react"
 import { useTranslations } from "@/lib/use-translations"
-import type { TransfersSetting } from "@/lib/transfers"
+import { readableSize, type TransfersSetting } from "@/lib/transfers"
 import type { CountryFlights } from "@/lib/flights"
 import { FlightBoard, type BoardRow } from "@/components/flight-board"
 
@@ -390,6 +390,57 @@ export function GettingHereClient({
           )}
         </div>
       </section>
+
+      {/* ── The sheet to keep ───────────────────────────────────────────
+          Between the timetable and the transfers, which is where somebody
+          who has just read the schedule decides they want it with them. */}
+      {transfers.brochure && (
+        <section className="w-full px-6 md:px-10 pt-10">
+          <div className="mx-auto max-w-[1400px]">
+            <a
+              href={transfers.brochure.url}
+              download={transfers.brochure.name}
+              target="_blank"
+              rel="noopener"
+              className="group flex flex-wrap items-center gap-4 rounded-[var(--iyc-radius-md)] p-5 transition-all duration-300 hover:-translate-y-0.5 motion-reduce:transition-none"
+              style={{
+                background: "var(--surface-raised)",
+                border: "1px solid var(--border-hairline)",
+              }}
+            >
+              <span
+                className="flex size-11 shrink-0 items-center justify-center rounded-xl"
+                style={{ background: "color-mix(in srgb, var(--iyc-sun-500) 14%, transparent)" }}
+              >
+                <FileText className="size-5" style={{ color: "var(--iyc-sun-600)" }} aria-hidden="true" />
+              </span>
+
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold" style={{ color: "var(--text-heading)" }}>
+                  {lang(transfers.brochure.label) ||
+                    t("gettingHere.brochureTitle", "The full flight overview")}
+                </span>
+                <span className="mt-0.5 block text-xs" style={{ color: "var(--text-muted)" }}>
+                  {t("gettingHere.brochureBody", "One sheet to print or forward — every route, day and time for the season.")}
+                  {" "}
+                  <span className="tabular-nums" style={{ color: "var(--text-subtle)" }}>
+                    PDF{readableSize(transfers.brochure.size) ? ` · ${readableSize(transfers.brochure.size)}` : ""}
+                    {transfers.brochure.updated ? ` · ${transfers.brochure.updated}` : ""}
+                  </span>
+                </span>
+              </span>
+
+              <span
+                className="inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold transition-colors duration-300"
+                style={{ background: "var(--iyc-ionian-600)", color: "#fff" }}
+              >
+                <Download className="size-3.5" aria-hidden="true" />
+                {t("gettingHere.brochureDownload", "Download")}
+              </span>
+            </a>
+          </div>
+        </section>
+      )}
 
       {/* ── Transfers ───────────────────────────────────────────────────── */}
       <section className="w-full px-6 md:px-10 py-14 md:py-20">

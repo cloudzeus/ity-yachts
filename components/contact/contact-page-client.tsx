@@ -3,12 +3,13 @@
 import Image from "next/image"
 import Link from "@/components/locale-link"
 import { FlightTile } from "@/components/flight-tile"
+import type { Brochure } from "@/lib/transfers"
 
 import { useState, useRef, useEffect } from "react"
 import { gsap } from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 import {
-  Mail, Phone, MapPin, Send, Clock, Anchor,
+  Mail, Phone, MapPin, Send, Clock, Anchor, FileText,
   Globe, ArrowRight, CheckCircle2, Loader2,
   MessageSquare, Users, Ship, ChevronDown,
 } from "lucide-react"
@@ -23,6 +24,8 @@ type T = Record<string, string>
 interface ContactPageClientProps {
   staff: StaffMember[]
   content?: Record<string, unknown> | null
+  /** The office's flight sheet, when they have uploaded one. */
+  brochure?: Brochure | null
 }
 
 interface OfficeData {
@@ -77,7 +80,7 @@ const subjectDefs = [
   { value: "other", labelKey: "contact.subject.other", labelFallback: "Something Else", icon: Globe },
 ]
 
-export function ContactPageClient({ staff, content }: ContactPageClientProps) {
+export function ContactPageClient({ staff, content, brochure }: ContactPageClientProps) {
   const { t, tUpper, locale } = useTranslations()
   const subjects = subjectDefs.map((s) => ({ ...s, label: t(s.labelKey, s.labelFallback) }))
 
@@ -678,6 +681,27 @@ export function ContactPageClient({ staff, content }: ContactPageClientProps) {
                 "Preveza is the airport for Lefkada, twenty minutes from our pontoon. See who flies there from your country, on which days, and what the transfer costs."
               )}
             </p>
+
+            {/* The sheet, for anyone who came here to send it to somebody
+                else. Only when the office has uploaded one. */}
+            {brochure && (
+              <a
+                href={brochure.url}
+                download={brochure.name}
+                target="_blank"
+                rel="noopener"
+                className="group mt-4 inline-flex items-center gap-2 self-start text-sm font-semibold transition-colors"
+                style={{ color: "var(--text-link)" }}
+              >
+                <FileText className="size-4 shrink-0" aria-hidden="true" />
+                <span className="underline underline-offset-4">
+                  {r(brochure.label, "") || t("gettingHere.brochureTitle", "The full flight overview")}
+                </span>
+                <span className="text-xs font-normal" style={{ color: "var(--text-subtle)" }}>
+                  (PDF)
+                </span>
+              </a>
+            )}
           </div>
           {/* The same tile as the homepage: two lines of the departure board
               and a way through to the whole timetable. */}
