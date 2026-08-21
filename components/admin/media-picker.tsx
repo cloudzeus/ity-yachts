@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from "react"
 import Image from "next/image"
-import { Check, ChevronRight, Folder, Home, Image as ImageIcon, Play, Upload, Loader2 } from "lucide-react"
+import { Check, ChevronRight, Folder, Home, Image as ImageIcon, Play, Upload, Loader2, FileText } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -39,6 +39,7 @@ export function MediaPicker({ open, onClose, onSelect, accept = "all", multiple 
   const [loading, setLoading] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const fetchMedia = useCallback(async (f: string) => {
@@ -73,18 +74,29 @@ export function MediaPicker({ open, onClose, onSelect, accept = "all", multiple 
     const fileList = e.target.files
     if (!fileList || fileList.length === 0) return
     setUploading(true)
+    setUploadError(null)
     try {
+      const failed: string[] = []
       for (let i = 0; i < fileList.length; i++) {
         const file = fileList[i]
         const formData = new FormData()
         formData.append("file", file)
         formData.append("folder", folder)
-        await fetch("/api/admin/media/upload", { method: "POST", body: formData })
+        const res = await fetch("/api/admin/media/upload", { method: "POST", body: formData })
+        /* The response was thrown away, so a rejected file looked exactly like
+           a successful one: the dialog closed, nothing appeared, and there was
+           nothing to tell anyone why. */
+        if (!res.ok) {
+          const body = await res.json().catch(() => null)
+          failed.push(`${file.name}: ${body?.error ?? res.status}`)
+        }
       }
+      if (failed.length) setUploadError(failed.join(" · "))
       // Refresh the current folder to show uploaded files
       await fetchMedia(folder)
     } catch (err) {
       console.error("[MediaPicker upload]", err)
+      setUploadError(err instanceof Error ? err.message : "Upload failed")
     } finally {
       setUploading(false)
       if (fileInputRef.current) fileInputRef.current.value = ""
@@ -130,7 +142,18 @@ export function MediaPicker({ open, onClose, onSelect, accept = "all", multiple 
                 ref={fileInputRef}
                 type="file"
                 className="hidden"
-                accept={accept === "image" ? "image/*" : accept === "video" ? "video/*" : "image/*,video/*"}
+                /* The file dialog only offers what this lists, and it listed
+                   images and video — so a PDF could not be chosen even though
+                   the server accepts one and the library stores it. */
+                accept={
+                  accept === "image"
+                    ? "image/*"
+                    : accept === "video"
+                      ? "video/*"
+                      : accept === "document"
+                        ? "application/pdf,.pdf,.doc,.docx"
+                        : "image/*,video/*,application/pdf,.pdf,.doc,.docx"
+                }
                 multiple
                 onChange={handleUpload}
               />
@@ -150,6 +173,14 @@ export function MediaPicker({ open, onClose, onSelect, accept = "all", multiple 
 
         {/* Breadcrumb */}
         <div className="flex items-center gap-1 text-sm py-1 flex-wrap shrink-0">
+        {uploadError && (
+          <p
+            className="mx-4 rounded px-3 py-2 text-xs"
+            style={{ background: "color-mix(in srgb, var(--error) 12%, transparent)", color: "var(--error)" }}
+          >
+            {uploadError}
+          </p>
+        )}
           <button onClick={() => setFolder("")} className="flex items-center gap-1 transition-colors hover:opacity-70" style={{ color: folder ? "var(--secondary)" : "var(--primary)" }}>
             <Home className="size-3.5" /> Root
           </button>
@@ -186,6 +217,7 @@ export function MediaPicker({ open, onClose, onSelect, accept = "all", multiple 
               {/* Files */}
               {files.map((file) => {
                 const isImg = file.mimeType.startsWith("image/")
+                const isVid = file.mimeType.startsWith("video/")
                 const isSelected = selected.has(file.path)
                 return (
                   <button key={file.path} onClick={() => toggleSelect(file)}
@@ -198,6 +230,19 @@ export function MediaPicker({ open, onClose, onSelect, accept = "all", multiple 
                     <div className="aspect-square relative overflow-hidden flex items-center justify-center">
                       {isImg ? (
                         <Image src={file.url} alt={file.name} fill className="object-contain" sizes="120px" />
+                      ) : !isVid ? (
+                        /* Anything that is neither picture nor film — a PDF
+                           fell into the video branch and drew an empty player
+                           where a document should be. */
+                        <div className="flex h-full w-full flex-col items-center justify-center gap-1.5">
+                          <FileText className="size-7" style={{ color: "var(--on-surface-variant)" }} />
+                          <span
+                            className="text-[10px] font-semibold uppercase tracking-wider"
+                            style={{ color: "var(--on-surface-variant)" }}
+                          >
+                            {(file.name.split(".").pop() || "file").slice(0, 4)}
+                          </span>
+                        </div>
                       ) : (
                         <div className="relative w-full h-full">
                           <video src={file.url} muted preload="metadata" className="absolute inset-0 w-full h-full object-cover" />
