@@ -365,21 +365,31 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
   )
 
   /**
-   * The add-ons for the season being looked at.
+   * The add-ons, always at this season's prices.
    *
    * NAUSYS files each service once per season, so the list arrived doubled —
-   * "Skipper €200" next to "Skipper €210", which reads as a bug and is in fact
-   * next year's price. Tying them to the year toggle above shows one of each,
-   * at the price that applies.
+   * "Skipper €200" next to "Skipper €210", which reads as a bug and is in
+   * fact next year's price.
    *
-   * A service with no season attached is shown whatever year is chosen rather
-   * than vanishing, and if a year has none at all the whole list is shown
-   * instead of an empty panel.
+   * Only one season is ever shown, and it is the current one, whatever year
+   * the rate cards above are set to. The office quotes today's add-on prices,
+   * and a visitor comparing next summer's weeks should not be told a skipper
+   * costs more than the answer they will get on the telephone.
+   *
+   * Falling back to the whole list would put the doubling straight back, so
+   * when the current year has nothing the next season with anything in it is
+   * used instead — one season, never two.
    */
   const servicesForYear = useMemo(() => {
-    const forYear = yacht.services.filter((s) => s.year == null || s.year === activeYear)
-    return forYear.length ? forYear : yacht.services
-  }, [yacht.services, activeYear])
+    const undated = yacht.services.filter((s) => s.year == null)
+    const years = [...new Set(yacht.services.map((s) => s.year).filter((y): y is number => y != null))]
+      .sort((a, b) => a - b)
+    const chosen = years.includes(currentYear)
+      ? currentYear
+      : years.find((y) => y > currentYear) ?? years[years.length - 1]
+    if (chosen == null) return undated
+    return [...yacht.services.filter((s) => s.year === chosen), ...undated]
+  }, [yacht.services, currentYear])
 
   // Compute available dates for calendar from pricing periods
   const { unavailableMatcher, firstAvailableMonth } = useMemo(() => {
