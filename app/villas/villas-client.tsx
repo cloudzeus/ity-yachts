@@ -1,7 +1,7 @@
 "use client"
 
 import Image from "next/image"
-import { ArrowUpRight, BedDouble, Users, Ruler, Waves } from "lucide-react"
+import { ArrowUpRight } from "lucide-react"
 import { useTranslations } from "@/lib/use-translations"
 import { removeGreekTonos } from "@/lib/greek-utils"
 import { VILLAS, VILLAS_HERO, VILLAS_URL } from "@/lib/villas"
@@ -15,13 +15,21 @@ import { VILLAS, VILLAS_HERO, VILLAS_URL } from "@/lib/villas"
  * and the first rate change would make it a lying one.
  */
 export function VillasClient() {
-  const { t, tUpper, locale } = useTranslations()
+  const { t, tUpper } = useTranslations()
 
-  const facts = (v: (typeof VILLAS)[number]) => [
-    { icon: BedDouble, label: t("villas.bedrooms", "Bedrooms"), value: String(v.bedrooms) },
-    { icon: Users, label: t("villas.guests", "Guests"), value: String(v.guests) },
-    { icon: Ruler, label: t("villas.size", "Size"), value: `${v.size} m²` },
-    { icon: Waves, label: t("villas.pool", "Pool"), value: t("villas.poolPrivate", "Private") },
+  /**
+   * One line, not a grid of icons.
+   *
+   * Four icons in a two-by-two block sat directly under a photograph and
+   * competed with it — the card ended up with two things asking to be looked
+   * at first. Set as a single quiet line of middots it reads in one pass and
+   * lets the picture do the work it is there for.
+   */
+  const spec = (v: (typeof VILLAS)[number]) => [
+    `${v.bedrooms} ${t("villas.bedrooms", "bedrooms")}`,
+    `${v.guests} ${t("villas.guests", "guests")}`,
+    `${v.size} m²`,
+    t("villas.poolPrivate", "private pool"),
   ]
 
   return (
@@ -73,102 +81,104 @@ export function VillasClient() {
       {/* ── The three ───────────────────────────────────────────────────── */}
       <section className="w-full px-6 py-16 md:px-10 md:py-24">
         <div className="mx-auto max-w-[1400px]">
-          <ul className="grid list-none grid-cols-1 gap-8 p-0 md:grid-cols-3 md:gap-6">
-            {VILLAS.map((v) => (
-              <li key={v.key}>
+          {/* Restraint first, then rhythm.
+
+              The card had a border, a shadow, a lift, an image zoom and a gold
+              bar drawing itself across the top — five effects arguing at once,
+              which is what made it read as a template rather than as a house
+              worth a week of somebody's summer.
+
+              What is left is the photograph, an index, a bilingual name and
+              four facts. The middle column is dropped half a step so the three
+              are a composition rather than a row of equals; the eye moves
+              across them instead of scanning a table. It only applies where
+              there are three abreast — stacked on a phone, an offset is just a
+              gap. */}
+          <ul className="grid list-none grid-cols-1 gap-12 p-0 md:grid-cols-3 md:gap-8">
+            {VILLAS.map((v, i) => (
+              <li key={v.key} className={i === 1 ? "md:mt-16" : undefined}>
                 <a
                   href={v.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group flex h-full flex-col overflow-hidden rounded-[var(--iyc-radius-md)] transition-transform duration-300 ease-out hover:-translate-y-1 motion-reduce:transition-none"
-                  style={{
-                    background: "var(--surface-raised)",
-                    border: "1px solid var(--border-hairline)",
-                    boxShadow: "0 1px 2px rgba(4,13,25,0.04)",
-                  }}
+                  className="group flex h-full flex-col"
                 >
-                  <div className="relative aspect-[4/3] w-full overflow-hidden">
+                  <div
+                    className="relative aspect-[4/5] w-full overflow-hidden rounded-[var(--iyc-radius-md)]"
+                    style={{ background: "var(--surface-sunken)" }}
+                  >
                     <Image
                       src={v.image}
                       alt={`${v.name} — ${t("villas.imageAlt", "villa on Lefkada with a private pool")}`}
                       fill
                       sizes="(max-width: 768px) 100vw, 33vw"
-                      className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04] motion-reduce:transition-none"
+                      className="object-cover transition-transform duration-[900ms] ease-out group-hover:scale-[1.03] motion-reduce:transition-none"
                     />
+                  </div>
+
+                  {/* The index moved out of the photograph. Over the bottom of
+                      a picture it sat on whatever happened to be there —
+                      water in one, foliage in another — and was legible in
+                      neither. Here it is a fixed part of the type. */}
+                  <div
+                    className="mt-6 flex items-baseline gap-4 border-t pt-4"
+                    style={{ borderColor: "var(--border-hairline)" }}
+                  >
                     <span
                       aria-hidden="true"
-                      className="absolute inset-x-0 top-0 h-[3px] origin-left scale-x-0 transition-transform duration-300 ease-out group-hover:scale-x-100 motion-reduce:transition-none"
-                      style={{ background: "var(--iyc-sun-500)" }}
-                    />
-                  </div>
-
-                  <div className="flex flex-1 flex-col p-6">
-                    <div className="flex items-baseline justify-between gap-3">
-                      <h2
-                        className="text-2xl font-semibold leading-tight"
-                        style={{ fontFamily: "var(--font-display)", color: "var(--text-heading)" }}
-                      >
-                        {v.name}
-                      </h2>
-                      {/* The Greek name is how the house is known locally, and
-                          it is not translated — it is the name. */}
-                      <span className="text-sm" style={{ color: "var(--text-subtle)" }}>
+                      className="shrink-0 text-xs font-semibold tabular-nums tracking-[0.2em]"
+                      style={{ color: "var(--iyc-sun-600)" }}
+                    >
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    <h2
+                      className="min-w-0 text-2xl font-semibold leading-none md:text-[1.75rem]"
+                      style={{ fontFamily: "var(--font-display)", color: "var(--text-heading)" }}
+                    >
+                      {v.name}
+                      {/* The Greek is the same name, so it sits with it rather
+                          than under it as a second, quieter title. */}
+                      <span className="ml-2.5 text-base font-normal" style={{ color: "var(--text-subtle)" }}>
                         {v.greek}
                       </span>
-                    </div>
-
-                    <dl className="mt-5 grid grid-cols-2 gap-x-4 gap-y-3">
-                      {facts(v).map((f) => (
-                        <div key={f.label} className="flex items-center gap-2">
-                          <f.icon
-                            className="size-4 shrink-0"
-                            style={{ color: "var(--iyc-sun-600)" }}
-                            aria-hidden="true"
-                          />
-                          <span className="min-w-0">
-                            <dt
-                              className="text-[10px] font-semibold uppercase tracking-[0.12em]"
-                              style={{ color: "var(--text-subtle)" }}
-                            >
-                              {removeGreekTonos(f.label)}
-                            </dt>
-                            <dd className="m-0 text-sm font-medium" style={{ color: "var(--text-body)" }}>
-                              {f.value}
-                            </dd>
-                          </span>
-                        </div>
-                      ))}
-                    </dl>
-
-                    <div
-                      className="mt-auto flex items-baseline justify-between gap-3 border-t pt-4"
-                      style={{ borderColor: "var(--border-hairline)", marginTop: "1.5rem" }}
-                    >
-                      <span>
-                        <span
-                          className="block text-[10px] font-semibold uppercase tracking-[0.12em]"
-                          style={{ color: "var(--text-subtle)" }}
-                        >
-                          {removeGreekTonos(t("villas.from", "From"))}
-                        </span>
-                        <span
-                          className="text-lg font-semibold tabular-nums"
-                          style={{ color: "var(--text-heading)", fontFamily: "var(--font-display)" }}
-                        >
-                          €{v.fromPrice.toLocaleString(locale)}
-                          <span className="text-xs font-normal" style={{ color: "var(--text-muted)" }}>
-                            {" "}
-                            / {t("villas.week", "week")}
-                          </span>
-                        </span>
-                      </span>
-                      <ArrowUpRight
-                        className="size-5 shrink-0 transition-transform duration-300 ease-out group-hover:-translate-y-0.5 group-hover:translate-x-0.5 motion-reduce:transition-none"
-                        style={{ color: "var(--text-link)" }}
-                        aria-hidden="true"
-                      />
-                    </div>
+                    </h2>
                   </div>
+
+                  <ul className="mt-4 flex list-none flex-wrap gap-x-3 gap-y-1.5 p-0">
+                    {spec(v).map((f, n) => (
+                      <li key={f} className="flex items-center gap-3">
+                        {n > 0 && (
+                          <span
+                            aria-hidden="true"
+                            className="h-3 w-px"
+                            style={{ background: "var(--border-hairline)" }}
+                          />
+                        )}
+                        <span
+                          className="text-[11px] uppercase tracking-[0.1em]"
+                          style={{ color: "var(--text-muted)" }}
+                        >
+                          {removeGreekTonos(f)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <span
+                    className="mt-5 inline-flex items-center gap-2 text-sm font-semibold"
+                    style={{ color: "var(--text-link)" }}
+                  >
+                    <span
+                      className="bg-[length:0%_1px] bg-left-bottom bg-no-repeat pb-0.5 transition-[background-size] duration-300 ease-out group-hover:bg-[length:100%_1px] motion-reduce:transition-none"
+                      style={{ backgroundImage: "linear-gradient(currentColor, currentColor)" }}
+                    >
+                      {t("villas.view", "View the villa")}
+                    </span>
+                    <ArrowUpRight
+                      className="size-4 shrink-0 transition-transform duration-300 ease-out group-hover:-translate-y-0.5 group-hover:translate-x-0.5 motion-reduce:transition-none"
+                      aria-hidden="true"
+                    />
+                  </span>
                 </a>
               </li>
             ))}

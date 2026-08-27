@@ -8,10 +8,13 @@
  *
  * Deliberately not a copy of ioniandreamvillas.com. That site can sell them;
  * this page has one job, which is to tell a charter guest the villas exist
- * and are the same family, and then send them there. Room counts, a price to
- * anchor on, one photograph each — anything more and we are maintaining a
- * second villa website that will drift out of date the first time a rate
- * changes.
+ * and are the same family, and then send them there. Room counts and one
+ * photograph each — anything more and we are maintaining a second villa
+ * website that drifts out of date on its own.
+ *
+ * No prices. They move by season and by year, and a figure repeated here is
+ * a figure nobody will remember to change — a guest quoting it back at the
+ * office is worse than never having shown one.
  */
 
 export interface Villa {
@@ -23,8 +26,6 @@ export interface Villa {
   guests: number
   /** Square metres. */
   size: number
-  /** Euro per week, the lowest of the season. */
-  fromPrice: number
   image: string
   /** Deep link to the villa's own page. */
   href: string
@@ -40,7 +41,6 @@ export const VILLAS: Villa[] = [
     bedrooms: 3,
     guests: 6,
     size: 140,
-    fromPrice: 1950,
     image: "https://iycweb.b-cdn.net/villas/1787837567166-castro.webp",
     href: "https://ionian-dream-villas.com/en/villas/castro",
   },
@@ -51,7 +51,6 @@ export const VILLAS: Villa[] = [
     bedrooms: 3,
     guests: 6,
     size: 140,
-    fromPrice: 1950,
     image: "https://iycweb.b-cdn.net/villas/1787837567959-jira.webp",
     href: "https://ionian-dream-villas.com/en/villas/jira",
   },
@@ -62,7 +61,6 @@ export const VILLAS: Villa[] = [
     bedrooms: 3,
     guests: 6,
     size: 140,
-    fromPrice: 1950,
     image: "https://iycweb.b-cdn.net/villas/1787837568907-milos.webp",
     href: "https://ionian-dream-villas.com/en/villas/milos",
   },
