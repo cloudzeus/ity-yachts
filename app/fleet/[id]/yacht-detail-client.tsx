@@ -85,7 +85,7 @@ interface YachtData {
   note: string
   noteTranslations?: TranslatedField
   equipmentByCategory: Record<string, { categoryName: string; categoryNameTranslations?: TranslatedField; items: Array<{ name: string; nameTranslations?: TranslatedField; quantity: number }> }>
-  services: Array<{ name: string; nameTranslations?: TranslatedField; price: number; currency: string; obligatory: boolean }>
+  services: Array<{ name: string; nameTranslations?: TranslatedField; price: number; currency: string; obligatory: boolean; year?: number | null }>
   availability?: Array<{ dateFrom: string; dateTo: string; status: string }>
   prices: Array<{ dateFrom: string; dateTo: string; price: number; currency: string; priceType: string }>
   mastLength: number | null
@@ -363,6 +363,23 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
     () => weeklyPrices.filter((p) => new Date(p.dateFrom).getFullYear() === activeYear),
     [weeklyPrices, activeYear]
   )
+
+  /**
+   * The add-ons for the season being looked at.
+   *
+   * NAUSYS files each service once per season, so the list arrived doubled —
+   * "Skipper €200" next to "Skipper €210", which reads as a bug and is in fact
+   * next year's price. Tying them to the year toggle above shows one of each,
+   * at the price that applies.
+   *
+   * A service with no season attached is shown whatever year is chosen rather
+   * than vanishing, and if a year has none at all the whole list is shown
+   * instead of an empty panel.
+   */
+  const servicesForYear = useMemo(() => {
+    const forYear = yacht.services.filter((s) => s.year == null || s.year === activeYear)
+    return forYear.length ? forYear : yacht.services
+  }, [yacht.services, activeYear])
 
   // Compute available dates for calendar from pricing periods
   const { unavailableMatcher, firstAvailableMonth } = useMemo(() => {
@@ -1304,14 +1321,14 @@ export function YachtDetailClient({ yacht }: { yacht: YachtData }) {
             </div>
 
             {/* Services */}
-            {yacht.services.length > 0 && (
+            {servicesForYear.length > 0 && (
               <div className="mt-10 border-t border-[var(--border-hairline)] pt-8 pb-[100px]">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-lg font-bold" style={{ fontFamily: "var(--font-display)" }}>{t("yacht.availableServices", "Available Services")}</h2>
                   <span className="text-xs text-[var(--text-muted)]">{t("yacht.optionalAddons", "Optional add-ons for your charter")}</span>
                 </div>
                 <div className="flex flex-wrap gap-x-2 gap-y-4">
-                  {[...yacht.services].sort((a, b) => {
+                  {[...servicesForYear].sort((a, b) => {
                     // Free / included first, then paid
                     const aFree = a.price === 0 || a.obligatory ? 0 : 1
                     const bFree = b.price === 0 || b.obligatory ? 0 : 1

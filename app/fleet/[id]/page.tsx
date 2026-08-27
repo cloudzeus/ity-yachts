@@ -159,6 +159,20 @@ export default async function YachtDetailPage({ params }: { params: Promise<{ id
   }
 
   // Services
+  /* NAUSYS files a service once per season, so every add-on arrived twice and
+     the page listed both — "Skipper €200" beside "Skipper €210", which reads
+     as a fault rather than as next year's price. They are not duplicates: the
+     second is 2027. The season id carries the year, so each one is tagged and
+     the page shows the year the visitor has selected. */
+  const seasonYears = new Map(
+    (
+      await db.nausysSeason.findMany({
+        where: { id: { in: [...new Set(yacht.services.map((s) => s.seasonId).filter((id): id is number => id != null))] } },
+        select: { id: true, dateFrom: true },
+      })
+    ).map((s) => [s.id, s.dateFrom.getUTCFullYear()])
+  )
+
   const services = yacht.services.map((s) => {
     const serviceNames = s.service?.name as Record<string, string> | undefined
     const serviceName = serviceNames?.en || "Service"
@@ -168,6 +182,9 @@ export default async function YachtDetailPage({ params }: { params: Promise<{ id
       price: Number(s.price) || 0,
       currency: s.currency || "EUR",
       obligatory: s.obligatory || false,
+      /* Null when NAUSYS filed it without a season — shown whatever year is
+         chosen, rather than disappearing. */
+      year: (s.seasonId != null ? seasonYears.get(s.seasonId) : null) ?? null,
     }
   })
 
