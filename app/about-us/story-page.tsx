@@ -6,6 +6,7 @@ import Link from "@/components/locale-link"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { useTranslations } from "@/lib/use-translations"
+import { TeamSection } from "@/components/story/team-section"
 import { removeGreekTonos } from "@/lib/greek-utils"
 
 if (typeof window !== "undefined") {
@@ -14,9 +15,27 @@ if (typeof window !== "undefined") {
 
 type Copy = Record<string, Record<string, string>>
 
-export function StoryPage({ copy }: { copy: Copy }) {
+type StaffRow = { name: string; position: unknown; image: string | null; bio: unknown }
+
+export function StoryPage({ copy, staff = [] }: { copy: Copy; staff?: StaffRow[] }) {
   const { locale } = useTranslations()
   const rootRef = useRef<HTMLDivElement>(null)
+
+  /** A translated field off a staff record, in the reader's language. */
+  const pick = (field: unknown) => {
+    const o = (field ?? {}) as Record<string, string>
+    return (o[locale] || o.en || o.el || o.de || "").trim()
+  }
+  const team = staff
+    .map((m) => ({
+      name: m.name,
+      position: pick(m.position),
+      image: m.image ?? "",
+      bio: pick(m.bio),
+    }))
+    /* Somebody with neither a photograph nor a role is a placeholder record,
+       not a colleague to put on the page. */
+    .filter((m) => m.image || m.position)
 
   /** A stored string, in the reader's language. */
   const c = (key: string, fallback = "") => {
@@ -120,6 +139,11 @@ export function StoryPage({ copy }: { copy: Copy }) {
       <Chapter n={5} side="left" c={c} img={img} drift="0.16" />
       <Chapter n={6} side="right" c={c} img={img} drift="0.2" tone="sunken" />
       <Chapter n={7} side="left" c={c} img={img} drift="0.14" />
+
+      {/* ── The team ─────────────────────────────────────────────────────
+          Before the closing paragraph: the page has just told the family's
+          story, and this is who that family is now. */}
+      <TeamSection members={team} />
 
       {/* ── Sailing with friends ─────────────────────────────────────────── */}
       <section className="relative w-full">

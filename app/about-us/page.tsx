@@ -55,7 +55,16 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function AboutUsPage() {
-  const data = await loadStory()
+  const [data, staff] = await Promise.all([
+    loadStory(),
+    /* The team comes from the staff records the office already keeps, so a
+       face changed in /admin changes here and nowhere else has to be edited. */
+    db.staff.findMany({
+      where: { status: "active" },
+      select: { name: true, position: true, image: true, bio: true },
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+    }),
+  ])
   if (!data) notFound()
 
   return (
@@ -65,7 +74,7 @@ export default async function AboutUsPage() {
         style={{ background: "var(--surface-page)", clipPath: "polygon(0% 0, 100% 0%, 100% 100%, 0 100%)" }}
       >
         <SiteHeader />
-        <StoryPage copy={data.copy} />
+        <StoryPage copy={data.copy} staff={staff} />
       </div>
 
       <SiteFooter />
