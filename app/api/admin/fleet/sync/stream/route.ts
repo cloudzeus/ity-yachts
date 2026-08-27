@@ -1,9 +1,11 @@
 import { db } from "@/lib/db"
+import type { Prisma } from "@prisma/client"
 import { getSession } from "@/lib/auth-session"
 import { NextRequest } from "next/server"
 import { runFullSync, SYNC_STEPS, type SyncProgressFn } from "@/lib/nausys-sync"
 import { syncAllYachtImages } from "@/lib/nausys-image-sync"
 import type { NausysCredentials } from "@/lib/nausys-api"
+import { takeSnapshot, diffSnapshots, type Change } from "@/lib/nausys-changes"
 
 export const dynamic = "force-dynamic"
 
@@ -65,6 +67,11 @@ export async function GET(req: NextRequest) {
         data: { syncType: "FULL", status: "running" },
       })
 
+      /* Photographed before anything is written, so the run can say what it
+         changed rather than only how much it touched. Five selects; the cost
+         is nothing beside the sync itself. */
+      const before = await takeSnapshot()
+
       const onProgress: SyncProgressFn = (key, status, count, error) => {
         send({ type: "progress", key, status, count: count ?? 0, error })
       }
@@ -97,17 +104,37 @@ export async function GET(req: NextRequest) {
           send({ type: "progress", key: "images", status: "error", count: 0, error: imgMsg })
         }
 
+        /* The diff is reporting, not data: a failure here must not turn a
+           successful sync into a failed one. */
+        let changes: Change[] = []
+        try {
+          changes = await diffSnapshots(before, await takeSnapshot())
+        } catch (diffErr) {
+          console.error("[NAUSYS Sync] change detection failed", diffErr)
+        }
+
         await db.nausysSyncLog.update({
           where: { id: log.id },
           data: {
             status: result.status,
             itemCount: result.itemCount,
+            /* Capped. A first sync, or one after NAUSYS renumbers something,
+               can produce thousands and nobody reads past the first screen —
+               the count still carries the true total. */
+            changes: changes.slice(0, 500) as unknown as Prisma.InputJsonValue,
+            changeCount: changes.length,
             completedAt: new Date(),
             errorMsg: result.errorMsg || result.steps.join("\n"),
           },
         })
 
-        send({ type: "complete", status: result.status, itemCount: result.itemCount })
+        send({
+          type: "complete",
+          status: result.status,
+          itemCount: result.itemCount,
+          changeCount: changes.length,
+          changes: changes.slice(0, 50),
+        })
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : "Unknown error"
         await db.nausysSyncLog.update({

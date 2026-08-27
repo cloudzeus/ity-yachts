@@ -1,4 +1,6 @@
 import { db } from "@/lib/db"
+import type { Prisma } from "@prisma/client"
+import { takeSnapshot, diffSnapshots, type Change } from "@/lib/nausys-changes"
 import { getSession } from "@/lib/auth-session"
 import { NextRequest, NextResponse } from "next/server"
 import { runFullSync } from "@/lib/nausys-sync"
@@ -61,8 +63,20 @@ export async function POST(req: NextRequest) {
       data: { syncType, status: "running" },
     })
 
+    /* The same before-and-after as the streaming route, so a sync started
+       from here is recorded the same way rather than being the one that
+       silently reports nothing. */
+    const before = await takeSnapshot()
+
     // Run sync (this can take a while)
     const result = await runFullSync(creds)
+
+    let changes: Change[] = []
+    try {
+      changes = await diffSnapshots(before, await takeSnapshot())
+    } catch (diffErr) {
+      console.error("[NAUSYS Sync] change detection failed", diffErr)
+    }
 
     // Update log with results
     await db.nausysSyncLog.update({
@@ -70,6 +84,8 @@ export async function POST(req: NextRequest) {
       data: {
         status: result.status,
         itemCount: result.itemCount,
+        changes: changes.slice(0, 500) as unknown as Prisma.InputJsonValue,
+        changeCount: changes.length,
         completedAt: new Date(),
         errorMsg: result.errorMsg || result.steps.join("\n"),
       },

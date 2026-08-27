@@ -931,6 +931,11 @@ model NausysSyncLog {
   syncType    String                           // FULL, YACHTS, PRICES, EQUIPMENT, etc.
   status      String   @default("running")     // running, completed, failed
   itemCount   Int      @default(0)
+  /// What actually moved — see lib/nausys-changes.ts. A count of items says
+  /// something changed and never what, which is the half that matters when a
+  /// rate the office has already quoted goes up.
+  changes     Json?
+  changeCount Int      @default(0)
   errorMsg    String?  @db.Text
   startedAt   DateTime @default(now())
   completedAt DateTime?

@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useCallback, useRef, useEffect } from "react"
-import { RefreshCw, CheckCircle2, XCircle, Loader2, Database, Ship, X } from "lucide-react"
+import type { Change } from "@/lib/nausys-changes"
+import { RefreshCw, CheckCircle2, XCircle, Loader2, Database, Ship, X, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 type StepDef = { key: string; label: string; wave: number }
@@ -25,6 +26,11 @@ export function SyncModal({ onClose, onComplete }: SyncModalProps) {
   const [phase, setPhase] = useState<"idle" | "running" | "done" | "error">("idle")
   const [overallStatus, setOverallStatus] = useState<string>("")
   const [totalItems, setTotalItems] = useState(0)
+  /* What the run actually altered. A count of items says something moved and
+     never what — and what is the half somebody needs when a rate they have
+     already quoted goes up. */
+  const [changes, setChanges] = useState<Change[]>([])
+  const [changeCount, setChangeCount] = useState(0)
   const [imageProgress, setImageProgress] = useState<{ yachtName: string; current: number; total: number } | null>(null)
   const abortRef = useRef<AbortController | null>(null)
   const startTimeRef = useRef<number>(0)
@@ -104,6 +110,8 @@ export function SyncModal({ onClose, onComplete }: SyncModalProps) {
 
             if (msg.type === "complete") {
               setTotalItems(msg.itemCount ?? 0)
+              setChanges(msg.changes ?? [])
+              setChangeCount(msg.changeCount ?? 0)
               if (msg.status === "completed") {
                 setPhase("done")
                 setOverallStatus("Sync completed successfully")
@@ -299,12 +307,66 @@ export function SyncModal({ onClose, onComplete }: SyncModalProps) {
             ))}
         </div>
 
+        {/* What changed. Only when something did — a panel announcing "no
+            changes" on every run trains people to ignore the one that matters. */}
+        {phase === "done" && changeCount > 0 && (
+          <div
+            className="mx-5 mb-3 rounded-md"
+            style={{ border: "1px solid var(--outline-variant)", background: "var(--surface-container-lowest)" }}
+          >
+            <div
+              className="flex items-center gap-2 px-4 py-2.5"
+              style={{ borderBottom: "1px solid var(--outline-variant)" }}
+            >
+              <AlertCircle className="size-4 shrink-0" style={{ color: "var(--secondary)" }} />
+              <p className="text-xs font-semibold" style={{ color: "var(--primary)" }}>
+                {changeCount} change{changeCount === 1 ? "" : "s"} from NAUSYS
+              </p>
+            </div>
+            <div className="max-h-52 overflow-y-auto">
+              {changes.map((c, i) => (
+                <div
+                  key={i}
+                  className="flex items-baseline gap-2 px-4 py-2 text-xs"
+                  style={{ borderTop: i ? "1px solid var(--outline-variant)" : undefined }}
+                >
+                  <span
+                    className="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+                    style={{ background: "var(--surface-container)", color: "var(--on-surface-variant)" }}
+                  >
+                    {c.kind === "yacht-added" || c.kind === "yacht-removed" ? "fleet" : c.kind}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="font-medium" style={{ color: "var(--on-surface)" }}>{c.yacht}</span>
+                    <span style={{ color: "var(--on-surface-variant)" }}> — {c.what}</span>
+                  </span>
+                  {(c.before || c.after) && (
+                    <span className="shrink-0 tabular-nums" style={{ color: "var(--on-surface-variant)" }}>
+                      <span style={{ textDecoration: c.after ? "line-through" : undefined, opacity: 0.6 }}>
+                        {c.before ?? "—"}
+                      </span>
+                      {" → "}
+                      <span style={{ color: "var(--primary)", fontWeight: 600 }}>{c.after ?? "removed"}</span>
+                    </span>
+                  )}
+                </div>
+              ))}
+              {changeCount > changes.length && (
+                <p className="px-4 py-2 text-xs" style={{ color: "var(--on-surface-variant)" }}>
+                  … and {changeCount - changes.length} more
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Footer */}
         <div className="px-5 py-3 flex items-center justify-between" style={{ borderTop: "1px solid var(--outline-variant)" }}>
           {phase === "done" ? (
             <>
               <span className="text-xs" style={{ color: "#4F7A46" }}>
-                {totalItems.toLocaleString()} total items synced
+                {totalItems.toLocaleString()} items synced
+                {changeCount > 0 && ` · ${changeCount.toLocaleString()} change${changeCount === 1 ? "" : "s"}`}
               </span>
               <Button
                 size="sm"
