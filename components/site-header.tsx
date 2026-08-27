@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import Link from "@/components/locale-link"
 import Image from "next/image"
 import gsap from "gsap"
-import { Menu, X, Anchor } from "lucide-react"
+import { Menu, X, Anchor, ChevronDown } from "lucide-react"
 import { LanguageSwitcher } from "@/components/language-switcher"
 import { useTranslations } from "@/lib/use-translations"
 import { useNavigation } from "@/lib/use-navigation"
@@ -19,6 +19,25 @@ export function SiteHeader() {
   const menuItemsRef = useRef<HTMLDivElement>(null)
   const { t, locale } = useTranslations()
   const { items: navItems } = useNavigation()
+
+  /**
+   * The kinds of boat, under the Fleet link.
+   *
+   * Read from the fleet itself so the menu cannot drift from the pontoon:
+   * sailing yachts and a catamaran today, and whatever arrives next without
+   * anyone editing a list.
+   */
+  const [types, setTypes] = useState<{ id: number; name: Record<string, string>; count: number }[]>([])
+  useEffect(() => {
+    let alive = true
+    fetch("/api/fleet/categories")
+      .then((r) => r.json())
+      .then((d) => { if (alive) setTypes(d.categories ?? []) })
+      .catch(() => {})
+    return () => { alive = false }
+  }, [])
+
+  const typeName = (n: Record<string, string>) => n[locale] || n.en || Object.values(n)[0] || ""
 
   const navLinks = navItems
     .filter((item) => !item.isHomePage)
@@ -129,16 +148,56 @@ export function SiteHeader() {
 
           {/* Desktop nav */}
           <nav className="hidden items-center gap-8 lg:flex">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-sm font-medium text-white/80 transition-colors hover:text-white"
-                style={{ fontFamily: "var(--font-display)" }}
-              >
-                {link.label}
-              </Link>
-            ))}
+            {navLinks.map((link) => {
+              const withTypes = link.href === "/fleet" && types.length > 1
+              return (
+                <div key={link.href} className={withTypes ? "group/nav relative" : undefined}>
+                  <Link
+                    href={link.href}
+                    className="flex items-center gap-1 text-sm font-medium text-white/80 transition-colors hover:text-white"
+                    style={{ fontFamily: "var(--font-display)" }}
+                  >
+                    {link.label}
+                    {withTypes && (
+                      <ChevronDown
+                        className="h-3.5 w-3.5 transition-transform duration-200 group-hover/nav:rotate-180"
+                        strokeWidth={2}
+                        aria-hidden="true"
+                      />
+                    )}
+                  </Link>
+
+                  {/* Opens on hover and on keyboard focus, so it is reachable
+                      without a mouse. The gap between the link and the panel is
+                      padding rather than margin — a real gap breaks the hover
+                      the moment the pointer crosses it. */}
+                  {withTypes && (
+                    <div className="invisible absolute left-0 top-full z-50 pt-3 opacity-0 transition-all duration-200 group-hover/nav:visible group-hover/nav:opacity-100 group-focus-within/nav:visible group-focus-within/nav:opacity-100">
+                      <div
+                        className="min-w-[15rem] overflow-hidden rounded-xl py-1.5"
+                        style={{
+                          background: "var(--surface-inverse-raised)",
+                          border: "1px solid rgba(255,255,255,0.12)",
+                          boxShadow: "var(--shadow-lg)",
+                        }}
+                      >
+                        {types.map((c) => (
+                          <Link
+                            key={c.id}
+                            href={`/fleet?categoryId=${c.id}`}
+                            className="flex items-center justify-between gap-6 px-4 py-2.5 text-sm text-white/75 transition-colors hover:bg-white/10 hover:text-white"
+                            style={{ fontFamily: "var(--font-display)" }}
+                          >
+                            {typeName(c.name)}
+                            <span className="text-xs tabular-nums text-white/40">{c.count}</span>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </nav>
 
           {/* Right actions */}
@@ -186,15 +245,33 @@ export function SiteHeader() {
         >
           <div ref={menuItemsRef} className="flex flex-col gap-1">
             {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setMobileOpen(false)}
-                className="rounded-sm px-4 py-3 text-base font-medium text-white/80 transition-colors hover:bg-white/5 hover:text-white"
-                style={{ fontFamily: "var(--font-display)" }}
-              >
-                {link.label}
-              </Link>
+              <div key={link.href}>
+                <Link
+                  href={link.href}
+                  onClick={() => setMobileOpen(false)}
+                  className="block rounded-sm px-4 py-3 text-base font-medium text-white/80 transition-colors hover:bg-white/5 hover:text-white"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  {link.label}
+                </Link>
+                {/* No hover on a phone, so the types are simply listed. */}
+                {link.href === "/fleet" && types.length > 1 && (
+                  <div className="flex flex-col">
+                    {types.map((c) => (
+                      <Link
+                        key={c.id}
+                        href={`/fleet?categoryId=${c.id}`}
+                        onClick={() => setMobileOpen(false)}
+                        className="flex items-center justify-between rounded-sm py-2 pl-8 pr-4 text-sm text-white/60 transition-colors hover:bg-white/5 hover:text-white"
+                        style={{ fontFamily: "var(--font-display)" }}
+                      >
+                        {typeName(c.name)}
+                        <span className="text-xs tabular-nums text-white/30">{c.count}</span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
             ))}
             <button
               type="button"

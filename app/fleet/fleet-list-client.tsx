@@ -111,7 +111,10 @@ export function FleetListClient({
   // Filter state
   const [search, setSearch] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
-  const [categoryId, setCategoryId] = useState("")
+  /* The header menu links straight to a type — /fleet?categoryId=51 for the
+     catamarans — so the filter has to start from the URL rather than empty,
+     or the link would land on the unfiltered fleet. */
+  const [categoryId, setCategoryId] = useState(() => q.get("categoryId") ?? "")
   const [builderId, setBuilderId] = useState("")
   const [cabinsMin, setCabinsMin] = useState(() => rangeStart("cabins"))
   /* The guests select only offers even numbers, so a bar selection of "5 – 8"
@@ -131,7 +134,7 @@ export function FleetListClient({
   /* Normally the first render is skipped, because the server already sent the
      first page. When the URL seeded a filter that no longer holds — those
      yachts are the unfiltered list — so let the first fetch through. */
-  const isFirstRender = useRef(!(cabinsMin || guestsMin || loaMin || loaMax))
+  const isFirstRender = useRef(!(cabinsMin || guestsMin || loaMin || loaMax || categoryId))
 
   const fetchYachts = useCallback(
     async (pageNum: number) => {

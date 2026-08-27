@@ -29,7 +29,11 @@ export default async function FleetPage() {
     db.nausysYacht.findMany({ select: { builderId: true }, distinct: ["builderId"], where: { builderId: { not: null } } }),
     db.nausysYacht.findMany({
       take: 12,
-      orderBy: { name: "asc" },
+      /* Longest first, the order the client asks the API for and the one the
+         customer asked for. This query renders the first page on the server
+         and was left alphabetical, so the fleet arrived sorted by name and
+         only re-sorted itself once somebody touched a filter. */
+      orderBy: [{ loa: "desc" }, { name: "asc" }],
       include: {
         category: true,
         model: { include: { builder: true } },
